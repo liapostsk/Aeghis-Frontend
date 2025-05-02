@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Text,
   StyleSheet,
@@ -13,6 +13,8 @@ import PhoneInput, {
 } from 'react-native-international-phone-number';
 import { useRouter } from "expo-router";
 import { useSignUp } from '@clerk/clerk-expo';
+import ContinueButton from "../../components/ContinueButton";
+import PhoneNumberInput from "../../components/PhoneNumberInput";
 
 export default function PhoneScreen() {
   const { user, setUser } = useUser();
@@ -22,14 +24,6 @@ export default function PhoneScreen() {
   const [selectedCountry, setSelectedCountry] = useState<null | ICountry>(null);
   const [isValid, setIsValid] = useState(false);
   const { signUp } = useSignUp();
-
-
-  const handleInputValue = (phoneNumber: string) => {
-    setPhone(phoneNumber);
-    setIsValid(
-      selectedCountry ? isValidPhoneNumber(phoneNumber, selectedCountry) : false
-    );
-  };
 
   const handleSelectedCountry = (country: ICountry) => {
     setSelectedCountry(country);
@@ -50,10 +44,7 @@ export default function PhoneScreen() {
       await signUp.preparePhoneNumberVerification();
 
       // 3. Guardamos el número para usarlo luego
-      setUser({
-        ...user,
-        phone: fullPhone,
-      });
+      setUser({ ...user, phone: fullPhone });
 
       // 4. Navegamos a la siguiente pantalla
       router.push("/(onboarding)/phoneVerification");
@@ -63,7 +54,6 @@ export default function PhoneScreen() {
     }
   };
 
-
   return (
     <SafeAreaView style={styles.container}>
 
@@ -71,32 +61,21 @@ export default function PhoneScreen() {
         Hey {user.name}, let's{"\n"}verify your phone number!
       </Text>
 
-      <PhoneInput
+      <PhoneNumberInput
         value={phone}
-        onChangePhoneNumber={handleInputValue}
-        selectedCountry={selectedCountry}
-        onChangeSelectedCountry={handleSelectedCountry}
-        placeholder="Enter phone number"
-        defaultCountry="ES"
-        phoneInputStyles={{
-          container: {
-            borderWidth: 1,
-            position: "absolute",
-            top: "40%",
-            width: 375,
-            borderStyle: 'solid',
-            borderColor: '#F3F3F3',
-          },
+        onChange={(phone, isValid) => {
+          setPhone(phone);
+          setIsValid(isValid);
         }}
+        selectedCountry={selectedCountry}
+        onCountryChange={handleSelectedCountry}
       />
 
-      <Pressable
+      <ContinueButton
         onPress={sendCode}
-        style={[styles.continueButton, !isValid && styles.disabledButton]}
+        text="Send Code"
         disabled={!isValid}
-      >
-        <Text style={styles.continueButtonText}>Send Code</Text>
-      </Pressable>
+      />
     
     </SafeAreaView>
   );

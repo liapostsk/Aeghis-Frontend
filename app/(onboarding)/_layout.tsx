@@ -1,23 +1,26 @@
-import { Redirect, Stack } from "expo-router";
-import { useAuth } from '@clerk/clerk-expo';
+import { useAuth } from "@clerk/clerk-expo";
+import { Redirect, router, Stack } from "expo-router";
+import React from "react";
+import { Pressable } from "react-native";
+import Icon from '@expo/vector-icons/Ionicons';
+
 
 export default function OnboardingLayout() {
-  const { isSignedIn } = useAuth();
-
-  // Si el usuario ya está autenticado, lo redirigimos al home
-  if (isSignedIn) {
-    return <Redirect href={'/'} />;
-  }
+  const { isSignedIn, isLoaded } = useAuth();
+    
+      // Esperamos a que Clerk cargue
+      if (!isLoaded) return null;
 
   return (
     <Stack>
       <Stack.Screen 
-        name="index" 
-        options={{ headerShown: false }} 
-      />
-      <Stack.Screen 
-        name="age"
+        name="index"
         options={{
+          headerLeft: () => (
+            <Pressable onPress={() => router.back()}>
+              <Icon name="arrow-back" size={24} color="#FFFF" />
+            </Pressable>
+          ),
           headerShown: true,
           title: "",
           headerTransparent: true,
@@ -44,6 +47,24 @@ export default function OnboardingLayout() {
       />
       <Stack.Screen 
         name="phoneVerification"
+        options={{
+          headerShown: true,
+          title: "",
+          headerTransparent: true,
+          headerTintColor: '#fff',
+        }}
+      />
+      <Stack.Screen 
+        name="email"
+        options={{
+          headerShown: true,
+          title: "",
+          headerTransparent: true,
+          headerTintColor: '#fff',
+        }}
+      />
+      <Stack.Screen 
+        name="emailVerification"
         options={{
           headerShown: true,
           title: "",

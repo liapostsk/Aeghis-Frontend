@@ -12,10 +12,11 @@ import {
 import { useUser } from "../../context/UserContext";
 import { useSignUp, useAuth } from "@clerk/clerk-expo";
 import { CodeField, Cursor, useBlurOnFulfill, useClearByFocusCell } from 'react-native-confirmation-code-field';
+import VerificationCodeField from "@/components/VerificationCodeField";
 
 export default function PhoneVerificationScreen() {
     const { user, setUser } = useUser();
-    const { signUp, setActive, isLoaded } = useSignUp();
+    const { signUp, isLoaded } = useSignUp();
     const router = useRouter();
     
     const [isLoading, setIsLoading] = useState(false);
@@ -24,7 +25,6 @@ export default function PhoneVerificationScreen() {
 
     const [value, setValue] = useState('');
     const ref = useBlurOnFulfill({ value, cellCount: CELL_COUNT });
-    const [props, getCellOnLayoutHandler] = useClearByFocusCell({ value, setValue });
 
     const handleVerifyCode = async () => {
         if (!isLoaded || !signUp) {
@@ -48,12 +48,7 @@ export default function PhoneVerificationScreen() {
           console.log("Verification result:", result);
     
           if (result.status === "complete") {
-            await setActive({ session: result.createdSessionId });
-    
-            setUser({
-              ...user,
-              isVerified: true,
-            });
+            // Si la verificación es exitosa, guardamos el número de teléfono
     
             Alert.alert("Success", "Phone number verified!");
             router.push("/(onboarding)/email");
@@ -62,7 +57,7 @@ export default function PhoneVerificationScreen() {
                 console.log("Email address is missing. Continue to email verification.");
                 Alert.alert("Success", "Phone number verified! Please verify your email.");
                 setUser({ ...user, isPhoneVerified: true });
-                router.push("/email");
+                router.push("/(onboarding)/email");
             } else {
               Alert.alert("Error", "Other fields missing: " + result.missingFields.join(", "));
             }
@@ -85,24 +80,7 @@ export default function PhoneVerificationScreen() {
         Enter the 6-digit code sent to{"\n"}{user.phone}
       </Text>
 
-      <CodeField
-        ref={ref}
-        {...props}
-        value={value}
-        onChangeText={setValue}
-        cellCount={CELL_COUNT}
-        rootStyle={styles.codeFieldRoot}
-        keyboardType="number-pad"
-        textContentType="oneTimeCode"
-        renderCell={({ index, symbol, isFocused }) => (
-            <Text
-            key={index}
-            style={[styles.cell, isFocused && styles.focusCell]}
-            onLayout={getCellOnLayoutHandler(index)}>
-            {symbol || (isFocused ? <Cursor /> : null)}
-            </Text>
-        )}
-        />
+      <VerificationCodeField value={value} setValue={setValue} />
 
       <Pressable
         onPress={handleVerifyCode}

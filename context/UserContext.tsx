@@ -1,16 +1,25 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
-type User = {
+export type User = {
+  id?: number;
   name?: string;
   email?: string;
   dateOfBirth?: Date;
   gender?: string;
   phone?: string;
-  verificationId?: string | null;
-  firebaseUser?: any;
-  isVerified?: boolean;
+  verify?: boolean;
+  image?: string;
+  valid?: boolean;
+  age?: number;
   confirmationResult?: any;
   isPhoneVerified?: boolean;
+  isEmailVerified?: boolean;
+  token?: string;
+  emergencyContact?: {
+    name: string;
+    phone: string;
+    relationship: string;
+  };
   // añade más campos según los necesites
 };
 
