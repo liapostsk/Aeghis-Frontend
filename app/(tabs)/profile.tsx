@@ -3,7 +3,7 @@ import { View, Text, Button, Alert } from "react-native";
 import { useAuth, useUser as useClerkUser } from "@clerk/clerk-expo";
 import { useUser as useFrontUser } from "../../context/UserContext";
 import { SignOutButton } from "@/components/SignOutButton";
-import { deleteUser } from "../../api/userApi";
+import { deleteUser } from "../../api/user/userApi";
 
 const ProfileScreen = () => {
   const { signOut } = useAuth();

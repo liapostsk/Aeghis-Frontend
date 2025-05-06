@@ -9,6 +9,7 @@ export type User = {
   phone?: string;
   verify?: boolean;
   image?: string;
+  // Añade más campos según los necesites
   valid?: boolean;
   age?: number;
   confirmationResult?: any;

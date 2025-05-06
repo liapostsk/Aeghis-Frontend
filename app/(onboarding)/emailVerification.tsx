@@ -9,38 +9,38 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useUser } from "../../context/UserContext";
-import { useAuth, useSignUp } from "@clerk/clerk-expo";
-import {
-  CodeField,
-  Cursor,
-  useBlurOnFulfill,
-  useClearByFocusCell,
-} from "react-native-confirmation-code-field";
-import { mapUserToDto } from "../../api/mapper";
-import { createUser } from "../../api/userApi";
+import { useSignUp, useAuth, useUser as useClerkUser } from "@clerk/clerk-expo";
+import VerificationCodeField from "@/components/VerificationCodeField";
+import { mapUserToDto } from "../../api/user/mapper";
+import { createUser } from "../../api/user/userApi";
+import { useTokenStore } from "@/lib/auth/tokenStore";
+
 
 export default function EmailVerificationScreen() {
-  const { user, setUser } = useUser();
-  const { signUp, setActive, isLoaded } = useSignUp();
-  const { getToken } = useAuth();
+  // Router and context
   const router = useRouter();
+  const { user, setUser } = useUser();
 
+  // Clerk authentication
+  const { signUp, setActive, isLoaded } = useSignUp();
+  const { getToken, signOut } = useAuth();
+  const setToken = useTokenStore((state) => state.setToken);
+  const { user: clerkUser } = useClerkUser();
+
+  // Local state
   const [isLoading, setIsLoading] = useState(false);
-  const [value, setValue] = useState("");
-  const CELL_COUNT = 6;
+  const [verificationCode, setVerificationCode] = useState("");
 
-  const ref = useBlurOnFulfill({ value, cellCount: CELL_COUNT });
-  const [props, getCellOnLayoutHandler] = useClearByFocusCell({
-    value,
-    setValue,
-  });
+  const isCodeValid = verificationCode && verificationCode.length === 6;
+
 
   const handleVerifyCode = async () => {
+    // Validation checks
     if (!isLoaded || !signUp) {
       return Alert.alert("Error", "Auth not ready.");
     }
   
-    if (!value || value.length !== 6) {
+    if (!isCodeValid) {
       return Alert.alert("Error", "Please enter the 6-digit code.");
     }
   
@@ -53,37 +53,52 @@ export default function EmailVerificationScreen() {
   
     try {
       setIsLoading(true);
-  
-      const result = await signUp.attemptEmailAddressVerification({ code: value });
+
+      // Step 1: Verify email with Clerk
+      const result = await signUp.attemptEmailAddressVerification({ code: verificationCode });
   
       console.log("Verification result:", result);
   
       if (result.status === "complete") {
-        // Antes de activar sesión en Clerk, intentamos crear el usuario en el backend
-        const dto = mapUserToDto({ ...user});
-        console.log("User DTO:", dto);
-  
+        // Step 2: Activate Clerk session to get token
+        await setActive({ session: signUp.createdSessionId });
+
+        const token = await getToken();
+        console.log("Token:", token);
+        if (!token) {
+          return Alert.alert("Error", "Failed to get token.");
+        }
+        setToken(token); // <—— necesario
+
+
+        // Step 3: Create user in backend
         try {
-          const response = await createUser(dto);
-          console.log("User created:", response);
-  
-          // Ahora que el usuario se creó correctamente, activamos sesión y navegamos
-          await setActive({ session: signUp.createdSessionId });
-  
-          const token = await getToken();
+          const dto = mapUserToDto({ ...user});
+          console.log("User DTO:", dto);
+
+          const userId = await createUser(dto);
+          console.log("User created with ID:", userId);
+
+          // Step 4: Update local user state
           setUser({
             ...user,
             isEmailVerified: true,
-            id: response,
-            token: token || undefined,
+            id: userId,
+            token,
           });
   
           Alert.alert("Success", "Email verified and user created!");
           router.push("/(tabs)");
         } catch (apiError: any) {
+          console.error("API error:", apiError);
+          console.log("HOLAAAA")
+          // Clean up Clerk session on backend error
+          await clerkUser?.delete(); // Elimina en Clerk
+          await signOut(); // Cierra sesión
+
+          // Handle backend user creation error
           console.error("Error creating user in backend:", apiError);
-          const message =
-            apiError?.message || "Failed to create user in backend.";
+          const message = apiError?.message || "Failed to create user in backend.";
           Alert.alert("Error", message);
         }
   
@@ -112,33 +127,20 @@ export default function EmailVerificationScreen() {
         {user.email}
       </Text>
 
-      <CodeField
-        ref={ref}
-        {...props}
-        value={value}
-        onChangeText={setValue}
-        cellCount={CELL_COUNT}
-        rootStyle={styles.codeFieldRoot}
-        keyboardType="number-pad"
-        textContentType="oneTimeCode"
-        renderCell={({ index, symbol, isFocused }) => (
-          <Text
-            key={index}
-            style={[styles.cell, isFocused && styles.focusCell]}
-            onLayout={getCellOnLayoutHandler(index)}
-          >
-            {symbol || (isFocused ? <Cursor /> : null)}
-          </Text>
-        )}
-      />
+      <VerificationCodeField
+        value={verificationCode}
+        setValue={setVerificationCode}
+        cellCount={6}
+        >
+      </VerificationCodeField>
 
       <Pressable
         onPress={handleVerifyCode}
         style={[
           styles.verifyButton,
-          (!value || value.length !== 6) && styles.disabledButton,
+          !isCodeValid && styles.disabledButton,
         ]}
-        disabled={!value || value.length !== 6 || isLoading}
+        disabled={!isCodeValid || isLoading}
       >
         {isLoading ? (
           <ActivityIndicator color="#7A33CC" />
@@ -170,25 +172,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: "center",
     marginBottom: 40,
-  },
-  codeFieldRoot: {
-    marginTop: 20,
-    width: 300,
-    justifyContent: "space-between",
-  },
-  cell: {
-    width: 40,
-    height: 50,
-    lineHeight: 50,
-    fontSize: 24,
-    borderWidth: 2,
-    borderColor: "#fff",
-    textAlign: "center",
-    color: "#fff",
-    borderRadius: 8,
-  },
-  focusCell: {
-    borderColor: "#7A33CC",
   },
   verifyButton: {
     width: 300,
