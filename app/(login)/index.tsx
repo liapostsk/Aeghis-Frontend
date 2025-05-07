@@ -14,6 +14,7 @@ import PhoneNumberInput from '../../components/PhoneNumberInput';
 import VerificationCodeField from '../../components/VerificationCodeField';
 import ContinueButton from '../../components/ContinueButton';
 import { ICountry } from 'react-native-international-phone-number';
+import { getCurrentUser } from '@/api/user/userApi';
 
 export default function LoginScreen() {
   const { signIn, setActive, isLoaded } = useSignIn();

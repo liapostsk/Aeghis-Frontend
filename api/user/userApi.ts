@@ -1,6 +1,11 @@
 import api from "../client";
 import { UserDto } from "../types";
 
+export const getCurrentUser = async (): Promise<UserDto> => {
+  const response = await api.get("/user/me");
+  return response.data;
+};
+
 export const createUser = async (dto: UserDto): Promise<number> => {
   const response = await api.post("/user", dto);
   return response.data;
