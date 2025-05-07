@@ -43,6 +43,7 @@ const ProfileScreen = () => {
     <View style={{ padding: 20 }}>
       <Text style={{ fontSize: 18, fontWeight: "bold" }}>Perfil</Text>
       <Text style={{ marginTop: 10 }}>ID Backend: {user.id}</Text>
+      <Text>Name: {user.name}</Text>
       <Text>Email: {clerkUser.primaryEmailAddress?.emailAddress}</Text>
       <Text>Teléfono: {clerkUser.primaryPhoneNumber?.phoneNumber}</Text>
 
