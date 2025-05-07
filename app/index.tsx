@@ -1,6 +1,6 @@
 // Index is the main screen of the app, the entry point of the app
 import { useAuth } from "@clerk/clerk-expo";
-import { Link, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { useEffect } from "react";
 import { Text, View, StyleSheet, Pressable, Image } from "react-native"; 
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -36,7 +36,7 @@ export default function Index() {
         <Text style={{ color: 'white', fontSize: 18 }}>
           Already have an account?{'  '}
         </Text>
-        <Pressable onPress={() => router.replace("/(login)")}>
+        <Pressable onPress={() => router.push("/(login)")}>
           <Text style={{ color: "#0003B2", fontSize: 18, fontWeight: 'bold' }}>
             Log In
           </Text>

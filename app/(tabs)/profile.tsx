@@ -1,14 +1,14 @@
 import React from "react";
 import { View, Text, Button, Alert } from "react-native";
 import { useAuth, useUser as useClerkUser } from "@clerk/clerk-expo";
-import { useUser as useFrontUser } from "../../context/UserContext";
+import { useUserStore } from "../../lib/storage/useUserStorage";
 import { SignOutButton } from "@/components/SignOutButton";
 import { deleteUser } from "../../api/user/userApi";
 
 const ProfileScreen = () => {
   const { signOut } = useAuth();
   const { user: clerkUser } = useClerkUser(); // Clerk user
-  const { user: appUser, setUser } = useFrontUser(); // Tu propio user con ID
+  const { user, setUser } = useUserStore(); // Tu propio user con ID
 
   const handleDeleteAccount = async () => {
     Alert.alert(
@@ -21,9 +21,9 @@ const ProfileScreen = () => {
           style: "destructive",
           onPress: async () => {
             try {
-              if (!appUser?.id) throw new Error("User ID no disponible");
+              if (!user?.id) throw new Error("User ID no disponible");
 
-              await deleteUser(appUser.id); // Llama al backend
+              await deleteUser(user?.id); // Llama al backend
               await clerkUser?.delete(); // Elimina en Clerk
               await signOut(); // Cierra sesión
             } catch (err) {
@@ -37,12 +37,12 @@ const ProfileScreen = () => {
     );
   };
 
-  if (!clerkUser || !appUser) return null;
+  if (!clerkUser || !user) return null;
 
   return (
     <View style={{ padding: 20 }}>
       <Text style={{ fontSize: 18, fontWeight: "bold" }}>Perfil</Text>
-      <Text style={{ marginTop: 10 }}>ID Backend: {appUser.id}</Text>
+      <Text style={{ marginTop: 10 }}>ID Backend: {user.id}</Text>
       <Text>Email: {clerkUser.primaryEmailAddress?.emailAddress}</Text>
       <Text>Teléfono: {clerkUser.primaryPhoneNumber?.phoneNumber}</Text>
 

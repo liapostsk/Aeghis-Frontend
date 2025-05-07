@@ -5,7 +5,6 @@ import {
   Pressable,
   Alert,
 } from "react-native";
-import { useUser } from "../../context/UserContext";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PhoneInput, {
   ICountry,
@@ -15,9 +14,10 @@ import { useRouter } from "expo-router";
 import { useSignUp } from '@clerk/clerk-expo';
 import ContinueButton from "../../components/ContinueButton";
 import PhoneNumberInput from "../../components/PhoneNumberInput";
+import { useUserStore } from "../../lib/storage/useUserStorage";
 
 export default function PhoneScreen() {
-  const { user, setUser } = useUser();
+  const { user, setUser } = useUserStore();
   const router = useRouter();
 
   const [phone, setPhone] = useState('');
@@ -58,7 +58,7 @@ export default function PhoneScreen() {
     <SafeAreaView style={styles.container}>
 
       <Text style={styles.textTitle}>
-        Hey {user.name}, let's{"\n"}verify your phone number!
+        Hey {user?.name || "User"}, let's{"\n"}verify your phone number!
       </Text>
 
       <PhoneNumberInput

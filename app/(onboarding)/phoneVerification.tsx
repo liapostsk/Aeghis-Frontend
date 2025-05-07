@@ -9,75 +9,74 @@ import {
   TextInput,
   ActivityIndicator,
 } from "react-native";
-import { useUser } from "../../context/UserContext";
+import { useUserStore } from "../../lib/storage/useUserStorage";
 import { useSignUp, useAuth } from "@clerk/clerk-expo";
 import { CodeField, Cursor, useBlurOnFulfill, useClearByFocusCell } from 'react-native-confirmation-code-field';
 import VerificationCodeField from "@/components/VerificationCodeField";
 
 export default function PhoneVerificationScreen() {
-    const { user, setUser } = useUser();
-    const { signUp, isLoaded } = useSignUp();
-    const router = useRouter();
-    
-    const [isLoading, setIsLoading] = useState(false);
+  const { user, setUser } = useUserStore();
+  const { signUp, isLoaded } = useSignUp();
+  const router = useRouter();
+  
+  const [isLoading, setIsLoading] = useState(false);
 
-    const CELL_COUNT = 6;
+  const CELL_COUNT = 6;
 
-    const [value, setValue] = useState('');
-    const ref = useBlurOnFulfill({ value, cellCount: CELL_COUNT });
+  const [value, setValue] = useState('');
+  const ref = useBlurOnFulfill({ value, cellCount: CELL_COUNT });
 
-    const handleVerifyCode = async () => {
-        if (!isLoaded || !signUp) {
-          Alert.alert("Error", "Auth not ready.");
-          return;
-        }
-    
-        if (!value || value.length !== 6) {
-          Alert.alert("Error", "Please enter the 6-digit code.");
-          return;
-        }
-    
-        try {
-          setIsLoading(true);
-    
-          // Verificamos el código con Clerk
-          const result = await signUp.attemptPhoneNumberVerification({
-            code: value,
-          });
+  const handleVerifyCode = async () => {
+      if (!isLoaded || !signUp) {
+        Alert.alert("Error", "Auth not ready.");
+        return;
+      }
+  
+      if (!value || value.length !== 6) {
+        Alert.alert("Error", "Please enter the 6-digit code.");
+        return;
+      }
+  
+      try {
+        setIsLoading(true);
+  
+        // Verificamos el código con Clerk
+        const result = await signUp.attemptPhoneNumberVerification({
+          code: value,
+        });
 
-          console.log("Verification result:", result);
-    
-          if (result.status === "complete") {
-            // Si la verificación es exitosa, guardamos el número de teléfono
-    
-            Alert.alert("Success", "Phone number verified!");
-            router.push("/(onboarding)/email");
-          } else if (result.status === "missing_requirements") {
-            if (result.missingFields.includes("email_address")) {
-                console.log("Email address is missing. Continue to email verification.");
-                Alert.alert("Success", "Phone number verified! Please verify your email.");
-                setUser({ ...user, isPhoneVerified: true });
-                router.push("/(onboarding)/email");
-            } else {
-              Alert.alert("Error", "Other fields missing: " + result.missingFields.join(", "));
-            }
+        console.log("Verification result:", result);
+  
+        if (result.status === "complete") {
+          // Si la verificación es exitosa, guardamos el número de teléfono
+  
+          Alert.alert("Success", "Phone number verified!");
+          router.push("/(onboarding)/email");
+        } else if (result.status === "missing_requirements") {
+          if (result.missingFields.includes("email_address")) {
+              console.log("Email address is missing. Continue to email verification.");
+              Alert.alert("Success", "Phone number verified! Please verify your email.");
+              router.push("/(onboarding)/email");
           } else {
-            Alert.alert("Error", "Unexpected verification status: " + result.status);
+            Alert.alert("Error", "Other fields missing: " + result.missingFields.join(", "));
           }
-        } catch (error: any) {
-          console.error(error);
-          Alert.alert("Error", error?.errors?.[0]?.message || "Invalid verification code.");
-        } finally {
-          setIsLoading(false);
+        } else {
+          Alert.alert("Error", "Unexpected verification status: " + result.status);
         }
-    };
+      } catch (error: any) {
+        console.error(error);
+        Alert.alert("Error", error?.errors?.[0]?.message || "Invalid verification code.");
+      } finally {
+        setIsLoading(false);
+      }
+  };
 
   return (
     <View style={styles.container}>
       <Text style={styles.textTitle}>Verification Code</Text>
       
       <Text style={styles.instruction}>
-        Enter the 6-digit code sent to{"\n"}{user.phone}
+        Enter the 6-digit code sent to{"\n"}{user?.phone || "+error"}.
       </Text>
 
       <VerificationCodeField value={value} setValue={setValue} />
@@ -87,8 +86,7 @@ export default function PhoneVerificationScreen() {
         style={[
           styles.verifyButton,
          
-        ]}
-        
+        ]} 
       >
         {isLoading ? (
           <ActivityIndicator color="#7A33CC" />

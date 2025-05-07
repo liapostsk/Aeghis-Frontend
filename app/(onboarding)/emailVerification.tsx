@@ -8,7 +8,7 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native";
-import { useUser } from "../../context/UserContext";
+import { useUserStore } from "../../lib/storage/useUserStorage";
 import { useSignUp, useAuth, useUser as useClerkUser } from "@clerk/clerk-expo";
 import VerificationCodeField from "@/components/VerificationCodeField";
 import { mapUserToDto } from "../../api/user/mapper";
@@ -19,7 +19,7 @@ import { useTokenStore } from "@/lib/auth/tokenStore";
 export default function EmailVerificationScreen() {
   // Router and context
   const router = useRouter();
-  const { user, setUser } = useUser();
+  const { user, setUser } = useUserStore();
 
   // Clerk authentication
   const { signUp, setActive, isLoaded } = useSignUp();
@@ -44,7 +44,7 @@ export default function EmailVerificationScreen() {
       return Alert.alert("Error", "Please enter the 6-digit code.");
     }
   
-    if (!user.phone) {
+    if (!user || !user.phone) {
       return Alert.alert(
         "Error",
         "You must verify your phone number before continuing."
@@ -70,7 +70,6 @@ export default function EmailVerificationScreen() {
         }
         setToken(token); // <—— necesario
 
-
         // Step 3: Create user in backend
         try {
           const dto = mapUserToDto({ ...user});
@@ -82,9 +81,7 @@ export default function EmailVerificationScreen() {
           // Step 4: Update local user state
           setUser({
             ...user,
-            isEmailVerified: true,
             id: userId,
-            token,
           });
   
           Alert.alert("Success", "Email verified and user created!");
@@ -124,7 +121,7 @@ export default function EmailVerificationScreen() {
 
       <Text style={styles.instruction}>
         Enter the 6-digit code sent to your email:{"\n"}
-        {user.email}
+        {user?.email || "No email available"}
       </Text>
 
       <VerificationCodeField

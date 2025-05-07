@@ -1,6 +1,7 @@
 import { useAuth } from "@clerk/clerk-expo";
-import { Redirect, Stack } from "expo-router";
-
+import { Stack, router } from "expo-router";
+import { Pressable } from "react-native";
+import Icon from '@expo/vector-icons/Ionicons';
 
 export default function OnboardingLayout() {
   const { isSignedIn, isLoaded } = useAuth();
@@ -13,10 +14,15 @@ export default function OnboardingLayout() {
             <Stack.Screen 
                 name="index"
                 options={{
-                headerShown: true,
-                title: "",
-                headerTransparent: true,
-                headerTintColor: '#fff',
+                    headerLeft: () => (
+                    <Pressable onPress={() => router.back()}>
+                        <Icon name="arrow-back" size={24} color="#FFFF" />
+                    </Pressable>
+                    ),
+                    headerShown: true,
+                    title: "",
+                    headerTransparent: true,
+                    headerTintColor: '#fff',
                 }}
             />
         </Stack>

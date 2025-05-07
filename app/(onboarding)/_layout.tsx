@@ -1,5 +1,5 @@
 import { useAuth } from "@clerk/clerk-expo";
-import { Redirect, router, Stack } from "expo-router";
+import { router, Stack } from "expo-router";
 import React from "react";
 import { Pressable } from "react-native";
 import Icon from '@expo/vector-icons/Ionicons';
@@ -8,8 +8,8 @@ import Icon from '@expo/vector-icons/Ionicons';
 export default function OnboardingLayout() {
   const { isSignedIn, isLoaded } = useAuth();
     
-      // Esperamos a que Clerk cargue
-      if (!isLoaded) return null;
+  // Esperamos a que Clerk cargue
+  if (!isLoaded) return null;
 
   return (
     <Stack>

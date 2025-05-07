@@ -13,14 +13,15 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Icon from '@expo/vector-icons/Ionicons';
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { router } from "expo-router";
-import { useUser } from "../../context/UserContext";
-  
+import { useUserStore } from "../../lib/storage/useUserStorage";
+
 export default function AgeScreen() {
     const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [isValidAge, setIsValidAge] = useState<boolean>(true);
     const [dateOfBirth, setDateOfBirth] = useState("");
-    const { user, setUser } = useUser();
+    const { user, setUser } = useUserStore();
+
 
     const showDatePicker = () => setDatePickerVisibility(true);
     const hideDatePicker = () => setDatePickerVisibility(false);

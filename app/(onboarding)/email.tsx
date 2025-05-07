@@ -6,13 +6,13 @@ import {
   Alert,
   TextInput
 } from 'react-native';
-import { useUser } from "../../context/UserContext"; // Esto es opcional, depende de cómo manejes el estado del usuario en el proyecto.
+import { useUserStore } from "../../lib/storage/useUserStorage";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from "expo-router";
 import { useSignUp } from '@clerk/clerk-expo';
 
 export default function PhoneScreen() {
-  const { user, setUser } = useUser();  // Si estás utilizando un contexto de usuario.
+  const { user, setUser } = useUserStore();
   const router = useRouter();
   const [isValid, setIsValid] = useState(false);
   const [email, setEmail] = useState('');

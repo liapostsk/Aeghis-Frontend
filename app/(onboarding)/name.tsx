@@ -11,60 +11,60 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import React, { useState } from "react";
-import { useUser } from "../../context/UserContext";
+import { useUserStore } from "../../lib/storage/useUserStorage";
 
 export default function NameScreen() {
-    const { user, setUser } = useUser();
-    const [name, setName] = useState("");
+  const { user, setUser } = useUserStore();
+  const [name, setName] = useState("");
 
-    const handleNameChange = (name: string) => {
-      setUser({ ...user, name });
-    };
+  const handleNameChange = (name: string) => {
+    setUser({ ...user, name });
+  };
 
-    const handleConfirm = (name: string) => {
-      handleNameChange(name);
-      console.log(user);
-        if (name.trim() === "") {
-          Alert.alert("Missing name", "Please enter your name before continuing.");
-        }
-    };
+  const handleConfirm = (name: string) => {
+    handleNameChange(name);
+    console.log(user);
+      if (name.trim() === "") {
+        Alert.alert("Missing name", "Please enter your name before continuing.");
+      }
+  };
 
-    return (
-        <SafeAreaView style={styles.container}>
-            <Text style={styles.textTitle}>Great, Let's {"\n"}Continue!</Text>
+  return (
+      <SafeAreaView style={styles.container}>
+          <Text style={styles.textTitle}>Great, Let's {"\n"}Continue!</Text>
 
-            <Image
-                source={require("../../assets/images/gettingCoffee.png")}
-                style={styles.image}
-            />
+          <Image
+              source={require("../../assets/images/gettingCoffee.png")}
+              style={styles.image}
+          />
 
-            <Text style={styles.textSubtitle}>What’s the best way to call you?</Text>
+          <Text style={styles.textSubtitle}>What’s the best way to call you?</Text>
 
-            <TextInput
-                placeholder="Enter your name"
-                placeholderTextColor="#11182766"
-                style={styles.textInput}
-                value={name}
-                onChangeText={(text) => {
-                    setName(text);
-                    handleNameChange(text);
-                }}
-            />
+          <TextInput
+              placeholder="Enter your name"
+              placeholderTextColor="#11182766"
+              style={styles.textInput}
+              value={name}
+              onChangeText={(text) => {
+                  setName(text);
+                  handleNameChange(text);
+              }}
+          />
 
-            {/* Botón */}
-            {name.trim() !== "" ? (
-                <Link href="/(onboarding)/phone" asChild>
-                    <Pressable style={styles.continueButton} onPress={() => handleConfirm(name)}>
-                        <Text style={styles.continueButtonText}>Continue</Text>
-                    </Pressable>
-                </Link>
-            ) : (
-                <Pressable style={[styles.continueButton, styles.disabledButton]} onPress={() => handleConfirm(name)}>
-                    <Text style={styles.continueButtonText}>Continue</Text>
-                </Pressable>
-            )}
-        </SafeAreaView>
-    );
+          {/* Botón */}
+          {name.trim() !== "" ? (
+              <Link href="/(onboarding)/phone" asChild>
+                  <Pressable style={styles.continueButton} onPress={() => handleConfirm(name)}>
+                      <Text style={styles.continueButtonText}>Continue</Text>
+                  </Pressable>
+              </Link>
+          ) : (
+              <Pressable style={[styles.continueButton, styles.disabledButton]} onPress={() => handleConfirm(name)}>
+                  <Text style={styles.continueButtonText}>Continue</Text>
+              </Pressable>
+          )}
+      </SafeAreaView>
+  );
 }
 
 // Reference for the image used in the app:
