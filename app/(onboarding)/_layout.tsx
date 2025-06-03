@@ -6,7 +6,7 @@ import Icon from '@expo/vector-icons/Ionicons';
 
 
 export default function OnboardingLayout() {
-  const { isSignedIn, isLoaded } = useAuth();
+  const { isLoaded } = useAuth();
     
   // Esperamos a que Clerk cargue
   if (!isLoaded) return null;
@@ -21,6 +21,15 @@ export default function OnboardingLayout() {
               <Icon name="arrow-back" size={24} color="#FFFF" />
             </Pressable>
           ),
+          headerShown: true,
+          title: "",
+          headerTransparent: true,
+          headerTintColor: '#fff',
+        }}
+      />
+      <Stack.Screen 
+        name="information"
+        options={{
           headerShown: true,
           title: "",
           headerTransparent: true,

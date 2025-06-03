@@ -51,7 +51,6 @@ export default function NameScreen() {
               }}
           />
 
-          {/* Botón */}
           {name.trim() !== "" ? (
               <Link href="/(onboarding)/phone" asChild>
                   <Pressable style={styles.continueButton} onPress={() => handleConfirm(name)}>

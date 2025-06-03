@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { EmergencyContact, SafeLocation } from '@/api/types';
+import { getCurrentUser } from '../../api/user/userApi';
+
 
 export type User = {
   id?: number;
@@ -13,24 +16,37 @@ export type User = {
   gender?: string;
   valid?: boolean;
   age?: number;
+  acceptedPrivacyPolicy?: boolean;
+  emergencyContacts?: EmergencyContact[];
+  safeLocations?: SafeLocation[];
 };
 
 type UserStore = {
   user: User | null;
   setUser: (u: User) => void;
   clearUser: () => void;
+  refreshUserFromBackend: () => Promise<void>;
 };
 
 export const useUserStore = create<UserStore>()(
-    persist(
-      (set) => ({
-        user: null,
-        setUser: (user) => set({ user }),
-        clearUser: () => set({ user: null }),
-      }),
-      {
-        name: 'user-storage',
-        storage: createJSONStorage(() => AsyncStorage),
-      }
-    )
+  persist(
+    (set) => ({
+      user: null,
+      setUser: (user) => set({ user }),
+      clearUser: () => set({ user: null }),
+
+      refreshUserFromBackend: async () => {
+        try {
+          const user = await getCurrentUser(); // ← Usas directamente tu API
+          set({ user });
+        } catch (err) {
+          console.error('Error al refrescar usuario:', err);
+        }
+      },
+    }),
+    {
+      name: 'user-storage',
+      storage: createJSONStorage(() => AsyncStorage),
+    }
+  )
 );

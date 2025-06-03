@@ -1,4 +1,3 @@
-// Index is the main screen of the app, the entry point of the app
 import { useAuth } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
 import { useEffect } from "react";
@@ -11,17 +10,16 @@ export default function Index() {
 
   useEffect(() => {
     console.log("isSignedIn:", isSignedIn);
-    // Si el usuario ya está autenticado, redirigir a la pantalla principal
     if (isSignedIn) {
-      router.replace("/(tabs)"); // 👈 redirige automáticamente
+      router.replace("/(tabs)");
     }
   }, [isSignedIn]);
   
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.textTitle}>Welcome to Aegis!</Text>
+      <Text style={styles.textTitle}>Welcome to Aeghis!</Text>
       <Image
-        source={require("../assets/images/welcomePage.png")}
+        source={require("../../assets/images/welcomePage.png")}
         style={styles.image}
       />
     

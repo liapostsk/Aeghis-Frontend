@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Text,
   StyleSheet,
@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   Pressable,
   View,
+  TextInput,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -13,10 +14,9 @@ import {
 import { useRouter } from 'expo-router';
 import { useSignIn, useAuth } from '@clerk/clerk-expo';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import PhoneNumberInput from '../../components/PhoneNumberInput';
+import PhoneNumberPicker from '@/components/PhoneNumberPicker';
 import VerificationCodeField from '../../components/VerificationCodeField';
 import ContinueButton from '../../components/ContinueButton';
-import { ICountry } from 'react-native-international-phone-number';
 import { getCurrentUser } from '@/api/user/userApi';
 import { useUserStore } from '@/lib/storage/useUserStorage';
 import { useTokenStore } from '@/lib/auth/tokenStore';
@@ -26,43 +26,46 @@ export default function LoginScreen() {
   const router = useRouter();
 
   const [phone, setPhone] = useState('');
-  const [selectedCountry, setSelectedCountry] = useState<null | ICountry>(null);
+  const [countryCode, setCountryCode] = useState<'ES' | string>('ES');
+  const [callingCode, setCallingCode] = useState('34');
   const [isValid, setIsValid] = useState(false);
   const [codeSent, setCodeSent] = useState(false);
   const [code, setCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [timer, setTimer] = useState(60);
+  const [canResend, setCanResend] = useState(false);
+
   const { setUser } = useUserStore();
   const setToken = useTokenStore((state) => state.setToken);
-  const { getToken } = useAuth();
+  const { signOut, getToken } = useAuth();
 
-  const fullPhone = `${selectedCountry?.callingCode}${phone.replace(/\s/g, '')}`;
+  const fullPhone = `+${callingCode}${phone.replace(/\s/g, '')}`;
 
   const handleSendCode = async () => {
-    if (!signIn || !selectedCountry || !isValid) return;
+    if (!signIn || !isValid) return;
 
     try {
       setIsLoading(true);
-
-      // Iniciar el intento de login
       await signIn.create({ identifier: fullPhone });
 
-      // Enviar código OTP
       const phoneCodeFactor = signIn.supportedFirstFactors?.find(
         (factor) => factor.strategy === 'phone_code'
       );
-      
-      // Asegúrate de que existe y tiene phoneNumberId
+
       if (!phoneCodeFactor || !('phoneNumberId' in phoneCodeFactor)) {
         Alert.alert("Error", "Phone number ID not found.");
         return;
       }
-      
+
       await signIn.prepareFirstFactor({
         strategy: 'phone_code',
         phoneNumberId: phoneCodeFactor.phoneNumberId,
       });
 
       setCodeSent(true);
+      setTimer(60);
+      setCanResend(false);
+      setCode('');
     } catch (error: any) {
       console.error("Send code error:", error);
       Alert.alert("Error", error?.errors?.[0]?.message || "Could not send verification code.");
@@ -76,7 +79,6 @@ export default function LoginScreen() {
 
     try {
       setIsLoading(true);
-
       const attempt = await signIn.attemptFirstFactor({
         strategy: 'phone_code',
         code,
@@ -84,14 +86,24 @@ export default function LoginScreen() {
 
       if (attempt.status === 'complete') {
         await setActive({ session: attempt.createdSessionId });
-
         const token = await getToken();
+
+        if (!token) {
+          Alert.alert("Error", "No token received from Clerk.");
+          return;
+        }
+
         setToken(token);
-
         const userData = await getCurrentUser();
-        setUser(userData);
 
-        router.push('/(tabs)'); // Redirige al home o dashboard
+        if (!userData || !userData.id) {
+          Alert.alert("Error", "We couldn't retrieve your account. Please try again.");
+          await signOut();
+          return;
+        }
+
+        setUser(userData);
+        router.push('/(tabs)');
       } else {
         Alert.alert("Error", "Incomplete verification.");
       }
@@ -103,26 +115,56 @@ export default function LoginScreen() {
     }
   };
 
-  // Contenido principal que se reutiliza
+  useEffect(() => {
+    if (!codeSent || timer <= 0) return;
+
+    const interval = setInterval(() => {
+      setTimer((prev) => {
+        if (prev === 1) {
+          setCanResend(true);
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [codeSent, timer]);
+
   const renderContent = () => (
     <ScrollView 
       contentContainerStyle={styles.scrollContainer}
+      keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.container}>
-        <Text style={styles.title}>Welcome 👋</Text>
+        <View style={styles.titleContainer}>
+          <Text style={styles.title}>Welcome back, we missed you! 👋</Text>
+        </View>
 
         {!codeSent ? (
           <View style={styles.inputContainer}>
-            <PhoneNumberInput
-              value={phone}
-              onChange={(val, valid) => {
-                setPhone(val);
-                setIsValid(valid);
-              }}
-              selectedCountry={selectedCountry}
-              onCountryChange={setSelectedCountry}
-            />
+            <View style={styles.phoneRow}>
+              <PhoneNumberPicker
+                onChange={({ countryCode, callingCode }) => {
+                  setCountryCode(countryCode);
+                  setCallingCode(callingCode);
+                }}
+              />
+              <TextInput
+                value={phone}
+                onChangeText={(text) => {
+                  setPhone(text);
+                  setIsValid(text.length >= 6);
+                }}
+                keyboardType="phone-pad"
+                placeholder="Phone number"
+                placeholderTextColor="#aaa"
+                style={styles.phoneInput}
+              />
+            </View>
+
             <View style={styles.buttonSpacing}>
               <ContinueButton
                 onPress={handleSendCode}
@@ -133,24 +175,52 @@ export default function LoginScreen() {
           </View>
         ) : (
           <View style={styles.verificationContainer}>
-            <Text style={styles.subtitle}>Enter the code sent to {fullPhone}</Text>
+            <Text style={styles.subtitle}>
+              We've sent a 6-digit code to {fullPhone}
+            </Text>
+            <Text style={styles.helpText}>
+              Please check your messages 📱
+            </Text>
+            
             <View style={styles.codeFieldContainer}>
               <VerificationCodeField value={code} setValue={setCode} />
             </View>
+            
             <Pressable 
-              style={styles.verifyButton} 
+              style={[
+                styles.verifyButton,
+                (isLoading || code.length !== 6) && styles.verifyButtonDisabled
+              ]} 
               onPress={handleVerifyCode}
               disabled={isLoading || code.length !== 6}
             >
               {isLoading ? (
                 <ActivityIndicator color="#7A33CC" />
               ) : (
-                <Text style={styles.verifyButtonText}>Verify</Text>
+                <Text style={styles.verifyButtonText}>Verify Code</Text>
               )}
             </Pressable>
-            <Pressable onPress={() => setCodeSent(false)}>
-              <Text style={styles.changeNumberText}>Change phone number</Text>
-            </Pressable>
+
+            {/* Sección de Resend Code */}
+            <View style={styles.resendSection}>
+              {canResend ? (
+                <Pressable onPress={handleSendCode} style={styles.resendButton}>
+                  <Text style={styles.resendText}> Resend code</Text>
+                </Pressable>
+              ) : (
+                <Text style={styles.timerText}>
+                  Resend available in {timer}s
+                </Text>
+              )}
+            </View>
+
+            {/* Sección separada para cambiar número */}
+            <View style={styles.changeNumberSection}>
+              <Text style={styles.wrongNumberText}>Wrong number?</Text>
+              <Pressable onPress={() => setCodeSent(false)}>
+                <Text style={styles.changeNumberText}>Change it here</Text>
+              </Pressable>
+            </View>
           </View>
         )}
       </View>
@@ -181,6 +251,8 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     justifyContent: "center",
+    paddingVertical: 40,
+    paddingHorizontal: 20,
   },
   container: {
     flex: 1,
@@ -188,6 +260,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 20,
     paddingVertical: 40,
+  },
+  titleContainer: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 90,
   },
   title: {
     color: "#fff",
@@ -200,9 +278,27 @@ const styles = StyleSheet.create({
     width: "100%",
     alignItems: "center",
   },
+  phoneRow: {
+    flexDirection: 'row',
+    backgroundColor: '#E3D5F5',
+    borderRadius: 10,
+    overflow: 'hidden',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  phoneInput: {
+    flex: 1,
+    backgroundColor: '#F1EAFD',
+    padding: 12,
+    fontSize: 16,
+    borderTopRightRadius: 10,
+    borderBottomRightRadius: 10,
+  },
   buttonSpacing: {
     marginTop: 30,
     width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
   },
   verificationContainer: {
     width: "100%",
@@ -212,11 +308,19 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 18,
     textAlign: "center",
-    marginBottom: 30,
+    marginBottom: 8,
+  },
+  helpText: {
+    color: "#E8D5FF",
+    fontSize: 14,
+    textAlign: "center",
+    marginBottom: 20,
   },
   codeFieldContainer: {
     marginBottom: 10,
     width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
   },
   verifyButton: {
     width: "80%",
@@ -233,15 +337,51 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
+  verifyButtonDisabled: {
+    opacity: 0.6,
+  },
   verifyButtonText: {
     color: "#7A33CC",
     fontSize: 18,
     fontWeight: "bold",
   },
+  resendSection: {
+    alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 15,
+  },
+  resendButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  resendText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '500',
+    textDecorationLine: 'underline',
+  },
+  timerText: {
+    color: '#CCCCCC',
+    fontSize: 14,
+    fontStyle: 'italic',
+  },
+  changeNumberSection: {
+    alignItems: 'center',
+    marginTop: 25,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.2)',
+    width: '80%',
+  },
+  wrongNumberText: {
+    color: '#E8D5FF',
+    fontSize: 14,
+    marginBottom: 5,
+  },
   changeNumberText: {
     color: "#FFFFFF",
-    textDecorationLine: "underline",
-    marginTop: 20,
     fontSize: 16,
+    fontWeight: '600',
+    textDecorationLine: "underline",
   },
 });

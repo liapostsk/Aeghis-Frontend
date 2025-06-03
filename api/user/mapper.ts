@@ -1,5 +1,6 @@
-import { User } from "../../context/UserContext";
+
 import { UserDto } from "../types";
+import { User } from "../../lib/storage/useUserStorage";
 
 // Mapper function to convert User context type to UserDto
 export const mapUserToDto = (user: User): UserDto => {
@@ -10,6 +11,9 @@ export const mapUserToDto = (user: User): UserDto => {
       phone: user.phone ?? "",
       image: user.image ?? "",
       verify: user.verify ?? false,
+      acceptedPrivacyPolicy: user.acceptedPrivacyPolicy ?? false,
       dateOfBirth: user.dateOfBirth ?? new Date(),
+      safeLocations: user.safeLocations ?? [],
+      emergencyContacts: user.emergencyContacts ?? []
     };
 }

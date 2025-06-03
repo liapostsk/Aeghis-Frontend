@@ -1,0 +1,37 @@
+{
+  "lastUpdated": "Mayo 2025",
+  "sections": [
+    {
+      "title": "1. Introducción",
+      "content": "Gracias por utilizar nuestra aplicación. Esta política de privacidad explica cómo recopilamos, utilizamos, divulgamos, transferimos y almacenamos su información. Por favor, tómese un momento para familiarizarse con nuestras prácticas de privacidad."
+    },
+    {
+      "title": "2. Recopilación y uso de información",
+      "content": "Podemos recopilar diversos tipos de información para proporcionar y mejorar nuestros servicios. Los datos que podemos recopilar incluyen, pero no se limitan a: información personal como nombre, dirección de correo electrónico, y datos de uso de la aplicación."
+    },
+    {
+      "title": "3. Protección de datos",
+      "content": "Tomamos la seguridad de sus datos muy en serio. Implementamos medidas técnicas y organizativas para proteger su información personal contra acceso no autorizado, alteración, divulgación o destrucción."
+    },
+    {
+      "title": "4. Compartir información",
+      "content": "No vendemos su información personal a terceros. Podemos compartir información con terceros que nos ayudan a operar, proporcionar, mejorar, integrar, personalizar, respaldar y comercializar nuestros servicios."
+    },
+    {
+      "title": "5. Sus derechos",
+      "content": "Usted tiene derecho a acceder, corregir, actualizar o solicitar la eliminación de su información personal. También puede oponerse al procesamiento de su información personal, pedirnos que restrinjamos el procesamiento o solicitar la portabilidad de su información."
+    },
+    {
+      "title": "6. Cambios a esta política",
+      "content": "Podemos actualizar esta política de privacidad periódicamente. Le notificaremos cualquier cambio publicando la nueva política de privacidad en esta página y actualizando la fecha de \"última actualización\"."
+    },
+    {
+      "title": "7. Contacto",
+      "content": "Si tiene alguna pregunta sobre esta política de privacidad, por favor contáctenos a través de privacy@miapp.com."
+    }
+  ],
+  "footerText": [
+    "Al utilizar nuestra aplicación, usted acepta los términos y condiciones establecidos en esta política. Si no está de acuerdo con esta política, por favor no utilice nuestra aplicación o servicios.",
+    "Gracias por tomarse el tiempo de leer nuestra política de privacidad. Valoramos su confianza al proporcionarnos su información personal, y nos esforzamos por utilizarla de manera responsable."
+  ]
+}

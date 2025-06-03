@@ -11,8 +11,6 @@ import {
 import { useUserStore } from "../../lib/storage/useUserStorage";
 import { useSignUp, useAuth, useUser as useClerkUser } from "@clerk/clerk-expo";
 import VerificationCodeField from "@/components/VerificationCodeField";
-import { mapUserToDto } from "../../api/user/mapper";
-import { createUser } from "../../api/user/userApi";
 import { useTokenStore } from "@/lib/auth/tokenStore";
 
 
@@ -72,20 +70,8 @@ export default function EmailVerificationScreen() {
 
         // Step 3: Create user in backend
         try {
-          const dto = mapUserToDto({ ...user});
-          console.log("User DTO:", dto);
-
-          const userId = await createUser(dto);
-          console.log("User created with ID:", userId);
-
-          // Step 4: Update local user state
-          setUser({
-            ...user,
-            id: userId,
-          });
-  
           Alert.alert("Success", "Email verified and user created!");
-          router.push("/(tabs)");
+          router.push("/information");
         } catch (apiError: any) {
           console.error("API error:", apiError);
           console.log("HOLAAAA")

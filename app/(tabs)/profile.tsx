@@ -1,65 +1,84 @@
-import React from "react";
-import { View, Text, Button, Alert } from "react-native";
-import { useAuth, useUser as useClerkUser } from "@clerk/clerk-expo";
-import { useUserStore } from "../../lib/storage/useUserStorage";
-import { SignOutButton } from "@/components/SignOutButton";
-import { deleteUser } from "../../api/user/userApi";
+import React, { useState } from 'react';
+import { StyleSheet, View, Text, ScrollView, StatusBar } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import { useUserStore } from '@/lib/storage/useUserStorage';
+import { useAuth } from '@clerk/clerk-expo';
+import ProfileHeader from '@/components/profile/ProfileHeader';
+import EmergencyContactsSection from '@/components/profile/EmergencyContactsSection';
+import SafeLocationsSection from '@/components/profile/SafeLocationsSection';
+import SettingsSection from '@/components/profile/SettingsSection';
 
-const ProfileScreen = () => {
+
+export default function ProfileScreen() {
+  const router = useRouter();
+  const { user, clearUser } = useUserStore();
   const { signOut } = useAuth();
-  const { user: clerkUser } = useClerkUser(); // Clerk user
-  const { user, setUser } = useUserStore(); // Tu propio user con ID
+  const [showMenu, setShowMenu] = useState(false);
+  const [ editable, setEditable ] = useState(false);
 
-  const handleDeleteAccount = async () => {
-    Alert.alert(
-      "¿Eliminar cuenta?",
-      "Esta acción no se puede deshacer",
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Eliminar",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              if (!user?.id) throw new Error("User ID no disponible");
+  const toggleMenu = () => setShowMenu(!showMenu);
+  const navigateToEditProfile = () => setEditable(true);
 
-              await deleteUser(user?.id); // Llama al backend
-              await clerkUser?.delete(); // Elimina en Clerk
-              await signOut(); // Cierra sesión
-            } catch (err) {
-              console.error("Error al eliminar la cuenta:", err);
-              Alert.alert("Error", "No se pudo eliminar la cuenta.");
-            }
-          },
-        },
-      ],
-      { cancelable: true }
-    );
+  const handleDeleteAccount = () => {
+    console.log('Eliminar cuenta');
   };
 
-  if (!clerkUser || !user) return null;
+  const handleLogout = async () => {
+    await signOut();
+    clearUser();
+    router.replace("/(initialScreen)");
+  };
+
+  if (!user) return null;
+
+  const emergencyContacts = user.emergencyContacts ?? [
+    { name: 'Carlos Rodríguez', relation: 'Hermano', phone: '+34 612 345 678', confirmed: true },
+  ];
+
+  const safeLocations = user.safeLocations ?? [
+    { name: 'Casa', address: 'Calle Principal 123', type: 'Hogar', latitude: 40.4168, longitude: -3.7038 },
+  ];
+
+  // <StatusBar barStyle="dark-content" backgroundColor="#7A33CC" />
 
   return (
-    <View style={{ padding: 20 }}>
-      <Text style={{ fontSize: 18, fontWeight: "bold" }}>Perfil</Text>
-      <Text style={{ marginTop: 10 }}>ID Backend: {user.id}</Text>
-      <Text>Name: {user.name}</Text>
-      <Text>Email: {clerkUser.primaryEmailAddress?.emailAddress}</Text>
-      <Text>Teléfono: {clerkUser.primaryPhoneNumber?.phoneNumber}</Text>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#7A33CC" />
 
-      <View style={{ marginTop: 20 }}>
-        <SignOutButton />
-      </View>
-
-      <View style={{ marginTop: 10 }}>
-        <Button
-          title="Eliminar cuenta"
-          onPress={handleDeleteAccount}
-          color="red"
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        <ProfileHeader
+          user={user}
+          showMenu={showMenu}
+          onToggleMenu={toggleMenu}
+          onEdit={navigateToEditProfile}
+          onLogout={handleLogout}
+          onDelete={handleDeleteAccount}
         />
-      </View>
-    </View>
-  );
-};
 
-export default ProfileScreen;
+        <EmergencyContactsSection 
+          contacts={emergencyContacts}
+          editable={editable}
+        />
+        <SafeLocationsSection 
+          locations={safeLocations}
+          editable={editable}
+        />
+        <SettingsSection />
+
+        <View style={{ height: 30 }} />
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#7A33CC',
+  },
+  scrollView: {
+    flex: 1,
+    backgroundColor: '#f8f8ff',
+  },
+});
