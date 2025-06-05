@@ -10,9 +10,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from "expo-router";
 import { useSignUp } from '@clerk/clerk-expo';
-import ContinueButton from "../../components/ContinueButton";
+import ContinueButton from "../../components/ui/ContinueButton";
 import { useUserStore } from "../../lib/storage/useUserStorage";
-import PhoneNumberPicker from '@/components/PhoneNumberPicker';
+import PhoneNumberPicker from '@/components/ui/PhoneNumberPicker';
 
 export default function PhoneScreen() {
   const { user, setUser } = useUserStore();

@@ -1,4 +1,3 @@
-// File: components/auth/TokenProvider.tsx
 import { useEffect } from "react";
 import { useAuth } from "@clerk/clerk-expo";
 import { useTokenStore } from "@/lib/auth/tokenStore";

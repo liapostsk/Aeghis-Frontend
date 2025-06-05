@@ -28,9 +28,9 @@ export default function AgeScreen() {
 
     const formatDate = (date: Date) => {
         return date.toLocaleDateString('en-US', {
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric'
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric'
         });
     };
 
@@ -39,7 +39,6 @@ export default function AgeScreen() {
     };
 
     const handleConfirm = (date: Date) => {
-        console.log("A date has been picked: ", date);
         setSelectedDate(date);
         
         // Validate age before accepting the date
@@ -73,7 +72,6 @@ export default function AgeScreen() {
             setDateOfBirth(formatDate(date));
             setIsValidAge(true);
         }
-        console.log(user);
         hideDatePicker();
     };
 
@@ -139,13 +137,11 @@ export default function AgeScreen() {
                 style={styles.image}
             />
 
-            {/* Botón */}
             {(dateOfBirth.trim() !== "" && isValidAge) ? (
             <Pressable 
                 style={styles.continueButton} 
                 onPress={() => {
-                // Puedes realizar validaciones adicionales aquí si es necesario
-                router.push("/(onboarding)/name");
+                    router.push("/(onboarding)/name");
                 }}
             >
                 <Text style={styles.continueButtonText}>Continue</Text>

@@ -6,11 +6,12 @@ import {
   StyleSheet,
   Pressable,
   Alert,
+  KeyboardAvoidingView,
   ActivityIndicator,
 } from "react-native";
 import { useUserStore } from "../../lib/storage/useUserStorage";
 import { useSignUp, useAuth, useUser as useClerkUser } from "@clerk/clerk-expo";
-import VerificationCodeField from "@/components/VerificationCodeField";
+import VerificationCodeField from "@/components/ui/VerificationCodeField";
 import { useTokenStore } from "@/lib/auth/tokenStore";
 
 
@@ -102,40 +103,45 @@ export default function EmailVerificationScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.textTitle}>Email Verification</Text>
+    <KeyboardAvoidingView behavior="padding" style={styles.keyboardAvoid}>
+      <View style={styles.container}>
+        <Text style={styles.textTitle}>Email Verification</Text>
 
-      <Text style={styles.instruction}>
-        Enter the 6-digit code sent to your email:{"\n"}
-        {user?.email || "No email available"}
-      </Text>
+        <Text style={styles.instruction}>
+          Enter the 6-digit code sent to your email:{"\n"}
+          {user?.email || "No email available"}
+        </Text>
 
-      <VerificationCodeField
-        value={verificationCode}
-        setValue={setVerificationCode}
-        cellCount={6}
+        <VerificationCodeField
+          value={verificationCode}
+          setValue={setVerificationCode}
+          cellCount={6}
+          >
+        </VerificationCodeField>
+
+        <Pressable
+          onPress={handleVerifyCode}
+          style={[
+            styles.verifyButton,
+            !isCodeValid && styles.disabledButton,
+          ]}
+          disabled={!isCodeValid || isLoading}
         >
-      </VerificationCodeField>
-
-      <Pressable
-        onPress={handleVerifyCode}
-        style={[
-          styles.verifyButton,
-          !isCodeValid && styles.disabledButton,
-        ]}
-        disabled={!isCodeValid || isLoading}
-      >
-        {isLoading ? (
-          <ActivityIndicator color="#7A33CC" />
-        ) : (
-          <Text style={styles.verifyButtonText}>Verify</Text>
-        )}
-      </Pressable>
-    </View>
+          {isLoading ? (
+            <ActivityIndicator color="#7A33CC" />
+          ) : (
+            <Text style={styles.verifyButtonText}>Verify</Text>
+          )}
+        </Pressable>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  keyboardAvoid: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     justifyContent: "center",

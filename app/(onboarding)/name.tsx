@@ -1,4 +1,3 @@
-// Index is the main screen of the app, the entry point of the app
 import { Link } from "expo-router";
 import { 
     Text,
@@ -8,6 +7,9 @@ import {
     Image,
     TextInput,
     Alert,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import React, { useState } from "react";
@@ -30,39 +32,58 @@ export default function NameScreen() {
   };
 
   return (
-      <SafeAreaView style={styles.container}>
-          <Text style={styles.textTitle}>Great, Let's {"\n"}Continue!</Text>
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.keyboardContainer}
+      >
+        <ScrollView 
+          contentContainerStyle={styles.scrollContainer}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.containerTitle}>
+            <Text style={styles.textTitle}>Great, Let's {"\n"}Continue!</Text>
+          </View>
 
-          <Image
-              source={require("../../assets/images/gettingCoffee.png")}
-              style={styles.image}
-          />
+          <View style={styles.imageContainer}>
+            <Image
+                source={require("../../assets/images/gettingCoffee.png")}
+                style={styles.image}
+            />
+          </View>
 
-          <Text style={styles.textSubtitle}>What’s the best way to call you?</Text>
+          <View style={styles.inputContainer}>
+            <Text style={styles.textSubtitle}>What's the best way to call you?</Text>
 
-          <TextInput
-              placeholder="Enter your name"
-              placeholderTextColor="#11182766"
-              style={styles.textInput}
-              value={name}
-              onChangeText={(text) => {
-                  setName(text);
-                  handleNameChange(text);
-              }}
-          />
+            <TextInput
+                placeholder="Enter your name"
+                placeholderTextColor="#11182766"
+                style={styles.textInput}
+                value={name}
+                onChangeText={(text) => {
+                    setName(text);
+                    handleNameChange(text);
+                }}
+            />
+          </View>
 
-          {name.trim() !== "" ? (
-              <Link href="/(onboarding)/phone" asChild>
-                  <Pressable style={styles.continueButton} onPress={() => handleConfirm(name)}>
-                      <Text style={styles.continueButtonText}>Continue</Text>
-                  </Pressable>
-              </Link>
-          ) : (
-              <Pressable style={[styles.continueButton, styles.disabledButton]} onPress={() => handleConfirm(name)}>
-                  <Text style={styles.continueButtonText}>Continue</Text>
-              </Pressable>
-          )}
-      </SafeAreaView>
+          <View style={styles.continueContainer}>
+            {name.trim() !== "" ? (
+                <Link href="/(onboarding)/phone" asChild>
+                    <Pressable style={styles.continueButton} onPress={() => handleConfirm(name)}>
+                        <Text style={styles.continueButtonText}>Continue</Text>
+                    </Pressable>
+                </Link>
+            ) : (
+                <Pressable style={[styles.continueButton, styles.disabledButton]} onPress={() => handleConfirm(name)}>
+                    <Text style={styles.continueButtonText}>Continue</Text>
+                </Pressable>
+            )}
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
@@ -72,30 +93,53 @@ export default function NameScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "flex-end",
-    alignItems: "center",
     backgroundColor: "#7A33CC",
-    paddingBottom: 70,
+  },
+  keyboardContainer: {
+    flex: 1,
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    justifyContent: 'space-between',
+    paddingBottom: 20,
+  },
+  containerTitle: {
+    justifyContent: "center",
+    alignContent: "center",
+    alignItems: "center",
+    marginTop: 60,
+  },
+  imageContainer: {
+    alignContent: "center",
+    alignItems: "center",
+    marginVertical: 20,
+  },
+  inputContainer: {
+    alignContent: "center",
+    alignItems: "center",
+    marginVertical: 20,
+  },
+  continueContainer: {
+    alignContent: "center",
+    alignItems: "center",
+    marginTop: 20,
   },
   image: {
     width: 300,
     height: 300,
-    position: "absolute",
-    top: "27%",
   },
   textTitle: {
     color: "#FFFFFF",
     fontSize: 36,
     fontWeight: "bold",
-    position: "absolute",
-    top: "15%",
+    textAlign: "center",
   },
   textSubtitle: {
     color: "#FFFFFF",
-    fontSize: 25,
+    fontSize: 23,
     fontWeight: "bold",
-    position: "absolute",
-    bottom: "35%",
+    textAlign: "center",
+    marginBottom: 20,
   },
   textInput: {
     backgroundColor: "#FFFFFF",
@@ -103,9 +147,6 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 10,
     paddingHorizontal: 20,
-    marginTop: 20,
-    position: "absolute",
-    bottom: "25%",
     fontSize: 16,
     color: "#000",
   },
@@ -116,8 +157,6 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     justifyContent: "center",
     alignItems: "center",
-    position: "absolute",
-    bottom: 40,
   },
   disabledButton: {
     opacity: 0.5,

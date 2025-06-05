@@ -14,7 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useUserStore } from "../../lib/storage/useUserStorage";
 import { useSignUp } from "@clerk/clerk-expo";
-import VerificationCodeField from "@/components/VerificationCodeField";
+import VerificationCodeField from "@/components/ui/VerificationCodeField";
 
 export default function PhoneVerificationScreen() {
   const { user, setUser } = useUserStore();

@@ -4,7 +4,12 @@ import {
   StyleSheet,
   Pressable,
   Alert,
-  TextInput
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Keyboard,
+  View
 } from 'react-native';
 import { useUserStore } from "../../lib/storage/useUserStorage";
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,6 +23,11 @@ export default function PhoneScreen() {
   const [email, setEmail] = useState('');
 
   const { signUp } = useSignUp();
+
+  // Función para cerrar el teclado
+  const dismissKeyboard = () => {
+    Keyboard.dismiss();
+  };
 
   // Maneja el valor de la entrada del email
   const handleEmailChange = (text: string) => {
@@ -66,33 +76,53 @@ export default function PhoneScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.textTitle}>
-        Hey {user?.name}, let's{"\n"}verify your email!
-      </Text>
-
-      <Text style={styles.instruction}>
-        Enter your email address to receive a verification code.
-      </Text>
-
-      <TextInput
-        style={styles.input}
-        placeholder="Email Address"
-        placeholderTextColor="#7A33CC"
-        value={email}
-        onChangeText={handleEmailChange}  // Usa el manejador de cambio de texto
-        autoCapitalize="none"
-        autoCorrect={false}
-        keyboardType="email-address"
-        returnKeyType="done"
-      />
-
-      <Pressable
-        onPress={sendCode}
-        style={[styles.continueButton, !isValid && styles.disabledButton]}
-        disabled={!isValid}
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.keyboardContainer}
       >
-        <Text style={styles.continueButtonText}>Send Code</Text>
-      </Pressable>
+          <ScrollView 
+            contentContainerStyle={styles.scrollContainer}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={styles.contentContainer}>
+              <View style={styles.titleContainer}>
+                <Text style={styles.textTitle}>
+                  Hey {user?.name}, let's{"\n"}verify your email!
+                </Text>
+              </View>
+
+              <View style={styles.inputSection}>
+                <Text style={styles.instruction}>
+                  Enter your email address to receive a verification code.
+                </Text>
+
+                <TextInput
+                  style={styles.input}
+                  placeholder="Email Address"
+                  placeholderTextColor="#7A33CC80"
+                  value={email}
+                  onChangeText={handleEmailChange}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  keyboardType="email-address"
+                  returnKeyType="done"
+                  onSubmitEditing={dismissKeyboard}
+                />
+              </View>
+
+              <View style={styles.buttonContainer}>
+                <Pressable
+                  onPress={sendCode}
+                  style={[styles.continueButton, !isValid && styles.disabledButton]}
+                  disabled={!isValid}
+                >
+                  <Text style={styles.continueButtonText}>Send Code</Text>
+                </Pressable>
+              </View>
+            </View>
+          </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -100,33 +130,68 @@ export default function PhoneScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
     backgroundColor: "#7A33CC",
-    paddingBottom: 70,
+  },
+  keyboardContainer: {
+    flex: 1,
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    minHeight: '100%',
+  },
+  contentContainer: {
+    flex: 1,
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+  },
+  titleContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 30,
   },
   textTitle: {
     color: "#FFFFFF",
     fontSize: 36,
     fontWeight: "bold",
-    position: "absolute",
-    top: "15%",
     textAlign: "center",
+    lineHeight: 44,
+  },
+  inputSection: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
   },
   instruction: {
     color: "#FFFFFF",
     fontSize: 18,
     textAlign: "center",
-    marginBottom: 20,
+    marginBottom: 30,
+    paddingHorizontal: 20,
+    lineHeight: 24,
   },
   input: {
     width: 300,
-    height: 50,
+    height: 60,
     backgroundColor: "#FFFFFF",
-    borderRadius: 10,
-    marginBottom: 20,
-    paddingHorizontal: 10,
+    borderRadius: 12,
+    paddingHorizontal: 20,
     fontSize: 16,
+    color: "#000",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  buttonContainer: {
+    alignItems: 'center',
+    paddingBottom: 60,
   },
   continueButton: {
     width: 300,
@@ -135,8 +200,14 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     justifyContent: "center",
     alignItems: "center",
-    position: "absolute",
-    bottom: "25%",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
   },
   disabledButton: {
     opacity: 0.5,

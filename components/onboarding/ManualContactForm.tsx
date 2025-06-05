@@ -5,10 +5,9 @@ import {
     Pressable,
     StyleSheet,
     TextInput,
-    Platform,
 } from 'react-native';
 import { CountryCode } from 'react-native-country-picker-modal';
-import PhoneNumberPicker from '@/components/PhoneNumberPicker';
+import PhoneNumberPicker from '@/components/ui/PhoneNumberPicker';
 import { EmergencyContact } from '@/api/types';
 
 type Props = {

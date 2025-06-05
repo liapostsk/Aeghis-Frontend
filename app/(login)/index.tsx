@@ -14,9 +14,9 @@ import {
 import { useRouter } from 'expo-router';
 import { useSignIn, useAuth } from '@clerk/clerk-expo';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import PhoneNumberPicker from '@/components/PhoneNumberPicker';
-import VerificationCodeField from '../../components/VerificationCodeField';
-import ContinueButton from '../../components/ContinueButton';
+import PhoneNumberPicker from '@/components/ui/PhoneNumberPicker';
+import VerificationCodeField from '../../components/ui/VerificationCodeField';
+import ContinueButton from '../../components/ui/ContinueButton';
 import { getCurrentUser } from '@/api/user/userApi';
 import { useUserStore } from '@/lib/storage/useUserStorage';
 import { useTokenStore } from '@/lib/auth/tokenStore';

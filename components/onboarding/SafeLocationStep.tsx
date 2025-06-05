@@ -18,6 +18,36 @@ import { useUserStore } from "../../lib/storage/useUserStorage";
 
 const { width, height } = Dimensions.get("window");
 
+const MOCK_SAFE_LOCATIONS: SafeLocation[] = [
+  {
+    id: 1,
+    name: "Hospital General",
+    address: "Calle Principal 123, Centro",
+    latitude: 40.4168,
+    longitude: -3.7038,
+    distance: "0.5 km",
+    type: "hospital"
+  },
+  {
+    id: 2,
+    name: "Comisaría de Policía",
+    address: "Avenida de la Paz 456, Centro",
+    latitude: 40.4200,
+    longitude: -3.7100,
+    distance: "0.8 km",
+    type: "police"
+  },
+  {
+    id: 3,
+    name: "Estación de Bomberos",
+    address: "Plaza de la Seguridad 789, Norte",
+    latitude: 40.4150,
+    longitude: -3.6980,
+    distance: "1.2 km",
+    type: "fire_station"
+  },
+];
+
 export default function SafeLocationStep({
   onNext,
   onBack,
@@ -37,6 +67,7 @@ export default function SafeLocationStep({
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
         Alert.alert("Permiso denegado", "No se pudo acceder a la ubicación.");
+        setSearchResults(MOCK_SAFE_LOCATIONS.slice(0, 3));
         return;
       }
 
