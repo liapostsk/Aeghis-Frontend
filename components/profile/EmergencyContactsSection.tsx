@@ -8,7 +8,9 @@ import { useTokenStore } from '../../lib/auth/tokenStore';
 import { useAuth } from "@clerk/clerk-expo";
 import { useUserStore } from '@/lib/storage/useUserStorage';
 import { editEmergencyContact } from '@/api/emergencyContacts/emergencyContactsApi';
+import { createEmergencyContact } from '@/api/emergencyContacts/emergencyContactsApi';
 import { getCurrentUser } from '@/api/user/userApi';
+import EmergencyContactAddModal from '../EmergencyContactAddModal';
 
 
 interface Props {
@@ -43,27 +45,13 @@ export default function EmergencyContactsSection({ contacts, editable }: Props) 
     await useUserStore.getState().refreshUserFromBackend();
   };
 
-  const handleAddContact = (contact: EmergencyContact) => {
-    const { user, setUser } = useUserStore.getState();
-
-    if (!contact.name || !contact.phone) {
-      console.warn('Faltan datos del contacto');
-      return;
-    }
-
-    if (!user) {
-      console.error('No hay usuario en el store');
-      return;
-    }
-
-    const updatedContacts = [...(user.emergencyContacts || []), contact];
-
-    setUser({
-      ...user,
-      emergencyContacts: updatedContacts,
-    });
-
-    console.log('📞 Contacto agregado:', contact);
+  const handleAddContact = async (contact: EmergencyContact) => {
+    const token = await getToken();
+    setToken(token);
+    await createEmergencyContact(contact);
+    await getCurrentUser();
+    await useUserStore.getState().refreshUserFromBackend();
+    
   };
 
   return (
@@ -103,12 +91,15 @@ export default function EmergencyContactsSection({ contacts, editable }: Props) 
         onSave={handleEditContact}
         onDelete={() => handleDeleteContact(contacts[0])} // Puedes pasar un contacto específico o dejarlo vacío
       />
-      <ContactEditorModal
+
+      <EmergencyContactAddModal
         visible={modalAddVisible}
         onClose={() => setModalAddVisible(false)}
-        onSave={handleAddContact}
+        onAddContact={(contact) => {
+          // tu handleAddContact con userStore
+          handleAddContact(contact);
+        }}
       />
-
 
     </View>
   );

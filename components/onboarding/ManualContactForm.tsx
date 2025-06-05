@@ -9,9 +9,10 @@ import {
 } from 'react-native';
 import { CountryCode } from 'react-native-country-picker-modal';
 import PhoneNumberPicker from '@/components/PhoneNumberPicker';
+import { EmergencyContact } from '@/api/types';
 
 type Props = {
-    onSave: (contact: { name: string; phone: string }) => void;
+    onSave: (contact: EmergencyContact) => void;
     onCancel: () => void;
 };
 
@@ -28,7 +29,8 @@ export default function ManualContactForm({ onSave, onCancel }: Props) {
         
         onSave({ 
             name, 
-            phone: formattedPhone 
+            phone: formattedPhone,
+            confirmed: true,
         });
         
         setName('');

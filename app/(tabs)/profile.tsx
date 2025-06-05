@@ -18,7 +18,9 @@ export default function ProfileScreen() {
   const [ editable, setEditable ] = useState(false);
 
   const toggleMenu = () => setShowMenu(!showMenu);
-  const navigateToEditProfile = () => setEditable(true);
+  const handleEditProfile = () => {
+    setEditable(true);
+  };
 
   const handleDeleteAccount = () => {
     console.log('Eliminar cuenta');
@@ -51,7 +53,7 @@ export default function ProfileScreen() {
           user={user}
           showMenu={showMenu}
           onToggleMenu={toggleMenu}
-          onEdit={navigateToEditProfile}
+          onEdit={handleEditProfile}
           onLogout={handleLogout}
           onDelete={handleDeleteAccount}
         />

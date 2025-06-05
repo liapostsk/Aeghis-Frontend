@@ -13,10 +13,10 @@ import { EmergencyContact } from '@/api/types';
 
 type Props = {
   visible: boolean;
-  initialData?: EmergencyContact;
+  initialData: EmergencyContact;
   onClose: () => void;
   onSave: (contact: EmergencyContact) => void;
-  onDelete?: () => void; // si se pasa, se muestra el botón de borrar
+  onDelete?: () => void;
 };
 
 export default function ContactEditorModal({
@@ -32,26 +32,23 @@ export default function ContactEditorModal({
 
   useEffect(() => {
     if (initialData) {
-      setName(initialData.name || '');
-      setPhone(initialData.phone || '');
-      setRelation(initialData.relation || '');
-    } else {
-      setName('');
-      setPhone('');
-      setRelation('');
+      setName(initialData.name ?? '');
+      setPhone(initialData.phone ?? '');
+      setRelation(initialData.relation ?? '');
     }
   }, [initialData, visible]);
 
   const handleSave = () => {
     if (!name || !phone) return;
-    const contact: EmergencyContact = {
+
+    const updated: EmergencyContact = {
       ...initialData,
       name,
       phone,
       relation,
-      confirmed: initialData?.confirmed ?? false, // ensure boolean
     };
-    onSave(contact);
+
+    onSave(updated);
     onClose();
   };
 
@@ -63,9 +60,7 @@ export default function ContactEditorModal({
           style={styles.container}
         >
           <View style={styles.modal}>
-            <Text style={styles.title}>
-              {initialData ? 'Editar contacto' : 'Nuevo contacto'}
-            </Text>
+            <Text style={styles.title}>Editar contacto</Text>
 
             <TextInput
               style={styles.input}

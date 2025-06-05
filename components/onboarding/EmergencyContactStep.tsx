@@ -7,17 +7,12 @@ import {
   Image,
   Dimensions,
   Pressable,
-  Modal,
-  Platform,
-  KeyboardAvoidingView,
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import * as Contacts from 'expo-contacts';
-import ContactList from './ContactList';
-import ManualContactForm from './ManualContactForm';
 import { useUserStore } from '../../lib/storage/useUserStorage';
 import { EmergencyContact } from '@/api/types';
+import EmergencyContactAddModal from '../EmergencyContactAddModal';
 
 export default function EmergencyContactStep({
   onNext,
@@ -27,14 +22,10 @@ export default function EmergencyContactStep({
   onBack: () => void;
 }) {
   const [modalVisible, setModalVisible] = useState(false);
-  const [modalMode, setModalMode] = useState<'initial' | 'manual' | 'contacts'>('initial');
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [contacts, setContacts] = useState<any[]>([]);
   const [selectedContactCount, setSelectedContactCount] = useState(0);
   const { user, setUser } = useUserStore();
 
-  const handleAddContact = (contactData: { name: string; phone: string }) => {
+  const handleAddContact = (contactData: EmergencyContact) => {
     if (!contactData.name || !contactData.phone) return;
 
     // Crea un nuevo contacto de emergencia
@@ -51,105 +42,20 @@ export default function EmergencyContactStep({
       return;
     }
 
-    const updatedUser = {
+    // You may want to update the user state here to add the new contact
+    setUser({
       ...user,
-      emergencyContacts: [...(user.emergencyContacts || []), newContact],
-    };
-
-    setUser(updatedUser);
-
+      emergencyContacts: [
+        ...(user.emergencyContacts || []),
+        newContact,
+      ],
+    });
     setSelectedContactCount((prev) => prev + 1);
     setModalVisible(false);
-    setModalMode("initial");
   };
 
-  const getContactsFromDevice = async () => {
-    const { status } = await Contacts.requestPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission Denied', 'We need access to your contacts to continue.');
-      return;
-    }
-
-    const { data } = await Contacts.getContactsAsync({
-      fields: [Contacts.Fields.Name, Contacts.Fields.PhoneNumbers],
-    });
-
-    if (data.length > 0) {
-      const filtered = data.filter(c => c.phoneNumbers && c.phoneNumbers.length > 0);
-      if (filtered.length > 0) {
-        setContacts(filtered);
-      } else {
-        Alert.alert('No Valid Contacts', 'No contacts with phone numbers were found.');
-      }
-    } else {
-      Alert.alert('No Contacts', 'No contacts were found on your device.');
-    }
-  };
-
-  // Maneja el botón "Add a contact"
   const handleAddContactPress = () => {
     setModalVisible(true);
-    setModalMode('initial');
-  };
-
-  // Renderiza el contenido modal según el modo actual
-  const renderModalContent = () => {
-    switch (modalMode) {
-      case 'manual':
-        return (
-          <ManualContactForm
-            onSave={handleAddContact}
-            onCancel={() => setModalMode('initial')}
-          />
-        );
-      
-      case 'contacts':
-        return (
-          <>
-            <ContactList
-              contacts={contacts}
-              onSelect={handleAddContact}
-              onCancel={() => setModalMode('initial')}
-            />
-            <Pressable
-              style={styles.refreshButton}
-              onPress={getContactsFromDevice}
-            >
-              <Text style={styles.buttonText}>Refresh Contacts</Text>
-            </Pressable>
-          </>
-        );
-      
-      default: // 'initial'
-        return (
-          <>
-            <Text style={styles.modalTitle}>New Emergency Contact</Text>
-            <Text style={styles.modalText}>Add at least one emergency contact here!</Text>
-            <Image
-              source={require('../../assets/images/think.png')}
-              style={styles.imageModal}
-            />
-            <Pressable 
-              style={styles.addButton} 
-              onPress={() => {
-                getContactsFromDevice();
-                setModalMode('contacts');
-              }}
-            >
-              <Text style={styles.buttonText}>Add from Contacts</Text>
-            </Pressable>
-            <Pressable
-              style={[styles.addButton, { marginTop: 20 }]}
-              onPress={() => setModalMode('manual')}
-            >
-              <Text style={styles.buttonText}>Add manually</Text>
-            </Pressable>
-            <Pressable onPress={() => setModalVisible(false)} style={styles.cancelButton}>
-              <Text style={styles.cancelText}>Cancel</Text>
-            </Pressable>
-          </>
-        );
-    }
   };
 
   return (
@@ -164,18 +70,11 @@ export default function EmergencyContactStep({
           style={styles.image}
         />
 
-        <Modal visible={modalVisible} animationType="slide" transparent={true}>
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalView}>
-              <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={styles.modalContainer}
-              >
-                {renderModalContent()}
-              </KeyboardAvoidingView>
-            </View>
-          </View>
-        </Modal>
+        <EmergencyContactAddModal
+          visible={modalVisible}
+          onClose={() => setModalVisible(false)}
+          onAddContact={handleAddContact}
+        />
 
         <Pressable onPress={handleAddContactPress} style={styles.addButton}>
           <Text style={styles.buttonText}>
@@ -232,42 +131,7 @@ const styles = StyleSheet.create({
     marginBottom: 40,
     marginHorizontal: 30,
   },
-  modalText: {
-    fontSize: 18,
-    color: '#000000',
-    textAlign: 'center',
-    marginBottom: 10,
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.3)',
-  },
-  modalView: {
-    height: height * 0.75,
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  modalContainer: {
-    flex: 1,
-    width: '100%',
-  },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
   image: {
-    width: 350,
-    height: 350,
-  },
-  imageModal: {
-    top: -55,
     width: 350,
     height: 350,
   },

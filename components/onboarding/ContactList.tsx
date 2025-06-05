@@ -1,5 +1,6 @@
 import React from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { EmergencyContact } from '@/api/types';
 
 type Contact = {
   id: string;
@@ -9,7 +10,7 @@ type Contact = {
 
 type Props = {
   contacts: Contact[];
-  onSelect: (contact: { name: string; phone: string }) => void;
+  onSelect: (contact: EmergencyContact) => void;
   onCancel?: () => void;
 };
 
@@ -27,7 +28,8 @@ export default function ContactList({ contacts, onSelect, onCancel }: Props) {
             style={styles.item}
             onPress={() => onSelect({
               name: item.name,
-              phone: item.phoneNumbers[0]?.number || ''
+              phone: item.phoneNumbers[0]?.number || '',
+              confirmed: true,
             })}
           >
             <Text style={styles.name}>{item.name}</Text>
