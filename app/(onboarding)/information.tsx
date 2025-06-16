@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { StyleSheet, ActivityIndicator, Alert, View } from 'react-native';
 import PrivacyStep from '../../components/onboarding/PrivacyStep';
 import ProfileImageStep from '../../components/onboarding/ProfileImageStep';
 import EmergencyContactStep from '../../components/onboarding/EmergencyContactStep';
@@ -8,13 +8,28 @@ import SummaryStep from '../../components/onboarding/SummaryStep';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
+import ProgressBar from '@/components/ui/ProgressBar';
+
+const TOTAL_STEPS = 5;
+
+/*
+const STEP_TITLES = [
+  'Política de Privacidad',
+  'Foto de Perfil', 
+  'Contacto de Emergencia',
+  'Ubicación Segura',
+  'Resumen'
+];
+*/
 
 export default function InformationScreen() {
   const [step, setStep] = useState(0);
-  const [loadingToken, setLoadingToken] = useState(true);
+  const [loadingToken, setLoadingToken] = useState(false);
 
   const { getToken } = useAuth();
   const { setToken } = useTokenStore();
+
+  /*
 
   useEffect(() => {
     const ensureValidToken = async () => {
@@ -35,7 +50,9 @@ export default function InformationScreen() {
     ensureValidToken();
   }, []);
 
-  const next = () => setStep((s) => s + 1);
+  */
+
+  const next = () => setStep((s) => Math.min(TOTAL_STEPS - 1, s + 1));
   const prev = () => setStep((s) => Math.max(0, s - 1));
 
   if (loadingToken) {
@@ -48,11 +65,25 @@ export default function InformationScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {step === 0 && <PrivacyStep onNext={next} />}
-      {step === 1 && <ProfileImageStep onNext={next} onBack={prev} />}
-      {step === 2 && <EmergencyContactStep onNext={next} onBack={prev} />}
-      {step === 3 && <SafeLocationStep onNext={next} onBack={prev} />}
-      {step === 4 && <SummaryStep onBack={prev} />}
+      {/* Contenido de los pasos */}
+        {/* Progress Bar integrado en el contenido */}
+        <View style={styles.progressContainer}>
+          <ProgressBar 
+            progress={(step + 1) / TOTAL_STEPS}
+            height={6}
+            backgroundColor="rgba(255, 255, 255, 0.3)"
+            progressColor="#FFFFFF"
+            showShadow={false}
+          />
+        </View>
+        
+        {/* Steps */}
+        {step === 0 && <PrivacyStep onNext={next} />}
+        {step === 1 && <ProfileImageStep onNext={next} onBack={prev} />}
+        {step === 2 && <EmergencyContactStep onNext={next} onBack={prev} />}
+        {step === 3 && <SafeLocationStep onNext={next} onBack={prev} />}
+        {step === 4 && <SummaryStep onBack={prev} />}
+      
     </SafeAreaView>
   );
 }
@@ -61,6 +92,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#7A33CC',
-    justifyContent: 'center',
+  },
+  contentContainer: {
+    flex: 1,
+  },
+  progressContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 10,
+    zIndex: 1, // Asegura que esté por encima pero sin conflictos
   },
 });

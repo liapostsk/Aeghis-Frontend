@@ -25,6 +25,15 @@ export default function OnboardingLayout() {
                     headerTintColor: '#fff',
                 }}
             />
+            <Stack.Screen 
+                name="emailCase"
+                options={{
+                    headerShown: true,
+                    title: "",
+                    headerTransparent: true,
+                    headerTintColor: '#fff',
+                }}
+                />
         </Stack>
     );
 }

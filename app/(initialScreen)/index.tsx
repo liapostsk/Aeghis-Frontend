@@ -40,6 +40,12 @@ export default function Index() {
           </Text>
         </Pressable>
       </View>
+
+      <Pressable 
+        onPress={() => router.push("/(onboarding)/information")}
+      >
+        <Text style={styles.textSignUp}>info</Text>
+      </Pressable>
       
     </SafeAreaView>
   );

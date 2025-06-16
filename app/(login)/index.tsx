@@ -68,7 +68,7 @@ export default function LoginScreen() {
       setCode('');
     } catch (error: any) {
       console.error("Send code error:", error);
-      Alert.alert("Error", error?.errors?.[0]?.message || "Could not send verification code.");
+      Alert.alert("Could not send verification code.");
     } finally {
       setIsLoading(false);
     }
@@ -84,7 +84,7 @@ export default function LoginScreen() {
         code,
       });
 
-      if (attempt.status === 'complete') {
+      if (attempt.status === 'complete') { // Esto se ha de verificar pq no se si estado complete quiere decir que ha ido bien
         await setActive({ session: attempt.createdSessionId });
         const token = await getToken();
 
@@ -223,6 +223,15 @@ export default function LoginScreen() {
             </View>
           </View>
         )}
+        <View style={{ marginTop: 30 }}>
+          <Text style={{ color: '#E8D5FF', textAlign: 'center' }}>¿Prefieres usar tu correo?</Text>
+          <Pressable onPress={() => router.push('./emailCase')}>
+            <Text style={{ color: '#FFFFFF', textAlign: 'center', textDecorationLine: 'underline', marginTop: 8 }}>
+              Iniciar con correo
+            </Text>
+          </Pressable>
+        </View>
+
       </View>
     </ScrollView>
   );

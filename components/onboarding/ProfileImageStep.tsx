@@ -51,11 +51,21 @@ export default function ProfileImageStep({
         </Pressable>
 
       </View>
-    
+
+      {/* Bottom Navigation */}
       <View style={styles.buttonContainer}>
-        <Button title="Back" onPress={onBack} />
-        <Button title="Skip" onPress={onNext} />
+        <Pressable onPress={onBack} style={styles.backButton}>
+          <Text style={styles.backButtonText}>Atrás</Text>
+        </Pressable>
+        
+        <Pressable 
+          onPress={onNext} 
+          style={styles.continueButton}
+        >
+          <Text style={styles.continueButtonText}>Continuar</Text>
+        </Pressable>
       </View>
+  
     </SafeAreaView>
   );
 }
@@ -68,28 +78,11 @@ const styles = StyleSheet.create({
     padding: 20,
     justifyContent: 'center'
   },
-  title: {
-    fontSize: 30,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 20,
-  },
-  text: {
-    fontSize: 19,
-    color: '#FFFFFF',
-    marginBottom: 40,
-    textAlign: 'center',
-  },
   textContainer: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    position: 'absolute',
-    top: 50,
-    left: 0,
-    right: 0,
+    bottom: "20%",
     textAlign: 'center',
-    marginBottom: 20,
   },
   imageContainer: {
     width: width * 0.8,
@@ -97,6 +90,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'center',
     justifyContent: 'center',
+    bottom: "8%",
+  },
+  title: {
+    fontSize: 30,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  text: {
+    fontSize: 19,
+    color: '#FFFFFF',
+    textAlign: 'center',
     marginBottom: 20,
   },
   image: {
@@ -104,7 +108,7 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: width * 0.1,
     backgroundColor: '#FFFFFF',
-    marginBottom: 25,
+    marginBottom: 35,
   },
   addPictureButton: {
     backgroundColor: 'yellow',
@@ -123,11 +127,44 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     fontWeight: 'bold',
   },
+  backButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 20,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  backButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  continueButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 20,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  continueButtonDisabled: {
+    backgroundColor: 'rgba(122, 51, 204, 0.3)',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  continueButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  continueButtonTextDisabled: {
+    color: 'rgba(255, 255, 255, 0.5)',
+  },
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    position: 'absolute',
-    bottom: 40,
+    top: "15%",
     left: 0,
     right: 0,
     paddingHorizontal: 20,

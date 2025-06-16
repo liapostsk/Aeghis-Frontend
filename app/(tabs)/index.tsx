@@ -2,7 +2,7 @@
 import { useUserStore } from '@/lib/storage/useUserStorage';
 import { useAuth } from '@clerk/clerk-expo';
 import { router } from 'expo-router';
-import { Text, Pressable, StyleSheet } from 'react-native';
+import { Text, Pressable, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MapHeader from '../../components/map/MapHeader';
 import GroupMap from '../../components/map/GroupMap';
@@ -21,6 +21,12 @@ export default function MapScreen() {
     setActiveGroup({ name: 'Return Safe Buddies' });
   }, []);
 
+  const handleLogout = async () => {
+    await signOut();
+    clearUser();
+    router.replace("/(initialScreen)");
+  };
+
   /*
   <MapHeader activeGroup={activeGroup} />
       <GroupMap activeGroup={activeGroup} />
@@ -31,6 +37,9 @@ export default function MapScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <MapHeader activeGroup={activeGroup} />
+      <TouchableOpacity  onPress={handleLogout}>
+        <Text>Cerrar sesión</Text>
+      </TouchableOpacity>
       <GroupMap />
       <EmergencyButton onPress={() => console.log('Emergency triggered')} />
       <JourneyOverlay onStartJourney={function (): void {

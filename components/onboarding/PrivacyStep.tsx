@@ -60,21 +60,76 @@ export default function PrivacyPolicyScreen({ onNext }: PrivacyPolicyScreenProps
     }, 1500);
   };
 
-  /*
-  <Animated.View
-  // si hay un opacity en styles.overlay, será reemplazado por fadeAnim.
-    style={[  // Array de estilos para la vista de confirmación
-      styles.overlay, // Estilo fijo de la vista de confirmación
-      {
-        opacity: fadeAnim, // Estilo de opacidad animado
-      }
-    ]}
-  >
-  */
-
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Overlay de confirmación */}
+    <>
+      <SafeAreaView style={styles.container}>
+        {/* Contenido principal */}
+        <View style={styles.contentContainer}>
+          <View style={styles.headerContainer}>
+            <Text style={styles.title}>Política de Privacidad</Text>
+            <Text style={styles.subtitle}>Última actualización: {privacyPolicyContent.lastUpdated}</Text>
+          </View>
+
+          <ScrollView 
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollViewContent}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
+          >
+            {/* Renderizar dinámicamente las secciones desde el JSON */}
+            {privacyPolicyContent.sections.map((section, index) => (
+              <View key={index}>
+                <Text style={styles.sectionTitle}>{section.title}</Text>
+                <Text style={styles.paragraph}>{section.content}</Text>
+              </View>
+            ))}
+            
+            {/* Renderizar los párrafos del pie */}
+            {privacyPolicyContent.footerText.map((paragraph, index) => (
+              <Text 
+                key={`footer-${index}`} 
+                style={[
+                  styles.paragraph,
+                  index === privacyPolicyContent.footerText.length - 1 ? { marginBottom: 40 } : {}
+                ]}
+              >
+                {paragraph}
+              </Text>
+            ))}
+          </ScrollView>
+
+          <View style={styles.footerContainer}>
+            <View style={styles.statusContainer}>
+              <View style={[
+                styles.statusIndicator, 
+                scrolledToBottom ? styles.statusIndicatorActive : {}
+              ]} />
+              <Text style={styles.statusText}>
+                {scrolledToBottom ? 'Has revisado la política completa' : 'Por favor lee la política completa'}
+              </Text>
+            </View>
+            
+            <Pressable 
+              style={[
+                styles.button,
+                !scrolledToBottom ? styles.buttonDisabled : {}
+              ]}
+              onPress={handleAccept}
+              disabled={!scrolledToBottom}
+            >
+              <Text style={styles.buttonText}>
+                {scrolledToBottom ? 'Aceptar y Continuar' : 'Desplázate hasta el final para aceptar'}
+              </Text>
+            </Pressable>
+            
+            <Text style={styles.footerText}>
+              Al aceptar, confirmas que has leído y comprendido nuestra política de privacidad.
+            </Text>
+          </View>
+        </View>
+      </SafeAreaView>
+
+      {/* Overlay de confirmación - FUERA del SafeAreaView */}
       {accepted && (
         <Animated.View 
           style={[
@@ -101,81 +156,16 @@ export default function PrivacyPolicyScreen({ onNext }: PrivacyPolicyScreenProps
           </Animated.View>
         </Animated.View>
       )}
-
-      {/* Contenido principal */}
-      <View style={styles.contentContainer}>
-        <View style={styles.headerContainer}>
-          <Text style={styles.title}>Política de Privacidad</Text>
-          <Text style={styles.subtitle}>Última actualización: {privacyPolicyContent.lastUpdated}</Text>
-        </View>
-
-        <ScrollView 
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollViewContent}
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
-        >
-          {/* Renderizar dinámicamente las secciones desde el JSON */}
-          {privacyPolicyContent.sections.map((section, index) => (
-            <View key={index}>
-              <Text style={styles.sectionTitle}>{section.title}</Text>
-              <Text style={styles.paragraph}>{section.content}</Text>
-            </View>
-          ))}
-          
-          {/* Renderizar los párrafos del pie */}
-          {privacyPolicyContent.footerText.map((paragraph, index) => (
-            <Text 
-              key={`footer-${index}`} 
-              style={[
-                styles.paragraph,
-                index === privacyPolicyContent.footerText.length - 1 ? { marginBottom: 40 } : {}
-              ]}
-            >
-              {paragraph}
-            </Text>
-          ))}
-        </ScrollView>
-
-        <View style={styles.footerContainer}>
-          <View style={styles.statusContainer}>
-            <View style={[
-              styles.statusIndicator, 
-              scrolledToBottom ? styles.statusIndicatorActive : {}
-            ]} />
-            <Text style={styles.statusText}>
-              {scrolledToBottom ? 'Has revisado la política completa' : 'Por favor lee la política completa'}
-            </Text>
-          </View>
-          
-          <Pressable 
-            style={[
-              styles.button,
-              !scrolledToBottom ? styles.buttonDisabled : {}
-            ]}
-            onPress={handleAccept}
-            disabled={!scrolledToBottom}
-          >
-            <Text style={styles.buttonText}>
-              {scrolledToBottom ? 'Aceptar y Continuar' : 'Desplázate hasta el final para aceptar'}
-            </Text>
-          </Pressable>
-          
-          <Text style={styles.footerText}>
-            Al aceptar, confirmas que has leído y comprendido nuestra política de privacidad.
-          </Text>
-        </View>
-      </View>
-    </SafeAreaView>
+    </>
   );
 }
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "flex-end",
+    justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#7A33CC",
     paddingBottom: 70,
@@ -186,10 +176,13 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+    width: width,
+    height: height,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 999,
+    zIndex: 9999,
+    elevation: 9999, // Para Android
   },
   confirmationBox: {
     backgroundColor: '#FFFFFF',
