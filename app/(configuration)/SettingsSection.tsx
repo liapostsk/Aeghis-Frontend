@@ -1,12 +1,12 @@
 // File: components/profile/SettingsSection.tsx
 import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 
 export default function SettingsSection() {
   return (
-    <View style={styles.section}>
+    <SafeAreaView style={styles.section}>
       <View style={styles.sectionHeader}>
         <Ionicons name="settings" size={18} color="#7A33CC" />
         <Text style={styles.sectionTitle}>Configuración</Text>
@@ -20,7 +20,7 @@ export default function SettingsSection() {
 
       <Pressable
         style={styles.settingItem}
-        onPress={() => router.push('./account')}
+        onPress={() => router.push('/(configuration)/account')}
       >
         <Ionicons name="person-circle" size={24} color="#7A33CC" />
         <Text style={styles.settingText}>Cuenta</Text>
@@ -38,7 +38,7 @@ export default function SettingsSection() {
         <Text style={styles.settingText}>Ayuda y Soporte</Text>
         <Ionicons name="chevron-forward" size={24} color="#7A33CC" style={styles.chevron} />
       </Pressable>
-    </View>
+    </SafeAreaView>
   );
 }
 

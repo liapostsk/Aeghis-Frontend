@@ -17,26 +17,16 @@ export default function OnboardingLayout() {
         name="account"
         options={{
             headerLeft: () => (
-            <Pressable onPress={() => router.back()}>
-                <Icon name="arrow-back" size={24} color="#FFFF" />
+            <Pressable onPress={() => router.push("/(tabs)/profile")}>
+                <Icon name="arrow-back" size={24} color="#7A33CC" />
             </Pressable>
             ),
-            headerShown: false,
-            title: "",
-            headerTransparent: true,
-            headerTintColor: '#fff',
-        }}
-      />
-      <Stack.Screen 
-        name="SafeLocationSection"
-        options={{
             headerShown: true,
             title: "",
             headerTransparent: true,
             headerTintColor: '#fff',
         }}
-        />
-      
+      />
     </Stack>
   );
 }
