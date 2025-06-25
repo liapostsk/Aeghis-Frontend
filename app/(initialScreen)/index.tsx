@@ -14,6 +14,14 @@ export default function Index() {
       router.replace("/(tabs)");
     }
   }, [isSignedIn]);
+
+  /*
+  <Pressable 
+        onPress={() => router.push("/(onboarding)/information")}
+      >
+        <Text style={styles.textSignUp}>info</Text>
+      </Pressable>
+  */
   
   return (
     <SafeAreaView style={styles.container}>
@@ -40,12 +48,6 @@ export default function Index() {
           </Text>
         </Pressable>
       </View>
-
-      <Pressable 
-        onPress={() => router.push("/(onboarding)/information")}
-      >
-        <Text style={styles.textSignUp}>info</Text>
-      </Pressable>
       
     </SafeAreaView>
   );

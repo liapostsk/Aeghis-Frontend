@@ -78,7 +78,7 @@ export default function EmergencyContactsSection({ contacts, editable }: Props) 
           </View>
         </View>
       ))}
-
+      
       <Pressable style={styles.addButton} onPress={() => setModalAddVisible(true)}>
         <Ionicons name="add-circle" size={24} color="#7A33CC" />
         <Text style={styles.addButtonText}>Añadir contacto</Text>

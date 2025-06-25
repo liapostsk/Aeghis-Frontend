@@ -9,8 +9,8 @@ import {
   SafeAreaView,
   Pressable,
 } from 'react-native';
-import privacyPolicyContent from '../../privacyPolicy.json';
-import { useUserStore } from '../../lib/storage/useUserStorage';
+import privacyPolicyContent from '../../../privacyPolicy.json';
+import { useUserStore } from '@/lib/storage/useUserStorage';
 
 type PrivacyPolicyScreenProps = {
   onNext?: () => void;

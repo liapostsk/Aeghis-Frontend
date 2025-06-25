@@ -6,8 +6,8 @@ import { useUserStore } from '@/lib/storage/useUserStorage';
 import { useAuth } from '@clerk/clerk-expo';
 import ProfileHeader from '@/components/profile/ProfileHeader';
 import EmergencyContactsSection from '@/components/profile/EmergencyContactsSection';
-import SafeLocationsSection from '@/components/profile/SafeLocationsSection';
-import SettingsSection from '@/components/profile/SettingsSection';
+import SafeLocationsSection from '../../components/profile/SafeLocationsSection';
+import SettingsSection from '../(configuration)/SettingsSection';
 
 
 export default function ProfileScreen() {
@@ -19,7 +19,7 @@ export default function ProfileScreen() {
 
   const toggleMenu = () => setShowMenu(!showMenu);
   const handleEditProfile = () => {
-    setEditable(true);
+    setEditable(editable => !editable);
   };
 
   const handleDeleteAccount = () => {
@@ -66,7 +66,7 @@ export default function ProfileScreen() {
           locations={safeLocations}
           editable={editable}
         />
-        <SettingsSection />
+        <SettingsSection/>
 
         <View style={{ height: 30 }} />
       </ScrollView>

@@ -1,12 +1,13 @@
 // File: components/profile/ProfileHeader.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   Image,
-  TouchableOpacity,
+  Pressable,
   StyleSheet,
   Platform,
+  Modal,
 } from 'react-native';
 import { Ionicons, MaterialIcons, Feather } from '@expo/vector-icons';
 import { User } from '@/lib/storage/useUserStorage';
@@ -28,29 +29,39 @@ export default function ProfileHeader({
   onLogout,
   onDelete,
 }: profileHeaderProps) {
+
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showUserInfo, setShowUserInfo] = useState(false);
+
+
+  const handleConfirmLogout = () => {
+    setShowLogoutModal(false);
+    onLogout();
+  };
+
   return (
     <View>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Mi Perfil</Text>
-        <TouchableOpacity onPress={onToggleMenu}>
+        <Pressable onPress={onToggleMenu}>
           <Ionicons name="ellipsis-vertical" size={24} color="white" />
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       {showMenu && (
         <View style={styles.menuPopup}>
-          <TouchableOpacity style={styles.menuItem} onPress={onEdit}>
+          <Pressable style={styles.menuItem} onPress={onEdit}>
             <Feather name="edit" size={20} color="#7A33CC" />
             <Text style={styles.menuItemText}>Editar perfil</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.menuItem} onPress={onDelete}>
+          </Pressable>
+          <Pressable style={styles.menuItem} onPress={onDelete}>
             <MaterialIcons name="delete" size={20} color="#FF3B30" />
             <Text style={[styles.menuItemText, { color: '#FF3B30' }]}>Eliminar cuenta</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.menuItem} onPress={onLogout}>
+          </Pressable>
+          <Pressable style={styles.menuItem} onPress={() => setShowLogoutModal(true)}>
             <MaterialIcons name="logout" size={20} color="#7A33CC" />
             <Text style={styles.menuItemText}>Cerrar sesión</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       )}
 
@@ -82,6 +93,41 @@ export default function ProfileHeader({
           )}
         </View>
       </View>
+      {/* Modal de confirmación */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={showLogoutModal}
+        onRequestClose={() => setShowLogoutModal(false)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setShowLogoutModal(false)}
+        >
+          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+            <Text style={styles.modalTitle}>¿Estás segura?</Text>
+            <Text style={styles.modalMessage}>
+              Asegúrate de que tu correo electrónico y número de teléfono sean
+              correctos. Si no están actualizados, podrías perder el acceso a
+              tu cuenta.
+            </Text>
+            <View style={styles.modalButtons}>
+              <Pressable
+                style={styles.cancelButton}
+                onPress={() => setShowUserInfo(true)}
+              >
+                <Text style={styles.cancelButtonText}>Revisar datos</Text>
+              </Pressable>
+              <Pressable
+                style={styles.confirmButton}
+                onPress={handleConfirmLogout}
+              >
+                <Text style={styles.confirmButtonText}>Cerrar sesión</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -177,5 +223,57 @@ const styles = StyleSheet.create({
     marginLeft: 5,
     color: '#3232C3',
     fontSize: 14,
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '85%',
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 20,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: '#555',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  cancelButton: {
+    backgroundColor: '#ddd',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 8,
+    marginRight: 10,
+  },
+  cancelButtonText: {
+    color: '#333',
+    fontWeight: 'bold',
+  },
+  confirmButton: {
+    backgroundColor: '#7A33CC',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 8,
+  },
+  confirmButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
   },
 });

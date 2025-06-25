@@ -126,7 +126,6 @@ export default function SafeLocationModal({ visible, onClose, onSelectLocation }
                 )}
               />
             )}
-
             <TouchableOpacity onPress={onClose} style={styles.cancelButton}>
               <Text style={styles.cancelText}>Cancelar</Text>
             </TouchableOpacity>

@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, Button, StyleSheet, Dimensions, Image, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
-import { useUserStore } from '../../lib/storage/useUserStorage';
+import { useUserStore } from '@/lib/storage/useUserStorage';
 
 export default function ProfileImageStep({
   onNext,
@@ -39,7 +39,7 @@ export default function ProfileImageStep({
 
       <View style={styles.imageContainer}>
         <Image
-          source={require("../../assets/images/addPicture.png")}
+          source={require("../../../assets/images/addPicture.png")}
           style={styles.image}
         />
 

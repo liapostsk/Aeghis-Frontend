@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, ActivityIndicator, Alert, View } from 'react-native';
-import PrivacyStep from '../../components/onboarding/PrivacyStep';
-import ProfileImageStep from '../../components/onboarding/ProfileImageStep';
-import EmergencyContactStep from '../../components/onboarding/EmergencyContactStep';
-import SafeLocationStep from '../../components/onboarding/SafeLocationStep';
-import SummaryStep from '../../components/onboarding/SummaryStep';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 import ProgressBar from '@/components/ui/ProgressBar';
+import PrivacyStep from './PrivacyStep';
+import ProfileImageStep from './ProfileImageStep';
+import EmergencyContactStep from './EmergencyContactStep';
+import SafeLocationStep from './SafeLocationStep';
+import SummaryStep from './SummaryStep';
 
 const TOTAL_STEPS = 5;
 

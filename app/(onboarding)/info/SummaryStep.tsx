@@ -1,10 +1,10 @@
 import React from 'react';
 import { View, Text, Button, StyleSheet, Pressable } from 'react-native';
 import { router } from 'expo-router';
-import { useUserStore } from '../../lib/storage/useUserStorage';
-import { useTokenStore } from '../../lib/auth/tokenStore';
-import { mapUserToDto } from '../../api/user/mapper';
-import { createUser } from '../../api/user/userApi';
+import { useUserStore } from '../../../lib/storage/useUserStorage';
+import { useTokenStore } from '../../../lib/auth/tokenStore';
+import { mapUserToDto } from '../../../api/user/mapper';
+import { createUser } from '../../../api/user/userApi';
 import { Alert } from 'react-native';
 
 export default function SummaryStep({onBack}: { onBack: () => void }) {

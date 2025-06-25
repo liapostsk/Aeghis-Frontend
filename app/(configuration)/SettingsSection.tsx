@@ -1,7 +1,8 @@
 // File: components/profile/SettingsSection.tsx
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 
 export default function SettingsSection() {
   return (
@@ -11,23 +12,32 @@ export default function SettingsSection() {
         <Text style={styles.sectionTitle}>Configuración</Text>
       </View>
 
-      <TouchableOpacity style={styles.settingItem}>
+      <Pressable style={styles.settingItem}>
         <Ionicons name="notifications" size={24} color="#7A33CC" />
         <Text style={styles.settingText}>Notificaciones</Text>
         <Ionicons name="chevron-forward" size={24} color="#7A33CC" style={styles.chevron} />
-      </TouchableOpacity>
+      </Pressable>
 
-      <TouchableOpacity style={styles.settingItem}>
+      <Pressable
+        style={styles.settingItem}
+        onPress={() => router.push('./account')}
+      >
+        <Ionicons name="person-circle" size={24} color="#7A33CC" />
+        <Text style={styles.settingText}>Cuenta</Text>
+        <Ionicons name="chevron-forward" size={24} color="#7A33CC" />
+      </Pressable>
+
+      <Pressable style={styles.settingItem}>
         <Ionicons name="shield" size={24} color="#7A33CC" />
         <Text style={styles.settingText}>Privacidad y Seguridad</Text>
         <Ionicons name="chevron-forward" size={24} color="#7A33CC" style={styles.chevron} />
-      </TouchableOpacity>
+      </Pressable>
 
-      <TouchableOpacity style={styles.settingItem}>
+      <Pressable style={styles.settingItem}>
         <Ionicons name="help-circle" size={24} color="#7A33CC" />
         <Text style={styles.settingText}>Ayuda y Soporte</Text>
         <Ionicons name="chevron-forward" size={24} color="#7A33CC" style={styles.chevron} />
-      </TouchableOpacity>
+      </Pressable>
     </View>
   );
 }

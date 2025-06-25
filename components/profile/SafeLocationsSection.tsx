@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, Pressable } from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
-import SafeLocationModal from './SafeLocationModal';
+import SafeLocationModal from '@/components/profile/SafeLocationModal';
 import { SafeLocation } from '@/api/types';
 import { createSafeLocation } from '../../api/safeLocations/safeLocationApi';
 import { getCurrentUser } from '@/api/user/userApi';

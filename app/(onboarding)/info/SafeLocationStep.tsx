@@ -12,9 +12,9 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as Location from "expo-location";
 
-import { searchNearbyPlaces, searchPlacesByText } from "../../api/safeLocations/googlePlacesApi";
-import { SafeLocation } from "../../api/types";
-import { useUserStore } from "../../lib/storage/useUserStorage";
+import { searchNearbyPlaces, searchPlacesByText } from "../../../api/safeLocations/googlePlacesApi";
+import { SafeLocation } from "../../../api/types";
+import { useUserStore } from "../../../lib/storage/useUserStorage";
 
 const { width, height } = Dimensions.get("window");
 

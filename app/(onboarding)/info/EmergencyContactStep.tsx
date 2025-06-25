@@ -9,9 +9,9 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useUserStore } from '../../lib/storage/useUserStorage';
+import { useUserStore } from '@/lib/storage/useUserStorage';
 import { EmergencyContact } from '@/api/types';
-import EmergencyContactAddModal from '../EmergencyContactAddModal';
+import EmergencyContactAddModal from '@/components/EmergencyContactAddModal';
 
 export default function EmergencyContactStep({
   onNext,
@@ -72,7 +72,7 @@ export default function EmergencyContactStep({
       <View style={styles.mainContent}>
         <View style={styles.imageContainer}>
           <Image
-            source={require('../../assets/images/emergencyContacts1.png')}
+            source={require('../../../assets/images/emergencyContacts1.png')}
             style={styles.image}
           />
         </View>
