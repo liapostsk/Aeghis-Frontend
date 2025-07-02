@@ -46,29 +46,28 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#7A33CC" />
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        <ProfileHeader
-          user={user}
-          showMenu={showMenu}
-          onToggleMenu={toggleMenu}
-          onEdit={handleEditProfile}
-          onLogout={handleLogout}
-          onDelete={handleDeleteAccount}
-        />
+          <ProfileHeader
+            user={user}
+            onToggleMenu={toggleMenu}
+            onEdit={handleEditProfile}
+          />
 
-        <EmergencyContactsSection 
-          contacts={emergencyContacts}
-          editable={editable}
-        />
-        <SafeLocationsSection 
-          locations={safeLocations}
-          editable={editable}
-        />
-        <SettingsSection/>
+          <EmergencyContactsSection 
+            contacts={emergencyContacts}
+            editable={editable}
+          />
+          <SafeLocationsSection 
+            locations={safeLocations}
+            editable={editable}
+          />
+          <SettingsSection
+            onDelete={handleDeleteAccount}
+            onLogout={handleLogout}
+          />
 
-        <View style={{ height: 30 }} />
+          <View style={{ height: 30 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -77,7 +76,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#7A33CC',
+    backgroundColor: '#FFFFFF',
   },
   scrollView: {
     flex: 1,

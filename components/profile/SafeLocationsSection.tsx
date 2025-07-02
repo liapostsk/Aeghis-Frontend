@@ -58,11 +58,12 @@ export default function SafeLocationsSection({ locations, editable, onAddLocatio
       onAddLocation?.(location); // Notificar al componente padre si hace falta
     }
   };
-
+  
+  /*   * Efecto para depurar las ubicaciones seleccionadas
   useEffect(() => {
     console.log("SafeLocations seleccionadas:", localLocations);
   }, [localLocations]);
-
+  */
 
   return (
     <View style={styles.section}>

@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, SafeAreaView, Pressable } from 'react-native';
 import { useUserStore } from '@/lib/storage/useUserStorage';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
-export default function AccountSettingsScreen() {
+interface profileHeaderProps {
+  onDelete: () => void;
+}
+
+export default function AccountSettingsScreen({onDelete}: profileHeaderProps) {
   const router = useRouter();
   const { user, setUser } = useUserStore();
 
@@ -13,6 +17,10 @@ export default function AccountSettingsScreen() {
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [phone, setPhone] = useState(user?.phone || '');
+
+  const handleConfirmDeleteAccount = () => {
+    onDelete();
+  };
 
   const handleSave = () => {
     if (!name || !email || !phone) {
@@ -95,6 +103,13 @@ export default function AccountSettingsScreen() {
           </TouchableOpacity>
         )}
       </View>
+
+      <View style={styles.section}>
+        <Pressable style={styles.logOut} onPress={handleConfirmDeleteAccount}>
+          <Ionicons name="help-circle" size={24} color="#7A33CC" />
+          <Text style={styles.settingText}>Eliminar cuenta</Text>
+        </Pressable>
+      </View>
     </SafeAreaView>
   );
 }
@@ -114,6 +129,17 @@ const styles = StyleSheet.create({
   },
   field: {
     marginBottom: 16,
+    marginLeft: 20,
+    width: 300,
+    height: 50,
+    justifyContent: 'center',
+    alignSelf: 'flex-start',
+    fontSize: 24,
+    borderWidth: 2,
+    borderColor: '#fff',
+    textAlign: 'center',
+    color: '#fff',
+    borderRadius: 8,
   },
   label: {
     fontSize: 14,
@@ -173,5 +199,24 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 8,
     fontSize: 16,
+  },
+  section: {
+    backgroundColor: 'white',
+    borderRadius: 15,
+    padding: 16,
+    margin: 16,
+    marginTop: 8,
+    elevation: 2,
+  },
+  logOut: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+  },
+  settingText: {
+    marginLeft: 15,
+    fontSize: 16,
+    color: '#333',
+    flex: 1,
   },
 });
