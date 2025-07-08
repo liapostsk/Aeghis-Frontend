@@ -19,10 +19,6 @@ export default function GroupsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Groups</Text>
-      </View>
 
       {/* Tabs */}
       <View style={styles.tabRow}>
@@ -123,15 +119,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   fab: {
-    position: 'absolute',
-    bottom: 30,
-    right: 30,
     backgroundColor: '#F5C80E',
     width: 56,
     height: 56,
     borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 4,
+    marginLeft: '80%',
+    marginBottom: '20%',
   },
 });
