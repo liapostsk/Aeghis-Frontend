@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, Button, StyleSheet, Dimensions, Image, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
@@ -14,19 +14,37 @@ export default function ProfileImageStep({
 
   const { user, setUser } = useUserStore();
 
+  // Limpiar el campo image al montar el componente
+  useEffect(() => {
+    if (user?.image && user.image !== '') {
+      console.log('Limpiando imagen previa:', user.image);
+      setUser({ ...user, image: '' });
+    }
+  }, []);
+
+  useEffect(() => {
+    console.log('ProfileImageStep montado. Estado actual de user.image:', user?.image);
+    
+    if (user?.image && user.image !== '') {
+      console.log('⚠️ Imagen detectada sin selección manual:', user.image);
+      setUser({ ...user, image: '' });
+    }
+  }, []);
+
   const pickImageAsync = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsEditing: true,
       quality: 1,
     });
-
+    
     setUser({ ...user, image: result.assets?.[0]?.uri || '' });
 
     if (!result.canceled) {
       console.log(result);
     } else {
       alert('You did not select any image.');
+      setUser({ ...user, image: '' });
     }
   };
 
@@ -39,7 +57,7 @@ export default function ProfileImageStep({
 
       <View style={styles.imageContainer}>
         <Image
-          source={require("../../../assets/images/addPicture.png")}
+          source={require("../../assets/images/addPicture.png")}
           style={styles.image}
         />
 

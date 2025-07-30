@@ -15,24 +15,30 @@ import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { router } from "expo-router";
 import { useUserStore } from "../../lib/storage/useUserStorage";
 
+const MINIMUM_AGE = 18; // Minimum age requirement
+const DATE_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+}
+
 export default function AgeScreen() {
+
+    // Estados
     const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [isValidAge, setIsValidAge] = useState<boolean>(true);
     const [dateOfBirth, setDateOfBirth] = useState("");
     const { user, setUser } = useUserStore();
 
-
+    // Handlers para el DatePicker
     const showDatePicker = () => setDatePickerVisibility(true);
     const hideDatePicker = () => setDatePickerVisibility(false);
 
-    const formatDate = (date: Date) => {
-        return date.toLocaleDateString('en-US', {
-            day: '2-digit',
-            month: 'long',
-            year: 'numeric'
-        });
-    };
+    // Valores comp
+    const canContinue = dateOfBirth.trim() !== "" && isValidAge;
+
+    // Event handlers para manejo de fecha
 
     const handleDateBirthChange = (date: Date) => {
         setUser({ ...user, dateOfBirth: date });
@@ -41,10 +47,12 @@ export default function AgeScreen() {
     const handleConfirm = (date: Date) => {
         setSelectedDate(date);
         
+        const validation = validateAge(date);
+        
         // Validate age before accepting the date
-        if (!isDateValid(date)) {
+        if (!validation.isValid) {
             // Show alert for underage users
-            if (isUnder18(date)) {
+            if (validation.isUnder18) {
                 Alert.alert(
                     "Age Restriction",
                     "You must be at least 18 years old to create an account.",
@@ -75,7 +83,8 @@ export default function AgeScreen() {
         hideDatePicker();
     };
 
-    const obtainAge = (date: Date): number => {
+    // Consolidated age validation function
+    const validateAge = (date: Date) => {
         const today = new Date();
         let age = today.getFullYear() - date.getFullYear();
         const hasHadBirthdayThisYear =
@@ -85,23 +94,16 @@ export default function AgeScreen() {
         if (!hasHadBirthdayThisYear) {
           age--;
         }
-        return age;
+        
+        return {
+            age,
+            isValid: age >= MINIMUM_AGE,
+            isUnder18: age < MINIMUM_AGE
+        };
     };
-    
-    // Check if the date is valid and the user is 18 or older
-    // If the user is under 18, show an alert
-    const isDateValid = (date: Date): boolean => obtainAge(date) >= 18;
-    
-    // Check if the user is under 18
-    const isUnder18 = (date: Date): boolean => {
-        const today = new Date();
-        const age = today.getFullYear() - date.getFullYear();
-        const monthDiff = today.getMonth() - date.getMonth();
-        const dayDiff = today.getDate() - date.getDate();
-        if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
-            return age - 1 < 18;
-        }
-        return age < 18;
+
+    const formatDate = (date: Date) => {
+        return date.toLocaleDateString('en-US', DATE_FORMAT_OPTIONS);
     };
 
     return (
@@ -137,7 +139,7 @@ export default function AgeScreen() {
                 style={styles.image}
             />
 
-            {(dateOfBirth.trim() !== "" && isValidAge) ? (
+            {(canContinue) ? (
             <Pressable 
                 style={styles.continueButton} 
                 onPress={() => {
@@ -195,16 +197,6 @@ const styles = StyleSheet.create({
     },
     icon: {
         marginLeft: 10,
-    },
-    selectedDateContainer: {
-        marginTop: 20,
-        backgroundColor: 'rgba(255, 255, 255, 0.2)',
-        padding: 10,
-        borderRadius: 8,
-    },
-    selectedDateText: {
-        color: '#FFFFFF',
-        fontSize: 16,
     },
     continueButton: {
         width: '80%',

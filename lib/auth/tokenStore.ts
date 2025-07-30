@@ -13,12 +13,16 @@ interface TokenState {
   token: string | null;
   setToken: (token: string | null) => void;
   isAuthenticated: boolean;
+  sessionActivated: boolean;
+  setSessionActivated: (activated: boolean) => void;
 }
 
 export const useTokenStore = create<TokenState>((set) => ({
   token: null,
   setToken: (token) => set({ token, isAuthenticated: !!token }),
   isAuthenticated: false,
+  sessionActivated: false,
+  setSessionActivated: (activated) => set({ sessionActivated: activated }),
 }));
 
 // Helper for non-hook contexts (e.g. Axios interceptor)

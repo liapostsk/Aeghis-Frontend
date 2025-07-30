@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React from "react";
 
 export default function HomeLayout() {
-  const { isSignedIn, isLoaded } = useAuth();
+  const { isLoaded } = useAuth();
 
   // Esperamos a que Clerk cargue
   if (!isLoaded) return null;

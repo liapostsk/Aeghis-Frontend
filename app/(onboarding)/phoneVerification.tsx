@@ -16,14 +16,43 @@ import { useUserStore } from "../../lib/storage/useUserStorage";
 import { useSignUp } from "@clerk/clerk-expo";
 import VerificationCodeField from "@/components/ui/VerificationCodeField";
 
+const validateCode = (code: string) => {
+  if (!code || code.trim() === '') {
+    return { isValid: false, message: "Please enter the verification code." };
+  }
+  
+  if (code.length !== 6) {
+    return { isValid: false, message: "Code must be 6 digits." };
+  }
+  
+  if (!/^\d{6}$/.test(code)) {
+    return { isValid: false, message: "Code can only contain digits." };
+  }
+  
+  return { isValid: true, message: "" };
+};
+
+const formatTime = (seconds: number) => {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+};
+
 export default function PhoneVerificationScreen() {
+  // Store y router
   const { user, setUser } = useUserStore();
   const { signUp, isLoaded } = useSignUp();
   const router = useRouter();
+
+  // Estados
   const [isLoading, setIsLoading] = useState(false);
   const [value, setValue] = useState('');
   const [timer, setTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
+
+  // Valores computados
+  const validation = validateCode(value);
+  const canVerify = validation.isValid && !isLoading;
 
   const handleVerifyCode = async () => {
     if (!isLoaded || !signUp) {
@@ -31,37 +60,24 @@ export default function PhoneVerificationScreen() {
       return;
     }
 
-    if (!value || value.length !== 6) {
-      Alert.alert("Error", "Please enter the 6-digit code.");
+    if (!validation.isValid) {
+      Alert.alert("Invalid Code", validation.message);
       return;
     }
 
     try {
       setIsLoading(true);
+      const result = await signUp.attemptPhoneNumberVerification({ code: value });
 
-      const result = await signUp.attemptPhoneNumberVerification({
-        code: value,
-      });
-
-      console.log("Verification result:", result);
-
-      if (result.status === "complete") {
-        Alert.alert("Success", "Phone number verified!");
+      if (result.status === "complete" || result.status === "missing_requirements") {
         router.push("/(onboarding)/email");
-      } else if (result.status === "missing_requirements") {
-        if (result.missingFields.includes("email_address")) {
-          console.log("Email address is missing. Continue to email verification.");
-          Alert.alert("Success", "Phone number verified! Please verify your email.");
-          router.push("/(onboarding)/email");
-        } else {
-          Alert.alert("Error", "Other fields missing: " + result.missingFields.join(", "));
-        }
       } else {
-        Alert.alert("Error", "Unexpected verification status: " + result.status);
+        Alert.alert("Error", "Verification failed. Please try again.");
       }
     } catch (error: any) {
       console.error(error);
-      Alert.alert("Error", error?.errors?.[0]?.message || "Invalid verification code.");
+      const errorMessage = error?.errors?.[0]?.message || "Invalid verification code.";
+      Alert.alert("Error", errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -102,79 +118,87 @@ export default function PhoneVerificationScreen() {
     return () => clearInterval(interval);
   }, [timer]);
 
-  const renderContent = () => (
-    <ScrollView 
-      contentContainerStyle={styles.scrollContainer}
-      keyboardShouldPersistTaps="handled"
-      showsVerticalScrollIndicator={false}
-    >
-      <View style={styles.container}>
-        <View style={styles.titleContainer}>
-          <Text style={styles.textTitle}>Almost there! 🎉</Text>
-          <Text style={styles.subtitle}>Let's verify your phone number</Text>
-        </View>
-
-        <View style={styles.verificationContainer}>
-          <Text style={styles.instruction}>
-            We've sent a 6-digit code to{"\n"}{user?.phone || "+error"}
-          </Text>
-          <Text style={styles.helpText}>
-            Please check your messages 📱
-          </Text>
-
-          <View style={styles.codeFieldContainer}>
-            <VerificationCodeField value={value} setValue={setValue} />
-          </View>
-
-          <Pressable
-            onPress={handleVerifyCode}
-            style={[
-              styles.verifyButton,
-              (isLoading || value.length !== 6) && styles.verifyButtonDisabled
-            ]} 
-            disabled={isLoading || value.length !== 6}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="#7A33CC" />
-            ) : (
-              <Text style={styles.verifyButtonText}>Verify Code</Text>
-            )}
-          </Pressable>
-
-          {/* Sección de Resend Code */}
-          <View style={styles.resendSection}>
-            {canResend ? (
-              <Pressable onPress={handleResendCode} style={styles.resendButton}>
-                <Text style={styles.resendText}>📨 Resend code</Text>
-              </Pressable>
-            ) : (
-              <Text style={styles.timerText}>
-                Resend available in {timer}s
-              </Text>
-            )}
-          </View>
-
-          {/* Sección para ir atrás */}
-          <View style={styles.backSection}>
-            <Text style={styles.wrongNumberText}>Wrong number?</Text>
-            <Pressable onPress={() => router.back()}>
-              <Text style={styles.backText}>Go back to change it</Text>
-            </Pressable>
-          </View>
-        </View>
-      </View>
-    </ScrollView>
-  );
+  // Auto-verificar cuando se complete el código
+  useEffect(() => {
+    if (value.length === 6) {
+      const timer = setTimeout(() => {
+        handleVerifyCode();
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [value]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {Platform.OS === "ios" ? (
-        <KeyboardAvoidingView behavior="padding" style={styles.keyboardAvoid}>
-          {renderContent()}
-        </KeyboardAvoidingView>
-      ) : (
-        renderContent()
-      )}
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.keyboardContainer}
+      >
+        <ScrollView 
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.content}>
+            <View style={styles.titleContainer}>
+              <Text style={styles.textTitle}>Almost there! 🎉</Text>
+              <Text style={styles.subtitle}>Let's verify your phone number</Text>
+            </View>
+
+            <View style={styles.verificationContainer}>
+              <Text style={styles.instruction}>
+                We've sent a 6-digit code to{"\n"}{user?.phone || "+error"}
+              </Text>
+              <Text style={styles.helpText}>
+                Please check your messages 📱
+              </Text>
+
+              <View style={styles.codeFieldContainer}>
+                <VerificationCodeField value={value} setValue={setValue} />
+              </View>
+
+              <Pressable
+                onPress={handleVerifyCode}
+                style={[
+                  styles.verifyButton,
+                  !canVerify && styles.verifyButtonDisabled
+                ]} 
+                disabled={!canVerify}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="#7A33CC" />
+                ) : (
+                  <Text style={styles.verifyButtonText}>
+                    {value.length === 6 ? "Verify Code" : `Enter ${6 - value.length} more digits`}
+                  </Text>
+                )}
+              </Pressable>
+
+              {/* Sección de Resend Code */}
+              <View style={styles.resendSection}>
+                {canResend ? (
+                  <Pressable onPress={handleResendCode} style={styles.resendButton}>
+                    <Text style={styles.resendText}>📨 Resend code</Text>
+                  </Pressable>
+                ) : (
+                  <Text style={styles.timerText}>
+                    Resend available in {formatTime(timer)}
+                  </Text>
+                )}
+              </View>
+
+              {/* Sección para ir atrás */}
+              <View style={styles.backSection}>
+                <Text style={styles.wrongNumberText}>Wrong number?</Text>
+                <Pressable onPress={() => router.back()}>
+                  <Text style={styles.backText}>Go back to change it</Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -184,27 +208,24 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#7A33CC",
   },
-  keyboardAvoid: {
+  keyboardContainer: {
     flex: 1,
   },
   scrollContainer: {
     flexGrow: 1,
     justifyContent: "center",
-    paddingVertical: 40,
     paddingHorizontal: 20,
+    paddingVertical: 40,
   },
-  container: {
+  content: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 40,
   },
   titleContainer: {
     width: '100%',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 60,
+    marginBottom: 40,
   },
   textTitle: {
     color: "#FFFFFF",
@@ -217,7 +238,6 @@ const styles = StyleSheet.create({
     color: "#E8D5FF",
     fontSize: 16,
     textAlign: "center",
-    marginBottom: 20,
   },
   verificationContainer: {
     width: "100%",

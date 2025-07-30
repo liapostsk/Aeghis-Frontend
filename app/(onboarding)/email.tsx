@@ -8,69 +8,72 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Keyboard,
-  View
+  View,
+  ActivityIndicator
 } from 'react-native';
 import { useUserStore } from "../../lib/storage/useUserStorage";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from "expo-router";
 import { useSignUp } from '@clerk/clerk-expo';
+import ContinueButton from "../../components/ui/ContinueButton";
 
-export default function PhoneScreen() {
+const validateEmail = (email: string) => {
+  const trimmedEmail = email.trim();
+  
+  if (trimmedEmail === "") {
+    return { isValid: false, message: "Please enter your email address." };
+  }
+  
+  // Regex más robusta para email
+  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+  
+  if (!emailRegex.test(trimmedEmail)) {
+    return { isValid: false, message: "Please enter a valid email address." };
+  }
+  
+  if (trimmedEmail.length > 254) {
+    return { isValid: false, message: "Email address is too long." };
+  }
+  
+  return { isValid: true, message: "" };
+};
+
+export default function EmailScreen() {
+  // Store y router
   const { user, setUser } = useUserStore();
   const router = useRouter();
-  const [isValid, setIsValid] = useState(false);
-  const [email, setEmail] = useState('');
-
   const { signUp } = useSignUp();
 
-  // Función para cerrar el teclado
-  const dismissKeyboard = () => {
-    Keyboard.dismiss();
-  };
+  // Estados
+  const [email, setEmail] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Maneja el valor de la entrada del email
+  // Valores computados
+  const validation = validateEmail(email);
+  const canContinue = validation.isValid && !isLoading;
+
+  // Event handlers
   const handleEmailChange = (text: string) => {
     setEmail(text);
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    setIsValid(emailRegex.test(text));  // Valida el email mientras el usuario escribe.
   };
 
-  // Función para enviar el código de verificación
   const sendCode = async () => {
-    if (!signUp) return;
+    if (!canContinue || !signUp) return;
 
-    // Formatea y valida el correo electrónico
-    const clearEmail = email.trim().toLowerCase();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(clearEmail)) {
-      setIsValid(false);
-      Alert.alert("Error", "Please enter a valid email address.");
-      return;
-    }
-
-    setIsValid(true);
+    setIsLoading(true);
+    const cleanEmail = email.trim().toLowerCase();
 
     try {
-      // 1. Actualizamos el correo electrónico en el objeto de signUp
-      // Esto es necesario para que Clerk reconozca el correo electrónico
-      // El phone number ya debería estar en el objeto de signUp
-      // y no es necesario actualizarlo aquí.
-      await signUp.update({
-        emailAddress: email,
-      });
-
-      // 2. Pedir que Clerk envíe el código de verificación
+      await signUp.update({ emailAddress: cleanEmail });
       await signUp.prepareEmailAddressVerification();
-
-      // 3. Guardamos el correo electrónico para usarlo más tarde
-      setUser({ ...user, email: clearEmail });
-
-      // 4. Navegamos a la siguiente pantalla
+      setUser({ ...user, email: cleanEmail });
       router.push("/(onboarding)/emailVerification");
     } catch (error: any) {
       console.error("Error sending verification code:", error);
-      Alert.alert("Error", error?.errors?.[0]?.message || "Failed to send verification code.");
+      const errorMessage = error?.errors?.[0]?.message || "Failed to send verification code.";
+      Alert.alert("Error", errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -98,27 +101,36 @@ export default function PhoneScreen() {
                 </Text>
 
                 <TextInput
-                  style={styles.input}
-                  placeholder="Email Address"
+                  style={[
+                    styles.input,
+                    email && !validation.isValid && styles.inputError
+                  ]}
+                  placeholder="Enter your email address"
                   placeholderTextColor="#7A33CC80"
                   value={email}
                   onChangeText={handleEmailChange}
                   autoCapitalize="none"
                   autoCorrect={false}
+                  autoComplete="email"
                   keyboardType="email-address"
                   returnKeyType="done"
-                  onSubmitEditing={dismissKeyboard}
+                  onSubmitEditing={sendCode}
+                  editable={!isLoading}
+                  maxLength={254}
                 />
+
+                {email && !validation.isValid && (
+                  <Text style={styles.errorText}>{validation.message}</Text>
+                )}
               </View>
 
               <View style={styles.buttonContainer}>
-                <Pressable
+                <ContinueButton
                   onPress={sendCode}
-                  style={[styles.continueButton, !isValid && styles.disabledButton]}
-                  disabled={!isValid}
-                >
-                  <Text style={styles.continueButtonText}>Send Code</Text>
-                </Pressable>
+                  text={isLoading ? "Sending..." : "Send Code"}
+                  disabled={!canContinue}
+                  loading={isLoading}
+                />
               </View>
             </View>
           </ScrollView>
@@ -163,6 +175,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 40,
+    bottom: "5%"
   },
   instruction: {
     color: "#FFFFFF",
@@ -189,32 +202,20 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  inputError: {
+    borderColor: '#FF6B6B',
+    borderWidth: 2,
+  },
+  errorText: {
+    color: '#FF6B6B',
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 10,
+    paddingHorizontal: 20,
+  },
   buttonContainer: {
     alignItems: 'center',
     paddingBottom: 60,
-  },
-  continueButton: {
-    width: 300,
-    height: 55,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 30,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  disabledButton: {
-    opacity: 0.5,
-  },
-  continueButtonText: {
-    color: "#7A33CC",
-    fontSize: 18,
-    fontWeight: "bold",
+    bottom: "5%",
   },
 });

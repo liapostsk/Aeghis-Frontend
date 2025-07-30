@@ -1,4 +1,3 @@
-import { Link } from "expo-router";
 import { 
     Text,
     View,
@@ -13,22 +12,54 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import React, { useState } from "react";
+import { router } from "expo-router";
 import { useUserStore } from "../../lib/storage/useUserStorage";
 
+const validateName = (name: string) => {
+  const trimmedName = name.trim();
+  
+  if (trimmedName === "") {
+    return { isValid: false, message: "Please enter your name before continuing." };
+  }
+  
+  if (trimmedName.length < 2) {
+    return { isValid: false, message: "Name must be at least 2 characters long." };
+  }
+  
+  if (trimmedName.length > 25) {
+    return { isValid: false, message: "Name cannot exceed 50 characters." };
+  }
+  
+  // Basic regex to allow letters, spaces, hyphens, and apostrophes
+  const nameRegex = /^[a-zA-ZÀ-ÿ\s'-]+$/;
+  if (!nameRegex.test(trimmedName)) {
+    return { isValid: false, message: "Name can only contain letters, spaces, hyphens, and apostrophes." };
+  }
+  
+  return { isValid: true, message: "" };
+};
+
 export default function NameScreen() {
+  // State
   const { user, setUser } = useUserStore();
   const [name, setName] = useState("");
 
-  const handleNameChange = (name: string) => {
-    setUser({ ...user, name });
+  // Computed values
+  const validation = validateName(name);
+  const canContinue = validation.isValid;
+
+  // Event handlers
+  const handleNameChange = (text: string) => {
+    setName(text);
+    setUser({ ...user, name: text.trim() });
   };
 
-  const handleConfirm = (name: string) => {
-    handleNameChange(name);
-    console.log(user);
-      if (name.trim() === "") {
-        Alert.alert("Missing name", "Please enter your name before continuing.");
-      }
+  const handleContinue = () => {
+    if (canContinue) {
+      router.push("/(onboarding)/phone");
+    } else {
+      Alert.alert("Invalid Name", validation.message);
+    }
   };
 
   return (
@@ -61,25 +92,23 @@ export default function NameScreen() {
                 placeholderTextColor="#11182766"
                 style={styles.textInput}
                 value={name}
-                onChangeText={(text) => {
-                    setName(text);
-                    handleNameChange(text);
-                }}
+                onChangeText={handleNameChange}
+                maxLength={50}
+                autoCapitalize="words"
+                autoCorrect={false}
+                returnKeyType="done"
+                onSubmitEditing={handleContinue}
             />
           </View>
 
           <View style={styles.continueContainer}>
-            {name.trim() !== "" ? (
-                <Link href="/(onboarding)/phone" asChild>
-                    <Pressable style={styles.continueButton} onPress={() => handleConfirm(name)}>
-                        <Text style={styles.continueButtonText}>Continue</Text>
-                    </Pressable>
-                </Link>
-            ) : (
-                <Pressable style={[styles.continueButton, styles.disabledButton]} onPress={() => handleConfirm(name)}>
-                    <Text style={styles.continueButtonText}>Continue</Text>
-                </Pressable>
-            )}
+            <Pressable 
+              style={[styles.continueButton, !canContinue && styles.disabledButton]} 
+              onPress={handleContinue}
+              disabled={!canContinue}
+            >
+              <Text style={styles.continueButtonText}>Continue</Text>
+            </Pressable>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

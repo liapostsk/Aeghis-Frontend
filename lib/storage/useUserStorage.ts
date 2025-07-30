@@ -19,6 +19,7 @@ export type User = {
   acceptedPrivacyPolicy?: boolean;
   emergencyContacts?: EmergencyContact[];
   safeLocations?: SafeLocation[];
+  idClerk?: string; // ID de usuario en Clerk
 };
 
 type UserStore = {

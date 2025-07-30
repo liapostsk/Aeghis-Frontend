@@ -29,8 +29,7 @@ export default function InformationScreen() {
   const { getToken } = useAuth();
   const { setToken } = useTokenStore();
 
-  /*
-
+  // Asegurarse de que el token esté disponible antes de continuar
   useEffect(() => {
     const ensureValidToken = async () => {
       try {
@@ -50,8 +49,6 @@ export default function InformationScreen() {
     ensureValidToken();
   }, []);
 
-  */
-
   const next = () => setStep((s) => Math.min(TOTAL_STEPS - 1, s + 1));
   const prev = () => setStep((s) => Math.max(0, s - 1));
 
@@ -65,8 +62,7 @@ export default function InformationScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Contenido de los pasos */}
-        {/* Progress Bar integrado en el contenido */}
+    
         <View style={styles.progressContainer}>
           <ProgressBar 
             progress={(step + 1) / TOTAL_STEPS}
@@ -77,7 +73,6 @@ export default function InformationScreen() {
           />
         </View>
         
-        {/* Steps */}
         {step === 0 && <PrivacyStep onNext={next} />}
         {step === 1 && <ProfileImageStep onNext={next} onBack={prev} />}
         {step === 2 && <EmergencyContactStep onNext={next} onBack={prev} />}
@@ -100,6 +95,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 10,
-    zIndex: 1, // Asegura que esté por encima pero sin conflictos
+    zIndex: 1, // Asegura que esté por encima
   },
 });

@@ -1,8 +1,10 @@
 // File: components/map/GroupMap.tsx
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Alert, Image } from 'react-native';
+import { StyleSheet, View, Alert, Image, Pressable, Text } from 'react-native';
 import MapView, { Marker, Region } from 'react-native-maps';
 import * as Location from 'expo-location';
+import { Ionicons } from '@expo/vector-icons';
+import MapStyleButton, { MapType } from './MapStyleButton';
 
 const mockMembers = [
   {
@@ -23,6 +25,7 @@ const mockMembers = [
 
 export default function GroupMap() {
   const [region, setRegion] = useState<Region | null>(null);
+  const [mapType, setMapType] = useState<MapType>('standard');
 
   useEffect(() => {
     (async () => {
@@ -42,11 +45,28 @@ export default function GroupMap() {
     })();
   }, []);
 
+  const handleMapTypeChange = (newMapType: MapType) => {
+    setMapType(newMapType);
+  };
+
   if (!region) return null;
 
   return (
     <View style={styles.container}>
-      <MapView style={styles.map} region={region} showsUserLocation>
+      <MapView 
+        style={styles.map} 
+        region={region}
+        mapType={mapType}
+        showsUserLocation
+        showsCompass
+        showsScale
+        showsBuildings={true}
+        showsIndoors={true}
+        pitchEnabled={true}
+        rotateEnabled={true}
+        zoomEnabled={true}
+        scrollEnabled={true}
+      >
         {mockMembers.map(member => (
           <Marker
             key={member.id}
@@ -62,6 +82,12 @@ export default function GroupMap() {
           </Marker>
         ))}
       </MapView>
+
+      {/* Botón de estilo del mapa */}
+      <MapStyleButton 
+        mapType={mapType} 
+        onMapTypeChange={handleMapTypeChange} 
+      />
     </View>
   );
 }

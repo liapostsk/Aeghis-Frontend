@@ -34,12 +34,15 @@ export default function MapScreen() {
       <JourneyOverlay activeGroup={activeGroup} />
   */
 
+  /*
+    <TouchableOpacity  onPress={handleLogout}>
+      <Text>Cerrar sesión</Text>
+    </TouchableOpacity>
+  */
+
   return (
     <SafeAreaView style={styles.container}>
       <MapHeader activeGroup={activeGroup} />
-      <TouchableOpacity  onPress={handleLogout}>
-        <Text>Cerrar sesión</Text>
-      </TouchableOpacity>
       <GroupMap />
       <EmergencyButton onPress={() => console.log('Emergency triggered')} />
       <JourneyOverlay onStartJourney={function (): void {

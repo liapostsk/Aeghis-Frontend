@@ -1,21 +1,26 @@
 // components/ui/ContinueButton.tsx
 import React from 'react';
-import { Pressable, Text, StyleSheet } from 'react-native';
+import { Pressable, Text, StyleSheet, ActivityIndicator } from 'react-native';
 
 type Props = {
   onPress: () => void;
   text: string;
   disabled?: boolean;
+  loading?: boolean;
 };
 
-export default function ContinueButton({ onPress, text, disabled }: Props) {
+export default function ContinueButton({ onPress, text, disabled, loading }: Props) {
   return (
     <Pressable
       onPress={onPress}
       style={[styles.button, disabled && styles.disabled]}
       disabled={disabled}
     >
-      <Text style={styles.text}>{text}</Text>
+      {loading ? (
+        <ActivityIndicator color="#7A33CC" />
+      ) : (
+        <Text style={styles.text}>{text}</Text>
+      )}
     </Pressable>
   );
 }

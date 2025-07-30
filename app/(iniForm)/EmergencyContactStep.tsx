@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -21,11 +21,28 @@ export default function EmergencyContactStep({
   onBack: () => void;
 }) {
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedContactCount, setSelectedContactCount] = useState(0);
   const { user, setUser } = useUserStore();
+  
+  // Calcular el count directamente desde el store en lugar de usar estado local
+  const selectedContactCount = user?.emergencyContacts?.length || 0;
 
   const handleAddContact = (contactData: EmergencyContact) => {
     if (!contactData.name || !contactData.phone) return;
+
+     if (!user) {
+      Alert.alert('Error', 'User information is missing.');
+      return;
+    }
+
+    // Verificar si el contacto ya existe (por teléfono)
+    const existingContact = user.emergencyContacts?.find(
+      contact => contact.phone === contactData.phone
+    );
+
+    if (existingContact) {
+      Alert.alert('Contacto duplicado', 'Este contacto ya ha sido agregado.');
+      return;
+    }
 
     // Crea un nuevo contacto de emergencia
     const newContact: EmergencyContact = {
@@ -49,19 +66,14 @@ export default function EmergencyContactStep({
         newContact,
       ],
     });
-    setSelectedContactCount((prev) => prev + 1);
+
+    console.log("Mirar User:", user);
     setModalVisible(false);
   };
 
   const handleAddContactPress = () => {
     setModalVisible(true);
   };
-
-  /*
-  <Text style={styles.subtitle}>
-          Agrega personas que puedan ayudarte en caso de emergencia
-        </Text>
-  */
 
   return (
     <SafeAreaView style={styles.container}>
@@ -72,7 +84,7 @@ export default function EmergencyContactStep({
       <View style={styles.mainContent}>
         <View style={styles.imageContainer}>
           <Image
-            source={require('../../../assets/images/emergencyContacts1.png')}
+            source={require('../../assets/images/emergencyContacts1.png')}
             style={styles.image}
           />
         </View>
