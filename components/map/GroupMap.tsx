@@ -1,9 +1,8 @@
 // File: components/map/GroupMap.tsx
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Alert, Image, Pressable, Text } from 'react-native';
+import { StyleSheet, View, Alert, Image } from 'react-native';
 import MapView, { Marker, Region } from 'react-native-maps';
 import * as Location from 'expo-location';
-import { Ionicons } from '@expo/vector-icons';
 import MapStyleButton, { MapType } from './MapStyleButton';
 
 const mockMembers = [

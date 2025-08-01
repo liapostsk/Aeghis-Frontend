@@ -4,7 +4,7 @@ import {
   Text,
   Modal,
   StyleSheet,
-  TouchableOpacity,
+  Pressable,
   TextInput,
   FlatList,
   ActivityIndicator,
@@ -18,6 +18,7 @@ import { SafeLocation } from "../../api/types";
 import { useAuth } from "@clerk/clerk-expo";
 import { useTokenStore } from "@/lib/auth/tokenStore";
 import * as Location from "expo-location";
+import MapLocationPicker from "../map/MapLocationPicker";
 
 interface Props {
   visible: boolean;
@@ -26,13 +27,22 @@ interface Props {
 }
 
 export default function SafeLocationModal({ visible, onClose, onSelectLocation }: Props) {
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState<SafeLocation[]>([]);
-  const [loading, setLoading] = useState(false);
-  const { getToken } = useAuth();
-  const setToken = useTokenStore((state) => state.setToken);
-  const [currentLocation, setCurrentLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  // Estados del componente
+  const [query, setQuery] = useState(""); // Busqueda de texto
+  const [results, setResults] = useState<SafeLocation[]>([]); // Resultados de búsqueda
+  const [loading, setLoading] = useState(false); // Estado de carga
+  const [currentLocation, setCurrentLocation] = useState<{ latitude: number; longitude: number } | null>(null); // Ubicación actual del usuario
+  const [mapVisible, setMapVisible] = useState(false); // Estado del mapa
 
+  // Hooks externos
+  const { getToken } = useAuth(); // Hook para obtener el token de autenticación
+  const setToken = useTokenStore((state) => state.setToken); // Hook para guardar el token en el store
+
+  useEffect(() => {
+    if (!visible) {
+      setMapVisible(false);
+    }
+  }, [visible]);
 
   // Obtener ubicación real del usuario y cargar lugares cercanos
   useEffect(() => {
@@ -75,7 +85,7 @@ export default function SafeLocationModal({ visible, onClose, onSelectLocation }
     if (visible) {
       fetchLocationAndNearbyPlaces();
     }
-  }, [visible]);
+  }, [visible]); // Se ejecuta cuando visible cambia
 
   useEffect(() => {
     if (query.length < 3) {
@@ -126,7 +136,7 @@ export default function SafeLocationModal({ visible, onClose, onSelectLocation }
       } finally {
         setLoading(false);
       }
-    }, 500);
+    }, 500); // Se ejecuta después de 500ms
 
     return () => clearTimeout(timeout);
   }, [query, currentLocation, visible]);
@@ -143,89 +153,118 @@ export default function SafeLocationModal({ visible, onClose, onSelectLocation }
     }
   };
 
+  const handleMapPickerClose = () => {
+    setMapVisible(false);
+  };
+
+  const handleMapLocationSelect = (location: SafeLocation) => {
+    onSelectLocation(location);
+    setMapVisible(false);
+    onClose();
+  };
+
   return (
-    <Modal visible={visible} animationType="slide" transparent>
-      <View style={styles.overlay}>
-        <View style={styles.modal}>
-          <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
-            <View style={styles.header}>
-              <Text style={styles.title}>Buscar ubicación segura</Text>
-              <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                <Ionicons name="close" size={24} color="#666" />
-              </TouchableOpacity>
-            </View>
-            
-            <TextInput
-              style={styles.input}
-              placeholder="Escribe un lugar..."
-              value={query}
-              onChangeText={setQuery}
-              placeholderTextColor="#999"
-            />
-
-            <View style={styles.sectionHeader}>
-              <Ionicons 
-                name={query.length > 2 ? "search" : "location"} 
-                size={16} 
-                color="#7A33CC" 
+      <Modal visible={visible} animationType="slide" transparent>
+        <View style={styles.overlay}>
+          <View style={styles.modal}>
+            <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
+              <View style={styles.header}>
+                <Text style={styles.title}>Buscar ubicación segura</Text>
+                <Pressable onPress={onClose} style={styles.closeButton}>
+                  <Ionicons name="close" size={24} color="#666" />
+                </Pressable>
+              </View>
+              
+              <TextInput
+                style={styles.input}
+                placeholder="Escribe un lugar..."
+                value={query}
+                onChangeText={setQuery}
+                placeholderTextColor="#999"
               />
-              <Text style={styles.sectionTitle}>
-                {query.length > 2 ? "Resultados de búsqueda" : "Lugares cercanos recomendados"}
-              </Text>
-            </View>
 
-            {loading ? (
-              <ActivityIndicator size="large" color="#7A33CC" style={{ marginTop: 20 }} />
-            ) : (
-              <FlatList
-                data={results}
-                keyExtractor={(item, index) => item.externalId || item.id?.toString() || `safe-location-${index}`}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={styles.item}
-                    onPress={() => {
-                      if (item.externalId) handleSelect(item.externalId);
-                    }}
-                    disabled={!item.externalId}
-                  >
-                    <View style={styles.itemIcon}>
-                      <Ionicons
-                        name={
-                          item.type === 'hospital' ? 'medical' :
-                          item.type === 'police' ? 'shield-checkmark' :
-                          item.type === 'fire_station' ? 'flame' :
-                          item.type === 'pharmacy' ? 'medical' :
-                          item.type === 'school' ? 'school' : 'location'
-                        }
-                        size={20}
-                        color="#7A33CC"
-                      />
-                    </View>
-                    <View style={styles.itemInfo}>
-                      <Text style={styles.name}>{item.name}</Text>
-                      <Text style={styles.address}>{item.address}</Text>
-                      {item.distance && (
-                        <Text style={styles.distance}>{item.distance}</Text>
-                      )}
-                    </View>
-                  </TouchableOpacity>
-                )}
-                ListEmptyComponent={
-                  !loading ? (
-                    <View style={styles.emptyState}>
-                      <Ionicons name="location-outline" size={48} color="#ccc" />
-                      <Text style={styles.emptyText}>
-                        {query.length > 2 ? "No se encontraron resultados" : "Cargando lugares cercanos..."}
-                      </Text>
-                    </View>
-                  ) : null
+              {/* Boton de seleccion en mapa */}
+              <Pressable
+                style={styles.mapButton}
+                onPress={() => {
+                      console.log("🗺️ Botón de mapa presionado, abriendo modal...");
+
+                  setMapVisible(true);
                 }
-              />
-            )}
-          </KeyboardAvoidingView>
+              }>
+                <Ionicons name="map" size={20} color="#7A33CC" />
+                  <Text style={styles.mapButtonText}>Seleccionar en mapa</Text>
+                  <Ionicons name="chevron-forward" size={16} color="#7A33CC" />
+              </Pressable>
+
+              <View style={styles.sectionHeader}>
+                <Ionicons 
+                  name={query.length > 2 ? "search" : "location"} 
+                  size={16} 
+                  color="#7A33CC" 
+                />
+                <Text style={styles.sectionTitle}>
+                  {query.length > 2 ? "Resultados de búsqueda" : "Lugares cercanos recomendados"}
+                </Text>
+              </View>
+
+              {loading ? (
+                <ActivityIndicator size="large" color="#7A33CC" style={{ marginTop: 20 }} />
+              ) : (
+                <FlatList
+                  data={results}
+                  keyExtractor={(item, index) => item.externalId || item.id?.toString() || `safe-location-${index}`}
+                  renderItem={({ item }) => (
+                    <Pressable
+                      style={styles.item}
+                      onPress={() => {
+                        if (item.externalId) handleSelect(item.externalId);
+                      }}
+                      disabled={!item.externalId}
+                    >
+                      <View style={styles.itemIcon}>
+                        <Ionicons
+                          name={
+                            item.type === 'hospital' ? 'medical' :
+                            item.type === 'police' ? 'shield-checkmark' :
+                            item.type === 'fire_station' ? 'flame' :
+                            item.type === 'pharmacy' ? 'medical' :
+                            item.type === 'school' ? 'school' : 'location'
+                          }
+                          size={20}
+                          color="#7A33CC"
+                        />
+                      </View>
+                      <View style={styles.itemInfo}>
+                        <Text style={styles.name}>{item.name}</Text>
+                        <Text style={styles.address}>{item.address}</Text>
+                        {item.distance && (
+                          <Text style={styles.distance}>{item.distance}</Text>
+                        )}
+                      </View>
+                    </Pressable>
+                  )}
+                  ListEmptyComponent={
+                    !loading ? (
+                      <View style={styles.emptyState}>
+                        <Ionicons name="location-outline" size={48} color="#ccc" />
+                        <Text style={styles.emptyText}>
+                          {query.length > 2 ? "No se encontraron resultados" : "Cargando lugares cercanos..."}
+                        </Text>
+                      </View>
+                    ) : null
+                  }
+                />
+              )}
+            </KeyboardAvoidingView>
+          </View>
         </View>
-      </View>
-    </Modal>
+        <MapLocationPicker
+          visible={mapVisible}
+          onClose={handleMapPickerClose}
+          onSelectLocation={handleMapLocationSelect}
+        />
+      </Modal>
   );
 }
 
@@ -323,5 +362,24 @@ const styles = StyleSheet.create({
     color: '#999',
     textAlign: 'center',
     marginTop: 12,
+  },
+  mapButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#f8f9ff',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#e0e6ff',
+  },
+  mapButtonText: {
+    flex: 1,
+    marginLeft: 10,
+    fontSize: 16,
+    color: '#7A33CC',
+    fontWeight: '500',
   },
 });
