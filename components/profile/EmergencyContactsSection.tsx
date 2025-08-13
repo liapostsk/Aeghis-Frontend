@@ -1,13 +1,14 @@
 // File: components/profile/EmergencyContactsSection.tsx
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Alert } from 'react-native';
 import { Ionicons, FontAwesome5, Feather } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import ContactEditorModal from '../ContactEditorModal';
 import { EmergencyContact } from '@/api/types';
 import { useTokenStore } from '../../lib/auth/tokenStore';
 import { useAuth } from "@clerk/clerk-expo";
 import { useUserStore } from '@/lib/storage/useUserStorage';
-import { editEmergencyContact } from '@/api/emergencyContacts/emergencyContactsApi';
+import { deleteEmergencyContact, editEmergencyContact } from '@/api/emergencyContacts/emergencyContactsApi';
 import { createEmergencyContact } from '@/api/emergencyContacts/emergencyContactsApi';
 import { getCurrentUser } from '@/api/user/userApi';
 import EmergencyContactAddModal from '../EmergencyContactAddModal';
@@ -15,11 +16,13 @@ import EmergencyContactAddModal from '../EmergencyContactAddModal';
 
 interface Props {
   contacts: EmergencyContact[];
-  editable?: boolean; 
 }
 
-export default function EmergencyContactsSection({ contacts, editable }: Props) {
+export default function EmergencyContactsSection({ contacts }: Props) {
   // Estado para manejar la visibilidad del modal de editor
+  const [editable, setEditable] = useState(false);
+  const [selectedContact, setSelectedContact] = useState<EmergencyContact | null>(null);
+
   const [modalEditorVisible, setModalEditorVisible] = useState(editable || false);
   const [modalAddVisible, setModalAddVisible] = useState(editable || false);
 
@@ -27,6 +30,19 @@ export default function EmergencyContactsSection({ contacts, editable }: Props) 
 
   const { getToken } = useAuth();
   const setToken = useTokenStore((state) => state.setToken);
+
+  // 🔥 Resetear estados cuando la screen pierde el foco
+  useFocusEffect(
+    React.useCallback(() => {
+      return () => {
+        // Esta función se ejecuta cuando la screen pierde el foco
+        setEditable(false);
+        setModalEditorVisible(false);
+        setModalAddVisible(false);
+        setSelectedContact(null);
+      };
+    }, [])
+  );
   
   const handleEditContact = async (updated: EmergencyContact) => {
     const token = await getToken();
@@ -36,19 +52,35 @@ export default function EmergencyContactsSection({ contacts, editable }: Props) 
     await useUserStore.getState().refreshUserFromBackend();
   };
 
-  // Arreglar
-  const handleDeleteContact = async (updated: EmergencyContact) => {
-    const token = await getToken();
-    setToken(token);
-    await editEmergencyContact(updated.id!, updated); // tu función API PUT
-    await getCurrentUser();
-    await useUserStore.getState().refreshUserFromBackend();
+  const handleDeleteContact = async (contact: EmergencyContact) => {
+    Alert.alert(
+      "Eliminar Ubicación",
+      `¿Estás seguro de que quieres eliminar "${contact.name}"?`,
+      [
+        {
+          text: "Cancelar",
+          style: "cancel",
+        },
+        {
+          text: "Eliminar",
+          onPress: async () => {
+            const token = await getToken();
+            setToken(token);
+            await deleteEmergencyContact(contact.id!); // tu función API DELETE
+            await getCurrentUser();
+            await useUserStore.getState().refreshUserFromBackend();
+          },
+          style: "destructive",
+        },
+      ]
+    );
   };
 
   const handleAddContact = async (contact: EmergencyContact) => {
     const token = await getToken();
     setToken(token);
-    await createEmergencyContact(contact);
+    const id = await createEmergencyContact(contact);
+    contact.id = id; // Asignar el ID devuelto al objeto de contacto
     await getCurrentUser();
     await useUserStore.getState().refreshUserFromBackend();
     
@@ -59,11 +91,11 @@ export default function EmergencyContactsSection({ contacts, editable }: Props) 
       <View style={styles.sectionHeader}>
         <FontAwesome5 name="phone-alt" size={18} color="#7A33CC" />
         <Text style={styles.sectionTitle}>Contactos de Emergencia</Text>
-        {editable && (
-          <Pressable style={styles.editButton } onPress={() => setModalEditorVisible(true)}>
-            <Feather name="edit-2" size={18} color="#7A33CC" />
-          </Pressable>
-        )}
+          {contacts.length > 1 && (
+            <Pressable style={styles.editButton} onPress={() => setEditable(!editable)}>
+              <Text style={{ color: '#7A33CC' }}>Editar</Text>
+            </Pressable>
+          )}
       </View>
 
       {contacts.map((contact, index) => (
@@ -76,6 +108,30 @@ export default function EmergencyContactsSection({ contacts, editable }: Props) 
             <Text style={styles.contactRelation}>{contact.relation}</Text>
             <Text style={styles.contactPhone}>{contact.phone}</Text>
           </View>
+          {editable && (
+            <View style={styles.actionButtons}>
+              {/* Botón de editar */}
+              <Pressable 
+                style={[styles.actionButton, styles.editActionButton]} 
+                onPress={() => {
+                  console.log("Editar contacto:", contact);
+                  setSelectedContact(contact);
+                  setModalEditorVisible(true);
+                }}
+              >
+                <Feather name="edit-2" size={16} color="#7A33CC" />
+              </Pressable>
+              
+              {/* Botón de eliminar */}
+              <Pressable 
+                style={[styles.actionButton, styles.deleteActionButton]} 
+                onPress={() => handleDeleteContact(contact)}
+              >
+                <Feather name="trash-2" size={16} color="#ff4444" />
+              </Pressable>
+            </View>
+          )}
+
         </View>
       ))}
       
@@ -86,17 +142,16 @@ export default function EmergencyContactsSection({ contacts, editable }: Props) 
 
       <ContactEditorModal
         visible={modalEditorVisible}
-        initialData={contacts[0]} // Puedes pasar un contacto específico o dejarlo vacío
+        contact={selectedContact || contacts[0]} 
         onClose={() => setModalEditorVisible(false)}
         onSave={handleEditContact}
-        onDelete={() => handleDeleteContact(contacts[0])} // Puedes pasar un contacto específico o dejarlo vacío
+        onDelete={() => handleDeleteContact(selectedContact!)}
       />
 
       <EmergencyContactAddModal
         visible={modalAddVisible}
         onClose={() => setModalAddVisible(false)}
         onAddContact={(contact) => {
-          // tu handleAddContact con userStore
           handleAddContact(contact);
         }}
       />
@@ -175,5 +230,24 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 8,
     fontSize: 16,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  actionButton: {
+    padding: 8,
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 32,
+    height: 32,
+  },
+  editActionButton: {
+    backgroundColor: '#f0f0ff',
+  },
+  deleteActionButton: {
+    backgroundColor: '#fff0f0',
   },
 });

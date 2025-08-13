@@ -4,6 +4,7 @@ import { Alert, KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Te
 import MapView, { Marker, Region } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { SafeLocation } from '../../api/types';
+import { getLocationFromCoordinates } from '@/api/safeLocations/googleGeocodingApi';
 
 type MapLocationPickerProps = {
     visible: boolean;
@@ -12,98 +13,137 @@ type MapLocationPickerProps = {
 };
 
 export default function MapLocationPicker({ visible, onClose, onSelectLocation }: MapLocationPickerProps) {
-    // Este componente se encarga de seleccionar ubicaciones en el mapa
-    //console.log("🗺️ MapLocationPicker - props recibidas:", { visible, onClose: !!onClose, onSelectLocation: !!onSelectLocation });
-
     const [region, setRegion] = useState<Region | null>(null);
     const [selectedCoordinates, setSelectedCoordinates] = useState<{ latitude: number; longitude: number } | null>(null);
     const [locationName, setLocationName] = useState<string>('');
-    const [isRenamed, setIsRenamed] = useState(false);
+    const [showNamingModal, setShowNamingModal] = useState(false);
+
+    // Función para limpiar el estado
+    const resetState = () => {
+        setSelectedCoordinates(null);
+        setLocationName('');
+        setShowNamingModal(false);
+        setRegion(null);
+    };
 
     useEffect(() => {
         const getInitialLocation = async () => {
-            if (!visible) return; // Solo obtener ubicación cuando el modal sea visible
+            try {
+                if (!visible) return;
 
-            const { status } = await Location.requestForegroundPermissionsAsync();
-            if (status !== 'granted') {
-                Alert.alert("Permission denied", "Location access is required.");
-                return;
+                const { status } = await Location.requestForegroundPermissionsAsync();
+                if (status !== 'granted') {
+                    Alert.alert("Permission denied", "Location access is required.");
+                    return;
+                }
+
+                const location = await Location.getCurrentPositionAsync({});
+                setRegion({
+                    latitude: location.coords.latitude,
+                    longitude: location.coords.longitude,
+                    latitudeDelta: 0.01,
+                    longitudeDelta: 0.01,
+                });
+            } catch (error) {
+                console.error("❌ Error al obtener ubicación:", error);
+                Alert.alert("Error", "No se pudo obtener la ubicación actual.");
             }
-
-            const location = await Location.getCurrentPositionAsync({});
-            setRegion({
-                latitude: location.coords.latitude,
-                longitude: location.coords.longitude,
-                latitudeDelta: 0.01,
-                longitudeDelta: 0.01,
-            });
         };
 
         if (visible) {
             getInitialLocation();
         } else {
-            // Limpiar estado cuando el modal se cierre
-            setSelectedCoordinates(null);
-            setLocationName('');
-            setIsRenamed(false);
-            setRegion(null);
+            resetState();
         }
-    }, [visible]); // Ejecutar cuando visible cambie
+    }, [visible]);
 
     const handleMapPress = (event: any) => {
         const { latitude, longitude } = event.nativeEvent.coordinate;
+        console.log("📍 Ubicación seleccionada:", { latitude, longitude });
+        
+        // Primero establecemos las coordenadas
         setSelectedCoordinates({ latitude, longitude });
-        setIsRenamed(true);
+        // Limpiamos el nombre anterior
+        setLocationName('');
+        // Mostramos el modal de nombrado
+        setShowNamingModal(true);
     };
 
     const handleConfirmLocation = async () => {
         if (selectedCoordinates && locationName.trim()) {
-            const locationData = {
-                latitude: selectedCoordinates.latitude,
-                longitude: selectedCoordinates.longitude,
-                name: locationName.trim(),
-                address: `${selectedCoordinates.latitude.toFixed(6)}, ${selectedCoordinates.longitude.toFixed(6)}`, // Coordenadas como dirección temporal
-                type: 'custom' // Tipo para ubicaciones seleccionadas manualmente
-            };
-            
-            console.log("✅ Confirmando ubicación:", locationData);
-            onSelectLocation(locationData);
-            
-            // Limpiar estado y cerrar modal
-            setSelectedCoordinates(null);
-            setLocationName('');
-            setIsRenamed(false);
-            onClose();
+            console.log("✅ Confirmando ubicación:", selectedCoordinates, locationName);
+            try {
+                // Obtenemos los detalles de la ubicación
+                const locationInfo = await getLocationFromCoordinates(
+                    selectedCoordinates.latitude, 
+                    selectedCoordinates.longitude,
+                    locationName.trim()
+                    // Pasamos las coordenadas del usuario, pasar por el PropTypes
+                    // userLat, userLng
+                    
+                );
+                
+                if (!locationInfo) {
+                    throw new Error("No se pudo obtener información de la ubicación.");
+                }
+                
+                console.log("✅ Ubicación con geocoding:", locationInfo);
+                onSelectLocation(locationInfo);
+                
+            } catch (error) {
+                console.error("❌ Error al obtener detalles de la ubicación:", error);
+                console.log("🔄 Usando fallback sin geocoding");
+                
+                // Fallback: crear ubicación básica sin geocoding
+                const locationData: SafeLocation = {
+                    name: locationName.trim(),
+                    description: "Ubicación personalizada", 
+                    address: `${selectedCoordinates.latitude.toFixed(6)}, ${selectedCoordinates.longitude.toFixed(6)}`,
+                    type: 'custom',
+                    latitude: selectedCoordinates.latitude,
+                    longitude: selectedCoordinates.longitude,
+                    externalId: `custom_${selectedCoordinates.latitude}_${selectedCoordinates.longitude}`,
+                };
+                
+                console.log("✅ Ubicación fallback:", locationData);
+                onSelectLocation(locationData);
+            } finally {
+                // Siempre limpiar estado al final
+                resetState();
+                onClose();
+            }
+        } else {
+            console.warn("⚠️ No se puede confirmar: faltan coordenadas o nombre");
         }
     };
 
-    const handleCancel = () => {
-        console.log("❌ Cancelando selección de ubicación");
-        // Limpiar estado completo para volver al estado inicial
-        setSelectedCoordinates(null);
+    const handleCancelNaming = () => {
+        console.log("❌ Cancelando nombrado de ubicación");
+        // Solo ocultamos el modal de nombrado, mantenemos el marker para que puedan seleccionar otro punto
+        setShowNamingModal(false);
         setLocationName('');
-        setIsRenamed(false);
+        // NO limpiamos selectedCoordinates para que el marker se mantenga visible
+    };
+
+    const handleCloseModal = () => {
+        console.log("❌ Cerrando modal completo");
+        resetState();
+        onClose();
     };
 
     return (
         <Modal visible={visible} animationType="slide" transparent>
             <View style={styles.overlay}>
                 <View style={styles.modal}>
-                    {/* Header*/}
+                    {/* Header */}
                     <View style={styles.header}>
                         <Text style={styles.textTitle}>Selecciona una ubicación en el mapa</Text>
-                        <Pressable style={styles.closeButton} onPress={() => {
-                            // Limpiar estado y cerrar modal
-                            setSelectedCoordinates(null);
-                            setLocationName('');
-                            setIsRenamed(false);
-                            onClose();
-                        }}>
+                        <Pressable style={styles.closeButton} onPress={handleCloseModal}>
                             <Ionicons name="close" size={24} color="#000" />
                         </Pressable>
                     </View>
                     
-                    {/* Mostrar loading o mapa */}
+                    {/* Contenido del mapa */}
                     {!region ? (
                         <View style={styles.loadingContainer}>
                             <Text style={styles.loadingText}>Obteniendo ubicación...</Text>
@@ -117,9 +157,13 @@ export default function MapLocationPicker({ visible, onClose, onSelectLocation }
                                     onPress={handleMapPress}
                                     showsUserLocation
                                 >
+                                    {/* Condición simplificada para el marker */}
                                     {selectedCoordinates && (
                                         <Marker
-                                            coordinate={selectedCoordinates}
+                                            coordinate={{
+                                                latitude: selectedCoordinates.latitude,
+                                                longitude: selectedCoordinates.longitude,
+                                            }}
                                             title={locationName || 'Ubicación seleccionada'}
                                             pinColor="#7A33CC"
                                         />
@@ -127,47 +171,45 @@ export default function MapLocationPicker({ visible, onClose, onSelectLocation }
                                 </MapView>
                             </View>
                             
-                            {/* Modal para nombrar ubicación */}
-                            <Modal 
-                                visible={isRenamed} 
-                                animationType="slide" 
-                                transparent
-                                onRequestClose={handleCancel}
-                            >
-                                <View style={styles.namingModalOverlay}>
-                                    <KeyboardAvoidingView 
-                                        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                                        style={styles.namingOverlay}
-                                    >
-                                        <View style={styles.namingContainer}>
-                                            <Text style={styles.namingTitle}>Nombra esta ubicación</Text>
-                                            <TextInput
-                                                style={styles.nameInput}
-                                                placeholder="Ej: Mi casa, Oficina, Gimnasio..."
-                                                value={locationName}
-                                                onChangeText={setLocationName}
-                                                autoFocus
-                                                maxLength={50}
-                                            />
-                                            <View style={styles.namingButtons}>
-                                                <Pressable 
-                                                    style={styles.cancelButton} 
-                                                    onPress={handleCancel}
-                                                >
-                                                    <Text style={styles.cancelButtonText}>Cancelar</Text>
-                                                </Pressable>
-                                                <Pressable 
-                                                    style={[styles.confirmButton, !locationName.trim() && styles.confirmButtonDisabled]} 
-                                                    onPress={handleConfirmLocation}
-                                                    disabled={!locationName.trim()}
-                                                >
-                                                    <Text style={styles.confirmButtonText}>Confirmar</Text>
-                                                </Pressable>
+                            {/* Modal de nombrado */}
+                            {showNamingModal && (
+                                <>
+                                    <View style={styles.namingModalOverlay} />
+                                    <View style={styles.namingOverlayAnimated}>
+                                        <KeyboardAvoidingView 
+                                            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                                            style={styles.namingOverlay}
+                                        >
+                                            <View style={styles.namingContainer}>
+                                                <Text style={styles.namingTitle}>Nombra esta ubicación</Text>
+                                                <TextInput
+                                                    style={styles.nameInput}
+                                                    placeholder="Ej: Mi casa, Oficina, Gimnasio..."
+                                                    value={locationName}
+                                                    onChangeText={setLocationName}
+                                                    autoFocus
+                                                    maxLength={50}
+                                                />
+                                                <View style={styles.namingButtons}>
+                                                    <Pressable 
+                                                        style={styles.cancelButton} 
+                                                        onPress={handleCancelNaming}
+                                                    >
+                                                        <Text style={styles.cancelButtonText}>Cancelar</Text>
+                                                    </Pressable>
+                                                    <Pressable 
+                                                        style={[styles.confirmButton, !locationName.trim() && styles.confirmButtonDisabled]} 
+                                                        onPress={handleConfirmLocation}
+                                                        disabled={!locationName.trim()}
+                                                    >
+                                                        <Text style={styles.confirmButtonText}>Confirmar</Text>
+                                                    </Pressable>
+                                                </View>
                                             </View>
-                                        </View>
-                                    </KeyboardAvoidingView>
-                                </View>
-                            </Modal>
+                                        </KeyboardAvoidingView>
+                                    </View>
+                                </>
+                            )}
                         </>
                     )}
                 </View>
@@ -225,21 +267,35 @@ const styles = StyleSheet.create({
         height: '100%',
     },
     namingModalOverlay: {
-        flex: 1,
-        justifyContent: 'flex-end',
-        backgroundColor: 'rgba(0, 0, 0, 0.16)',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.3)',
     },
-    namingOverlay: {
+    namingOverlayAnimated: {
+        position: 'absolute',
         bottom: 0,
         left: 0,
         right: 0,
+    },
+    namingOverlay: {
         padding: 20,
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        paddingBottom: 40,
+        backgroundColor: '#fff',
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: -2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 8,
+        elevation: 10,
     },
     namingContainer: {
-        bottom: "5%",
         justifyContent: 'center',
     },
     namingTitle: {

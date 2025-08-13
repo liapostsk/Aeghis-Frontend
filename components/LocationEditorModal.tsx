@@ -9,42 +9,38 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { EmergencyContact } from '@/api/types';
+import { SafeLocation } from '@/api/types';
 
 type Props = {
   visible: boolean;
-  contact: EmergencyContact;
+  location: SafeLocation;
   onClose: () => void;
-  onSave: (contact: EmergencyContact) => void;
-  onDelete?: () => void;
+  onSave: (location: SafeLocation) => void;
 };
 
-export default function ContactEditorModal({
+export default function LocationEditorModal({
   visible,
-  contact,
+  location,
   onClose,
   onSave,
 }: Props) {
   const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [relation, setRelation] = useState('');
+  const [type, setType] = useState('');
 
   useEffect(() => {
-    if (contact) {
-      setName(contact.name ?? '');
-      setPhone(contact.phone ?? '');
-      setRelation(contact.relation ?? '');
+    if (location) {
+      setName(location.name ?? '');
+      setType(location.type ?? '');
     }
-  }, [contact, visible]);
+  }, [location, visible]);
 
   const handleSave = () => {
-    if (!name || !phone) return;
+    if (!name || !type) return;
 
-    const updated: EmergencyContact = {
-      ...contact,
+    const updated: SafeLocation = {
+      ...location,
       name,
-      phone,
-      relation,
+      type,
     };
 
     onSave(updated);
@@ -59,27 +55,26 @@ export default function ContactEditorModal({
           style={styles.container}
         >
           <View style={styles.modal}>
-            <Text style={styles.title}>Editar contacto</Text>
+            <Text style={styles.title}>Editar ubicación</Text>
 
             <TextInput
               style={styles.input}
-              placeholder="Nombre"
+              placeholder="Nombre (ej: Casa, Oficina)"
               value={name}
               onChangeText={setName}
             />
             <TextInput
               style={styles.input}
-              placeholder="Teléfono"
-              value={phone}
-              onChangeText={setPhone}
-              keyboardType="phone-pad"
+              placeholder="Tipo (ej: custom, work, home)"
+              value={type}
+              onChangeText={setType}
             />
-            <TextInput
-              style={styles.input}
-              placeholder="Relación"
-              value={relation}
-              onChangeText={setRelation}
-            />
+            
+            {/* Campo de dirección solo para mostrar - no editable */}
+            <View style={styles.addressContainer}>
+              <Text style={styles.addressLabel}>Dirección:</Text>
+              <Text style={styles.addressText}>{location.address}</Text>
+            </View>
 
             <View style={styles.buttonRow}>
               <TouchableOpacity onPress={onClose}>
@@ -139,9 +134,23 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
-  deleteText: {
-    color: '#e74c3c',
-    fontWeight: 'bold',
-    fontSize: 16,
+  addressContainer: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+  },
+  addressLabel: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 4,
+    fontWeight: '500',
+  },
+  addressText: {
+    fontSize: 14,
+    color: '#333',
+    lineHeight: 18,
   },
 });

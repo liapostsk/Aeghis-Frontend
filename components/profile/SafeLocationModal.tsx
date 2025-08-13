@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 import { getPlaceDetails, searchPlacesByText, searchNearbyPlaces } from "../../api/safeLocations/googlePlacesApi";
+import { searchLocationsByText } from "../../api/safeLocations/googleGeocodingApi";
 import { SafeLocation } from "../../api/types";
 import { useAuth } from "@clerk/clerk-expo";
 import { useTokenStore } from "@/lib/auth/tokenStore";
@@ -124,13 +125,32 @@ export default function SafeLocationModal({ visible, onClose, onSelectLocation }
         if (!token) {
           return Alert.alert("Error", "Failed to get token.");
         }
-        setToken(token); // <—— necesario
-        const fetched = await searchPlacesByText({ 
+        setToken(token);
+        // Primero intentamos con Google Places
+        const placesResult = await searchPlacesByText({ 
           query,
           latitude: currentLocation?.latitude,
           longitude: currentLocation?.longitude,
         });
-        setResults(fetched);
+
+        if (placesResult.length > 0) {
+          console.log("Resultados de Google Places:", placesResult);
+          setResults(placesResult);
+        } else {
+          // Si no hay resultados, intentamos con Google Geocoding
+          const geocodingResult = await searchLocationsByText(query,
+            currentLocation?.latitude,
+            currentLocation?.longitude
+          );
+          console.log("Resultados de Google Geocoding:", geocodingResult);
+          if (geocodingResult.length > 0) {
+            console.log(`Geocoding encontró ${geocodingResult.length} direcciones`);
+            setResults(geocodingResult);
+          } else {
+            console.log("No se encontraron resultados en ninguna API");
+            setResults([]);
+          }
+        }
       } catch (e) {
         console.error("Error al buscar lugares:", e);
       } finally {

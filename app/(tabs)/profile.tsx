@@ -56,11 +56,9 @@ export default function ProfileScreen() {
 
           <EmergencyContactsSection 
             contacts={emergencyContacts}
-            editable={editable}
           />
           <SafeLocationsSection 
             locations={safeLocations}
-            editable={editable}
           />
           <SettingsSection
             onDelete={handleDeleteAccount}

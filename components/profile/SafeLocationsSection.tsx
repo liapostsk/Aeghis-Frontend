@@ -1,62 +1,93 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, Pressable } from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import SafeLocationModal from '@/components/profile/SafeLocationModal';
 import { SafeLocation } from '@/api/types';
-import { createSafeLocation } from '../../api/safeLocations/safeLocationApi';
+import { createSafeLocation, deleteSafeLocation } from '../../api/safeLocations/safeLocationApi';
 import { getCurrentUser } from '@/api/user/userApi';
 import { useTokenStore } from '../../lib/auth/tokenStore';
 import { useAuth } from "@clerk/clerk-expo";
 import { useUserStore } from '@/lib/storage/useUserStorage';
-import EditItemModal from './EditItemModel';
 import { editSafeLocation } from '../../api/safeLocations/safeLocationApi';
+import LocationEditorModal from '../LocationEditorModal';
 
 interface Props {
   locations: SafeLocation[]; // Lista de ubicaciones seguras
-  editable?: boolean; // Si se puede editar o no
   onAddLocation?: (location: SafeLocation) => void; // Para pasar al padre si se desea
 }
 
-export default function SafeLocationsSection({ locations, editable, onAddLocation }: Props) {
-  // Estado para manejar la visibilidad del modal de añadir ubicación
+export default function SafeLocationsSection({ locations, onAddLocation }: Props) {
   const [modalAddSaveLocationVisible, setModalAddSaveLocationVisible] = useState(false);
-  const [localLocations, setLocalLocations] = useState<SafeLocation[]>(locations);
-
-  // Estado para manejar la visibilidad del modal de editor
-  const [modalEditorVisible, setModalEditorVisible] = useState(editable || false);
+  const [selectedLocation, setSelectedLocation] = useState<SafeLocation | null>(null);
+  const [editable, setEditable] = useState(false);
+  const [modalEditorVisible, setModalEditorVisible] = useState(false);
 
   const { getToken } = useAuth();
   const setToken = useTokenStore((state) => state.setToken);
 
+  useFocusEffect(
+    React.useCallback(() => {
+      return () => {
+        setEditable(false);
+        setModalEditorVisible(false);
+        setModalAddSaveLocationVisible(false);
+        setSelectedLocation(null);
+      };
+    }, [])
+  );
+
   const handleEditLocation = async (updated: SafeLocation) => {
     const token = await getToken();
     setToken(token);
-    await editSafeLocation(updated.id!, updated); // tu función API PUT
+
+    await editSafeLocation(updated.id!, updated);
     await getCurrentUser();
     await useUserStore.getState().refreshUserFromBackend();
   };
 
   const handleLocationAdded = async (location: SafeLocation) => {
     console.log("🧪 Nueva ubicación añadida desde modal:", location);
-    const exists = localLocations.find(
-      (loc) => loc.externalId === location.externalId
-    );
-    if (!exists) {
-      const updated = [...localLocations, location];
-      setLocalLocations(updated);
-      // Llamada a la API para guardar la ubicación
+    try {
       const token = await getToken();
-      console.log("Token:", token);
       if (!token) {
         return Alert.alert("Error", "Failed to get token.");
       }
-      setToken(token); // <—— necesario
-      await createSafeLocation(location);
-      // Actualizar el usuario en el store
+      setToken(token);
+      
+      const id = await createSafeLocation(location);
+      location.id = id; // Asignar el ID devuelto al objeto de ubicación
       await getCurrentUser();
       await useUserStore.getState().refreshUserFromBackend();
-      onAddLocation?.(location); // Notificar al componente padre si hace falta
+      onAddLocation?.(location);
+    } catch (error) {
+      console.error("Error al guardar ubicación:", error);
+      Alert.alert("Error", "No se pudo guardar la ubicación");
     }
+  };
+
+  const handleDeleteSafeLocation = async (location: SafeLocation) => {
+    Alert.alert(
+      "Eliminar Ubicación",
+      `¿Estás seguro de que quieres eliminar "${location.name}"?`,
+      [
+        {
+          text: "Cancelar",
+          style: "cancel",
+        },
+        {
+          text: "Eliminar",
+          onPress: async () => {
+            const token = await getToken();
+            setToken(token);
+            await deleteSafeLocation(location.id!); // tu función API DELETE
+            await getCurrentUser();
+            await useUserStore.getState().refreshUserFromBackend();
+          },
+          style: "destructive",
+        },
+      ]
+    );
   };
   
   /*   * Efecto para depurar las ubicaciones seleccionadas
@@ -70,15 +101,15 @@ export default function SafeLocationsSection({ locations, editable, onAddLocatio
       <View style={styles.sectionHeader}>
         <Ionicons name="location" size={18} color="#7A33CC" />
         <Text style={styles.sectionTitle}>Ubicaciones Seguras</Text>
-        {editable && (
-          <Pressable style={styles.editButton} onPress={() => setModalEditorVisible(true)}>
-            <Feather name="edit-2" size={18} color="#7A33CC" />
+        {locations.length > 1 && (
+          <Pressable style={styles.editButton} onPress={() => setEditable(!editable)}>
+            <Text style={{ color: '#7A33CC' }}>Editar</Text>
           </Pressable>
         )}
       </View>
 
-      {localLocations.map((location, index) => (
-        <View key={index} style={styles.locationItem}>
+      {locations.map((location, index) => (
+        <View key={location.id || `temp-${index}`} style={styles.locationItem}>
           <View style={styles.locationIcon}>
             <Ionicons
               name={
@@ -97,6 +128,28 @@ export default function SafeLocationsSection({ locations, editable, onAddLocatio
             <Text style={styles.locationType}>{location.type}</Text>
             <Text style={styles.locationAddress}>{location.address}</Text>
           </View>
+          {editable && (
+            <View style={styles.actionButtons}>
+              {/* Botón de editar */}
+              <Pressable 
+                style={[styles.actionButton, styles.editActionButton]} 
+                onPress={() => {
+                  console.log("Editar ubicación:", location);
+                  setSelectedLocation(location);
+                  setModalEditorVisible(true);
+                }}
+              >
+                <Feather name="edit-2" size={16} color="#7A33CC" />
+              </Pressable>
+              {/* Botón de eliminar */}
+              <Pressable 
+                style={[styles.actionButton, styles.deleteActionButton]} 
+                onPress={() => handleDeleteSafeLocation(location)}
+              >
+                <Feather name="trash-2" size={16} color="#ff4444" />
+              </Pressable>
+            </View>
+          )}
         </View>
       ))}
 
@@ -114,10 +167,13 @@ export default function SafeLocationsSection({ locations, editable, onAddLocatio
         }}
       />
 
-      <EditItemModal
+      <LocationEditorModal
         visible={modalEditorVisible}
-        locations={localLocations}
-        onClose={() => setModalEditorVisible(false)}
+        location={selectedLocation || locations[0]}
+        onClose={() => {
+          setModalEditorVisible(false);
+          setSelectedLocation(null);
+        }}
         onSave={handleEditLocation}
       />
     </View>
@@ -194,5 +250,24 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 8,
     fontSize: 16,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  actionButton: {
+    padding: 8,
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 32,
+    height: 32,
+  },
+  editActionButton: {
+    backgroundColor: '#f0f0ff',
+  },
+  deleteActionButton: {
+    backgroundColor: '#fff0f0',
   },
 });

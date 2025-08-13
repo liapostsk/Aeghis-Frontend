@@ -5,17 +5,19 @@ import {
   Text,
   TextInput,
   StyleSheet,
-  TouchableOpacity,
+  Pressable,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import TrustedGroups from '../../components/groups/TrustedGroups';
 import TemporalGroups from '../../components/groups/TemporalGroups';
 import CompanionGroups from '../../components/groups/CompanionGroups';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import CreateGroupModal from '@/components/groups/CreateGroupModal';
 
 export default function GroupsScreen() {
   const [activeTab, setActiveTab] = useState<'trusted' | 'temporals' | 'companions'>('trusted');
   const [search, setSearch] = useState('');
+  const [isCreatingGroup, setIsCreatingGroup] = useState(false);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -23,7 +25,7 @@ export default function GroupsScreen() {
       {/* Tabs */}
       <View style={styles.tabRow}>
         {['trusted', 'temporals', 'companions'].map((tab) => (
-          <TouchableOpacity
+          <Pressable
             key={tab}
             onPress={() => setActiveTab(tab as any)}
             style={[
@@ -37,7 +39,7 @@ export default function GroupsScreen() {
             ]}>
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         ))}
       </View>
 
@@ -61,9 +63,18 @@ export default function GroupsScreen() {
       </View>
 
       {/* Floating Add Button */}
-      <TouchableOpacity style={styles.fab}>
+      <Pressable style={styles.fab} onPress={() => setIsCreatingGroup(true)}>
         <Ionicons name="add" size={28} color="#fff" />
-      </TouchableOpacity>
+      </Pressable>
+      
+      {/* Create Group Modal */}
+      {isCreatingGroup && (
+        <CreateGroupModal
+          visible={isCreatingGroup}
+          onClose={() => setIsCreatingGroup(false)}
+          type={activeTab === 'trusted' ? 'trusted' : activeTab === 'temporals' ? 'temporal' : 'companion'}
+        />
+      )}
     </SafeAreaView>
   );
 }

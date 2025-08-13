@@ -12,5 +12,14 @@ export const editSafeLocation = async (id: number, safeLocation: SafeLocation): 
 };
 
 export const deleteSafeLocation = async (id: number): Promise<void> => {
-  await api.delete(`/me/safe-location/${id}/delete`);
+  console.log("🌐 API: Eliminando ubicación con ID:", id);
+  console.log("🌐 API: URL:", `/me/safe-location/${id}/delete`);
+  
+  try {
+    const response = await api.delete(`/me/safe-location/${id}/delete`);
+    console.log("✅ API: Respuesta del servidor:", response.status);
+  } catch (error) {
+    console.error("❌ API: Error en delete:", error);
+    throw error;
+  }
 };

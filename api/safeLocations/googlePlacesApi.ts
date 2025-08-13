@@ -24,7 +24,7 @@ const TYPE_TRANSLATIONS: { [key: string]: string } = {
 };
 
 // Cálculo de distancia Haversine
-const calculateDistance = (
+export const calculateDistance = (
   lat1: number,
   lon1: number,
   lat2: number,
@@ -41,7 +41,7 @@ const calculateDistance = (
   return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 1000); // metros
 };
 
-const formatDistance = (meters: number): string =>
+export const formatDistance = (meters: number): string =>
   meters < 1000 ? `${meters} m` : `${(meters / 1000).toFixed(1)} km`;
 
 // Transforma la respuesta de Google Places
