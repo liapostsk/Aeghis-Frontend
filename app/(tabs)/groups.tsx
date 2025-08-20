@@ -1,5 +1,5 @@
 // File: app/(tabs)/groups.tsx
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -12,19 +12,76 @@ import TrustedGroups from '../../components/groups/TrustedGroups';
 import TemporalGroups from '../../components/groups/TemporalGroups';
 import CompanionGroups from '../../components/groups/CompanionGroups';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import GroupActionModal from '@/components/groups/GroupActionModal';
 import CreateGroupModal from '@/components/groups/CreateGroupModal';
+import JoinGroupModal from '@/components/groups/JoinGroupModal';
+import { getUserGroups } from '@/api/group/groupApi';
+import { Group } from '@/api/types';
+import { useFocusEffect } from 'expo-router';
+import { useAuth } from '@clerk/clerk-expo';
+import { useTokenStore } from '@/lib/auth/tokenStore';
 
 export default function GroupsScreen() {
-  const [activeTab, setActiveTab] = useState<'trusted' | 'temporals' | 'companions'>('trusted');
+  const [activeTab, setActiveTab] = useState<'confianza' | 'temporals' | 'companions'>('confianza');
   const [search, setSearch] = useState('');
   const [isCreatingGroup, setIsCreatingGroup] = useState(false);
+
+  const [showActionModal, setShowActionModal] = useState(false);
+  const [isJoiningGroup, setIsJoiningGroup] = useState(false);
+
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const [cache, setCache] = useState<{[k in typeof activeTab]?: Group[]}>({});
+
+  const { getToken } = useAuth();
+  const setToken = useTokenStore((state) => state.setToken);
+
+  const typeMap: Record<typeof activeTab, string> = {
+    confianza: 'CONFIANZA',
+    temporals: 'TEMPORAL',
+    companions: 'ACOMPANAMIENTO',
+  };
+    
+  // al cambiar de tab, muestra cache inmediata y luego refresca:
+  useEffect(() => {
+    if (cache[activeTab]) setGroups(cache[activeTab]!);
+    loadGroups();
+  }, [activeTab]);
+
+  const loadGroups = async () => {
+    try {
+      setLoading(true);
+      const token = await getToken();
+      setToken(token);
+      
+      const userGroups = await getUserGroups(typeMap[activeTab]);
+      setGroups(userGroups);
+      setCache(prev => ({ ...prev, [activeTab]: userGroups }));
+      console.log('✅ Grupos cargados:', userGroups);
+    } catch (error) {
+      console.error('❌ Error cargando grupos:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateGroup = () => {
+    setShowActionModal(false);
+    setIsCreatingGroup(true);
+  };
+
+  const handleJoinGroup = () => {
+    setShowActionModal(false);
+    setIsJoiningGroup(true);
+  };
 
   return (
     <SafeAreaView style={styles.container}>
 
       {/* Tabs */}
       <View style={styles.tabRow}>
-        {['trusted', 'temporals', 'companions'].map((tab) => (
+        {['confianza', 'temporals', 'companions'].map((tab) => (
           <Pressable
             key={tab}
             onPress={() => setActiveTab(tab as any)}
@@ -57,24 +114,38 @@ export default function GroupsScreen() {
 
       {/* Groups List */}
       <View style={styles.groupList}>
-        {activeTab === 'trusted' && <TrustedGroups />}
-        {activeTab === 'temporals' && <TemporalGroups />}
-        {activeTab === 'companions' && <CompanionGroups />}
+        {activeTab === 'confianza'   && <TrustedGroups groups={groups} loading={loading} onRefresh={loadGroups} />}
+        {activeTab === 'temporals'   && <TemporalGroups groups={groups} loading={loading} onRefresh={loadGroups} />}
+        {activeTab === 'companions'  && <CompanionGroups/>}
       </View>
 
       {/* Floating Add Button */}
-      <Pressable style={styles.fab} onPress={() => setIsCreatingGroup(true)}>
+      <Pressable style={styles.fab} onPress={() => setShowActionModal(true)}>
         <Ionicons name="add" size={28} color="#fff" />
       </Pressable>
+
+      {/* Group Action Modal - Selección inicial */}
+      <GroupActionModal
+        visible={showActionModal}
+        onClose={() => setShowActionModal(false)}
+        onCreateGroup={handleCreateGroup}
+        onJoinGroup={handleJoinGroup}
+      />
       
       {/* Create Group Modal */}
       {isCreatingGroup && (
         <CreateGroupModal
           visible={isCreatingGroup}
           onClose={() => setIsCreatingGroup(false)}
-          type={activeTab === 'trusted' ? 'trusted' : activeTab === 'temporals' ? 'temporal' : 'companion'}
+          type={activeTab === 'confianza' ? 'confianza' : activeTab === 'temporals' ? 'temporal' : 'companion'}
         />
       )}
+
+      {/* Join Group Modal */}
+      <JoinGroupModal
+        visible={isJoiningGroup}
+        onClose={() => setIsJoiningGroup(false)}
+      />
     </SafeAreaView>
   );
 }

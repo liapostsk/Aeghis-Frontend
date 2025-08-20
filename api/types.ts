@@ -39,6 +39,20 @@ export interface SafeLocation {
   externalId?: string; // ID del lugar en la fuente externa (Google, etc.)
 }
 
+export interface Group {
+  id: number;
+  name: string;
+  description?: string;
+  image?: string;
+  type: typeof GROUP_TYPES[number];
+  state: string;
+  members: UserDto[];
+  createdAt: Date;
+  expirationDate?: Date;
+  lastModified: Date;
+  ownerId: number;
+}
+
 // Parámetros para buscar lugares cercanos
 export interface NearbySearchParams {
   latitude: number;
@@ -54,6 +68,12 @@ export interface TextSearchParams {
   longitude?: number;
   radius?: number;
 }
+
+export const GROUP_TYPES = [
+  "CONFIANZA",
+  "Temporals",
+  "Companions",
+] 
 
 export const SAFE_LOCATION_TYPES = [
   "hospital",

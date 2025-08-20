@@ -1,63 +1,170 @@
+import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Modal, StyleSheet, ActivityIndicator, Alert } from 'react-native';
-/*
-import QRCode from 'react-native-qrcode-svg'; // npm i react-native-qrcode-svg
-import * as Clipboard from 'expo-clipboard';
-import { createGroupWithInvite } from '../../services/groupService';
-import { useTokenStore } from '../../lib/auth/tokenStore';
-*/
+import { View, Text, TextInput, Modal, StyleSheet, Alert, Pressable, ScrollView } from 'react-native';
+import { useTokenStore } from "@/lib/auth/tokenStore";
+import { useUserStore } from "@/lib/storage/useUserStorage";
+import { useAuth } from '@clerk/clerk-expo';
+import { createGroup } from '@/api/group/groupApi';
+import { Group } from '@/api/types';
+import { create } from 'zustand';
 
 type Props = { 
     visible: boolean;
     onClose: () => void; 
-    type?: 'trusted' | 'temporal' | 'companion';
+    type?: 'confianza' | 'temporal' | 'companion';
 };
 
 export default function CreateGroupModal({ visible, onClose, type }: Props) {
-  const [name, setName] = useState('');
+  const [groupName, setGroupName] = useState('');
+  const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const [invite, setInvite] = useState<{ code: string; deepLink: string } | null>(null);
 
+  const { user, setUser } = useUserStore.getState();
+  
+  const { getToken } = useAuth();
+  const setToken = useTokenStore((state) => state.setToken);
+
+
+  const getModalTitle = () => {
+    switch (type) {
+      case 'confianza': return 'Create Trusted Group';
+      case 'temporal': return 'Create Temporal Group';
+      case 'companion': return 'Create Companion Group';
+      default: return 'Create Group';
+    }
+  };
+
+  const getModalDescription = () => {
+    switch (type) {
+      case 'confianza': return 'A secure group for close friends and family';
+      case 'temporal': return 'A temporary group that expires after a set time';
+      case 'companion': return 'A group for finding companions and activities';
+      default: return '';
+    }
+  };
+
+  const handleCreateGroup = async () => {
+    if (!groupName.trim()) {
+      Alert.alert('Error', 'Group name is required');
+      return;
+    }
+    
+    const groupData: Partial<Group> = {
+      name: groupName.trim(),
+      description: description?.trim() || getModalDescription(),
+      image: '',
+      type: 'CONFIANZA', // Default to 'CONFIANZA' if no type provided
+      ownerId: user?.id
+    };
+
+    console.log('Creating group with data:', groupData);
+    
+    try {
+      setLoading(true);
+
+      const token = await getToken();
+      setToken(token);
+      
+      const createdGroup = await createGroup(groupData);
+      
+      const completeGroup: Group = {
+        ...groupData as Group, // Convertir a Group completo
+        id: createdGroup.id,   // Asignar el ID devuelto
+        // Otros campos que el backend podría haber añadido
+        createdAt: createdGroup.createdAt,
+        state: createdGroup.state,
+        members: createdGroup.members || [],
+        ownerId: user?.id ?? (() => { throw new Error("User ID is undefined"); })(),
+        // ... cualquier otro campo del backend
+      };
+      
+      console.log('✅ Group created successfully:', completeGroup);
+
+      setGroupName('');
+      setDescription('');
+      setLoading(false);
+      onClose();
+      
+      Alert.alert('Success', 'Group created successfully!');
+      
+    } catch (error) {
+      console.error('❌ Error creating group:', error);
+      Alert.alert('Error', 'Failed to create group');
+      setLoading(false);
+    }
+  } 
+
   return (
-    <Modal visible={visible} animationType="slide" transparent>
-      <View style={styles.overlay}>
-        <View style={styles.container}>
-          <Text style={styles.title}>Crear grupo</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Nombre del grupo"
-            value={name}
-            onChangeText={setName}
-          />
-          {loading ? (
-            <ActivityIndicator size="large" color="#0000ff" />
-          ) : (
-            <>
-              <TouchableOpacity
-                style={styles.button}
-                onPress={() => {
-                  // Aquí iría la lógica para crear el grupo y generar el código de invitación
-                  setLoading(true);
-                  // Simulación de creación de grupo
-                  setTimeout(() => {
-                    setInvite({ code: '123456', deepLink: 'aegis://group/123456' });
-                    setLoading(false);
-                  }, 2000);
-                }}
-              >
-                <Text style={styles.buttonText}>Crear grupo</Text>
-              </TouchableOpacity>
-              {invite && (
-                <View style={styles.inviteContainer}>
-                  <Text style={styles.inviteCode}>Código de invitación: {invite.code}</Text>
-                  <Text style={styles.inviteLink}>Deep Link: {invite.deepLink}</Text>
-                </View>
-              )}
-            </>
-          )}
-          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Text style={styles.closeButtonText}>Cerrar</Text>
-          </TouchableOpacity>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={onClose}
+    >
+      <View style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Pressable onPress={onClose} style={styles.closeButton}>
+            <Ionicons name="close" size={24} color="#7A33CC" />
+          </Pressable>
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>{getModalTitle()}</Text>
+            <Text style={styles.headerSubtitle}>{getModalDescription()}</Text>
+          </View>
+          <View style={styles.placeholder} />
+        </View>
+
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {/* Group Name */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Group Name *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter group name"
+              placeholderTextColor="#999"
+              value={groupName}
+              onChangeText={setGroupName}
+              maxLength={50}
+            />
+            <Text style={styles.charCount}>{groupName.length}/50</Text>
+          </View>
+
+          {/* Description */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Description</Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              placeholder="What's this group about?"
+              placeholderTextColor="#999"
+              value={description}
+              onChangeText={setDescription}
+              multiline
+              numberOfLines={3}
+              maxLength={200}
+            />
+            <Text style={styles.charCount}>{description.length}/200</Text>
+          </View>
+
+          {/* Group Type Info */}
+          <View style={styles.infoBox}>
+            <Ionicons name="information-circle" size={20} color="#7A33CC" />
+            <Text style={styles.infoText}>
+              {type === 'confianza' && 'Trusted groups have enhanced security features and are perfect for family and close friends.'}
+              {type === 'temporal' && 'Temporal groups are automatically deleted after the specified duration.'}
+              {type === 'companion' && 'Companion groups help you find people with similar interests and activities.'}
+            </Text>
+          </View>
+        </ScrollView>
+
+        {/* Footer */}
+        <View style={styles.footer}>
+          <Pressable style={styles.cancelButton} onPress={onClose}>
+            <Text style={styles.cancelButtonText}>Cancel</Text>
+          </Pressable>
+          <Pressable style={styles.createButton} onPress={handleCreateGroup}>
+            <Text style={styles.createButtonText}>Create Group</Text>
+          </Pressable>
         </View>
       </View>
     </Modal>
@@ -65,69 +172,126 @@ export default function CreateGroupModal({ visible, onClose, type }: Props) {
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   container: {
-    width: '80%',
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 20,
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  header: {
+    flexDirection: 'row',
     alignItems: 'center',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
-  input: {
-    width: '100%',
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 20,
-  },
-  button: {
-    backgroundColor: '#7A33CC',
-    padding: 15,
-    borderRadius: 5,
-    width: '100%',
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  inviteContainer: {
-    marginTop: 20,
-    alignItems: 'center',
-  },
-  inviteCode: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  inviteLink: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 5,
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5E5',
   },
   closeButton: {
-    marginTop: 20,
-    backgroundColor: '#ccc',
-    padding: 10,
-    borderRadius: 5,
-    width: '100%',
+    padding: 8,
+  },
+  headerContent: {
+    flex: 1,
     alignItems: 'center',
   },
-  closeButtonText: {
-    color: '#333',
-    fontSize: 16,
+  placeholder: {
+    width: 40,
+  },
+  headerTitle: {
+    fontSize: 18,
     fontWeight: 'bold',
+    color: '#333',
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  inputGroup: {
+    marginTop: 24,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#333',
+    backgroundColor: '#FAFAFA',
+  },
+  textArea: {
+    height: 80,
+    textAlignVertical: 'top',
+  },
+  charCount: {
+    fontSize: 12,
+    color: '#999',
+    textAlign: 'right',
+    marginTop: 4,
+  },
+  helperText: {
+    fontSize: 12,
+    color: '#7A33CC',
+    marginTop: 4,
+    fontStyle: 'italic',
+  },
+  infoBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#F8F4FF',
+    padding: 16,
+    borderRadius: 12,
+    marginTop: 24,
+    marginBottom: 24,
+  },
+  infoText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#7A33CC',
+    marginLeft: 8,
+    lineHeight: 20,
+  },
+  footer: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingVertical: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E5E5',
+    gap: 12,
+  },
+  cancelButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#666',
+  },
+  createButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: '#7A33CC',
+    alignItems: 'center',
+  },
+  createButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
   },
 });

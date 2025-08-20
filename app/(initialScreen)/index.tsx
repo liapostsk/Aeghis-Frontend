@@ -16,11 +16,11 @@ export default function Index() {
   const { user, clearUser } = useUserStore();
 
   const handleLogout = async () => {
-      await signOut();
-      clearUser();
-      console.log("🔒 Sesión cerrada");
-      router.replace("/(initialScreen)");
-    };
+    await signOut();
+    clearUser();
+    console.log("🔒 Sesión cerrada");
+    router.replace("/(initialScreen)");
+  };
 
   // Redirigir a la pantalla de tabs si existe una sesion activa en clerk o en el backend
   useEffect(() => {

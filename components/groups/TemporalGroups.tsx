@@ -1,6 +1,13 @@
 // File: components/groups/TemporalGroups.tsx
 import React from 'react';
+import { Group } from '@/api/types'; 
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+
+type temporalProps = { 
+  groups: Group[];
+  loading?: boolean;
+  onRefresh?: () => void; 
+};
 
 const temporalGroups = [
   {
@@ -23,7 +30,7 @@ const temporalGroups = [
   },
 ];
 
-export default function TemporalGroups() {
+export default function TemporalGroups({ groups, loading, onRefresh }: temporalProps) {
   return (
     <View style={styles.container}>
       <FlatList
