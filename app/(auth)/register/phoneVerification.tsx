@@ -12,7 +12,7 @@ import {
   Platform,
 } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useUserStore } from "../../lib/storage/useUserStorage";
+import { useUserStore } from "../../../lib/storage/useUserStorage";
 import { useSignUp } from "@clerk/clerk-expo";
 import VerificationCodeField from "@/components/ui/VerificationCodeField";
 

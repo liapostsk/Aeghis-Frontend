@@ -12,8 +12,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from "expo-router";
 import { useSignUp } from '@clerk/clerk-expo';
-import ContinueButton from "../../components/ui/ContinueButton";
-import { useUserStore } from "../../lib/storage/useUserStorage";
+import ContinueButton from "../../../components/ui/ContinueButton";
+import { useUserStore } from "../../../lib/storage/useUserStorage";
 import PhoneNumberPicker from '@/components/ui/PhoneNumberPicker';
 
 const validatePhoneNumber = (phone: string, countryCode: string) => {

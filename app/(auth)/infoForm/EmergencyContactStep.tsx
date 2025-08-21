@@ -84,7 +84,7 @@ export default function EmergencyContactStep({
       <View style={styles.mainContent}>
         <View style={styles.imageContainer}>
           <Image
-            source={require('../../assets/images/emergencyContacts1.png')}
+            source={require('@/assets/images/emergencyContacts1.png')}
             style={styles.image}
           />
         </View>

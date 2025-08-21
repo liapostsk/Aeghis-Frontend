@@ -19,7 +19,7 @@ export default function Index() {
     await signOut();
     clearUser();
     console.log("🔒 Sesión cerrada");
-    router.replace("/(initialScreen)");
+    router.replace("/(auth)");
   };
 
   // Redirigir a la pantalla de tabs si existe una sesion activa en clerk o en el backend
@@ -43,7 +43,7 @@ export default function Index() {
           console.log("❌ No se pudo obtener token de Clerk");
           // Si no hay token, cerrar sesión para reautenticar
           await signOut();
-          router.replace("/(initialScreen)");
+          router.replace("/(auth)");
           return;
         }
         
@@ -79,7 +79,7 @@ export default function Index() {
           console.log("🔐 Token inválido - Volver a autenticar");
           // Token inválido, cerrar sesión para reautenticar
           await signOut();
-          router.replace("/(initialScreen)");
+          router.replace("/(auth)");
         } else {
           console.log("❓ Error desconocido");
         }
@@ -103,7 +103,7 @@ export default function Index() {
       await signOut();
       console.log("✅ Sesión cerrada de Clerk");
 
-      router.replace("/(initialScreen)");
+      router.replace("/(auth)");
 
     } catch (error) {
       console.error("❌ Error al borrar usuario de Clerk:", error);
@@ -111,10 +111,10 @@ export default function Index() {
       try {
         await signOut();
         console.log("✅ Sesión cerrada como fallback");
-        router.replace("/(initialScreen)");
+        router.replace("/(auth)");
       } catch (signOutError) {
         console.error("❌ Error cerrando sesión:", signOutError);
-        router.replace("/(initialScreen)");
+        router.replace("/(auth)");
       }
     }
   };
@@ -137,7 +137,7 @@ export default function Index() {
     
       <Pressable 
         style={styles.buttonSignUp}
-        onPress={() => router.push("/(onboarding)")}
+        onPress={() => router.push("/(auth)/register")}
       >
         <Text style={styles.textSignUp}>Sign Up</Text>
       </Pressable>
@@ -146,7 +146,7 @@ export default function Index() {
         <Text style={{ color: 'white', fontSize: 18 }}>
           Already have an account?{'  '}
         </Text>
-        <Pressable onPress={() => router.push("/(login)")}>
+        <Pressable onPress={() => router.push("/(auth)/login")}>
           <Text style={{ color: "#0003B2", fontSize: 18, fontWeight: 'bold' }}>
             Log In
           </Text>

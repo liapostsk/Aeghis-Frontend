@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable, StyleSheet, Animated, Dimensions } from 'react-native';
 import { router } from 'expo-router';
-import { useUserStore } from '../../lib/storage/useUserStorage';
-import { useTokenStore } from '../../lib/auth/tokenStore';
-import { mapUserToDto } from '../../api/user/mapper';
-import { createUser } from '../../api/user/userApi';
+import { useUserStore } from '@/lib/storage/useUserStorage';
+import { useTokenStore } from '@/lib/auth/tokenStore';
+import { mapUserToDto } from '@/api/user/mapper';
+import { createUser } from '@/api/user/userApi';
 import { Alert } from 'react-native';
 import { useAuth } from '@clerk/clerk-expo';
 

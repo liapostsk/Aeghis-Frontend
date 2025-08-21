@@ -36,6 +36,7 @@ export default function HomeLayout() {
       <Tabs.Screen
         name="index"
         options={{
+          tabBarLabel: "Map",
           title: "Map",
           headerShown: false,
           tabBarIcon: ({ color, focused }) => (
@@ -47,6 +48,7 @@ export default function HomeLayout() {
       <Tabs.Screen
         name="groups"
         options={{
+          tabBarLabel: "Groups",
           title: "Groups",
           headerShown: false,
           tabBarIcon: ({ color, focused }) => (
@@ -56,9 +58,10 @@ export default function HomeLayout() {
       />
       
       <Tabs.Screen
-        name="profile"
+        name="profile/index"
         options={{
           headerShown: false,
+          tabBarLabel: "Profile",
           title: "Profile",
           headerTransparent: true,
           headerTintColor: '#fff',

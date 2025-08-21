@@ -11,11 +11,11 @@ import {
   View,
   ActivityIndicator
 } from 'react-native';
-import { useUserStore } from "../../lib/storage/useUserStorage";
+import { useUserStore } from "../../../lib/storage/useUserStorage";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from "expo-router";
 import { useSignUp } from '@clerk/clerk-expo';
-import ContinueButton from "../../components/ui/ContinueButton";
+import ContinueButton from "../../../components/ui/ContinueButton";
 
 const validateEmail = (email: string) => {
   const trimmedEmail = email.trim();

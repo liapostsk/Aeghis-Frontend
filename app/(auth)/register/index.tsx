@@ -13,7 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Icon from '@expo/vector-icons/Ionicons';
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { router } from "expo-router";
-import { useUserStore } from "../../lib/storage/useUserStorage";
+import { useUserStore } from "../../../lib/storage/useUserStorage";
 
 const MINIMUM_AGE = 18; // Minimum age requirement
 const DATE_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
@@ -135,7 +135,7 @@ export default function AgeScreen() {
             />
 
             <Image
-                source={require("../../assets/images/curiosity.png")}
+                source={require("../../../assets/images/curiosity.png")}
                 style={styles.image}
             />
 

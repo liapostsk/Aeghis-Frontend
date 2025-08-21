@@ -24,7 +24,7 @@ export default function MapScreen() {
   const handleLogout = async () => {
     await signOut();
     clearUser();
-    router.replace("/(initialScreen)");
+    router.replace("/(auth)");
   };
 
   /*

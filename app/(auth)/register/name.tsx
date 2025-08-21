@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import React, { useState } from "react";
 import { router } from "expo-router";
-import { useUserStore } from "../../lib/storage/useUserStorage";
+import { useUserStore } from "../../../lib/storage/useUserStorage";
 
 const validateName = (name: string) => {
   const trimmedName = name.trim();
@@ -79,7 +79,7 @@ export default function NameScreen() {
 
           <View style={styles.imageContainer}>
             <Image
-                source={require("../../assets/images/gettingCoffee.png")}
+                source={require("../../../assets/images/gettingCoffee.png")}
                 style={styles.image}
             />
           </View>

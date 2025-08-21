@@ -68,7 +68,7 @@ export default function TrustedGroups({groups, loading, onRefresh}: trustedProps
           const unreadCount = 1;
           const status = stateLabel(item.state);
           return (
-            <Pressable style={styles.card} onPress={() => router.push("/chat")}>
+            <Pressable style={styles.card} onPress={() => router.push("/(tabs)/groups/chat")}>
               <View style={styles.avatar}>
                 <Text style={styles.avatarText}>{initials}</Text>
               </View>

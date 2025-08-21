@@ -57,7 +57,7 @@ export default function ProfileImageStep({
 
       <View style={styles.imageContainer}>
         <Image
-          source={require("../../assets/images/addPicture.png")}
+          source={require("@/assets/images/addPicture.png")}
           style={styles.image}
         />
 

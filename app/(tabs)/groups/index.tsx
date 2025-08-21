@@ -8,9 +8,9 @@ import {
   Pressable,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import TrustedGroups from '../../components/groups/TrustedGroups';
-import TemporalGroups from '../../components/groups/TemporalGroups';
-import CompanionGroups from '../../components/groups/CompanionGroups';
+import TrustedGroups from '@/components/groups/TrustedGroups';
+import TemporalGroups from '@/components/groups/TemporalGroups';
+import CompanionGroups from '@/components/groups/CompanionGroups';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import GroupActionModal from '@/components/groups/GroupActionModal';
 import CreateGroupModal from '@/components/groups/CreateGroupModal';
