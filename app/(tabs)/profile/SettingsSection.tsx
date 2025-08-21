@@ -21,7 +21,7 @@ export default function SettingsSection({onDelete, onLogout}: settingsSectionPro
   const handleShowUserInfo = () => {
     setShowUserInfo(true);
     setShowLogoutModal(false);
-    router.push('/(configuration)/account');
+    router.push('/(tabs)/profile/account');
   };
 
   const handleConfirmLogout = () => {
@@ -45,7 +45,7 @@ export default function SettingsSection({onDelete, onLogout}: settingsSectionPro
 
         <Pressable
           style={styles.settingItem}
-          onPress={() => router.push('/(configuration)/account')}
+          onPress={() => router.push('/(tabs)/profile/account')}
         >
           <Ionicons name="person-circle" size={24} color="#7A33CC" />
           <Text style={styles.settingText}>Cuenta</Text>

@@ -1,18 +1,19 @@
-import { useAuth } from "@clerk/clerk-expo";
-import { router, Stack } from "expo-router";
-import React from "react";
-import { Pressable } from "react-native";
+import { router, Stack } from 'expo-router';
+import React from 'react';
+import { Pressable } from 'react-native';
 import Icon from '@expo/vector-icons/Ionicons';
 
 
-export default function OnboardingLayout() {
-  const { isLoaded } = useAuth();
-    
-  // Esperamos a que Clerk cargue
-  if (!isLoaded) return null;
-
+export default function ProfileLayout() {
   return (
     <Stack>
+      <Stack.Screen 
+        name="index" 
+        options={{ 
+          title: 'Profile',
+          headerShown: false 
+        }} 
+      />
       <Stack.Screen 
         name="account"
         options={{

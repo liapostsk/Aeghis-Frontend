@@ -58,7 +58,7 @@ export default function HomeLayout() {
       />
       
       <Tabs.Screen
-        name="profile/index"
+        name="profile"
         options={{
           headerShown: false,
           tabBarLabel: "Profile",

@@ -7,8 +7,7 @@ import { useAuth } from '@clerk/clerk-expo';
 import ProfileHeader from '@/components/profile/ProfileHeader';
 import EmergencyContactsSection from '@/components/profile/EmergencyContactsSection';
 import SafeLocationsSection from '../../../components/profile/SafeLocationsSection';
-import SettingsSection from '../../(configuration)/SettingsSection';
-
+import SettingsSection from './SettingsSection';
 
 export default function ProfileScreen() {
   const router = useRouter();
