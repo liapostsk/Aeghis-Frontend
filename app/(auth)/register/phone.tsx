@@ -77,7 +77,7 @@ export default function PhoneScreen() {
       await signUp.create({ phoneNumber: fullPhone });
       await signUp.preparePhoneNumberVerification();
       setUser({ ...user, phone: fullPhone });
-      router.push("/(onboarding)/phoneVerification");
+      router.push("/(auth)/register/phoneVerification");
     } catch (error: any) {
       console.error("Error sending SMS:", error);
       const errorMessage = error?.errors?.[0]?.message || "Failed to send SMS. Please try again.";

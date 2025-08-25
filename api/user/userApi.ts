@@ -2,6 +2,7 @@ import api from "../client";
 import { UserDto } from "../types";
 
 export const getCurrentUser = async (): Promise<UserDto> => {
+  console.log("📡 API: Llamando /user/me...");
   const response = await api.get("/user/me");
   return response.data;
 };

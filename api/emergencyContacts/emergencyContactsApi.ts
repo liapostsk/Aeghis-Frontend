@@ -3,7 +3,9 @@ import { EmergencyContact } from "../types";
 
 
 export const createEmergencyContact = async (emergencyContact: EmergencyContact): Promise<number> => {
+  console.log("📡 API: Enviando contacto:", emergencyContact);
   const response = await api.post("/me/emergency-contact/add", emergencyContact);
+  console.log("📡 API: Respuesta de creación:", response.data);
   return response.data;
 };
 

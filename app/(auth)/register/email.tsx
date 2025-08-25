@@ -67,7 +67,7 @@ export default function EmailScreen() {
       await signUp.update({ emailAddress: cleanEmail });
       await signUp.prepareEmailAddressVerification();
       setUser({ ...user, email: cleanEmail });
-      router.push("/(onboarding)/emailVerification");
+      router.push("/(auth)/register/emailVerification");
     } catch (error: any) {
       console.error("Error sending verification code:", error);
       const errorMessage = error?.errors?.[0]?.message || "Failed to send verification code.";

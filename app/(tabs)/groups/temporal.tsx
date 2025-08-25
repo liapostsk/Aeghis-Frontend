@@ -1,7 +1,10 @@
 // File: components/groups/TemporalGroups.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import { Group } from '@/api/types'; 
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { useGroupSeach } from './_layout';
+import { useAuth } from '@clerk/clerk-expo';
+import { useTokenStore } from '@/lib/auth/tokenStore';
 
 type temporalProps = { 
   groups: Group[];
@@ -30,7 +33,15 @@ const temporalGroups = [
   },
 ];
 
-export default function TemporalGroups({ groups, loading, onRefresh }: temporalProps) {
+export default function TemporalGroups() {
+
+  const { search } = useGroupSeach(); // valor compartido del header
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [loading, setLoading] = useState(false);
+  
+  const { getToken } = useAuth();
+  const setToken = useTokenStore((state) => state.setToken);
+
   return (
     <View style={styles.container}>
       <FlatList

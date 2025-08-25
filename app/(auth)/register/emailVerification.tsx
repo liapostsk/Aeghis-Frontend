@@ -94,7 +94,7 @@ export default function EmailVerificationScreen() {
           setUser({ ...user, email: user?.email || "No email available" });
           
           Alert.alert("Success", "Email verified successfully!");
-          router.push('/(iniForm)/information');
+          router.push('/(auth)/infoForm/information');
           
         } catch (navigationError: any) {
           console.error("Error después de verificación exitosa:", navigationError);

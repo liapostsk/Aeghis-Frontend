@@ -143,7 +143,7 @@ export default function AgeScreen() {
             <Pressable 
                 style={styles.continueButton} 
                 onPress={() => {
-                    router.push("/(onboarding)/name");
+                    router.push("/(auth)/register/name");
                 }}
             >
                 <Text style={styles.continueButtonText}>Continue</Text>

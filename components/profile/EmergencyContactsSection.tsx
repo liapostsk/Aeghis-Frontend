@@ -66,6 +66,7 @@ export default function EmergencyContactsSection({ contacts }: Props) {
           onPress: async () => {
             const token = await getToken();
             setToken(token);
+            console.log("Eliminando contacto de emergencia con ID:", contact.id);
             await deleteEmergencyContact(contact.id!); // tu función API DELETE
             await getCurrentUser();
             await useUserStore.getState().refreshUserFromBackend();
@@ -80,10 +81,15 @@ export default function EmergencyContactsSection({ contacts }: Props) {
     const token = await getToken();
     setToken(token);
     const id = await createEmergencyContact(contact);
-    contact.id = id; // Asignar el ID devuelto al objeto de contacto
+    console.log("Nuevo contacto de emergencia creado con ID:", id);
+    const contactWithId: EmergencyContact = {
+      ...contact,
+      id: id
+    };
+    console.log("✅ Contacto con ID:", contactWithId);
+
     await getCurrentUser();
     await useUserStore.getState().refreshUserFromBackend();
-    
   };
 
   return (
@@ -91,15 +97,17 @@ export default function EmergencyContactsSection({ contacts }: Props) {
       <View style={styles.sectionHeader}>
         <FontAwesome5 name="phone-alt" size={18} color="#7A33CC" />
         <Text style={styles.sectionTitle}>Contactos de Emergencia</Text>
-          {contacts.length > 1 && (
-            <Pressable style={styles.editButton} onPress={() => setEditable(!editable)}>
-              <Text style={{ color: '#7A33CC' }}>Editar</Text>
-            </Pressable>
-          )}
+          <Pressable style={styles.editButton} onPress={() => setEditable(!editable)}>
+            <Text style={{ color: '#7A33CC' }}>Editar</Text>
+          </Pressable>
       </View>
 
       {contacts.map((contact, index) => (
-        <View key={index} style={styles.contactItem}>
+        <View key={contact.id || `temp-${index}`} style={styles.contactItem}>
+          {/* Mostrar ID del contacto en la esquina superior derecha, es DEBUGG */}
+          <Text style={{ fontSize: 8, color: 'red', position: 'absolute', top: 0, right: 0 }}>
+            ID: {contact.id || 'SIN ID'}
+          </Text>
           <View style={styles.contactIcon}>
             <Ionicons name="person" size={24} color="#7A33CC" />
           </View>
@@ -123,12 +131,14 @@ export default function EmergencyContactsSection({ contacts }: Props) {
               </Pressable>
               
               {/* Botón de eliminar */}
-              <Pressable 
-                style={[styles.actionButton, styles.deleteActionButton]} 
-                onPress={() => handleDeleteContact(contact)}
-              >
-                <Feather name="trash-2" size={16} color="#ff4444" />
-              </Pressable>
+              {contacts.length > 1 && (
+                <Pressable 
+                  style={[styles.actionButton, styles.deleteActionButton]} 
+                  onPress={() => handleDeleteContact(contact)}
+                >
+                  <Feather name="trash-2" size={16} color="#ff4444" />
+                </Pressable>
+              )}
             </View>
           )}
 

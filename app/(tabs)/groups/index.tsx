@@ -1,213 +1,186 @@
-// File: app/(tabs)/groups.tsx
-import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  Pressable,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import TrustedGroups from '@/components/groups/TrustedGroups';
-import TemporalGroups from '@/components/groups/TemporalGroups';
-import CompanionGroups from '@/components/groups/CompanionGroups';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import GroupActionModal from '@/components/groups/GroupActionModal';
-import CreateGroupModal from '@/components/groups/CreateGroupModal';
-import JoinGroupModal from '@/components/groups/JoinGroupModal';
+// app/(tabs)/groups/trusted.tsx
+import React, { useEffect, useMemo, useState,  } from 'react';
+import type { Group } from '@/api/types';
 import { getUserGroups } from '@/api/group/groupApi';
-import { Group } from '@/api/types';
-import { useFocusEffect } from 'expo-router';
+import { useGroupSeach } from './_layout'; // <- del Provider en groups/_layout
+import { router } from 'expo-router';
+import GroupsButton from '@/components/groups/GroupsButton';
+import { View, Text, StyleSheet, FlatList, RefreshControl, Pressable } from 'react-native';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 
-export default function GroupsScreen() {
-  const [activeTab, setActiveTab] = useState<'confianza' | 'temporals' | 'companions'>('confianza');
-  const [search, setSearch] = useState('');
-  const [isCreatingGroup, setIsCreatingGroup] = useState(false);
+// Helpers
+const getInitials = (name?: string) => {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/).slice(0, 2);
+  return parts.map(p => p[0]?.toUpperCase()).join('');
+};
 
-  const [showActionModal, setShowActionModal] = useState(false);
-  const [isJoiningGroup, setIsJoiningGroup] = useState(false);
+const stateLabel = (state?: string) => {
+  switch (state) {
+    case 'ACTIVO': return 'Active';
+    case 'INACTIVO': return 'Inactive';
+    case 'CERRADO': return 'Closed';
+    case 'PENDIENTE': return 'Pending';
+    default: return state ?? '';
+  }
+};
 
+export default function TrustedScreen() {
+  const { search } = useGroupSeach();        // valor compartido del header
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(false);
-
-  const [cache, setCache] = useState<{[k in typeof activeTab]?: Group[]}>({});
 
   const { getToken } = useAuth();
   const setToken = useTokenStore((state) => state.setToken);
 
-  const typeMap: Record<typeof activeTab, string> = {
-    confianza: 'CONFIANZA',
-    temporals: 'TEMPORAL',
-    companions: 'ACOMPANAMIENTO',
-  };
-    
-  // al cambiar de tab, muestra cache inmediata y luego refresca:
-  useEffect(() => {
-    if (cache[activeTab]) setGroups(cache[activeTab]!);
-    loadGroups();
-  }, [activeTab]);
 
-  const loadGroups = async () => {
+  const load = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
       const token = await getToken();
       setToken(token);
-      
-      const userGroups = await getUserGroups(typeMap[activeTab]);
-      setGroups(userGroups);
-      setCache(prev => ({ ...prev, [activeTab]: userGroups }));
-      console.log('✅ Grupos cargados:', userGroups);
-    } catch (error) {
-      console.error('❌ Error cargando grupos:', error);
+      const data = await getUserGroups('CONFIANZA'); // <- tipo fijo para esta screen
+      setGroups(data ?? []);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCreateGroup = () => {
-    setShowActionModal(false);
-    setIsCreatingGroup(true);
-  };
+  useEffect(() => { load(); }, []);
 
-  const handleJoinGroup = () => {
-    setShowActionModal(false);
-    setIsJoiningGroup(true);
-  };
+  // Filtrado local por el search del header
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return groups;
+    return groups.filter(g =>
+      (g.name ?? '').toLowerCase().includes(q)
+      // añade otros campos si te interesa buscar por más cosas
+    );
+  }, [groups, search]);
 
   return (
-    <SafeAreaView style={styles.container}>
-
-      {/* Tabs */}
-      <View style={styles.tabRow}>
-        {['confianza', 'temporals', 'companions'].map((tab) => (
-          <Pressable
-            key={tab}
-            onPress={() => setActiveTab(tab as any)}
-            style={[
-              styles.tabButton,
-              activeTab === tab && styles.tabButtonActive,
-            ]}
-          >
-            <Text style={[
-              styles.tabText,
-              activeTab === tab && styles.tabTextActive
-            ]}>
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
-
-      {/* Search */}
-      <View style={styles.searchBar}>
-        <Ionicons name="search" size={20} color="#7A33CC" />
-        <TextInput
-          placeholder="Search"
-          placeholderTextColor="#999"
-          style={styles.searchInput}
-          value={search}
-          onChangeText={setSearch}
-        />
-      </View>
-
-      {/* Groups List */}
-      <View style={styles.groupList}>
-        {activeTab === 'confianza'   && <TrustedGroups groups={groups} loading={loading} onRefresh={loadGroups} />}
-        {activeTab === 'temporals'   && <TemporalGroups groups={groups} loading={loading} onRefresh={loadGroups} />}
-        {activeTab === 'companions'  && <CompanionGroups/>}
-      </View>
-
-      {/* Floating Add Button */}
-      <Pressable style={styles.fab} onPress={() => setShowActionModal(true)}>
-        <Ionicons name="add" size={28} color="#fff" />
-      </Pressable>
-
-      {/* Group Action Modal - Selección inicial */}
-      <GroupActionModal
-        visible={showActionModal}
-        onClose={() => setShowActionModal(false)}
-        onCreateGroup={handleCreateGroup}
-        onJoinGroup={handleJoinGroup}
+    <View style={styles.container}>
+      <Text style={styles.note}>This groups are permanent</Text>
+      <FlatList
+        data={groups}
+        keyExtractor={(item) => String(item.id)}
+        refreshControl={
+          <RefreshControl refreshing={!!loading} onRefresh={load ?? (() => {})} />
+        }
+        ListEmptyComponent={
+          <View style={styles.empty}>
+            <Text style={styles.emptyTitle}>No trusted groups yet</Text>
+            <Text style={styles.emptySubtitle}>Create one with the + button</Text>
+          </View>
+        }
+        renderItem={({ item }) => {
+          const initials = getInitials(item.name);
+          const lastMessage = "You: I'm arriving";
+          const unreadCount = 1;
+          const status = stateLabel(item.state);
+          return (
+            <Pressable style={styles.card} onPress={() => router.push("/(tabs)/groups/chat")}>
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>{initials}</Text>
+              </View>
+              <View style={styles.info}>
+                <Text style={styles.groupName}>{item.name}</Text>
+                <Text style={styles.lastMessage}>{lastMessage}</Text>
+                <Text style={styles.status}>{status}</Text>
+              </View>
+              {unreadCount > 0 && (
+                <View style={styles.unreadBadge}>
+                  <Text style={styles.unreadText}>{unreadCount}</Text>
+                </View>
+              )}
+            </Pressable>
+          );
+        }}
       />
-      
-      {/* Create Group Modal */}
-      {isCreatingGroup && (
-        <CreateGroupModal
-          visible={isCreatingGroup}
-          onClose={() => setIsCreatingGroup(false)}
-          type={activeTab === 'confianza' ? 'confianza' : activeTab === 'temporals' ? 'temporal' : 'companion'}
-        />
-      )}
-
-      {/* Join Group Modal */}
-      <JoinGroupModal
-        visible={isJoiningGroup}
-        onClose={() => setIsJoiningGroup(false)}
+      <GroupsButton 
+        kind="confianza"
+        onSuccess={load}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  header: {
-    backgroundColor: '#7A33CC',
-    padding: 16,
-    alignItems: 'center',
-  },
-  headerTitle: {
-    color: '#fff',
-    fontSize: 25,
-    fontWeight: 'bold',
-  },
-  tabRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    backgroundColor: '#EEE6F7',
-  },
-  tabButton: {
-    paddingVertical: 12,
-  },
-  tabButtonActive: {
-    borderBottomWidth: 2,
-    borderBottomColor: '#7A33CC',
-  },
-  tabText: {
-    color: '#888',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  tabTextActive: {
-    color: '#7A33CC',
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F1EAFD',
-    margin: 16,
-    paddingHorizontal: 12,
-    borderRadius: 10,
-  },
-  searchInput: {
-    flex: 1,
-    padding: 10,
-    fontSize: 18,
-    color: '#333',
-  },
-  groupList: {
-    flex: 1,
+  container: {
     paddingHorizontal: 16,
+    paddingTop: 12,
   },
-  fab: {
-    backgroundColor: '#F5C80E',
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+  note: {
+    fontSize: 17,
+    color: '#888',
+    marginBottom: 8,
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    elevation: 1,
+    shadowColor: 'black',
+    shadowOffset: { width: 0, height: 1 },
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
+  },
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#e5d9f2',
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: '80%',
-    marginBottom: '20%',
+    marginRight: 12,
+  },
+  avatarText: {
+    color: '#7A33CC',
+    fontWeight: 'bold',
+  },
+  info: {
+    flex: 1,
+  },
+  groupName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 2,
+  },
+  lastMessage: {
+    fontSize: 14,
+    color: '#444',
+  },
+  status: {
+    fontSize: 13,
+    color: '#28a745',
+  },
+  unreadBadge: {
+    backgroundColor: '#7A33CC',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  unreadText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  empty: { 
+    paddingVertical: 40, 
+    alignItems: 'center' 
+  },
+  emptyTitle: { 
+    fontWeight: 'bold', 
+    fontSize: 16, 
+    color: '#333' 
+  },
+  emptySubtitle: { 
+    color: '#777', 
+    marginTop: 4 
   },
 });

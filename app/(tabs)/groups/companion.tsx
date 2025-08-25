@@ -1,4 +1,3 @@
-// File: components/groups/CompanionsGroups.tsx
 import React from 'react';
 import {
   View,
@@ -32,6 +31,7 @@ const companionGroups = [
 ];
 
 export default function CompanionsGroups() {
+  console.log('Rendering CompanionGroups');
   return (
     <View style={styles.container}>
       <FlatList

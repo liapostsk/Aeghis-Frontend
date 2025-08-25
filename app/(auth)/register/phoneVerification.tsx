@@ -70,7 +70,7 @@ export default function PhoneVerificationScreen() {
       const result = await signUp.attemptPhoneNumberVerification({ code: value });
 
       if (result.status === "complete" || result.status === "missing_requirements") {
-        router.push("/(onboarding)/email");
+        router.push("/(auth)/register/email");
       } else {
         Alert.alert("Error", "Verification failed. Please try again.");
       }

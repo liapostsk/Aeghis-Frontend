@@ -56,7 +56,7 @@ export default function NameScreen() {
 
   const handleContinue = () => {
     if (canContinue) {
-      router.push("/(onboarding)/phone");
+      router.push("/(auth)/register/phone");
     } else {
       Alert.alert("Invalid Name", validation.message);
     }
