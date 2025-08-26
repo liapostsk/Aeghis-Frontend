@@ -5,9 +5,9 @@ import { useRouter } from 'expo-router';
 import { useUserStore } from '@/lib/storage/useUserStorage';
 import { useAuth } from '@clerk/clerk-expo';
 import ProfileHeader from '@/components/profile/ProfileHeader';
+import SettingsSection from '@/components/profile/SettingsSection';
 import EmergencyContactsSection from '@/components/profile/EmergencyContactsSection';
-import SafeLocationsSection from '../../../components/profile/SafeLocationsSection';
-import SettingsSection from './SettingsSection';
+import SafeLocationsSection from '@/components/profile/SafeLocationsSection';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -52,7 +52,6 @@ export default function ProfileScreen() {
             onToggleMenu={toggleMenu}
             onEdit={handleEditProfile}
           />
-
           <EmergencyContactsSection 
             contacts={emergencyContacts}
           />
@@ -63,7 +62,6 @@ export default function ProfileScreen() {
             onDelete={handleDeleteAccount}
             onLogout={handleLogout}
           />
-
           <View style={{ height: 30 }} />
       </ScrollView>
     </SafeAreaView>

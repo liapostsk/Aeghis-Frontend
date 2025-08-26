@@ -11,7 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useUserStore } from '@/lib/storage/useUserStorage';
 import { EmergencyContact } from '@/api/types';
-import EmergencyContactAddModal from '@/components/EmergencyContactAddModal';
+import EmergencyContactAddModal from '@/components/emergencyContact/EmergencyContactAddModal';
 
 export default function EmergencyContactStep({
   onNext,

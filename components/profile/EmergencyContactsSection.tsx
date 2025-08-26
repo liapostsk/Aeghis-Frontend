@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Alert } from 'react-native';
 import { Ionicons, FontAwesome5, Feather } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import ContactEditorModal from '../ContactEditorModal';
+import ContactEditorModal from '../emergencyContact/ContactEditorModal';
 import { EmergencyContact } from '@/api/types';
 import { useTokenStore } from '../../lib/auth/tokenStore';
 import { useAuth } from "@clerk/clerk-expo";
@@ -11,7 +11,7 @@ import { useUserStore } from '@/lib/storage/useUserStorage';
 import { deleteEmergencyContact, editEmergencyContact } from '@/api/emergencyContacts/emergencyContactsApi';
 import { createEmergencyContact } from '@/api/emergencyContacts/emergencyContactsApi';
 import { getCurrentUser } from '@/api/user/userApi';
-import EmergencyContactAddModal from '../EmergencyContactAddModal';
+import EmergencyContactAddModal from '../emergencyContact/EmergencyContactAddModal';
 
 
 interface Props {

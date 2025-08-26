@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from '@expo/vector-icons';
-import SafeLocationModal from '@/components/profile/SafeLocationModal';
+import SafeLocationModal from '@/components/safeLocations/SafeLocationModal';
 import { SafeLocation } from '@/api/types';
 import { useUserStore } from '@/lib/storage/useUserStorage';
 

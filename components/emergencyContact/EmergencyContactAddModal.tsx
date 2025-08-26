@@ -12,8 +12,8 @@ import {
   Alert,
 } from 'react-native';
 import * as Contacts from 'expo-contacts';
-import ManualContactForm from './onboarding/ManualContactForm';
-import ContactList from './onboarding/ContactList';
+import ManualContactForm from './ManualContactForm';
+import ContactList from './ContactList';
 import { EmergencyContact } from '@/api/types';
 
 const { height } = Dimensions.get('window');
@@ -90,7 +90,7 @@ export default function EmergencyContactAddModal({ visible, onClose, onAddContac
             <Text style={styles.modalTitle}>Nuevo contacto de emergencia</Text>
             <Text style={styles.modalText}>¡Añade al menos uno!</Text>
             <Image
-              source={require('../assets/images/think.png')}
+              source={require('@/assets/images/think.png')}
               style={styles.imageModal}
             />
             <Pressable

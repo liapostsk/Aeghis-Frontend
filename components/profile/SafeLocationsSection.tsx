@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, Pressable } from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import SafeLocationModal from '@/components/profile/SafeLocationModal';
+import SafeLocationModal from '@/components/safeLocations/SafeLocationModal';
 import { SafeLocation } from '@/api/types';
 import { createSafeLocation, deleteSafeLocation } from '../../api/safeLocations/safeLocationApi';
 import { getCurrentUser } from '@/api/user/userApi';
@@ -10,7 +10,7 @@ import { useTokenStore } from '../../lib/auth/tokenStore';
 import { useAuth } from "@clerk/clerk-expo";
 import { useUserStore } from '@/lib/storage/useUserStorage';
 import { editSafeLocation } from '../../api/safeLocations/safeLocationApi';
-import LocationEditorModal from '../LocationEditorModal';
+import LocationEditorModal from '../safeLocations/LocationEditorModal';
 
 interface Props {
   locations: SafeLocation[]; // Lista de ubicaciones seguras
@@ -101,11 +101,9 @@ export default function SafeLocationsSection({ locations, onAddLocation }: Props
       <View style={styles.sectionHeader}>
         <Ionicons name="location" size={18} color="#7A33CC" />
         <Text style={styles.sectionTitle}>Ubicaciones Seguras</Text>
-        {locations.length > 1 && (
           <Pressable style={styles.editButton} onPress={() => setEditable(!editable)}>
             <Text style={{ color: '#7A33CC' }}>Editar</Text>
           </Pressable>
-        )}
       </View>
 
       {locations.map((location, index) => (
@@ -142,12 +140,14 @@ export default function SafeLocationsSection({ locations, onAddLocation }: Props
                 <Feather name="edit-2" size={16} color="#7A33CC" />
               </Pressable>
               {/* Botón de eliminar */}
-              <Pressable 
-                style={[styles.actionButton, styles.deleteActionButton]} 
-                onPress={() => handleDeleteSafeLocation(location)}
-              >
-                <Feather name="trash-2" size={16} color="#ff4444" />
-              </Pressable>
+              {locations.length > 1 && (
+                <Pressable 
+                  style={[styles.actionButton, styles.deleteActionButton]} 
+                  onPress={() => handleDeleteSafeLocation(location)}
+                >
+                  <Feather name="trash-2" size={16} color="#ff4444" />
+                </Pressable>
+              )}
             </View>
           )}
         </View>
