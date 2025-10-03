@@ -14,19 +14,19 @@ import {
 import * as Contacts from 'expo-contacts';
 import ManualContactForm from './ManualContactForm';
 import ContactList from './ContactList';
-import { EmergencyContact } from '@/api/types';
+import { Contact } from '@/api/types';
 
 const { height } = Dimensions.get('window');
 
 type Props = {
   visible: boolean;
   onClose: () => void;
-  onAddContact: (contact: EmergencyContact) => void;
+  onAddContact: (contact: Contact) => void;
 };
 
 export default function EmergencyContactAddModal({ visible, onClose, onAddContact }: Props) {
   const [modalMode, setModalMode] = useState<'initial' | 'manual' | 'contacts'>('initial');
-  const [contacts, setContacts] = useState<any[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
 
   const getContactsFromDevice = async () => {
     const { status } = await Contacts.requestPermissionsAsync();
@@ -37,14 +37,23 @@ export default function EmergencyContactAddModal({ visible, onClose, onAddContac
 
     const { data } = await Contacts.getContactsAsync({
       fields: [Contacts.Fields.Name, Contacts.Fields.PhoneNumbers],
+      sort: Contacts.SortTypes.FirstName,
     });
 
-    const filtered = data.filter(c => (c.phoneNumbers?.length ?? 0) > 0);
-    if (filtered.length > 0) {
-      setContacts(filtered);
-    } else {
-      Alert.alert('Sin contactos válidos', 'No se encontraron contactos con teléfono.');
-    }
+    const transformedContacts = data
+        .filter(c => c.name && c.phoneNumbers?.length)
+        .map(c => ({
+          id: c.id || Math.random().toString(),
+          name: c.name!,
+          phone: c.phoneNumbers![0].number!.replace(/[^\+\d]/g, ''), // Limpiar número
+        }));
+
+      if (transformedContacts.length > 0) {
+        setContacts(transformedContacts);
+        setModalMode('contacts');
+      } else {
+        Alert.alert('Sin contactos válidos', 'No se encontraron contactos con teléfono.');
+      }
   };
 
   const handleCancel = () => {

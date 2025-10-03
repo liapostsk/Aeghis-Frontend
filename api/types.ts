@@ -8,7 +8,8 @@ export type UserDto = {
   dateOfBirth: Date;
   acceptedPrivacyPolicy: boolean;
   safeLocations: SafeLocation[];
-  emergencyContacts: EmergencyContact[];
+  emergencyContacts?: EmergencyContact[];
+  externalContacts?: ExternalContact[];
 };
   
 export type ApiError = {
@@ -16,16 +17,41 @@ export type ApiError = {
   message: string;
 };
 
-export interface EmergencyContact { // Si el contacto es usuario, emergencyContactId es el id del usuario
-  // Si no es usuario, se rellena la informacion solo de name y phone
-  id?: number; // no se usa en el backend, solo para el frontend
-  ownerId?: number;
-  emergencyContactId?: number;
+export interface Contact {
+  phone: string;
   name?: string;
-  phone?: string;
-  confirmed: boolean;
-  relation?: string; // Relación con el usuario (padre, madre, amigo, etc.)
+  relation?: string;
 }
+
+export type ContactStatus = "PENDING" | "CONFIRMED" | "REJECTED" | "BLOCKED";
+
+// Contacto de emergencia que es usuario
+export interface EmergencyContactDto {
+  id: number;
+  ownerId: number;
+  contactId: number;  // id del usuario contacto
+  relation: string;
+  status: ContactStatus;
+}
+
+export interface EmergencyContact {
+  id: number;
+  ownerId: number;
+  contactId: number;  // id del usuario contacto
+  relation: string;
+  status: ContactStatus;
+  name: string;       // nombre del contacto (no del usuario)
+  phone: string;      // teléfono del contacto (no del usuario, normalizado E.164)
+}
+
+// Contacto de emergencia externo (no usuario)
+export interface ExternalContact {
+  id: number;
+  name: string;
+  phone: string;          // normalizado (E.164)
+  relation: string;
+}
+
 // Representación de un lugar (formato interno de tu app)
 export interface SafeLocation {
   id?: number;
@@ -46,11 +72,20 @@ export interface Group {
   image?: string;
   type: typeof GROUP_TYPES[number];
   state: string;
-  members: UserDto[];
+  membersIds: number[]; // IDs de usuarios
   createdAt: Date;
   expirationDate?: Date;
   lastModified: Date;
   ownerId: number;
+}
+
+export interface Invitation {
+  id: number;
+  groupId: number;
+  code: string;         // código único de invitación
+  expiresAt: Date;
+  revokedAt?: Date;
+  createdAt: Date;
 }
 
 // Parámetros para buscar lugares cercanos

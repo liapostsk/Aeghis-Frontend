@@ -1,10 +1,9 @@
-// app/(tabs)/groups/trusted.tsx
 import React, { useEffect, useMemo, useState,  } from 'react';
 import type { Group } from '@/api/types';
 import { getUserGroups } from '@/api/group/groupApi';
 import { useGroupSeach } from './_layout'; // <- del Provider en groups/_layout
 import { router } from 'expo-router';
-import GroupsButton from '@/components/groups/GroupsButton';
+import GroupsButton from '@/components/groups/GrupsButton';
 import { View, Text, StyleSheet, FlatList, RefreshControl, Pressable } from 'react-native';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
@@ -41,6 +40,7 @@ export default function TrustedScreen() {
       const token = await getToken();
       setToken(token);
       const data = await getUserGroups('CONFIANZA'); // <- tipo fijo para esta screen
+      console.log("🧪 Grupos de confianza cargados:", data);
       setGroups(data ?? []);
     } finally {
       setLoading(false);
@@ -58,6 +58,15 @@ export default function TrustedScreen() {
       // añade otros campos si te interesa buscar por más cosas
     );
   }, [groups, search]);
+
+  const navigateToChat = (group: Group) => {
+    router.push({
+      pathname: '/chat',
+      params: {
+        groupId: group.id.toString()
+      }
+    })
+  }
 
   return (
     <View style={styles.container}>
@@ -78,9 +87,13 @@ export default function TrustedScreen() {
           const initials = getInitials(item.name);
           const lastMessage = "You: I'm arriving";
           const unreadCount = 1;
+          const memberCount = item.membersIds?.length || 1;
           const status = stateLabel(item.state);
           return (
-            <Pressable style={styles.card} onPress={() => router.push("/(tabs)/groups/chat")}>
+            <Pressable 
+              style={styles.card} 
+              onPress={() => navigateToChat(item)}
+            >
               <View style={styles.avatar}>
                 <Text style={styles.avatarText}>{initials}</Text>
               </View>
@@ -88,6 +101,9 @@ export default function TrustedScreen() {
                 <Text style={styles.groupName}>{item.name}</Text>
                 <Text style={styles.lastMessage}>{lastMessage}</Text>
                 <Text style={styles.status}>{status}</Text>
+                <Text style={styles.memberCount}>
+                    {memberCount} member{memberCount !== 1 ? 's' : ''}
+                  </Text>
               </View>
               {unreadCount > 0 && (
                 <View style={styles.unreadBadge}>
@@ -98,7 +114,7 @@ export default function TrustedScreen() {
           );
         }}
       />
-      <GroupsButton 
+      <GroupsButton
         kind="confianza"
         onSuccess={load}
       />
@@ -182,5 +198,9 @@ const styles = StyleSheet.create({
   emptySubtitle: { 
     color: '#777', 
     marginTop: 4 
+  },
+  memberCount: {
+    fontSize: 12,
+    color: '#666',
   },
 });

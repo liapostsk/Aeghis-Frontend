@@ -8,32 +8,34 @@ import {
 } from 'react-native';
 import { CountryCode } from 'react-native-country-picker-modal';
 import PhoneNumberPicker from '@/components/ui/PhoneNumberPicker';
-import { EmergencyContact } from '@/api/types';
+import { Contact } from '@/api/types';
 
 type Props = {
-    onSave: (contact: EmergencyContact) => void;
+    onSave: (contact: Contact) => void;
     onCancel: () => void;
 };
 
 export default function ManualContactForm({ onSave, onCancel }: Props) {
     const [name, setName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
+    const [relation, setRelation] = useState('');
     const [countryCode, setCountryCode] = useState<CountryCode>('ES');
     const [callingCode, setCallingCode] = useState('34');
 
     const handleSave = () => {
-        if (!name || !phoneNumber) return;
+        if (!name.trim() || !phoneNumber.trim()) return;
 
         const formattedPhone = `+${callingCode}${phoneNumber.replace(/\D/g, '')}`;
         
         onSave({ 
-            name, 
+            name: name.trim(), 
             phone: formattedPhone,
-            confirmed: true,
+            relation: relation.trim(),
         });
         
         setName('');
         setPhoneNumber('');
+        setRelation('');
     };
 
     return (
@@ -44,6 +46,13 @@ export default function ManualContactForm({ onSave, onCancel }: Props) {
                 placeholder="Full Name"
                 value={name}
                 onChangeText={setName}
+                style={styles.input}
+            />
+
+            <TextInput
+                placeholder="Relationship (e.g., Father, Mother, Friend)"
+                value={relation}
+                onChangeText={setRelation}
                 style={styles.input}
             />
             
@@ -64,8 +73,20 @@ export default function ManualContactForm({ onSave, onCancel }: Props) {
                 />
             </View>
             
-            <Pressable style={styles.saveButton} onPress={handleSave}>
-                <Text style={styles.saveText}>Save Contact</Text>
+            <Pressable 
+                style={[
+                    styles.saveButton, 
+                    (!name.trim() || !phoneNumber.trim()) && styles.saveButtonDisabled
+                ]} 
+                onPress={handleSave}
+                disabled={!name.trim() || !phoneNumber.trim()}
+            >
+                <Text style={[
+                    styles.saveText,
+                    (!name.trim() || !phoneNumber.trim()) && styles.saveTextDisabled
+                ]}>
+                    Save Contact
+                </Text>
             </Pressable>
             
             <Pressable onPress={onCancel} style={{ marginTop: 10 }}>
@@ -113,9 +134,16 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
         marginTop: 10,
     },
+    saveButtonDisabled: {
+        backgroundColor: '#ccc',
+        opacity: 0.6,
+    },
     saveText: {
         color: '#FFFFFF',
         fontSize: 20,
         fontWeight: 'bold',
+    },
+    saveTextDisabled: {
+        color: '#999',
     },
 });

@@ -17,7 +17,7 @@ export default function ChatLayout() {
         name="index"
         options={{
           headerLeft: () => (
-            <Pressable onPress={() => router.back()}>
+            <Pressable onPress={() => router.replace("/(tabs)/groups")}>
               <Icon name="arrow-back" size={24} color="#FFFF" />
             </Pressable>
           ),

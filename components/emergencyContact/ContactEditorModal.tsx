@@ -8,20 +8,23 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
-import { EmergencyContact } from '@/api/types';
+import { EmergencyContact, ExternalContact, Contact } from '@/api/types';
 
 type Props = {
   visible: boolean;
-  contact: EmergencyContact;
+  contact: EmergencyContact | ExternalContact | null;
+  isEmergencyContact?: boolean;
   onClose: () => void;
-  onSave: (contact: EmergencyContact) => void;
+  onSave: (contact: Contact) => void;
   onDelete?: () => void;
 };
 
 export default function ContactEditorModal({
   visible,
   contact,
+  isEmergencyContact = false,
   onClose,
   onSave,
 }: Props) {
@@ -29,26 +32,49 @@ export default function ContactEditorModal({
   const [phone, setPhone] = useState('');
   const [relation, setRelation] = useState('');
 
+  // Campos editables
+  const isNameEditable = !isEmergencyContact;
+  const isPhoneEditable = !isEmergencyContact;
+  const isRelationEditable = true; // Siempre editable
+
   useEffect(() => {
     if (contact) {
       setName(contact.name ?? '');
       setPhone(contact.phone ?? '');
       setRelation(contact.relation ?? '');
     }
+    else {
+      setName('');
+      setPhone('');
+      setRelation('');
+    }
   }, [contact, visible]);
 
   const handleSave = () => {
-    if (!name || !phone) return;
+    if (isEmergencyContact) {
+      // Para contactos de emergencia, solo validar relación
+      if (!relation.trim()) {
+        Alert.alert('Error', 'La relación es obligatoria');
+        return;
+      }
+    } else {
+      // Para contactos externos, validar todos los campos
+      if (!name.trim() || !phone.trim()) {
+        Alert.alert('Error', 'El nombre y teléfono son obligatorios');
+        return;
+      }
+    }
 
-    const updated: EmergencyContact = {
-      ...contact,
-      name,
-      phone,
-      relation,
+    const updatedContact: Contact = {
+      phone: isPhoneEditable ? phone.trim() : contact?.phone || '',
+      name: isNameEditable ? name.trim() : contact?.name,
+      relation: relation.trim(),
     };
 
-    onSave(updated);
-    onClose();
+    console.log('Guardando contacto:', updatedContact);
+    console.log('Tipo de contacto:', isEmergencyContact ? 'Emergency' : 'External');
+
+    onSave(updatedContact);
   };
 
   return (
@@ -60,7 +86,7 @@ export default function ContactEditorModal({
         >
           <View style={styles.modal}>
             <Text style={styles.title}>Editar contacto</Text>
-
+          {}
             <TextInput
               style={styles.input}
               placeholder="Nombre"

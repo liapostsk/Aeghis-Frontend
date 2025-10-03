@@ -15,7 +15,9 @@
       }
     },
     "android": {
-      "permissions": ["READ_CONTACTS"],
+      "permissions": [
+        "READ_CONTACTS"
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/aegis.png",
         "backgroundColor": "#ffffff"
@@ -37,7 +39,8 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true

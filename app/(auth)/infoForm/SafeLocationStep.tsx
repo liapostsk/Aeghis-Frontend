@@ -45,7 +45,8 @@ export default function SafeLocationStep({
 
     const updated = [...currentLocations, location];
     setUser({ ...user, safeLocations: updated });
-    console.log("✅ Ubicación añadida exitosamente:", location.name);
+    console.log("✅ Ubicación añadida exitosamente:", location);
+    console.log("location id asignado:", location.id);
     console.log("📍 Total ubicaciones ahora:", updated.length);
     setModalVisible(false);
   };

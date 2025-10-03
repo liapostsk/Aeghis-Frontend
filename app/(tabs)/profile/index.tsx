@@ -33,10 +33,6 @@ export default function ProfileScreen() {
 
   if (!user) return null;
 
-  const emergencyContacts = user.emergencyContacts ?? [
-    { name: 'Carlos Rodríguez', relation: 'Hermano', phone: '+34 612 345 678', confirmed: true },
-  ];
-
   const safeLocations = user.safeLocations ?? [
     { name: 'Casa', address: 'Calle Principal 123', type: 'Hogar', latitude: 40.4168, longitude: -3.7038 },
   ];
@@ -52,9 +48,8 @@ export default function ProfileScreen() {
             onToggleMenu={toggleMenu}
             onEdit={handleEditProfile}
           />
-          <EmergencyContactsSection 
-            contacts={emergencyContacts}
-          />
+          <EmergencyContactsSection/>
+          
           <SafeLocationsSection 
             locations={safeLocations}
           />

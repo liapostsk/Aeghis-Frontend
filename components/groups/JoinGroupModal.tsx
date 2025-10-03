@@ -11,16 +11,25 @@ import {
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '@clerk/clerk-expo';
+import { useTokenStore } from '@/lib/auth/tokenStore';
+import { joinGroup } from '@/api/group/groupApi';
+import { useUserStore } from '@/lib/storage/useUserStorage';
 
 interface JoinGroupModalProps {
   visible: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
-export default function JoinGroupModal({ visible, onClose }: JoinGroupModalProps) {
+export default function JoinGroupModal({ visible, onClose, onSuccess }: JoinGroupModalProps) {
   const [code, setCode] = useState('');
   const [isJoining, setIsJoining] = useState(false);
   const inputRef = useRef<TextInput>(null);
+
+  const { user } = useUserStore();
+  const { getToken } = useAuth();
+  const setToken = useTokenStore((state) => state.setToken);
 
   // Función para validar el código (8 caracteres del alfabeto específico)
   const validateCode = (input: string): string => {
@@ -59,9 +68,24 @@ export default function JoinGroupModal({ visible, onClose }: JoinGroupModalProps
     
     try {
       console.log('Joining group with code:', code);
-      
-      // Llamada al backend
-    
+
+      const token = await getToken();
+      setToken(token);
+
+      if (!user || typeof user.id !== 'number') {
+        Alert.alert('Error', 'User information is missing. Please log in again.');
+        setIsJoining(false);
+        return;
+      }
+
+      // Llamada a la API para unirse al grupo
+      const response = await joinGroup(user.id, code);
+
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        onClose(); // Fallback si no hay onSuccess
+      }
       
     } catch (error) {
       Alert.alert('Error', 'Invalid code or group not found. Please check the code and try again.');

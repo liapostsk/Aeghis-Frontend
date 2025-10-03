@@ -1,15 +1,15 @@
 import api from "../client";
-import { EmergencyContact } from "../types";
+import { EmergencyContactDto } from "../types";
 
 
-export const createEmergencyContact = async (emergencyContact: EmergencyContact): Promise<number> => {
+export const createEmergencyContact = async (emergencyContact: EmergencyContactDto): Promise<number> => {
   console.log("📡 API: Enviando contacto:", emergencyContact);
   const response = await api.post("/me/emergency-contact/add", emergencyContact);
   console.log("📡 API: Respuesta de creación:", response.data);
   return response.data;
 };
 
-export const editEmergencyContact = async (id: number, emergencyContact: EmergencyContact): Promise<void> => {
+export const editEmergencyContact = async (id: number, emergencyContact: EmergencyContactDto): Promise<void> => {
   await api.put(`/me/emergency-contact/${id}/edit`, emergencyContact);
 };
 

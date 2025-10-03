@@ -24,3 +24,8 @@ export const updateUser = async (id: number, dto: UserDto): Promise<void> => {
 export const deleteUser = async (id: number): Promise<void> => {
   await api.delete(`/user/${id}`);
 };
+
+export const checkIfUserExists = async (phone: string): Promise<boolean> => {
+  const response = await api.get(`/user/exists/${encodeURIComponent(phone)}`);
+  return response.data.exists;
+};

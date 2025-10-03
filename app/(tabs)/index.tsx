@@ -2,12 +2,12 @@
 import { useUserStore } from '@/lib/storage/useUserStorage';
 import { useAuth } from '@clerk/clerk-expo';
 import { router } from 'expo-router';
-import { Text, Pressable, StyleSheet, TouchableOpacity } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import MapHeader from '../../components/map/MapHeader';
-import GroupMap from '../../components/map/GroupMap';
-import JourneyOverlay from '../../components/map/JourneyOverlay';
-import EmergencyButton from '../../components/map/EmergencyButton';
+import MapHeader from '@/components/map/MapHeader';
+import PeopleOnMap from '@/components/map/PeopleOnMap';
+import JourneyOverlay from '@/components/map/JourneyOverlay';
+import EmergencyButton from '@/components/map/EmergencyButton';
 import { useEffect, useState } from 'react';
 
 export default function MapScreen() {
@@ -43,7 +43,7 @@ export default function MapScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <MapHeader activeGroup={activeGroup} />
-      <GroupMap />
+      <PeopleOnMap />
       <EmergencyButton onPress={() => console.log('Emergency triggered')} />
       <JourneyOverlay onStartJourney={function (): void {
         throw new Error('Function not implemented.');

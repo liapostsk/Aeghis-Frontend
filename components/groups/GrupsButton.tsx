@@ -35,6 +35,24 @@ export default function GroupsButton({ kind, onSuccess, style }: Props) {
   // Mapear al tipo que esperan tus modales/API
   const modalType = currentKind; // 'confianza' | 'temporal' | 'companion'
 
+  const handleCreateSuccess = () => {
+    console.log('🎉 GroupsButton: Grupo creado exitosamente');
+    setCreating(false);
+    if (onSuccess) {
+      console.log('🔄 GroupsButton: Ejecutando onSuccess callback...');
+      onSuccess();
+    }
+  };
+
+  const handleJoinSuccess = () => {
+    console.log('🎉 GroupsButton: Se unió al grupo exitosamente');
+    setJoining(false);
+    if (onSuccess) {
+      console.log('🔄 GroupsButton: Ejecutando onSuccess callback...');
+      onSuccess();
+    }
+  };
+
   return (
     <>
       {/* FAB */}
@@ -55,6 +73,7 @@ export default function GroupsButton({ kind, onSuccess, style }: Props) {
         <CreateGroupModal
           visible={isCreating}
           onClose={() => setCreating(false)}
+          onSuccess={handleCreateSuccess}
           type={modalType}
         />
       )}
@@ -63,6 +82,7 @@ export default function GroupsButton({ kind, onSuccess, style }: Props) {
       <JoinGroupModal
         visible={isJoining}
         onClose={() => setJoining(false)}
+        onSuccess={handleJoinSuccess}
       />
     </>
   );

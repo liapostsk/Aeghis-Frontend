@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { useUserStore } from '@/lib/storage/useUserStorage';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 import { mapUserToDto } from '@/api/user/mapper';
-import { createUser } from '@/api/user/userApi';
+import { createUser, getCurrentUser } from '@/api/user/userApi';
 import { Alert } from 'react-native';
 import { useAuth } from '@clerk/clerk-expo';
 
@@ -82,13 +82,20 @@ export default function SummaryStep({onBack}: { onBack: () => void }) {
       const token = await getToken();
       setToken(token);
       const dto = mapUserToDto(user);
+      console.log('📋 DTO de usuario preparado:', dto);
       const userId = await createUser(dto);
+      const data = await getCurrentUser();
+      console.log("📡 Usuario actual desde backend:", data);
+      
       console.log("✅ User created with ID:", userId);
       
       // Step 4: Update local user state
       setUser({
         ...user,
         id: userId,
+        emergencyContacts: data.emergencyContacts,
+        externalContacts: data.externalContacts,
+        safeLocations: data.safeLocations,
       });
       
       // Pequeña pausa para mostrar el estado de éxito antes de navegar

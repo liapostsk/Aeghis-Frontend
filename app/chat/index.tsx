@@ -1,0 +1,378 @@
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TextInput,
+  StatusBar,
+  Pressable,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useLocalSearchParams } from 'expo-router';
+import { Group } from '@/api/types';
+import { useAuth } from '@clerk/clerk-expo';
+import { useTokenStore } from '@/lib/auth/tokenStore';
+import { createInvitation } from '@/api/group/invitationApi';
+import { getGroupById } from '@/api/group/groupApi';
+
+interface Message {
+  id: string;
+  sender: string;
+  content: string;
+  time: string;
+  isUser?: boolean;
+  type?: 'message' | 'status' | 'arrival';
+}
+
+export default function ChatScreen() {
+  const { groupId } = useLocalSearchParams<{ groupId: string }>();
+
+  const [inputText, setInputText] = useState('');
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [group, setGroup] = useState<Group | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const { getToken } = useAuth();
+  const setToken = useTokenStore((state) => state.setToken);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        setLoading(true);
+        const token = await getToken();
+        setToken(token);
+
+        const id = Number(groupId);
+        if (!id || Number.isNaN(id)) {
+          throw new Error('Invalid group id');
+        }
+
+        const data = await getGroupById(id);
+        if (mounted) {
+          setGroup(data);
+          setError(null);
+        }
+      } catch (e: any) {
+        if (mounted) setError(e?.message ?? 'Unable to load group');
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [groupId]);
+
+  const generateInvitation = async (g: Group) => {
+    try {
+      const token = await getToken();
+      setToken(token);
+
+      const data = await createInvitation(g.id);
+      Alert.alert('Invitación generada', `Código: ${data.code}`);
+    } catch (err) {
+      console.error('Error generando invitación:', err);
+      Alert.alert('Error', 'No se pudo generar la invitación.');
+    }
+  };
+
+  const sendMessage = async () => {
+    if (!inputText.trim()) return;
+
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      sender: 'Tú',
+      content: inputText.trim(),
+      time: new Date().toLocaleTimeString('es-ES', {
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+      isUser: true,
+    };
+
+    setMessages((prev) => [...prev, newMessage]);
+    setInputText('');
+  };
+
+  const renderMessage = ({ item }: { item: Message }) => {
+    if (item.type === 'arrival') {
+      return (
+        <View style={styles.arrivalContainer}>
+          <View style={styles.arrivalBubble}>
+            <Text style={styles.arrivalText}>{item.content}</Text>
+          </View>
+          <Text style={styles.arrivalTime}>{item.time}</Text>
+        </View>
+      );
+    }
+
+    if (item.isUser) {
+      return (
+        <View style={styles.userMessageContainer}>
+          <View style={styles.userBubble}>
+            <Text style={styles.userMessageText}>{item.content}</Text>
+          </View>
+          <View style={styles.userMessageInfo}>
+            <Text style={styles.messageTime}>{item.time}</Text>
+            <Ionicons name="checkmark" size={12} style={styles.checkIcon} />
+          </View>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.otherMessageContainer}>
+        <Text style={styles.senderName}>{item.sender}:</Text>
+        <View style={styles.otherBubble}>
+          <Text style={styles.otherMessageText}>{item.content}</Text>
+        </View>
+        <Text style={styles.messageTime}>{item.time}</Text>
+      </View>
+    );
+  };
+
+  /** -------- GUARDS -------- */
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator />
+        <Text style={styles.muted}>Cargando grupo…</Text>
+      </View>
+    );
+  }
+
+  if (error || !group) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.error}>{error ?? 'Group not found'}</Text>
+      </View>
+    );
+  }
+  /** -------- A partir de aquí, `group` es seguro (no null) -------- */
+
+  // Derivados seguros del grupo
+  const members = Array.isArray(group.membersIds) ? group.membersIds : [];
+  console.log('Members:', members);
+  console.log('Group data:', group);
+  const totalMembers = members.length;
+  const hasEnoughMembers = totalMembers >= 2;
+  const activeMembersCount = members.length; // Mock: todos activos por ahora
+
+  const renderInvitationScreen = (g: Group) => (
+    <View style={styles.invitationContainer}>
+      <View style={styles.invitationIcon}>
+        <Ionicons name="people-outline" size={64} color="#7A33CC" />
+      </View>
+
+      <Text style={styles.invitationTitle}>¡Invita a más personas!</Text>
+      <Text style={styles.invitationSubtitle}>
+        Necesitas al menos 2 miembros para usar este grupo de{' '}
+        {g.type?.toLowerCase() || 'confianza'}
+      </Text>
+
+      <Pressable style={styles.invitationButton} onPress={() => generateInvitation(g)}>
+        <Ionicons name="share-outline" size={20} color="#FFFFFF" style={styles.buttonIcon} />
+        <Text style={styles.invitationButtonText}>Generar invitación</Text>
+      </Pressable>
+
+      <Text style={styles.invitationHelp}>
+        Comparte el enlace de invitación con las personas que quieres añadir al grupo
+      </Text>
+    </View>
+  );
+
+  const renderChatScreen = (g: Group) => (
+    <>
+      {g.state === 'ACTIVO' && (
+        <View style={styles.tripStatus}>
+          <Ionicons name="location" size={20} style={styles.locationIcon} />
+          <View style={styles.tripStatusInfo}>
+            <Text style={styles.tripStatusText}>Trip active • Share location active</Text>
+            <Pressable onPress={() => { /* Navegar a mapa */ }}>
+              <Text style={styles.showLocationsText}>Show locations</Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
+
+      <FlatList
+        data={messages}
+        keyExtractor={(item) => item.id}
+        renderItem={renderMessage}
+        style={styles.messagesList}
+        contentContainerStyle={[
+          styles.messagesContent,
+          messages.length === 0 && styles.emptyMessagesContent,
+        ]}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={() => (
+          <View style={styles.emptyContainer}>
+            <Ionicons name="chatbubbles-outline" size={48} color="#ccc" />
+            <Text style={styles.emptyText}>No hay mensajes aún</Text>
+            <Text style={styles.emptySubtext}>¡Envía el primer mensaje!</Text>
+          </View>
+        )}
+      />
+
+      <View style={styles.inputContainer}>
+        <View style={styles.inputWrapper}>
+          <TextInput
+            style={styles.textInput}
+            value={inputText}
+            onChangeText={setInputText}
+            placeholder="Escribe un mensaje..."
+            multiline
+          />
+          {inputText.trim().length > 0 && (
+            <Pressable style={styles.sendButton} onPress={sendMessage}>
+              <Ionicons name="send" size={20} color="#7A33CC" />
+            </Pressable>
+          )}
+        </View>
+      </View>
+    </>
+  );
+
+  return (
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#7A33CC" translucent={false} />
+
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.headerCenter}>
+          <Text style={styles.headerTitle}>{group.name || 'Grupo sin nombre'}</Text>
+          <View style={styles.headerSubtitle}>
+            <Text style={styles.headerSubtitleText}>
+              {totalMembers} miembro{totalMembers !== 1 ? 's' : ''}
+            </Text>
+            {hasEnoughMembers && activeMembersCount > 0 && (
+              <>
+                <Text style={styles.headerDot}> • </Text>
+                <View style={styles.activeIndicator} />
+                <Text style={styles.headerSubtitleText}>
+                  {activeMembersCount} activo{activeMembersCount !== 1 ? 's' : ''}
+                </Text>
+              </>
+            )}
+          </View>
+        </View>
+
+        <Pressable
+          onPress={() => {
+            console.log('Abrir configuración del grupo:', group);
+          }}
+          style={styles.headerButton}
+        >
+          <Ionicons name="people" size={24} color="#FFFFFF" />
+        </Pressable>
+      </View>
+
+      {/* Contenido principal */}
+      {hasEnoughMembers ? renderChatScreen(group) : renderInvitationScreen(group)}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 16 },
+  muted: { color: '#888', marginTop: 8 },
+  error: { color: '#c00' },
+
+  header: {
+    backgroundColor: '#7A33CC',
+    paddingTop: 50,
+    paddingBottom: 16,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerCenter: { flex: 1, alignItems: 'center' },
+  headerButton: { marginLeft: 12 },
+  headerTitle: { color: 'white', fontSize: 18, fontWeight: '600' },
+  headerSubtitle: { flexDirection: 'row', alignItems: 'center', marginTop: 2 },
+  headerSubtitleText: { color: 'rgba(255, 255, 255, 0.9)', fontSize: 14 },
+  headerDot: { color: 'rgba(255, 255, 255, 0.9)', fontSize: 14 },
+  activeIndicator: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#22C55E', marginRight: 4 },
+
+  // Invitación
+  invitationContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32 },
+  invitationIcon: { marginBottom: 24 },
+  invitationTitle: { fontSize: 24, fontWeight: 'bold', color: '#374151', textAlign: 'center', marginBottom: 8 },
+  invitationSubtitle: { fontSize: 16, color: '#6B7280', textAlign: 'center', marginBottom: 32, lineHeight: 22 },
+  invitationButton: {
+    backgroundColor: '#7A33CC',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 25,
+    marginBottom: 16,
+  },
+  buttonIcon: { marginRight: 8 },
+  invitationButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '600' },
+  invitationHelp: { fontSize: 14, color: '#9CA3AF', textAlign: 'center', lineHeight: 20 },
+
+  // Chat
+  tripStatus: {
+    backgroundColor: '#F3E8FF',
+    marginHorizontal: 16,
+    marginTop: 16,
+    padding: 12,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  locationIcon: { marginRight: 8 },
+  tripStatusInfo: { flex: 1 },
+  tripStatusText: { color: '#7C3AED', fontSize: 14, fontWeight: '500' },
+  showLocationsText: { color: '#7C3AED', fontSize: 12, marginTop: 2, textDecorationLine: 'underline' },
+
+  messagesList: { flex: 1 },
+  messagesContent: { paddingHorizontal: 16, paddingVertical: 16 },
+  emptyMessagesContent: { flex: 1, justifyContent: 'center' },
+  emptyContainer: { alignItems: 'center', paddingVertical: 40 },
+  emptyText: { fontSize: 16, color: '#374151', marginTop: 12, fontWeight: '500' },
+  emptySubtext: { fontSize: 14, color: '#6B7280', marginTop: 4 },
+
+  // Mensajes
+  arrivalContainer: { alignItems: 'center', marginVertical: 8 },
+  arrivalBubble: { backgroundColor: '#BBF7D0', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
+  arrivalText: { color: '#166534', fontSize: 14, fontWeight: '500' },
+  arrivalTime: { color: '#6B7280', fontSize: 12, marginTop: 4 },
+  userMessageContainer: { alignItems: 'flex-end', marginVertical: 4 },
+  userBubble: {
+    backgroundColor: '#7A33CC',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 16,
+    borderBottomRightRadius: 4,
+    maxWidth: '80%',
+  },
+  userMessageText: { color: 'white', fontSize: 14 },
+  userMessageInfo: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
+  checkIcon: { marginLeft: 4, color: '#7A33CC' },
+  otherMessageContainer: { alignItems: 'flex-start', marginVertical: 4, maxWidth: '80%' },
+  senderName: { color: '#374151', fontSize: 12, fontWeight: '500', marginBottom: 4 },
+  otherBubble: { backgroundColor: '#E5E7EB', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 16, borderBottomLeftRadius: 4 },
+  otherMessageText: { color: '#374151', fontSize: 14 },
+  messageTime: { color: '#6B7280', fontSize: 12, marginTop: 4 },
+
+  // Input
+  inputContainer: { paddingHorizontal: 16, paddingVertical: 16, borderTopWidth: 1, borderTopColor: '#E5E7EB' },
+  inputWrapper: {
+    backgroundColor: '#F3F4F6',
+    borderRadius: 24,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+  },
+  textInput: { flex: 1, fontSize: 16, color: '#374151', minHeight: 20, maxHeight: 100 },
+  sendButton: { marginLeft: 8, padding: 4 },
+});

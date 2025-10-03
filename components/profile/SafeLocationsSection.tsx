@@ -125,6 +125,7 @@ export default function SafeLocationsSection({ locations, onAddLocation }: Props
             <Text style={styles.locationName}>{location.name}</Text>
             <Text style={styles.locationType}>{location.type}</Text>
             <Text style={styles.locationAddress}>{location.address}</Text>
+            <Text style={{ fontSize: 12, color: '#999', marginTop: 4 }}>ID: {location.id}</Text>
           </View>
           {editable && (
             <View style={styles.actionButtons}>

@@ -14,6 +14,7 @@ export const mapUserToDto = (user: User): UserDto => {
       acceptedPrivacyPolicy: user.acceptedPrivacyPolicy ?? false,
       dateOfBirth: user.dateOfBirth ?? new Date(),
       safeLocations: user.safeLocations ?? [],
+      externalContacts: user.externalContacts ?? [],
       emergencyContacts: user.emergencyContacts ?? []
     };
 }

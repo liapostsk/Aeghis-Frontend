@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { EmergencyContact, SafeLocation } from '@/api/types';
+import { EmergencyContact, ExternalContact, SafeLocation } from '@/api/types';
 import { getCurrentUser } from '../../api/user/userApi';
 
 
@@ -18,6 +18,7 @@ export type User = {
   age?: number;
   acceptedPrivacyPolicy?: boolean;
   emergencyContacts?: EmergencyContact[];
+  externalContacts?: ExternalContact[];
   safeLocations?: SafeLocation[];
   idClerk?: string; // ID de usuario en Clerk
 };

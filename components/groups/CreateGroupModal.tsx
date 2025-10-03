@@ -12,9 +12,10 @@ type Props = {
     visible: boolean;
     onClose: () => void; 
     type?: 'confianza' | 'temporal' | 'companion';
+    onSuccess?: () => void;
 };
 
-export default function CreateGroupModal({ visible, onClose, type }: Props) {
+export default function CreateGroupModal({ visible, onClose, onSuccess, type }: Props) {
   const [groupName, setGroupName] = useState('');
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
@@ -74,17 +75,22 @@ export default function CreateGroupModal({ visible, onClose, type }: Props) {
         // Otros campos que el backend podría haber añadido
         createdAt: createdGroup.createdAt,
         state: createdGroup.state,
-        members: createdGroup.members || [],
+        membersIds: createdGroup.membersIds || [],
         ownerId: user?.id ?? (() => { throw new Error("User ID is undefined"); })(),
         // ... cualquier otro campo del backend
       };
       
       console.log('✅ Group created successfully:', completeGroup);
 
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        onClose(); // Fallback si no hay onSuccess
+      }
+
       setGroupName('');
       setDescription('');
       setLoading(false);
-      onClose();
       
       Alert.alert('Success', 'Group created successfully!');
       
