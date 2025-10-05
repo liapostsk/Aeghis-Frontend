@@ -7,6 +7,8 @@ import { useAuth } from '@clerk/clerk-expo';
 import { createGroup } from '@/api/group/groupApi';
 import { Group } from '@/api/types';
 import { create } from 'zustand';
+import { createGroupFirebase } from '@/api/firebase/chat/chatService';
+
 
 type Props = { 
     visible: boolean;
@@ -67,20 +69,15 @@ export default function CreateGroupModal({ visible, onClose, onSuccess, type }: 
       const token = await getToken();
       setToken(token);
       
-      const createdGroup = await createGroup(groupData);
+      const idGroup = await createGroup(groupData);
       
-      const completeGroup: Group = {
-        ...groupData as Group, // Convertir a Group completo
-        id: createdGroup.id,   // Asignar el ID devuelto
-        // Otros campos que el backend podría haber añadido
-        createdAt: createdGroup.createdAt,
-        state: createdGroup.state,
-        membersIds: createdGroup.membersIds || [],
-        ownerId: user?.id ?? (() => { throw new Error("User ID is undefined"); })(),
-        // ... cualquier otro campo del backend
-      };
-      
-      console.log('✅ Group created successfully:', completeGroup);
+      console.log('Group created successfully with ID:', idGroup);
+
+      groupData.id = idGroup;
+
+      // Inicializar chat en Firebase
+      const chatId = await createGroupFirebase(groupData);
+      console.log('Firebase group chat initialized with ID:', chatId);
 
       if (onSuccess) {
         onSuccess();

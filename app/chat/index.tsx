@@ -17,6 +17,7 @@ import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 import { createInvitation } from '@/api/group/invitationApi';
 import { getGroupById } from '@/api/group/groupApi';
+import { updateGroupFirebase, sendMessageFirebase} from '@/api/firebase/chat/chatService';
 
 interface Message {
   id: string;
@@ -35,6 +36,7 @@ export default function ChatScreen() {
   const [group, setGroup] = useState<Group | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [chatInitialized, setChatInitialized] = useState(false);
 
   const { getToken } = useAuth();
   const setToken = useTokenStore((state) => state.setToken);
@@ -82,22 +84,19 @@ export default function ChatScreen() {
   };
 
   const sendMessage = async () => {
-    if (!inputText.trim()) return;
+    const text = inputText.trim();
+    if (!text) return;
 
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      sender: 'Tú',
-      content: inputText.trim(),
-      time: new Date().toLocaleTimeString('es-ES', {
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
-      isUser: true,
-    };
-
-    setMessages((prev) => [...prev, newMessage]);
     setInputText('');
+    try {
+      await sendMessageFirebase(groupId, text);
+      // No haces setMessages aquí: el listener lo recibe y renderiza.
+    } catch (e) {
+      console.warn('No se pudo enviar el mensaje', e);
+      // Si quieres, repones el texto en inputText o muestras Alert.
+    }
   };
+
 
   const renderMessage = ({ item }: { item: Message }) => {
     if (item.type === 'arrival') {

@@ -15,6 +15,7 @@ import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 import { joinGroup } from '@/api/group/groupApi';
 import { useUserStore } from '@/lib/storage/useUserStorage';
+import { joinGroupChatFirebase } from '@/api/firebase/chat/chatService';
 
 interface JoinGroupModalProps {
   visible: boolean;
@@ -77,11 +78,16 @@ export default function JoinGroupModal({ visible, onClose, onSuccess }: JoinGrou
         setIsJoining(false);
         return;
       }
-
+      console.log("HOLAAAA 1")
       // Llamada a la API para unirse al grupo
       const response = await joinGroup(user.id, code);
 
       if (onSuccess) {
+        console.log("HOLAAAA 2")
+        console.log("Code usado para unirse al grupo:", response);
+        // Unirse al chat del grupo en Firebase
+        await joinGroupChatFirebase(String(response));
+        console.log("HOLAAAA 3")
         onSuccess();
       } else {
         onClose(); // Fallback si no hay onSuccess

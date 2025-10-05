@@ -73,6 +73,7 @@ export interface Group {
   type: typeof GROUP_TYPES[number];
   state: string;
   membersIds: number[]; // IDs de usuarios
+  adminsIds: number[];  // IDs de usuarios administradores
   createdAt: Date;
   expirationDate?: Date;
   lastModified: Date;

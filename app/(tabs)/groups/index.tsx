@@ -7,6 +7,7 @@ import GroupsButton from '@/components/groups/GrupsButton';
 import { View, Text, StyleSheet, FlatList, RefreshControl, Pressable } from 'react-native';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
+import { updateGroupFirebase } from '@/api/firebase/chat/chatService';
 
 // Helpers
 const getInitials = (name?: string) => {
@@ -60,6 +61,7 @@ export default function TrustedScreen() {
   }, [groups, search]);
 
   const navigateToChat = (group: Group) => {
+    updateGroupFirebase(group); // Actualiza datos del chat al entrar
     router.push({
       pathname: '/chat',
       params: {
@@ -71,49 +73,54 @@ export default function TrustedScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.note}>This groups are permanent</Text>
-      <FlatList
-        data={groups}
-        keyExtractor={(item) => String(item.id)}
-        refreshControl={
-          <RefreshControl refreshing={!!loading} onRefresh={load ?? (() => {})} />
-        }
-        ListEmptyComponent={
-          <View style={styles.empty}>
-            <Text style={styles.emptyTitle}>No trusted groups yet</Text>
-            <Text style={styles.emptySubtitle}>Create one with the + button</Text>
-          </View>
-        }
-        renderItem={({ item }) => {
-          const initials = getInitials(item.name);
-          const lastMessage = "You: I'm arriving";
-          const unreadCount = 1;
-          const memberCount = item.membersIds?.length || 1;
-          const status = stateLabel(item.state);
-          return (
-            <Pressable 
-              style={styles.card} 
-              onPress={() => navigateToChat(item)}
-            >
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{initials}</Text>
-              </View>
-              <View style={styles.info}>
-                <Text style={styles.groupName}>{item.name}</Text>
-                <Text style={styles.lastMessage}>{lastMessage}</Text>
-                <Text style={styles.status}>{status}</Text>
-                <Text style={styles.memberCount}>
-                    {memberCount} member{memberCount !== 1 ? 's' : ''}
-                  </Text>
-              </View>
-              {unreadCount > 0 && (
-                <View style={styles.unreadBadge}>
-                  <Text style={styles.unreadText}>{unreadCount}</Text>
+      
+      <View style={styles.listContainer}>
+        <FlatList
+          data={filtered}
+          keyExtractor={(item) => String(item.id)}
+          refreshControl={
+            <RefreshControl refreshing={!!loading} onRefresh={load ?? (() => {})} />
+          }
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <Text style={styles.emptyTitle}>No trusted groups yet</Text>
+              <Text style={styles.emptySubtitle}>Create one with the + button</Text>
+            </View>
+          }
+          renderItem={({ item }) => {
+            const initials = getInitials(item.name);
+            const lastMessage = "You: I'm arriving";
+            const unreadCount = 1;
+            const memberCount = item.membersIds?.length || 1;
+            const status = stateLabel(item.state);
+            return (
+              <Pressable 
+                style={styles.card} 
+                onPress={() => navigateToChat(item)}
+              >
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>{initials}</Text>
                 </View>
-              )}
-            </Pressable>
-          );
-        }}
-      />
+                <View style={styles.info}>
+                  <Text style={styles.groupName}>{item.name}</Text>
+                  <Text style={styles.lastMessage}>{lastMessage}</Text>
+                  <Text style={styles.status}>{status}</Text>
+                  <Text style={styles.memberCount}>
+                      {memberCount} member{memberCount !== 1 ? 's' : ''}
+                    </Text>
+                </View>
+                {unreadCount > 0 && (
+                  <View style={styles.unreadBadge}>
+                    <Text style={styles.unreadText}>{unreadCount}</Text>
+                  </View>
+                )}
+              </Pressable>
+            );
+          }}
+          showsVerticalScrollIndicator={false}
+        />
+      </View>
+
       <GroupsButton
         kind="confianza"
         onSuccess={load}
@@ -124,8 +131,13 @@ export default function TrustedScreen() {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     paddingHorizontal: 16,
     paddingTop: 12,
+  },
+  listContainer: {
+    flex: 1,
+    marginBottom: 80,
   },
   note: {
     fontSize: 17,

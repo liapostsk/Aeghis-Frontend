@@ -23,7 +23,7 @@ export async function ensureCurrentUserProfile(opts?: { displayName?: string; ph
       lastSeen: serverTimestamp(),
       ...(opts?.displayName ? { displayName: opts.displayName } : {}),
       ...(opts?.photoURL ? { photoURL: opts.photoURL } : {}),
-      ...(opts?.phone ? { email: opts.phone } : {}),
+      ...(opts?.phone ? { phone: opts.phone } : {}),
     });
   }
 }

@@ -1,26 +1,22 @@
 export type ChatType = 'direct' | 'group';
-export type MemberRole = 'owner' | 'admin' | 'member';
-
-export interface ParticipantInfo {
-  role: MemberRole;
-  joinedAt: any; // Firebase Timestamp
-}
 
 export interface ChatDoc {
   type: ChatType;
   name?: string;
-  participants: Record<string, ParticipantInfo>;
-  participantsArr: string[];
-  lastMessage?: string;
+  members: string[];
+  admins: string[];
+  ownerId: string;
+  description?: string;
+  lastMessage?: MessageDoc;
   lastMessageAt: any;   // Firebase Timestamp
   createdAt: any;       // Firebase Timestamp
-  createdBy: string;
 }
 
 export interface MessageDoc {
+  id: string;
   senderId: string;
+  read: boolean;
   type: 'text' | 'image';
-  text?: string;
-  mediaUrl?: string;
+  content: string;
   timestamp: any;       // Firebase Timestamp
 }

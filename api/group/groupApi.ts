@@ -1,7 +1,7 @@
 import api from "../client";
 import { Group } from "../types";
 
-export const createGroup = async (groupDto: Partial<Group>): Promise<Group> => {
+export const createGroup = async (groupDto: Partial<Group>): Promise<number> => {
   const response = await api.post(`/group`, groupDto);
   return response.data;
 };
@@ -11,10 +11,11 @@ export const getUserGroups = async (type?: String): Promise<Group[]> => {
   return response.data;
 };
 
-export const joinGroup = async (userId: number, code: string): Promise<void> => {
-  await api.post("/group/join", null, {
+export const joinGroup = async (userId: number, code: string): Promise<number> => {
+  const response = await api.post("/group/join", null, {
     params: { userId, code },
   });
+  return response.data;
 };
 
 export const leaveGroup = async (groupId: number, userId: number): Promise<void> => {
