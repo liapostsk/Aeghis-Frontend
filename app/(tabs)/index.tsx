@@ -2,7 +2,7 @@
 import { useUserStore } from '@/lib/storage/useUserStorage';
 import { useAuth } from '@clerk/clerk-expo';
 import { router } from 'expo-router';
-import { StyleSheet } from 'react-native';
+import { Pressable, StyleSheet, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MapHeader from '@/components/map/MapHeader';
 import PeopleOnMap from '@/components/map/PeopleOnMap';
@@ -42,6 +42,9 @@ export default function MapScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+       <Pressable  onPress={handleLogout}>
+        <Text>Cerrar sesión</Text>
+      </Pressable>
       <MapHeader activeGroup={activeGroup} />
       <PeopleOnMap />
       <EmergencyButton onPress={() => console.log('Emergency triggered')} />

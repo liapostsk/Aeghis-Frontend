@@ -2,10 +2,14 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
+    "declaration": true,
+    "allowJs": true,
+    "checkJs": false,
     "paths": {
       "@/*": [
         "./*"
-      ]
+      ],
+      "@firebase/auth": ["./node_modules/@firebase/auth/dist/index.rn.d.ts"]
     }
   },
   "include": [
@@ -13,5 +17,9 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "metro.config.js"
   ]
 }

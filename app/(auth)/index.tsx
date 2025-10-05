@@ -6,6 +6,9 @@ import { Text, View, StyleSheet, Pressable, Image, TouchableOpacity } from "reac
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTokenStore } from "@/lib/auth/tokenStore";
 import { useUserStore } from "@/lib/storage/useUserStorage";
+import { linkFirebaseSession, unlinkFirebaseSession } from "@/api/firebase/firebase";
+import { ensureCurrentUserProfile } from "@/api/firebase/users";
+
 
 export default function Index() {
   const { isSignedIn, userId, signOut, getToken } = useAuth();
@@ -16,6 +19,7 @@ export default function Index() {
   const { user, clearUser } = useUserStore();
 
   const handleLogout = async () => {
+    await unlinkFirebaseSession();
     await signOut();
     clearUser();
     console.log("🔒 Sesión cerrada");
@@ -30,6 +34,7 @@ export default function Index() {
       // Si no hay sesión en Clerk, mostrar pantalla de bienvenida
       if (!isSignedIn || !userId) {
         console.log("No hay sesión en Clerk");
+        await unlinkFirebaseSession().catch(() => {});
         setIsValidating(false);
         return;
       }
@@ -40,8 +45,9 @@ export default function Index() {
         // Primero obtener el token de Clerk
         const token = await getToken();
         if (!token) {
-          console.log("❌ No se pudo obtener token de Clerk");
+          console.log("No se pudo obtener token de Clerk");
           // Si no hay token, cerrar sesión para reautenticar
+          await unlinkFirebaseSession().catch(() => {});
           await signOut();
           router.replace("/(auth)");
           return;
@@ -49,39 +55,56 @@ export default function Index() {
         
         // Guardar el token para usar en las peticiones
         setToken(token);
-        console.log("✅ Token obtenido y guardado");
+        console.log("Token obtenido y guardado");
 
         // Verificar si el usuario existe en el backend
         const currentUser = await getCurrentUser();
         
         if (currentUser) {
-          console.log("✅ Usuario existe en ambos lugares (Clerk + Backend)");
+          console.log("Usuario existe en ambos lugares (Clerk + Backend)");
+          
+          try {
+            await linkFirebaseSession();
+
+            await ensureCurrentUserProfile({
+              displayName: clerkUser?.fullName || undefined,
+              photoURL: clerkUser?.imageUrl || undefined,
+              phone: clerkUser?.primaryEmailAddress?.emailAddress || undefined,
+            });
+            
+            console.log("Sesión de Firebase vinculada");
+          } catch (firebaseError) {
+            console.error("Error vinculando sesión de Firebase:", firebaseError);
+            // No bloquear el acceso a la app si falla Firebase
+          }
           router.replace("/(tabs)");
         } else {
-          console.log("⚠️ Usuario existe en Clerk pero NO en backend - Borrar para mantener consistencia");
+          console.log("Usuario existe en Clerk pero NO en backend - Borrar para mantener consistencia");
           // Borrar usuario de Clerk para mantener consistencia
           await borradoClerk();
-        }
-        
+        }        
       } catch (error: any) {
-        console.error("❌ Error verificando usuario en backend:", error);
+        console.error("Error verificando usuario en backend:", error);
         
         // Clasificar el tipo de error
         if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
-          console.log("🌐 Error de conectividad - Permitir acceso offline");
+          console.log("Error de conectividad - Permitir acceso offline");
           // En caso de problemas de conexión, permitir acceso a la app
+          try { await linkFirebaseSession(); } catch {}
+
           router.replace("/(tabs)");
         } else if (error.response?.status === 404) {
-          console.log("🔄 Usuario no encontrado en backend - Borrar de Clerk para consistencia");
+          console.log("Usuario no encontrado en backend - Borrar de Clerk para consistencia");
           // Usuario existe en Clerk pero no en backend, borrar para mantener consistencia
           await borradoClerk();
         } else if (error.response?.status === 401) {
-          console.log("🔐 Token inválido - Volver a autenticar");
+          console.log("Token inválido - Volver a autenticar");
           // Token inválido, cerrar sesión para reautenticar
+          await unlinkFirebaseSession().catch(() => {});
           await signOut();
           router.replace("/(auth)");
         } else {
-          console.log("❓ Error desconocido");
+          console.log("Error desconocido");
         }
       } finally {
         setIsValidating(false);
@@ -93,27 +116,29 @@ export default function Index() {
 
   const borradoClerk = async () => {
     try {
-      console.log("🗑️ Borrando usuario de Clerk por inconsistencia...");
-      
+      console.log("Borrando usuario de Clerk por inconsistencia...");
+      await unlinkFirebaseSession().catch(() => {});
+
       if (clerkUser) {
         await clerkUser.delete();
-        console.log("✅ Usuario borrado de Clerk");
+        console.log("Usuario borrado de Clerk");
       }
 
       await signOut();
-      console.log("✅ Sesión cerrada de Clerk");
+      console.log("Sesión cerrada de Clerk");
 
       router.replace("/(auth)");
 
     } catch (error) {
-      console.error("❌ Error al borrar usuario de Clerk:", error);
+      console.error("Error al borrar usuario de Clerk:", error);
       // En caso de error, al menos cerrar sesión
       try {
+        await unlinkFirebaseSession().catch(() => {});
         await signOut();
-        console.log("✅ Sesión cerrada como fallback");
+        console.log("Sesión cerrada como fallback");
         router.replace("/(auth)");
       } catch (signOutError) {
-        console.error("❌ Error cerrando sesión:", signOutError);
+        console.error("Error cerrando sesión:", signOutError);
         router.replace("/(auth)");
       }
     }
