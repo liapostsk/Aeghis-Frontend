@@ -3,7 +3,7 @@ import {
   addDoc, collection, getDocs, limit, query, serverTimestamp,
   where, updateDoc, doc,
 } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db } from '../../firebaseconfig';
 import { getAuth } from 'firebase/auth';
 
 export async function openOrCreateDM(otherUid: string) {

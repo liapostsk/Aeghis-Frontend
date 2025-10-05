@@ -64,6 +64,7 @@ export default function Index() {
           console.log("Usuario existe en ambos lugares (Clerk + Backend)");
           
           try {
+            console.log("Vinculando sesión de Firebase...");
             await linkFirebaseSession();
 
             await ensureCurrentUserProfile({

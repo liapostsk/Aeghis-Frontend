@@ -1,13 +1,11 @@
-import { initializeApp, getApps, getApp } from 'firebase/app';
+import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { 
-  initializeAuth, 
-  getAuth,
+  initializeAuth,
   getReactNativePersistence 
 } from 'firebase/auth';
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Platform } from 'react-native';
+import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
 
 // credenciales unicas del proyecto Firebase
 const firebaseConfig = {
@@ -23,10 +21,6 @@ console.log("Firebase config:", firebaseConfig);
 
 // Esta función inicializa el SDK de Firebase en tu aplicación
 const app = initializeApp(firebaseConfig);
-
-let auth = getAuth(app);
-if (Platform.OS !== 'web') {
-  try {
     /*
         Esta parte inicializa el SDK de Firebase Authentication. 
         La distinción entre getAuth e initializeAuth con persistence es clave 
@@ -35,14 +29,10 @@ if (Platform.OS !== 'web') {
         localmente en el dispositivo.
     */
 
-    auth = initializeAuth(app, {
-      persistence: getReactNativePersistence(AsyncStorage),
-    });
-  } catch {
-    // ya estaba inicializado (Fast Refresh)
-    auth = getAuth(app);
-  }
-}
+const auth = initializeAuth(app, {
+  persistence: getReactNativePersistence(ReactNativeAsyncStorage)
+});
+
 
 // Inicializa el SDK de Cloud Firestore
 const db = getFirestore(app);
@@ -50,7 +40,6 @@ const db = getFirestore(app);
 // Inicializa el SDK de Cloud Storage for Firebase, si el chat permite subir archivos como imágenes
 // en los mensajes de Firestore, solo se guardarán las URLs de esos archivos en Firestore
 const storage = getStorage(app);
-
 
 export { app, auth , db, storage};
 
