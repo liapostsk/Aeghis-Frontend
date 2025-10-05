@@ -6,7 +6,7 @@ import {
   getAuth,
   getReactNativePersistence 
 } from 'firebase/auth';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Platform } from 'react-native';
 
 // credenciales unicas del proyecto Firebase
@@ -19,8 +19,10 @@ const firebaseConfig = {
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID!,
 };
 
+console.log("Firebase config:", firebaseConfig);
+
 // Esta función inicializa el SDK de Firebase en tu aplicación
-const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig);
 
 let auth = getAuth(app);
 if (Platform.OS !== 'web') {

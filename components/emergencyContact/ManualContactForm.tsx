@@ -6,7 +6,6 @@ import {
     StyleSheet,
     TextInput,
 } from 'react-native';
-import { CountryCode } from 'react-native-country-picker-modal';
 import PhoneNumberPicker from '@/components/ui/PhoneNumberPicker';
 import { Contact } from '@/api/types';
 
@@ -19,7 +18,7 @@ export default function ManualContactForm({ onSave, onCancel }: Props) {
     const [name, setName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [relation, setRelation] = useState('');
-    const [countryCode, setCountryCode] = useState<CountryCode>('ES');
+    const [countryCode, setCountryCode] = useState('ES');
     const [callingCode, setCallingCode] = useState('34');
 
     const handleSave = () => {

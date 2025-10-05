@@ -39,7 +39,7 @@ export default function LoginScreen() {
   const setToken = useTokenStore((state) => state.setToken);
   const { signOut, getToken } = useAuth();
 
-  const fullPhone = `+${callingCode}${phone.replace(/\s/g, '')}`;
+  const fullPhone = `${callingCode}${phone.replace(/\s/g, '')}`;
 
   const handleSendCode = async () => {
     if (!signIn || !isValid) return;

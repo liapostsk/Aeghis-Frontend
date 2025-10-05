@@ -6,28 +6,36 @@ import {
   StyleSheet,
   Platform,
 } from 'react-native';
-import CountryPicker, {
-  Country,
-  CountryCode,
-} from 'react-native-country-picker-modal';
+import CountrySelect from 'react-native-country-select';
 
 type Props = {
-  initialCountryCode?: CountryCode;
-  onChange: (data: { countryCode: CountryCode; callingCode: string }) => void;
+  initialCountryCode?: string;
+  onChange: (data: { countryCode: string; callingCode: string }) => void;
 };
 
 export default function PhoneNumberPicker({
   initialCountryCode = 'ES',
   onChange,
 }: Props) {
-  const [countryCode, setCountryCode] = useState<CountryCode>(initialCountryCode);
+  const [countryCode, setCountryCode] = useState(initialCountryCode);
   const [callingCode, setCallingCode] = useState('34');
   const [visible, setVisible] = useState(false);
+  const [selectedCountries, setSelectedCountries] = useState<any[]>([]);
 
-  const handleSelect = (country: Country) => {
-    setCountryCode(country.cca2);
-    setCallingCode(country.callingCode[0]);
-    onChange({ countryCode: country.cca2, callingCode: country.callingCode[0] });
+  const handleSelect = (country: any) => {
+    if (country) {
+      setCountryCode(country.code || country.cca2);
+      setCallingCode(country.idd.root || country.callingCode);
+      setSelectedCountries([country]);
+      onChange({ 
+        countryCode: country.code || country.cca2, 
+        callingCode: country.idd.root || country.callingCode 
+      });
+    }
+    setVisible(false);
+  };
+
+  const handleClose = () => {
     setVisible(false);
   };
 
@@ -37,22 +45,18 @@ export default function PhoneNumberPicker({
         style={styles.container}
         onPress={() => setVisible(true)}
       >
-        <Text style={styles.codeText}>+{callingCode}</Text>
-        <View style={{ marginLeft: 6 }}>
-          <CountryPicker
-            countryCode={countryCode}
-            withFlag
-            withEmoji
-            withFilter
-            withAlphaFilter
-            withCallingCode={false}
-            withCallingCodeButton={false}
-            onSelect={handleSelect}
-            visible={visible} // el modal se muestra por separado
-            onClose={() => setVisible(false)}
-          />
-        </View>
+        <Text style={styles.flag}>
+          {selectedCountries.length > 0 ? selectedCountries[0].flag : '🇪🇸'}
+        </Text>
+        <Text style={styles.codeText}>{callingCode}</Text>
       </TouchableOpacity>
+
+      <CountrySelect
+        isMultiSelect={false}
+        visible={visible}
+        onSelect={handleSelect}
+        onClose={handleClose}
+      />
     </>
   );
 }
@@ -66,6 +70,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: Platform.OS === 'ios' ? 13 : 12,
     alignItems: 'center',
+  },
+  flag: {
+    fontSize: 20,
+    marginRight: 8,
   },
   codeText: {
     fontSize: 16,

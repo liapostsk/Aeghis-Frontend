@@ -1,6 +1,5 @@
-// firebase.ts (cliente)
 import api from "../client";
-import {auth} from "@/lib/firebase";
+import {auth} from "../../firebaseconfig";
 import { signInWithCustomToken, signOut } from "firebase/auth";
 
 export async function linkFirebaseSession() {

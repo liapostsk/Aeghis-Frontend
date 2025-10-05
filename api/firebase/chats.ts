@@ -1,5 +1,5 @@
 // src/api/chats.ts
-import { auth, db } from '@/lib/firebase';
+import { auth, db } from '../../firebaseconfig';
 import {
   addDoc, collection, doc, serverTimestamp, setDoc,
 } from 'firebase/firestore';
