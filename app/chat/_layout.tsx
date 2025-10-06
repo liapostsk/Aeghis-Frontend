@@ -1,9 +1,6 @@
 import { useAuth } from "@clerk/clerk-expo";
-import { router, Stack } from "expo-router";
+import { Stack } from "expo-router";
 import React from "react";
-import { Pressable } from "react-native";
-import Icon from '@expo/vector-icons/Ionicons';
-
 
 export default function ChatLayout() {
   const { isLoaded } = useAuth();
@@ -16,15 +13,7 @@ export default function ChatLayout() {
       <Stack.Screen 
         name="index"
         options={{
-          headerLeft: () => (
-            <Pressable onPress={() => router.replace("/(tabs)/groups")}>
-              <Icon name="arrow-back" size={24} color="#FFFF" />
-            </Pressable>
-          ),
-          headerShown: true,
-          title: "",
-          headerTransparent: true,
-          headerTintColor: '#fff',
+          headerShown: false,
         }}
       />
     </Stack>

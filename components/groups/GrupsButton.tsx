@@ -98,6 +98,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginLeft: '80%',
     marginBottom: '25%',
-    top: '5%',
+    top: '2%',
   },
 });

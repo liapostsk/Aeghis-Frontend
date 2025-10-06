@@ -11,13 +11,15 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, router } from 'expo-router';
 import { Group } from '@/api/types';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 import { createInvitation } from '@/api/group/invitationApi';
 import { getGroupById } from '@/api/group/groupApi';
-import { updateGroupFirebase, sendMessageFirebase} from '@/api/firebase/chat/chatService';
+import { updateGroupFirebase, sendMessageFirebase, listenGroupMessagesexport} from '@/api/firebase/chat/chatService';
+import { auth } from '@/firebaseconfig';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface Message {
   id: string;
@@ -40,6 +42,33 @@ export default function ChatScreen() {
 
   const { getToken } = useAuth();
   const setToken = useTokenStore((state) => state.setToken);
+
+  function formatHourMin(d: Date) {
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  useEffect(() => {
+  if (!groupId) return;
+  const uid = auth.currentUser?.uid;
+
+  const unsub = listenGroupMessagesexport(
+    String(groupId),
+    (docs) => {
+      const ui = docs.map((m) => ({
+        id: m.id,
+        sender: m.senderId,
+        content: m.content ?? '',
+        time: (m.timestamp?.toDate ? formatHourMin(m.timestamp.toDate()) : 'enviando…'),
+        isUser: m.senderId === uid,
+        type: 'message' as const,
+      }));
+      setMessages(ui);
+    },
+    (err) => console.warn('No se pudieron leer mensajes:', err)
+  );
+
+  return unsub;
+}, [groupId]);
 
   useEffect(() => {
     let mounted = true;
@@ -186,7 +215,7 @@ export default function ChatScreen() {
   );
 
   const renderChatScreen = (g: Group) => (
-    <>
+    <View style={styles.chatContainer}>
       {g.state === 'ACTIVO' && (
         <View style={styles.tripStatus}>
           <Ionicons name="location" size={20} style={styles.locationIcon} />
@@ -229,20 +258,28 @@ export default function ChatScreen() {
           />
           {inputText.trim().length > 0 && (
             <Pressable style={styles.sendButton} onPress={sendMessage}>
-              <Ionicons name="send" size={20} color="#7A33CC" />
+              <Ionicons name="send" size={17} color="#7A33CC" />
             </Pressable>
           )}
         </View>
       </View>
-    </>
+    </View>
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar barStyle="light-content" backgroundColor="#7A33CC" translucent={false} />
 
       {/* Header */}
       <View style={styles.header}>
+
+        <Pressable 
+          onPress={() => router.replace("/(tabs)/groups")} 
+          style={styles.backButton}
+        >
+          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+        </Pressable>
+
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>{group.name || 'Grupo sin nombre'}</Text>
           <View style={styles.headerSubtitle}>
@@ -273,24 +310,25 @@ export default function ChatScreen() {
 
       {/* Contenido principal */}
       {hasEnoughMembers ? renderChatScreen(group) : renderInvitationScreen(group)}
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  container: { flex: 1, backgroundColor: '#7A33CC' },
+  chatContainer: { flex: 1, backgroundColor: '#FFFFFF' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 16 },
   muted: { color: '#888', marginTop: 8 },
   error: { color: '#c00' },
 
   header: {
     backgroundColor: '#7A33CC',
-    paddingTop: 50,
     paddingBottom: 16,
     paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
   },
+  backButton: { marginRight: 12 },
   headerCenter: { flex: 1, alignItems: 'center' },
   headerButton: { marginLeft: 12 },
   headerTitle: { color: 'white', fontSize: 18, fontWeight: '600' },
@@ -362,8 +400,13 @@ const styles = StyleSheet.create({
   otherMessageText: { color: '#374151', fontSize: 14 },
   messageTime: { color: '#6B7280', fontSize: 12, marginTop: 4 },
 
-  // Input
-  inputContainer: { paddingHorizontal: 16, paddingVertical: 16, borderTopWidth: 1, borderTopColor: '#E5E7EB' },
+  inputContainer: { 
+    paddingHorizontal: 16, 
+    paddingVertical: 16,
+    marginBottom: "7%",
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB' 
+  },
   inputWrapper: {
     backgroundColor: '#F3F4F6',
     borderRadius: 24,

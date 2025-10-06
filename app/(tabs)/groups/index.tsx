@@ -120,11 +120,10 @@ export default function TrustedScreen() {
           showsVerticalScrollIndicator={false}
         />
       </View>
-
-      <GroupsButton
-        kind="confianza"
-        onSuccess={load}
-      />
+        <GroupsButton
+          kind="confianza"
+          onSuccess={load}
+        />
     </View>
   );
 }
@@ -137,7 +136,7 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     flex: 1,
-    marginBottom: 80,
+    paddingBottom: 10,
   },
   note: {
     fontSize: 17,

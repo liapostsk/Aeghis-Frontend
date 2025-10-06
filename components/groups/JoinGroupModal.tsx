@@ -86,7 +86,8 @@ export default function JoinGroupModal({ visible, onClose, onSuccess }: JoinGrou
         console.log("HOLAAAA 2")
         console.log("Code usado para unirse al grupo:", response);
         // Unirse al chat del grupo en Firebase
-        await joinGroupChatFirebase(String(response));
+        const responseFb = await joinGroupChatFirebase(String(response));
+        console.log("Respuesta de Firebase al unirse al chat del grupo:", responseFb);
         console.log("HOLAAAA 3")
         onSuccess();
       } else {

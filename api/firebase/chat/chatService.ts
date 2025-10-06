@@ -14,6 +14,8 @@ import {
   where,
   Unsubscribe,
   arrayUnion,
+  writeBatch,
+  limit,
 } from 'firebase/firestore';
 import type { ChatDoc, MessageDoc } from '../firebaseTypes';
 import { Group } from '@/api/types';
@@ -51,21 +53,22 @@ export async function createGroupFirebase(group: Partial<Group>): Promise<string
   return chatRef.id;
 }
 
-// Join group chat
 export async function joinGroupChatFirebase(groupId: string) {
-  console.log("Joining Firebase group chat with ID:", groupId);
   const uid = requireUid();
   const chatRef = doc(db, 'chats', String(groupId));
-  const snap = await getDoc(chatRef);
-  if (!snap.exists()) throw new Error('Chat does not exist');
 
-  // Evita carreras/duplicados
-  await updateDoc(chatRef, {
-    members: arrayUnion(uid),
-    updatedAt: serverTimestamp(),
-  });
+  try {
+    await updateDoc(chatRef, {
+      members: arrayUnion(uid),
+      updatedAt: serverTimestamp(),
+    });
+    // ahora que YA eres miembro, si quieres, pon el listener:
+    // const snap = await getDoc(chatRef); // <- si lo necesitas, ahora sí
+  } catch (e: any) {
+    console.log('Join failed:', e.code, e.message);
+    throw e;
+  }
 }
-
 
 //Update group chat participants when members are added/removed in backend
 export async function updateGroupFirebase(group: Group) {
@@ -82,46 +85,54 @@ export async function updateGroupFirebase(group: Group) {
 
 // FUNCIONES DE MENSAJERÍA
 
-// sendMessageToGroup
-export async function sendMessageFirebase(groupId: string, text: string ) {
+// sendMessageToGroup, como ahora ya somos miembros, podemos enviar mensajes
+export async function sendMessageFirebase(groupId: string, text: string) {
   const uid = requireUid();
+  const trimmed = text.trim();
+  if (!trimmed) return;
 
-  const messagesRef = collection(db, 'chats', String(groupId), 'messages');
+  const chatRef = doc(db, 'chats', groupId);
+  const messagesRef = collection(db, 'chats', groupId, 'messages');
+  const newMsgRef = doc(messagesRef); // generas ID primero
 
-  await addDoc(messagesRef, {
+  const batch = writeBatch(db);
+  batch.set(newMsgRef, {
     senderId: uid,
     type: 'text',
-    content: text.trim(),
+    content: trimmed,
     read: false,
     timestamp: serverTimestamp(),
   });
+  batch.set(
+    chatRef,
+    {
+      lastMessage: trimmed.slice(0, 100),
+      lastMessageAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    },
+    { merge: true }
+  );
 
-  // Actualizar lastMessage y lastMessageAt en el chat
-  const chatRef = doc(db, 'chats', groupId);
-  await setDoc(chatRef, {
-    lastMessage: text.slice(0, 100),
-    lastMessageAt: serverTimestamp(),
-  }, { merge: true });
-
-  return messagesRef.id;
+  await batch.commit();
+  return newMsgRef.id;
 }
 
 //Escucha los mensajes de un grupo en tiempo real
-export function listenGroupMessages(
-  groupId: number,
-  onUpdate: (messages: MessageDoc[]) => void
+export function listenGroupMessagesexport (
+  groupId: string,
+  onChange: (docs: Array<{ id: string } & MessageDoc>) => void,
+  onError?: (err: any) => void,
+  max = 200
 ): Unsubscribe {
-  const messagesRef = collection(db, 'chats', String(groupId), 'messages');
-  const q = query(messagesRef, orderBy('timestamp', 'asc'));
-
-  return onSnapshot(q, (snapshot) => {
-    const messages = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    })) as MessageDoc[];
-    
-    onUpdate(messages);
-  });
+  const q = query(
+    collection(db, 'chats', String(groupId), 'messages'),
+    orderBy('timestamp', 'asc'),
+    limit(max),
+  );
+  return onSnapshot(q, snap => {
+    const items = snap.docs.map(d => ({ id: d.id, ...(d.data() as MessageDoc) }));
+    onChange(items);
+  }, onError);
 }
 
 /**
