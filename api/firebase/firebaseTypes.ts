@@ -15,8 +15,19 @@ export interface ChatDoc {
 export interface MessageDoc {
   id: string;
   senderId: string;
+  senderName: string;
   read: boolean;
   type: 'text' | 'image';
   content: string;
   timestamp: any;       // Firebase Timestamp
 }
+
+export type GroupTileInfo = {
+  chatId: string;
+  lastMessage: string | null;
+  lastMessageAt: any | null;      // Timestamp
+  lastSenderId: string | null;
+  lastSenderName: string | null;
+  unreadCount: number;
+  membersCount: number;
+};

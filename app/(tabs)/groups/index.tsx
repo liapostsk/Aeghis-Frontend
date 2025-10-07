@@ -7,7 +7,9 @@ import GroupsButton from '@/components/groups/GrupsButton';
 import { View, Text, StyleSheet, FlatList, RefreshControl, Pressable } from 'react-native';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
-import { updateGroupFirebase } from '@/api/firebase/chat/chatService';
+import { getGroupTilesInfo, updateGroupFirebase, markChatSeen} from '@/api/firebase/chat/chatService';
+import { GroupTileInfo } from '@/api/firebase/firebaseTypes';
+import { auth } from '@/firebaseconfig';
 
 // Helpers
 const getInitials = (name?: string) => {
@@ -15,6 +17,13 @@ const getInitials = (name?: string) => {
   const parts = name.trim().split(/\s+/).slice(0, 2);
   return parts.map(p => p[0]?.toUpperCase()).join('');
 };
+
+const formatTime = (ts?: any) => {
+  if (!ts?.toDate) return '';
+    const d: Date = ts.toDate();
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
+
 
 const stateLabel = (state?: string) => {
   switch (state) {
@@ -29,6 +38,7 @@ const stateLabel = (state?: string) => {
 export default function TrustedScreen() {
   const { search } = useGroupSeach();        // valor compartido del header
   const [groups, setGroups] = useState<Group[]>([]);
+  const [tilesById, setTilesById] = useState<Record<string, GroupTileInfo>>({});
   const [loading, setLoading] = useState(false);
 
   const { getToken } = useAuth();
@@ -41,8 +51,24 @@ export default function TrustedScreen() {
       const token = await getToken();
       setToken(token);
       const data = await getUserGroups('CONFIANZA'); // <- tipo fijo para esta screen
-      console.log("🧪 Grupos de confianza cargados:", data);
       setGroups(data ?? []);
+      console.log("🧪 Grupos de confianza cargados:", data);
+      if (data && data.length) {
+        const ids = data.map(g => String(g.id));
+        try {
+          const tiles = await getGroupTilesInfo(ids);
+          const map: Record<string, GroupTileInfo> = {};
+          for (const t of tiles) {
+            if (t) map[t.chatId] = t; // por si has filtrado errores inside
+          }
+          setTilesById(map);
+        } catch (e) {
+          console.warn('No se pudo cargar tiles de Firestore:', e);
+          setTilesById({});
+        }
+      } else {
+      setTilesById({});
+      }
     } finally {
       setLoading(false);
     }
@@ -62,6 +88,7 @@ export default function TrustedScreen() {
 
   const navigateToChat = (group: Group) => {
     updateGroupFirebase(group); // Actualiza datos del chat al entrar
+    void markChatSeen(String(group.id)).catch(() => {}); // Marca como visto
     router.push({
       pathname: '/chat',
       params: {
@@ -89,10 +116,33 @@ export default function TrustedScreen() {
           }
           renderItem={({ item }) => {
             const initials = getInitials(item.name);
-            const lastMessage = "You: I'm arriving";
-            const unreadCount = 1;
             const memberCount = item.membersIds?.length || 1;
             const status = stateLabel(item.state);
+            const tile = tilesById[String(item.id)];
+            
+            // Debug temporal para identificar el problema
+            console.log(`Tile para grupo ${item.id}:`, tile);
+            
+            // Verificación robusta del mensaje
+            const lastMessage = (() => {
+              if (!tile || !tile.lastMessage) return 'No messages yet';
+              
+              const senderPrefix = tile.lastSenderId === auth.currentUser?.uid 
+                ? 'Yo: '
+                : tile.lastSenderName 
+                  ? `${tile.lastSenderName}: `
+                  : '';
+              
+              const maxMessageLength = 35;
+              const truncatedMessage = tile.lastMessage.length > maxMessageLength 
+                ? tile.lastMessage.substring(0, maxMessageLength) + '...' 
+                : tile.lastMessage;
+              
+              return `${senderPrefix}${truncatedMessage}`;
+            })();
+            
+            const lastTime = tile?.lastMessageAt ? formatTime(tile.lastMessageAt) : '';
+            const unreadCount = tile?.unreadCount ?? 0;
             return (
               <Pressable 
                 style={styles.card} 
@@ -102,12 +152,21 @@ export default function TrustedScreen() {
                   <Text style={styles.avatarText}>{initials}</Text>
                 </View>
                 <View style={styles.info}>
-                  <Text style={styles.groupName}>{item.name}</Text>
-                  <Text style={styles.lastMessage}>{lastMessage}</Text>
-                  <Text style={styles.status}>{status}</Text>
-                  <Text style={styles.memberCount}>
+                  <View style={styles.topRow}>
+                    <Text style={styles.groupName}>{item.name}</Text>
+                    {lastTime && (
+                      <Text style={styles.timeText}>{lastTime}</Text>
+                    )}
+                  </View>
+                  <Text style={styles.lastMessage} numberOfLines={1}>
+                    {lastMessage}
+                  </Text>
+                  <View style={styles.bottomRow}>
+                    <Text style={styles.status}>{status}</Text>
+                    <Text style={styles.memberCount}>
                       {memberCount} member{memberCount !== 1 ? 's' : ''}
                     </Text>
+                  </View>
                 </View>
                 {unreadCount > 0 && (
                   <View style={styles.unreadBadge}>
@@ -118,11 +177,13 @@ export default function TrustedScreen() {
             );
           }}
           showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listContent}
         />
       </View>
         <GroupsButton
           kind="confianza"
           onSuccess={load}
+          style={styles.fab}
         />
     </View>
   );
@@ -136,7 +197,6 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     flex: 1,
-    paddingBottom: 10,
   },
   note: {
     fontSize: 17,
@@ -171,6 +231,7 @@ const styles = StyleSheet.create({
   },
   info: {
     flex: 1,
+    marginRight: 8, // Espacio para el badge de notificación
   },
   groupName: {
     fontSize: 16,
@@ -213,5 +274,36 @@ const styles = StyleSheet.create({
   memberCount: {
     fontSize: 12,
     color: '#666',
+  },
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
+  timeText: {
+    fontSize: 12,
+    color: '#888',
+    fontWeight: '500',
+  },
+  bottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  listContent: {
+    paddingBottom: 80,
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 70,
+    right: 20,
+    elevation: 8, // Android
+    shadowColor: '#000', // iOS
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    zIndex: 1000,
   },
 });

@@ -68,7 +68,7 @@ export default function Index() {
             await linkFirebaseSession();
 
             await ensureCurrentUserProfile({
-              displayName: clerkUser?.fullName || undefined,
+              displayName: user?.name || undefined,
               photoURL: clerkUser?.imageUrl || undefined,
               phone: clerkUser?.phoneNumbers[0].phoneNumber || undefined,
             });

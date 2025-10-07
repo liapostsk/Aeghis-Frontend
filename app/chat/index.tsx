@@ -17,16 +17,18 @@ import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 import { createInvitation } from '@/api/group/invitationApi';
 import { getGroupById } from '@/api/group/groupApi';
-import { updateGroupFirebase, sendMessageFirebase, listenGroupMessagesexport} from '@/api/firebase/chat/chatService';
+import { updateGroupFirebase, sendMessageFirebase, listenGroupMessagesexport, markAllMessagesAsRead} from '@/api/firebase/chat/chatService';
 import { auth } from '@/firebaseconfig';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface Message {
   id: string;
-  sender: string;
+  senderId: string;
+  senderName: string;
   content: string;
   time: string;
   isUser?: boolean;
+  isRead?: boolean;
   type?: 'message' | 'status' | 'arrival';
 }
 
@@ -48,6 +50,15 @@ export default function ChatScreen() {
   }
 
   useEffect(() => {
+    // Marcar como leídos cuando se abre el chat
+    if (groupId) {
+      console.log ("Marking messages as read for group:", groupId);
+      markAllMessagesAsRead(String(groupId));
+      console.log("Messages marked as read.");
+    }
+  }, [groupId]);
+
+  useEffect(() => {
   if (!groupId) return;
   const uid = auth.currentUser?.uid;
 
@@ -56,10 +67,12 @@ export default function ChatScreen() {
     (docs) => {
       const ui = docs.map((m) => ({
         id: m.id,
-        sender: m.senderId,
+        senderId: m.senderId,
+        senderName: m.senderName || 'Unknown',
         content: m.content ?? '',
         time: (m.timestamp?.toDate ? formatHourMin(m.timestamp.toDate()) : 'enviando…'),
         isUser: m.senderId === uid,
+        isRead: m.read || false, // 🔥 Añadir estado de lectura
         type: 'message' as const,
       }));
       setMessages(ui);
@@ -147,7 +160,16 @@ export default function ChatScreen() {
           </View>
           <View style={styles.userMessageInfo}>
             <Text style={styles.messageTime}>{item.time}</Text>
-            <Ionicons name="checkmark" size={12} style={styles.checkIcon} />
+            <View style={styles.checkMarkContainer}>
+              {item.isRead ? (
+                <>
+                  <Ionicons name="checkmark" size={12} style={[styles.checkIcon, styles.doubleCheck]} />
+                  <Ionicons name="checkmark" size={12} style={[styles.checkIcon, styles.doubleCheck, styles.secondCheck]} />
+                </>
+              ) : (
+                <Ionicons name="checkmark" size={12} style={styles.checkIcon} />
+              )}
+            </View>
           </View>
         </View>
       );
@@ -155,7 +177,7 @@ export default function ChatScreen() {
 
     return (
       <View style={styles.otherMessageContainer}>
-        <Text style={styles.senderName}>{item.sender}:</Text>
+        <Text style={styles.senderName}>{item.senderName}</Text>
         <View style={styles.otherBubble}>
           <Text style={styles.otherMessageText}>{item.content}</Text>
         </View>
@@ -269,7 +291,7 @@ export default function ChatScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar barStyle="light-content" backgroundColor="#7A33CC" translucent={false} />
-
+      
       {/* Header */}
       <View style={styles.header}>
 
@@ -307,9 +329,8 @@ export default function ChatScreen() {
           <Ionicons name="people" size={24} color="#FFFFFF" />
         </Pressable>
       </View>
-
-      {/* Contenido principal */}
-      {hasEnoughMembers ? renderChatScreen(group) : renderInvitationScreen(group)}
+        {/* Contenido principal */}
+        {hasEnoughMembers ? renderChatScreen(group) : renderInvitationScreen(group)}
     </SafeAreaView>
   );
 }
@@ -338,7 +359,7 @@ const styles = StyleSheet.create({
   activeIndicator: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#22C55E', marginRight: 4 },
 
   // Invitación
-  invitationContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32 },
+  invitationContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32, backgroundColor: '#FFFFFF'},
   invitationIcon: { marginBottom: 24 },
   invitationTitle: { fontSize: 24, fontWeight: 'bold', color: '#374151', textAlign: 'center', marginBottom: 8 },
   invitationSubtitle: { fontSize: 16, color: '#6B7280', textAlign: 'center', marginBottom: 32, lineHeight: 22 },
@@ -393,7 +414,7 @@ const styles = StyleSheet.create({
   },
   userMessageText: { color: 'white', fontSize: 14 },
   userMessageInfo: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
-  checkIcon: { marginLeft: 4, color: '#7A33CC' },
+  checkIcon: { marginLeft: 4, color: '#9CA3AF' }, // Gris para no leído
   otherMessageContainer: { alignItems: 'flex-start', marginVertical: 4, maxWidth: '80%' },
   senderName: { color: '#374151', fontSize: 12, fontWeight: '500', marginBottom: 4 },
   otherBubble: { backgroundColor: '#E5E7EB', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 16, borderBottomLeftRadius: 4 },
@@ -417,4 +438,9 @@ const styles = StyleSheet.create({
   },
   textInput: { flex: 1, fontSize: 16, color: '#374151', minHeight: 20, maxHeight: 100 },
   sendButton: { marginLeft: 8, padding: 4 },
+  
+  // Check marks
+  checkMarkContainer: { flexDirection: 'row', alignItems: 'center', marginLeft: 4 },
+  doubleCheck: { color: '#7A33CC' },
+  secondCheck: { marginLeft: -8 }, // Superpone el segundo check
 });
