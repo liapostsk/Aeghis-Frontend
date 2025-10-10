@@ -2,7 +2,7 @@ import api from "../client";
 import { EmergencyContactDto } from "../types";
 
 
-export const createEmergencyContact = async (emergencyContact: EmergencyContactDto): Promise<number> => {
+export const createEmergencyContact = async (emergencyContact: EmergencyContactDto): Promise<EmergencyContactDto> => {
   console.log("📡 API: Enviando contacto:", emergencyContact);
   const response = await api.post("/me/emergency-contact/add", emergencyContact);
   console.log("📡 API: Respuesta de creación:", response.data);

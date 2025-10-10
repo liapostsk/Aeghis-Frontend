@@ -15,7 +15,6 @@ import EmergencyContactAddModal from '@/components/emergencyContact/EmergencyCon
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 import { checkIfUserExists } from '@/api/user/userApi';
-import { createEmergencyContact } from '@/api/contacts/emergencyContactsApi';
 
 export default function EmergencyContactStep({
   onNext,
@@ -32,130 +31,98 @@ export default function EmergencyContactStep({
   const { getToken } = useAuth();
   const setToken = useTokenStore((state) => state.setToken);
   
-  // Numero de contactos seleccionados
+  // 🔥 Función para limpiar contactos
+  const clearContacts = () => {
+    if (user) {
+      setUser({
+        ...user,
+        emergencyContacts: [],
+        externalContacts: []
+      });
+    }
+  };
+  
+  // Contadores de contactos
   const emergencyContactCount = user?.emergencyContacts?.length || 0;
   const externalContactCount = user?.externalContacts?.length || 0;
   const totalContactCount = emergencyContactCount + externalContactCount;
 
-  const checkUserExists = async (phone: string): Promise<any | null> => {
-    try {
-      const token = await getToken();
-      setToken(token);
-      
-      console.log('Buscando usuario con teléfono:', phone);
-      const foundUser = await checkIfUserExists(phone);
-      console.log('Existe?:', foundUser);
-      return foundUser;
-    } catch (error) {
-      console.error('Error buscando usuario:', error);
-      return null;
-    }
+  // Validaciones de contacto
+  const validateContact = (contactData: Contact): string | null => {
+    if (!contactData.phone) return 'Falta teléfono.';
+    if (!user) return 'Información de usuario faltante.';
+    if (contactData.phone === user.phone) return 'No puedes agregarte a ti mismo.';
+    
+    const alreadyExists = 
+      (user.emergencyContacts ?? []).some(c => c.phone === contactData.phone) ||
+      (user.externalContacts ?? []).some(c => c.phone === contactData.phone);
+    if (alreadyExists) return 'Este contacto ya está en tu lista.';
+    
+    return null;
   };
 
-  // Verifica si el contacto ya existe en contactos de emergencia o externos
-  const isDuplicateContact = (phone: string): boolean => {
-    // Verificar duplicados en contactos de emergencia
-    const isDuplicateEmergency = user?.emergencyContacts?.some(
-      contact => contact.phone === phone
-    );
-
-    // Verificar duplicados en contactos externos
-    const isDuplicateExternal = user?.externalContacts?.some(
-      contact => contact.phone === phone
-    );
-
-    return !!isDuplicateEmergency || !!isDuplicateExternal;
-  };
-
-  // Añade un nuevo contacto de emergencia ya sea usuario o externo
+  // Añadir contacto de emergencia o externo
   const handleAddContact = async (contactData: Contact) => {
-    if (!contactData.name || !contactData.phone) {
-      Alert.alert('Error', 'Por favor completa todos los campos.');
-      return;
-    }
-
-    if (!user) {
-      Alert.alert('Error', 'Información de usuario faltante.');
-      return;
-    }
-
-    // Verificar duplicados
-    if (isDuplicateContact(contactData.phone)) {
-      Alert.alert('Contacto duplicado', 'Este contacto ya ha sido agregado.');
-      return;
-    }
-
-    // Verificar que no se esté agregando a sí mismo
-    if (contactData.phone === user.phone) {
-      Alert.alert('Error', 'No puedes agregarte a ti mismo como contacto de emergencia.');
+    const validationError = validateContact(contactData);
+    if (validationError) {
+      Alert.alert('Error', validationError);
       return;
     }
 
     setIsSearching(true);
-
     try {
-      // Buscar si el número pertenece a un usuario de la app
-      const foundUser = await checkUserExists(contactData.phone);
-      console.log('Resultado de búsqueda de usuario:', foundUser);
-
-      if (foundUser) {
-        // Si es usuario de la app, crear contacto de emergencia
-        const newEmergencyContact: Partial<EmergencyContact> = {
-          name: contactData.name || '',
+      const token = await getToken();
+      setToken(token);
+      const contactId = await checkIfUserExists(contactData.phone);
+      
+      if (contactId != null) {
+        // Usuario registrado - Contacto de emergencia
+        const draftEmergency: Partial<EmergencyContact> = {
+          id: undefined as any,
+          name: contactData.name ?? '',
           phone: contactData.phone,
-          relation: contactData.relation || '',
+          relation: contactData.relation ?? '',
+          contactId: contactId,
           status: 'PENDING',
         };
-        
-        console.log('Creando contacto de emergencia:', newEmergencyContact);
-        const contactId = await createEmergencyContact(newEmergencyContact as EmergencyContact);
-        console.log('Contacto creado con ID:', contactId);
-
-        // Actualizar estado local del usuario
-        const updatedEmergencyContacts = [
-          ...(user.emergencyContacts || []),
-          { ...newEmergencyContact, id: contactId } as EmergencyContact
-        ];
-
-        setUser({
-          ...user,
-          emergencyContacts: updatedEmergencyContacts,
-        });
-
+        const updated = [...(user!.emergencyContacts ?? []), draftEmergency as EmergencyContact];
+        setUser({ ...user!, emergencyContacts: updated });
       } else {
-        // Si NO es usuario de la app, crear contacto externo
-        const newExternalContact: Partial<ExternalContact> = {
-          name: contactData.name || '',
+        // Usuario no registrado - Contacto externo
+        const draftExternal: ExternalContact = {
+          id: undefined as any,
+          name: contactData.name ?? '',
           phone: contactData.phone,
+          relation: contactData.relation ?? '',
         };
-
-        console.log('Creando contacto externo:', newExternalContact);
-        
-        // Actualizar estado local con contacto externo
-        const updatedExternalContacts = [
-          ...(user.externalContacts || []),
-          newExternalContact as ExternalContact
-        ];
-
-        setUser({
-          ...user,
-          externalContacts: updatedExternalContacts,
-        });
+        const updated = [...(user!.externalContacts ?? []), draftExternal];
+        setUser({ ...user!, externalContacts: updated });
       }
 
-      console.log('Usuario actualizado:', user);
       setModalVisible(false);
-
-    } catch (error) {
-      console.error('Error procesando contacto:', error);
-      Alert.alert('Error', 'No se pudo agregar el contacto. Inténtalo de nuevo.');
+    } catch (e) {
+      console.error('Error al agregar contacto:', e);
+      Alert.alert('Error', 'No se pudo agregar el contacto.');
     } finally {
       setIsSearching(false);
     }
   };
 
-  const handleAddContactPress = () => {
-    setModalVisible(true);
+  // Navegación hacia atrás con opción de limpiar
+  const handleBackPress = () => {
+    if (totalContactCount > 0) {
+      Alert.alert(
+        'Contactos agregados',
+        '¿Qué quieres hacer con los contactos agregados?',
+        [
+          { text: 'Mantener', onPress: onBack },
+          { text: 'Eliminar', onPress: () => { clearContacts(); onBack(); }, style: 'destructive' },
+          { text: 'Cancelar', style: 'cancel' }
+        ]
+      );
+    } else {
+      onBack();
+    }
   };
 
   return (
@@ -189,7 +156,7 @@ export default function EmergencyContactStep({
 
         {/* Add Contact Button */}
         <Pressable 
-          onPress={handleAddContactPress} 
+          onPress={() => setModalVisible(true)} 
           style={[styles.addButton, totalContactCount > 0 && styles.addButtonSecondary]}
           disabled={isSearching}
         >
@@ -203,6 +170,13 @@ export default function EmergencyContactStep({
           </Text>
         </Pressable>
 
+        {/* Clear Contacts Button - Solo mostrar si hay contactos */}
+        {totalContactCount > 0 && (
+          <Pressable onPress={clearContacts} style={styles.clearButton}>
+            <Text style={styles.clearButtonText}>Limpiar contactos</Text>
+          </Pressable>
+        )}
+
         <View style={styles.infoContainer}>
           <Text style={styles.infoText}>
             💡 Tus contactos solo serán notificados en emergencias y no necesitan descargar la app
@@ -213,7 +187,7 @@ export default function EmergencyContactStep({
 
       {/* Bottom Navigation */}
       <View style={styles.buttonContainer}>
-        <Pressable onPress={onBack} style={styles.backButton}>
+        <Pressable onPress={handleBackPress} style={styles.backButton}>
           <Text style={styles.backButtonText}>Atrás</Text>
         </Pressable>
         
@@ -244,7 +218,7 @@ export default function EmergencyContactStep({
   );
 }
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {
@@ -270,13 +244,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     letterSpacing: -0.5,
   },
-  subtitle: {
-    fontSize: 16,
-    color: '#B8B8D1',
-    textAlign: 'center',
-    lineHeight: 22,
-    paddingHorizontal: 20,
-  },
+
   contactCountContainer: {
     backgroundColor: 'rgba(122, 51, 204, 0.2)',
     borderRadius: 25,
@@ -292,7 +260,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
   },
-  // Nuevo estilo para el desglose
   contactBreakdownText: {
     color: '#B8B8D1',
     fontSize: 12,
@@ -337,14 +304,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: '500',
   },
-  bottomNavigation: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.2)',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.1)',
-  },
+
   backButton: {
     paddingHorizontal: 24,
     paddingVertical: 12,
@@ -405,5 +365,21 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     paddingHorizontal: 20,
+  },
+  clearButton: {
+    backgroundColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 100, 100, 0.5)',
+  },
+  clearButtonText: {
+    color: '#FF6B6B',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });

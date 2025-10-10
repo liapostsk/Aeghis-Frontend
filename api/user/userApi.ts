@@ -25,7 +25,7 @@ export const deleteUser = async (id: number): Promise<void> => {
   await api.delete(`/user/${id}`);
 };
 
-export const checkIfUserExists = async (phone: string): Promise<boolean> => {
+export const checkIfUserExists = async (phone: string): Promise<number> => {
   const response = await api.get(`/user/exists/${encodeURIComponent(phone)}`);
-  return response.data.exists;
+  return response.data;
 };

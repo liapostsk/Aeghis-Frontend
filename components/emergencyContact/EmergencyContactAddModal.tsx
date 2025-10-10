@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,8 @@ import * as Contacts from 'expo-contacts';
 import ManualContactForm from './ManualContactForm';
 import ContactList from './ContactList';
 import { Contact } from '@/api/types';
+import { useUserStore } from '@/lib/storage/useUserStorage';
+
 
 const { height } = Dimensions.get('window');
 
@@ -27,6 +29,16 @@ type Props = {
 export default function EmergencyContactAddModal({ visible, onClose, onAddContact }: Props) {
   const [modalMode, setModalMode] = useState<'initial' | 'manual' | 'contacts'>('initial');
   const [contacts, setContacts] = useState<Contact[]>([]);
+
+  const { user, setUser } = useUserStore();
+
+  useEffect(() => {
+    if (!visible) {
+      setModalMode('initial');
+
+      setContacts([]);
+    }
+  }, [visible]);
 
   const getContactsFromDevice = async () => {
     const { status } = await Contacts.requestPermissionsAsync();

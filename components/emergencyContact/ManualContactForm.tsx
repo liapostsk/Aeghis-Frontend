@@ -24,7 +24,9 @@ export default function ManualContactForm({ onSave, onCancel }: Props) {
     const handleSave = () => {
         if (!name.trim() || !phoneNumber.trim()) return;
 
-        const formattedPhone = `+${callingCode}${phoneNumber.replace(/\D/g, '')}`;
+        const formattedPhone = `${callingCode}${phoneNumber.replace(/\D/g, '')}`;
+
+        console.log("numero de telefono formateado:", formattedPhone);
         
         onSave({ 
             name: name.trim(), 

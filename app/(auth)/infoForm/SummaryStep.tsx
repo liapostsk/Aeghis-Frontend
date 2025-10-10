@@ -85,7 +85,7 @@ export default function SummaryStep({onBack}: { onBack: () => void }) {
       console.log('📋 DTO de usuario preparado:', dto);
       const userId = await createUser(dto);
       const data = await getCurrentUser();
-      console.log("📡 Usuario actual desde backend:", data);
+      console.log("👀 SUMMARY STEP: Usuario actual desde backend:", data);
       
       console.log("✅ User created with ID:", userId);
       

@@ -152,13 +152,14 @@ export default function EmergencyContactsSection() {
       const token = await getToken();
       setToken(token);
 
-      const existsUser = await checkIfUserExists(contactData.phone);
-      console.log('Resultado de búsqueda de usuario:', existsUser);
+      const existsUserId = await checkIfUserExists(contactData.phone);
+      console.log('Resultado de búsqueda de usuario, id o null si no existe:', existsUserId);
       
-      if (existsUser) {
+      if (existsUserId != null) {
         const newEmergencyContact: Partial<EmergencyContact> = {
           name: contactData.name || '',
           phone: contactData.phone,
+          contactId: existsUserId,
           relation: contactData.relation || '',
           status: 'PENDING',
         };
