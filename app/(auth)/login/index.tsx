@@ -12,7 +12,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useSignIn, useAuth } from '@clerk/clerk-expo';
+import { useSignIn, useAuth, useUser } from '@clerk/clerk-expo';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PhoneNumberPicker from '@/components/ui/PhoneNumberPicker';
 import VerificationCodeField from '@/components/ui/VerificationCodeField';
@@ -20,9 +20,12 @@ import ContinueButton from '@/components/ui/ContinueButton';
 import { getCurrentUser } from '@/api/user/userApi';
 import { useUserStore } from '@/lib/storage/useUserStorage';
 import { useTokenStore } from '@/lib/auth/tokenStore';
+import { linkFirebaseSession } from '@/api/firebase/auth/firebase';
+import { ensureCurrentUserProfile } from '@/api/firebase/users/userService';
 
 export default function LoginScreen() {
   const { signIn, setActive, isLoaded } = useSignIn();
+  const { user: clerkUser } = useUser();
   const router = useRouter();
 
   const [phone, setPhone] = useState('');
@@ -34,6 +37,7 @@ export default function LoginScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [timer, setTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('');
 
   const { setUser } = useUserStore();
   const setToken = useTokenStore((state) => state.setToken);
@@ -79,13 +83,17 @@ export default function LoginScreen() {
 
     try {
       setIsLoading(true);
+      setLoadingMessage('Verificando código...');
+
       const attempt = await signIn.attemptFirstFactor({
         strategy: 'phone_code',
         code,
       });
 
-      if (attempt.status === 'complete') { // Esto se ha de verificar pq no se si estado complete quiere decir que ha ido bien
+      if (attempt.status === 'complete') {
         await setActive({ session: attempt.createdSessionId });
+        
+        setLoadingMessage('Obteniendo credenciales...');
         const token = await getToken();
 
         if (!token) {
@@ -94,6 +102,8 @@ export default function LoginScreen() {
         }
 
         setToken(token);
+
+        setLoadingMessage('Cargando tu perfil...');
         const userData = await getCurrentUser();
 
         if (!userData || !userData.id) {
@@ -103,7 +113,35 @@ export default function LoginScreen() {
         }
 
         setUser(userData);
-        router.push('/(tabs)');
+
+        // VINCULAR CON FIREBASE
+        try {
+          setLoadingMessage('Configurando servicios en tiempo real...');
+          console.log("Vinculando sesión de Firebase...");
+          await linkFirebaseSession();
+
+          setLoadingMessage('Sincronizando perfil...');
+          await ensureCurrentUserProfile({
+            displayName: userData?.name || undefined,
+            photoURL: clerkUser?.imageUrl || undefined,
+            phone: clerkUser?.phoneNumbers?.[0]?.phoneNumber || undefined,
+          });
+          
+          console.log("✅ Sesión de Firebase vinculada exitosamente");
+          
+        } catch (firebaseError) {
+          console.error("❌ Error vinculando sesión de Firebase:", firebaseError);
+          // No bloquear el acceso - Firebase es opcional para funcionalidades básicas
+          console.warn("⚠️ Continuando sin Firebase - Funcionalidades de chat limitadas");
+        }
+
+        setLoadingMessage('¡Bienvenido de vuelta!');
+        
+        // Pequeña pausa para mostrar mensaje final
+        setTimeout(() => {
+          router.push('/(tabs)');
+        }, 800);
+
       } else {
         Alert.alert("Error", "Incomplete verification.");
       }
@@ -112,6 +150,7 @@ export default function LoginScreen() {
       Alert.alert("Error", error?.errors?.[0]?.message || "Invalid verification code.");
     } finally {
       setIsLoading(false);
+      setLoadingMessage('');
     }
   };
 
@@ -185,6 +224,13 @@ export default function LoginScreen() {
             <View style={styles.codeFieldContainer}>
               <VerificationCodeField value={code} setValue={setCode} />
             </View>
+
+            {/* Mostrar mensaje de carga específico */}
+            {isLoading && loadingMessage && (
+              <View style={styles.loadingMessageContainer}>
+                <Text style={styles.loadingMessage}>{loadingMessage}</Text>
+              </View>
+            )}
             
             <Pressable 
               style={[
@@ -392,5 +438,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     textDecorationLine: "underline",
+  },
+  // Nuevos estilos para mensaje de carga
+  loadingMessageContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 20,
+    marginTop: 20,
+    marginBottom: 10,
+    width: '80%',
+  },
+  loadingMessage: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '500',
+    textAlign: 'center',
   },
 });

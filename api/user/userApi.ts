@@ -25,7 +25,8 @@ export const deleteUser = async (id: number): Promise<void> => {
   await api.delete(`/user/${id}`);
 };
 
-export const checkIfUserExists = async (phone: string): Promise<number> => {
+// Puede devolver el id del usuario o null si no existe
+export const checkIfUserExists = async (phone: string): Promise<number | null> => {
   const response = await api.get(`/user/exists/${encodeURIComponent(phone)}`);
   return response.data;
 };

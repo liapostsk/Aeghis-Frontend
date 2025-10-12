@@ -1,23 +1,23 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Pressable, StyleSheet, Animated, Dimensions } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Animated, Dimensions, Alert } from 'react-native';
 import { router } from 'expo-router';
+import { useAuth, useUser } from '@clerk/clerk-expo';
 import { useUserStore } from '@/lib/storage/useUserStorage';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 import { mapUserToDto } from '@/api/user/mapper';
 import { createUser, getCurrentUser } from '@/api/user/userApi';
-import { Alert } from 'react-native';
-import { useAuth } from '@clerk/clerk-expo';
+import { linkFirebaseSession } from '@/api/firebase/auth/firebase';
+import { ensureCurrentUserProfile } from '@/api/firebase/users/userService';
 
-const { width, height } = Dimensions.get('window');
+const { height } = Dimensions.get('window');
 
-export default function SummaryStep({onBack}: { onBack: () => void }) {
-
+export default function SummaryStep({ onBack }: { onBack: () => void }) {
   const { user, setUser } = useUserStore();
   const { getToken } = useAuth();
+  const { user: clerkUser } = useUser();
   const setToken = useTokenStore((state) => state.setToken);
-
-  // Estado para controlar el loading y prevenir múltiples clics
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('');
 
   // Animaciones
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -25,89 +25,108 @@ export default function SummaryStep({onBack}: { onBack: () => void }) {
   const slideAnim = useRef(new Animated.Value(50)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
+  // Inicializar animaciones
   useEffect(() => {
-    // Secuencia de animaciones de entrada
+    const animationConfig = { duration: 800, useNativeDriver: true };
+    
     Animated.sequence([
       Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-        Animated.timing(scaleAnim, {
-          toValue: 1,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-        Animated.timing(slideAnim, {
-          toValue: 0,
-          duration: 800,
-          useNativeDriver: true,
-        }),
+        Animated.timing(fadeAnim, { toValue: 1, ...animationConfig }),
+        Animated.timing(scaleAnim, { toValue: 1, ...animationConfig }),
+        Animated.timing(slideAnim, { toValue: 0, ...animationConfig }),
       ]),
-      // Animación de pulso continua para el botón principal
       Animated.loop(
         Animated.sequence([
-          Animated.timing(pulseAnim, {
-            toValue: 1.05,
-            duration: 1000,
-            useNativeDriver: true,
-          }),
-          Animated.timing(pulseAnim, {
-            toValue: 1,
-            duration: 1000,
-            useNativeDriver: true,
-          }),
+          Animated.timing(pulseAnim, { toValue: 1.05, duration: 1000, useNativeDriver: true }),
+          Animated.timing(pulseAnim, { toValue: 1, duration: 1000, useNativeDriver: true }),
         ])
       ),
     ]).start();
-  }, []);
+  }, [fadeAnim, scaleAnim, slideAnim, pulseAnim]);
 
+  // Crear usuario en el backend
   const handleCreateUser = async () => {
-    // Prevenir múltiples clics
-    if (isLoading) {
-      console.log('⚠️ Proceso ya en curso, ignorando clic adicional');
+    if (isLoading) return;
+
+    if (!user) {
+      Alert.alert("Error", "No hay datos de usuario disponibles.");
       return;
     }
 
+    setIsLoading(true);
+    setLoadingMessage('Creando tu cuenta...');
+    
     try {
-      setIsLoading(true);
-      console.log('🚀 Iniciando creación de usuario...');
-      
-      if (!user) {
-        Alert.alert("Error", "No hay datos de usuario disponibles.");
-        return;
-      }
-      
+      // 1. Obtener token de Clerk
       const token = await getToken();
       setToken(token);
+      
+      // 2. Crear usuario en el backend
+      setLoadingMessage('Configurando tu perfil...');
       const dto = mapUserToDto(user);
-      console.log('📋 DTO de usuario preparado:', dto);
       const userId = await createUser(dto);
-      const data = await getCurrentUser();
-      console.log("👀 SUMMARY STEP: Usuario actual desde backend:", data);
       
-      console.log("✅ User created with ID:", userId);
+      // 3. Obtener datos actualizados del backend
+      setLoadingMessage('Sincronizando datos...');
+      const userData = await getCurrentUser();
       
-      // Step 4: Update local user state
+      // 4. Actualizar estado local
       setUser({
         ...user,
         id: userId,
-        emergencyContacts: data.emergencyContacts,
-        externalContacts: data.externalContacts,
-        safeLocations: data.safeLocations,
+        emergencyContacts: userData.emergencyContacts,
+        externalContacts: userData.externalContacts,
+        safeLocations: userData.safeLocations,
       });
+
+      // 5. VINCULAR CON FIREBASE
+      try {
+        setLoadingMessage('Configurando servicios en tiempo real...');
+        console.log("Vinculando sesión de Firebase...");
+        await linkFirebaseSession();
+
+        setLoadingMessage('Finalizando configuración...');
+        await ensureCurrentUserProfile({
+          displayName: user?.name || undefined,
+          photoURL: clerkUser?.imageUrl || undefined,
+          phone: clerkUser?.phoneNumbers?.[0]?.phoneNumber || undefined,
+        });
+        
+        console.log("✅ Sesión de Firebase vinculada exitosamente");
+        
+      } catch (firebaseError) {
+        console.error("❌ Error vinculando sesión de Firebase:", firebaseError);
+        // No bloquear el acceso - Firebase es opcional para funcionalidades básicas
+        console.warn("⚠️ Continuando sin Firebase - Funcionalidades de chat limitadas");
+      }
+
+      // 6. Navegación final
+      setLoadingMessage('¡Bienvenido a Aegis!');
       
-      // Pequeña pausa para mostrar el estado de éxito antes de navegar
+      // Pequeña pausa para mostrar mensaje final
       setTimeout(() => {
         router.replace("/(tabs)");
-      }, 500);
+      }, 1000);
       
-    } catch (error: any) {
-      console.error("❌ Failed to create user:", error);
-      Alert.alert("Error", "No se pudo crear el usuario. Intenta de nuevo.");
+    } catch (error) {
+      console.error("❌ Error creando usuario:", error);
+      
+      // Mensajes de error más específicos
+      let errorMessage = "No se pudo crear el usuario. Intenta de nuevo.";
+      
+      if (error?.response?.status === 409) {
+        errorMessage = "Ya existe una cuenta con estos datos.";
+      } else if (error?.message?.includes('network')) {
+        errorMessage = "Error de conexión. Verifica tu internet.";
+      } else if (error?.response?.status >= 500) {
+        errorMessage = "Error del servidor. Intenta más tarde.";
+      }
+      
+      Alert.alert("Error", errorMessage);
+      
     } finally {
       setIsLoading(false);
+      setLoadingMessage('');
     }
   };
 
@@ -137,59 +156,41 @@ export default function SummaryStep({onBack}: { onBack: () => void }) {
           <Text style={styles.iconText}>🎉</Text>
         </View>
 
-        {/* Título principal */}
-        <Text style={styles.title}>¡Bienvenido a Aeghis!</Text>
-        
-        {/* Subtítulo */}
-        <Text style={styles.subtitle}>
-          Tu cuenta ha sido creada exitosamente
+        <Text style={styles.title}>¡Bienvenido a Aegis!</Text>
+        <Text style={styles.subtitle}>Tu cuenta ha sido creada exitosamente</Text>
+        <Text style={styles.description}>
+          Estás listo para comenzar a disfrutar de todas las funcionalidades que Aegis tiene para ofrecerte.
         </Text>
 
-        {/* Descripción */}
-        <Text style={styles.description}>
-          Estás listo para comenzar a disfrutar de todas las funcionalidades que Aeghis tiene para ofrecerte.
-        </Text>
+        {/* Mostrar mensaje de carga específico */}
+        {isLoading && loadingMessage && (
+          <View style={styles.loadingMessageContainer}>
+            <Text style={styles.loadingMessage}>{loadingMessage}</Text>
+          </View>
+        )}
 
         {/* Botones */}
         <View style={styles.buttonsContainer}>
           <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
             <Pressable 
-              style={[
-                styles.primaryButton,
-                isLoading && styles.primaryButtonDisabled
-              ]} 
+              style={[styles.primaryButton, isLoading && styles.buttonDisabled]} 
               onPress={handleCreateUser}
               disabled={isLoading}
-              android_ripple={{ color: 'rgba(255,255,255,0.2)', borderless: false }}
             >
-              <Text style={[
-                styles.primaryButtonText,
-                isLoading && styles.primaryButtonTextDisabled
-              ]}>
-                {isLoading ? 'Creando cuenta...' : 'Comenzar Experiencia'}
+              <Text style={[styles.primaryButtonText, isLoading && styles.buttonTextDisabled]}>
+                {isLoading ? 'Configurando...' : 'Comenzar Experiencia'}
               </Text>
               {!isLoading && <Text style={styles.buttonIcon}>→</Text>}
-              {isLoading && (
-                <View style={styles.loadingIndicator}>
-                  <Text style={styles.loadingSpinner}>⏳</Text>
-                </View>
-              )}
+              {isLoading && <Text style={styles.loadingSpinner}>⏳</Text>}
             </Pressable>
           </Animated.View>
 
           <Pressable 
-            style={[
-              styles.secondaryButton,
-              isLoading && styles.secondaryButtonDisabled
-            ]} 
+            style={[styles.secondaryButton, isLoading && styles.buttonDisabled]} 
             onPress={onBack}
             disabled={isLoading}
-            android_ripple={{ color: 'rgba(0,0,0,0.1)', borderless: false }}
           >
-            <Text style={[
-              styles.secondaryButtonText,
-              isLoading && styles.secondaryButtonTextDisabled
-            ]}>
+            <Text style={[styles.secondaryButtonText, isLoading && styles.buttonTextDisabled]}>
               ← Volver Atrás
             </Text>
           </Pressable>
@@ -281,25 +282,7 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     paddingHorizontal: 16,
   },
-  featuresList: {
-    marginBottom: 40,
-    width: '100%',
-  },
-  featureItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-    paddingHorizontal: 20,
-  },
-  featureIcon: {
-    fontSize: 20,
-    marginRight: 16,
-  },
-  featureText: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontWeight: '500',
-  },
+
   buttonsContainer: {
     width: '100%',
     gap: 16,
@@ -318,29 +301,26 @@ const styles = StyleSheet.create({
     shadowRadius: 20,
     elevation: 10,
   },
-  primaryButtonDisabled: {
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-    shadowOpacity: 0.1,
-  },
   primaryButtonText: {
     color: '#667eea',
     fontSize: 18,
     fontWeight: '700',
     marginRight: 8,
   },
-  primaryButtonTextDisabled: {
-    color: 'rgba(102, 126, 234, 0.5)',
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  buttonTextDisabled: {
+    opacity: 0.5,
   },
   buttonIcon: {
     color: '#667eea',
     fontSize: 18,
     fontWeight: 'bold',
   },
-  loadingIndicator: {
-    marginLeft: 8,
-  },
   loadingSpinner: {
     fontSize: 18,
+    marginLeft: 8,
   },
   secondaryButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
@@ -350,17 +330,24 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
-  secondaryButtonDisabled: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
   secondaryButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
   },
-  secondaryButtonTextDisabled: {
-    color: 'rgba(255, 255, 255, 0.5)',
+  // Nuevos estilos para mensaje de carga
+  loadingMessageContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 20,
+    marginBottom: 20,
+  },
+  loadingMessage: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '500',
+    textAlign: 'center',
   },
 });

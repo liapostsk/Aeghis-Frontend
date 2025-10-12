@@ -15,7 +15,6 @@ import * as Contacts from 'expo-contacts';
 import ManualContactForm from './ManualContactForm';
 import ContactList from './ContactList';
 import { Contact } from '@/api/types';
-import { useUserStore } from '@/lib/storage/useUserStorage';
 
 
 const { height } = Dimensions.get('window');
@@ -30,16 +29,15 @@ export default function EmergencyContactAddModal({ visible, onClose, onAddContac
   const [modalMode, setModalMode] = useState<'initial' | 'manual' | 'contacts'>('initial');
   const [contacts, setContacts] = useState<Contact[]>([]);
 
-  const { user, setUser } = useUserStore();
-
+  // Limpiar estado cuando el modal se cierre
   useEffect(() => {
     if (!visible) {
       setModalMode('initial');
-
       setContacts([]);
     }
   }, [visible]);
 
+  // Obtener contactos del dispositivo
   const getContactsFromDevice = async () => {
     const { status } = await Contacts.requestPermissionsAsync();
     if (status !== 'granted') {
@@ -53,22 +51,24 @@ export default function EmergencyContactAddModal({ visible, onClose, onAddContac
     });
 
     const transformedContacts = data
-        .filter(c => c.name && c.phoneNumbers?.length)
-        .map(c => ({
-          id: c.id || Math.random().toString(),
-          name: c.name!,
-          phone: c.phoneNumbers![0].number!.replace(/[^\+\d]/g, ''), // Limpiar número
-        }));
+      .filter(c => c.name && c.phoneNumbers?.length)
+      .map(c => ({
+        id: c.id || Math.random().toString(),
+        name: c.name!,
+        phone: c.phoneNumbers![0].number!.replace(/[^\+\d]/g, ''),
+      }));
 
-      if (transformedContacts.length > 0) {
-        setContacts(transformedContacts);
-        setModalMode('contacts');
-      } else {
-        Alert.alert('Sin contactos válidos', 'No se encontraron contactos con teléfono.');
-      }
+    if (transformedContacts.length > 0) {
+      setContacts(transformedContacts);
+      setModalMode('contacts');
+    } else {
+      Alert.alert('Sin contactos válidos', 'No se encontraron contactos con teléfono.');
+    }
   };
 
-  const handleCancel = () => {
+  // Manejar contacto seleccionado/guardado
+  const handleContactSaved = (contact: Contact) => {
+    onAddContact(contact);
     setModalMode('initial');
     onClose();
   };
@@ -78,11 +78,7 @@ export default function EmergencyContactAddModal({ visible, onClose, onAddContac
       case 'manual':
         return (
           <ManualContactForm
-            onSave={(contact) => {
-              onAddContact(contact);
-              setModalMode('initial');
-              onClose();
-            }}
+            onSave={handleContactSaved}
             onCancel={() => setModalMode('initial')}
           />
         );
@@ -92,20 +88,16 @@ export default function EmergencyContactAddModal({ visible, onClose, onAddContac
           <>
             <ContactList
               contacts={contacts}
-              onSelect={(contact) => {
-                onAddContact(contact);
-                setModalMode('initial');
-                onClose();
-              }}
+              onSelect={handleContactSaved}
               onCancel={() => setModalMode('initial')}
             />
-            <Pressable style={styles.refreshButton} onPress={getContactsFromDevice}>
+            <Pressable style={styles.button} onPress={getContactsFromDevice}>
               <Text style={styles.buttonText}>Actualizar contactos</Text>
             </Pressable>
           </>
         );
 
-      default:
+      default: // Pantalla inicial
         return (
           <>
             <Text style={styles.modalTitle}>Nuevo contacto de emergencia</Text>
@@ -114,22 +106,16 @@ export default function EmergencyContactAddModal({ visible, onClose, onAddContac
               source={require('@/assets/images/think.png')}
               style={styles.imageModal}
             />
-            <Pressable
-              style={styles.addButton}
-              onPress={() => {
-                getContactsFromDevice();
-                setModalMode('contacts');
-              }}
-            >
+            <Pressable style={styles.button} onPress={getContactsFromDevice}>
               <Text style={styles.buttonText}>Desde contactos</Text>
             </Pressable>
             <Pressable
-              style={[styles.addButton, { marginTop: 20 }]}
+              style={[styles.button, styles.buttonSecondary]}
               onPress={() => setModalMode('manual')}
             >
               <Text style={styles.buttonText}>Agregar manualmente</Text>
             </Pressable>
-            <Pressable onPress={handleCancel} style={styles.cancelButton}>
+            <Pressable onPress={onClose} style={styles.cancelButton}>
               <Text style={styles.cancelText}>Cancelar</Text>
             </Pressable>
           </>
@@ -187,17 +173,7 @@ const styles = StyleSheet.create({
     height: 300,
     marginBottom: 20,
   },
-  addButton: {
-    backgroundColor: '#7A33CC',
-    borderRadius: 20,
-    width: 250,
-    height: 47,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 10,
-    alignSelf: 'center',
-  },
-  refreshButton: {
+  button: {
     backgroundColor: '#7A33CC',
     borderRadius: 20,
     width: 250,
@@ -206,6 +182,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 20,
     alignSelf: 'center',
+  },
+  buttonSecondary: {
+    marginTop: 10,
   },
   buttonText: {
     color: '#FFFFFF',

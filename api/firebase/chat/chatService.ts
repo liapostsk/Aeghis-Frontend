@@ -20,7 +20,7 @@ import {
   increment,
   getDocs,
 } from 'firebase/firestore';
-import type { ChatDoc, GroupTileInfo, MessageDoc } from '../firebaseTypes';
+import type { ChatDoc, GroupTileInfo, MessageDoc } from '../types';
 import { Group } from '@/api/types';
 
 /**
@@ -194,32 +194,67 @@ export function listenGroupMessagesexport (
   }, onError);
 }
 
-
-
-
 export  async function getGroupTileInfo(groupId: string): Promise<GroupTileInfo> {
-  const uid = requireUid();
-  const chatRef = doc(db, 'chats', String(groupId));
-  const [chatSnap, seenSnap] = await Promise.all([
-    getDoc(chatRef), // requiere ser miembro (tus reglas)
-    getDoc(doc(db, 'users', uid, 'chatState', String(groupId))), // permitido al propio usuario
-  ]);
-
-  const chat = chatSnap.exists() ? (chatSnap.data() as any) : null;
-  const lastReadAt = seenSnap.exists() ? (seenSnap.data() as any).lastReadAt : null;
-
-  // Cuenta no leídos = mensajes con timestamp > lastReadAt de otros usuarios
-  const unreadCount = await getUnreadMessagesCount(groupId);
+  console.log(`🔍 getGroupTileInfo INICIADA para groupId: ${groupId}`);
   
-  return {
-    chatId: String(groupId),
-    lastMessage: chat?.lastMessage ?? null,
-    lastMessageAt: chat?.lastMessageAt ?? null,
-    lastSenderId: chat?.lastSenderId ?? null,
-    lastSenderName: chat?.lastSenderName ?? null,
-    membersCount: Array.isArray(chat?.members) ? chat.members.length : 0,
-    unreadCount: unreadCount,
-  };
+  const uid = requireUid();
+  console.log(`🔍 UID obtenido: ${uid}`);
+  
+  const chatRef = doc(db, 'chats', String(groupId));
+  
+  try {
+    const [chatSnap, seenSnap] = await Promise.all([
+      getDoc(chatRef), // requiere ser miembro (tus reglas)
+      getDoc(doc(db, 'users', uid, 'chatState', String(groupId))), // permitido al propio usuario
+    ]);
+
+    console.log(`🔍 chatSnap exists: ${chatSnap.exists()}`);
+    console.log(`🔍 seenSnap exists: ${seenSnap.exists()}`);
+
+    if (!chatSnap.exists()) {
+      console.error(`❌ Chat ${groupId} no existe o no tienes permisos`);
+      throw new Error(`Chat ${groupId} not found or no access`);
+    }
+
+    const chat = chatSnap.data() as any;
+    console.log(`🔍 Chat data:`, {
+      name: chat?.name,
+      members: chat?.members,
+      membersCount: chat?.members?.length,
+      isMember: chat?.members?.includes(uid),
+      ownerId: chat?.ownerId,
+      isOwner: chat?.ownerId === uid
+    });
+    
+    // Verificar si realmente es miembro
+    if (!chat?.members?.includes(uid)) {
+      console.error(`❌ Usuario ${uid} NO es miembro del chat ${groupId}`);
+      console.error(`❌ Miembros actuales:`, chat?.members);
+      throw new Error(`User ${uid} is not a member of chat ${groupId}`);
+    }
+
+    const lastReadAt = seenSnap.exists() ? (seenSnap.data() as any).lastReadAt : null;
+
+    // Cuenta no leídos = mensajes con timestamp > lastReadAt de otros usuarios
+    const unreadCount = await getUnreadMessagesCount(groupId);
+    
+    const result: GroupTileInfo = {
+      chatId: String(groupId),
+      lastMessage: chat?.lastMessage ?? null,
+      lastMessageAt: chat?.lastMessageAt ?? null,
+      lastSenderId: chat?.lastSenderId ?? null,
+      lastSenderName: chat?.lastSenderName ?? null,
+      membersCount: Array.isArray(chat?.members) ? chat.members.length : 0,
+      unreadCount: unreadCount,
+    };
+    
+    console.log(`✅ GroupTileInfo generado:`, result);
+    return result;
+    
+  } catch (error) {
+    console.error(`❌ Error en getGroupTileInfo para grupo ${groupId}:`, error);
+    throw error; // Re-lanzar para que el caller pueda manejarlo
+  }
 }
 
 /**
@@ -230,6 +265,7 @@ export  async function getGroupTileInfo(groupId: string): Promise<GroupTileInfo>
 export async function getUnreadMessagesCount(groupId: string): Promise<number> {
   try {
     const uid = requireUid();
+    console.log(`🔍 getUnreadMessagesCount para groupId: ${groupId}, uid: ${uid}`);
     
     // Consulta mensajes no leídos que NO sean del usuario actual
     const messagesQuery = query(
@@ -237,19 +273,49 @@ export async function getUnreadMessagesCount(groupId: string): Promise<number> {
       where('read', '==', false),
       where('senderId', '!=', uid) // Excluir mis propios mensajes
     );
-    console.log("Query para contar mensajes no leídos:", messagesQuery);
 
+    console.log(`🔍 Ejecutando query de conteo para chat ${groupId}...`);
     const countSnapshot = await getCountFromServer(messagesQuery);
-    console.log(`🧮 Mensajes no leídos en chat ${groupId}:`, countSnapshot.data().count);
-    return countSnapshot.data().count;
+    const count = countSnapshot.data().count;
     
-  } catch (error) {
-    console.error("❌ Error obteniendo mensajes no leídos:", error);
+    console.log(`✅ Mensajes no leídos en chat ${groupId}: ${count}`);
+    return count;
+    
+  } catch (error: any) {
+    console.error(`❌ Error obteniendo mensajes no leídos para chat ${groupId}:`, error);
+    console.error(`❌ Error code: ${error.code}, message: ${error.message}`);
+    
+    // Si es un error de permisos, intentar una consulta más simple
+    if (error.code === 'permission-denied') {
+      console.warn(`⚠️ Sin permisos para contar mensajes en chat ${groupId}, devolviendo 0`);
+    }
+    
     return 0; // Retorna 0 en caso de error
   }
 }
 
 // (Opcional) para varias tarjetas en paralelo:
 export async function getGroupTilesInfo(groupIds: Array<string | number>) {
-  return Promise.all(groupIds.map((id) => getGroupTileInfo(String(id))));
+  console.log(`🔍 getGroupTilesInfo para grupos:`, groupIds);
+  
+  const promises = groupIds.map(async (id) => {
+    try {
+      const result = await getGroupTileInfo(String(id));
+      console.log(`✅ Tile obtenido para grupo ${id}:`, result.chatId);
+      return result;
+    } catch (error) {
+      console.error(`❌ Error obteniendo tile para grupo ${id}:`, error);
+      // En lugar de fallar todo, devolver null para este grupo específico
+      return null;
+    }
+  });
+  
+  const results = await Promise.all(promises);
+  console.log(`🔍 Resultados de getGroupTilesInfo:`, results.map((r, i) => ({ 
+    groupId: groupIds[i], 
+    success: r !== null 
+  })));
+  
+  // Filtrar los null (grupos que fallaron) y devolver solo los exitosos
+  return results.filter((result): result is GroupTileInfo => result !== null);
 }

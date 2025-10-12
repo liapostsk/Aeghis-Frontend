@@ -1,4 +1,4 @@
-import { auth, db } from "../../firebaseconfig";
+import { auth, db } from "../../../firebaseconfig";
 import { doc, getDoc, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 
 export async function ensureCurrentUserProfile(opts?: { displayName?: string; photoURL?: string; phone?: string; }) {

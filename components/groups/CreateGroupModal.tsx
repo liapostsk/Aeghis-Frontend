@@ -13,7 +13,7 @@ import { createGroupFirebase } from '@/api/firebase/chat/chatService';
 type Props = { 
     visible: boolean;
     onClose: () => void; 
-    type?: 'confianza' | 'temporal' | 'companion';
+    type?: 'CONFIANZA' | 'TEMPORAL' | 'COMPANION';
     onSuccess?: () => void;
 };
 
@@ -31,18 +31,18 @@ export default function CreateGroupModal({ visible, onClose, onSuccess, type }: 
 
   const getModalTitle = () => {
     switch (type) {
-      case 'confianza': return 'Create Trusted Group';
-      case 'temporal': return 'Create Temporal Group';
-      case 'companion': return 'Create Companion Group';
+      case 'CONFIANZA': return 'Create Trusted Group';
+      case 'TEMPORAL': return 'Create TEMPORAL Group';
+      case 'COMPANION': return 'Create COMPANION Group';
       default: return 'Create Group';
     }
   };
 
   const getModalDescription = () => {
     switch (type) {
-      case 'confianza': return 'A secure group for close friends and family';
-      case 'temporal': return 'A temporary group that expires after a set time';
-      case 'companion': return 'A group for finding companions and activities';
+      case 'CONFIANZA': return 'A secure group for close friends and family';
+      case 'TEMPORAL': return 'A temporary group that expires after a set time';
+      case 'COMPANION': return 'A group for finding COMPANIONs and activities';
       default: return '';
     }
   };
@@ -57,7 +57,7 @@ export default function CreateGroupModal({ visible, onClose, onSuccess, type }: 
       name: groupName.trim(),
       description: description?.trim() || getModalDescription(),
       image: '',
-      type: 'CONFIANZA', // Default to 'CONFIANZA' if no type provided
+      type: type || 'CONFIANZA',  // Usar el prop type o por defecto 'CONFIANZA'
       ownerId: user?.id
     };
 
@@ -153,9 +153,9 @@ export default function CreateGroupModal({ visible, onClose, onSuccess, type }: 
           <View style={styles.infoBox}>
             <Ionicons name="information-circle" size={20} color="#7A33CC" />
             <Text style={styles.infoText}>
-              {type === 'confianza' && 'Trusted groups have enhanced security features and are perfect for family and close friends.'}
-              {type === 'temporal' && 'Temporal groups are automatically deleted after the specified duration.'}
-              {type === 'companion' && 'Companion groups help you find people with similar interests and activities.'}
+              {type === 'CONFIANZA' && 'Trusted groups have enhanced security features and are perfect for family and close friends.'}
+              {type === 'TEMPORAL' && 'TEMPORAL groups are automatically deleted after the specified duration.'}
+              {type === 'COMPANION' && 'COMPANION groups help you find people with similar interests and activities.'}
             </Text>
           </View>
         </ScrollView>

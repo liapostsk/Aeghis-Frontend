@@ -7,12 +7,12 @@ import CreateGroupModal from '@/components/groups/CreateGroupModal';
 import JoinGroupModal from '@/components/groups/JoinGroupModal';
 import { usePathname } from 'expo-router';
 
-type Kind = 'confianza' | 'temporal' | 'companion';
+type Kind = 'CONFIANZA' | 'TEMPORAL' | 'COMPANION';
 
 function kindFromPath(pathname: string): Kind {
-  if (pathname.endsWith('/temporal'))   return 'temporal';
-  if (pathname.endsWith('/companion'))  return 'companion';
-  return 'confianza'; // index (/groups)
+  if (pathname.endsWith('/TEMPORAL'))   return 'TEMPORAL';
+  if (pathname.endsWith('/COMPANION'))  return 'COMPANION';
+  return 'CONFIANZA'; // index (/groups)
 }
 
 type Props = {
@@ -33,7 +33,7 @@ export default function GroupsButton({ kind, onSuccess, style }: Props) {
   const [isJoining, setJoining]     = useState(false);
 
   // Mapear al tipo que esperan tus modales/API
-  const modalType = currentKind; // 'confianza' | 'temporal' | 'companion'
+  const modalType = currentKind; // 'CONFIANZA' | 'TEMPORAL' | 'COMPANION'
 
   const handleCreateSuccess = () => {
     console.log('🎉 GroupsButton: Grupo creado exitosamente');

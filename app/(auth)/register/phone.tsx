@@ -71,7 +71,7 @@ export default function PhoneScreen() {
     if (!canContinue || !signUp) return;
 
     setIsLoading(true);
-    const fullPhone = `+${callingCode}${phone.replace(/\s/g, '')}`;
+    const fullPhone = `${callingCode}${phone.replace(/\s/g, '')}`;
 
     try {
       await signUp.create({ phoneNumber: fullPhone });

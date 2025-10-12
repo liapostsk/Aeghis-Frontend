@@ -6,8 +6,8 @@ import { Text, View, StyleSheet, Pressable, Image, TouchableOpacity } from "reac
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTokenStore } from "@/lib/auth/tokenStore";
 import { useUserStore } from "@/lib/storage/useUserStorage";
-import { linkFirebaseSession, unlinkFirebaseSession } from "@/api/firebase/firebase";
-import { ensureCurrentUserProfile } from "@/api/firebase/users";
+import { linkFirebaseSession, unlinkFirebaseSession } from "@/api/firebase/auth/firebase";
+import { ensureCurrentUserProfile } from "@/api/firebase/users/userService";
 
 
 export default function Index() {

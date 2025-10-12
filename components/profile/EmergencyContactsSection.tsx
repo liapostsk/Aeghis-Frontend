@@ -1,5 +1,4 @@
-// File: components/profile/EmergencyContactsSection.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable, Alert } from 'react-native';
 import { Ionicons, FontAwesome5, Feather } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -18,40 +17,46 @@ import {
   editExternalContact,
   createExternalContact 
 } from '@/api/contacts/externalContactsApi';
-import { checkIfUserExists, getCurrentUser } from '@/api/user/userApi';
+import { checkIfUserExists, getCurrentUser, getUser } from '@/api/user/userApi';
 import EmergencyContactAddModal from '../emergencyContact/EmergencyContactAddModal';
-//import ExternalContactAddModal from '../emergencyContact/ExternalContactAddModal';
 
 type ContactType = 'emergency' | 'external';
+type TabType = 'app' | 'external';
 
 export default function EmergencyContactsSection() {
 
   // Obtener contactos de emergencia del usuario desde el store
-  const { user, setUser } = useUserStore();
+  const { user } = useUserStore();
   const emergencyContacts = user?.emergencyContacts || [];
   const externalContacts = user?.externalContacts || [];
 
-  console.log("📋 Contactos de emergencia:", emergencyContacts.length);
-  console.log("📋 Contactos externos:", externalContacts.length);
-
   // Estados
+  const [activeTab, setActiveTab] = useState<TabType>('app');
   const [editable, setEditable] = useState(false);
   const [selectedContact, setSelectedContact] = useState<EmergencyContact | ExternalContact | null>(null);
   const [selectedContactType, setSelectedContactType] = useState<ContactType>('emergency');
-  const [modalEditorVisible, setModalEditorVisible] = useState(editable || false);
-  const [modalAddVisible, setModalAddVisible] = useState(editable || false);
-  //const [addContactType, setAddContactType] = useState<ContactType>('emergency');
+  const [modalEditorVisible, setModalEditorVisible] = useState(false);
+  const [modalAddVisible, setModalAddVisible] = useState(false);
+  const [emergencyContactsData, setEmergencyContactsData] = useState<{ [contactId: number]: any }>({});
 
   const { getToken } = useAuth();
   const setToken = useTokenStore((state) => state.setToken);
 
+  const isEmptyOrNull = (value: any): boolean => {
+    return value == null || value === "" || value === "null" || value === "undefined";
+  };
+
+  // Cargar datos de contactos de emergencia cuando cambien
+  useEffect(() => {
+    if (emergencyContacts.length > 0) {
+      loadEmergencyContactsData();
+    }
+  }, [emergencyContacts]);
+
   // Resetear estados cuando la screen pierde el foco
   useFocusEffect(
     React.useCallback(() => {
-        console.log("External contacts:", externalContacts);
-        console.log("user:", user);
       return () => {
-        // Esta función se ejecuta cuando la screen pierde el foco
         setEditable(false);
         setModalEditorVisible(false);
         setModalAddVisible(false);
@@ -60,11 +65,36 @@ export default function EmergencyContactsSection() {
     }, [])
   );
   
-  // Funcion para refrescar los datos del usuario
+  // Función para refrescar los datos del usuario
   const refreshUserData = async () => {
-    const data = await getCurrentUser();
-          console.log("📡 Usuario actual desde backend:", data);
     await useUserStore.getState().refreshUserFromBackend();
+    // Después de refrescar, cargar los datos de los contactos de emergencia
+    await loadEmergencyContactsData();
+  };
+
+  // Función para obtener los datos actualizados de los contactos de emergencia
+  const loadEmergencyContactsData = async () => {
+    try {
+      const token = await getToken();
+      setToken(token);
+
+      const contactsData: { [contactId: number]: any } = {};
+      
+      for (const contact of emergencyContacts) {
+        if (contact.contactId && !contactsData[contact.contactId]) {
+          try {
+            const userData = await getUser(contact.contactId);
+            contactsData[contact.contactId] = userData;
+          } catch (error) {
+            console.error(`Error obteniendo datos del usuario ${contact.contactId}:`, error);
+          }
+        }
+      }
+      
+      setEmergencyContactsData(contactsData);
+    } catch (error) {
+      console.error("Error cargando datos de contactos de emergencia:", error);
+    }
   };
 
   // Handlers para ambos tipos de contacto
@@ -77,26 +107,22 @@ export default function EmergencyContactsSection() {
         // Crear objeto EmergencyContact completo
         const emergencyContact = selectedContact as EmergencyContact;
         const emergencyContactDto: EmergencyContactDto = {
-          id: emergencyContact!.id!,
-          ownerId: emergencyContact!.ownerId!,
-          contactId: emergencyContact!.contactId,
-          relation: updatedContact.relation || emergencyContact!.relation,
-          status: emergencyContact!.status
+          id: emergencyContact.id!,
+          ownerId: emergencyContact.ownerId!,
+          contactId: emergencyContact.contactId,
+          relation: updatedContact.relation || emergencyContact.relation,
+          status: emergencyContact.status
         };
-        console.log("📝 Editando relación de contacto de emergencia:", emergencyContactDto);
-        await editEmergencyContact(selectedContact!.id!, emergencyContactDto);
+        await editEmergencyContact(selectedContact.id!, emergencyContactDto);
       } else {
-        // Crear objeto ExternalContact completo
         const externalContact = selectedContact as ExternalContact;
         const externalContactUpdate: ExternalContact = {
-          id: externalContact!.id!,
-          name: externalContact!.name,
-          phone: externalContact!.phone,
-          relation: externalContact!.relation,
+          id: externalContact.id!,
+          name: externalContact.name,
+          phone: externalContact.phone,
+          relation: externalContact.relation,
         };
-        console.log("Editando contacto externo:", externalContactUpdate);
-        
-        await editExternalContact(selectedContact!.id!, externalContactUpdate);
+        await editExternalContact(selectedContact.id!, externalContactUpdate);
       }
 
       await refreshUserData();
@@ -126,12 +152,9 @@ export default function EmergencyContactsSection() {
               const token = await getToken();
               setToken(token);
               
-              console.log(`Eliminando ${contactType} con ID:`, contact.id);
-              
               if (type === 'emergency') {
                 await deleteEmergencyContact(contact.id!);
               } else {
-                console.log("Eliminando contacto externo con ID:", contact.id);
                 await deleteExternalContact(contact.id!);
               }
               
@@ -153,9 +176,8 @@ export default function EmergencyContactsSection() {
       setToken(token);
 
       const existsUserId = await checkIfUserExists(contactData.phone);
-      console.log('Resultado de búsqueda de usuario, id o null si no existe:', existsUserId);
       
-      if (existsUserId != null) {
+      if (!isEmptyOrNull(existsUserId)) {
         const newEmergencyContact: Partial<EmergencyContact> = {
           name: contactData.name || '',
           phone: contactData.phone,
@@ -164,10 +186,7 @@ export default function EmergencyContactsSection() {
           status: 'PENDING',
         };
         
-        console.log('Creando contacto de emergencia:', newEmergencyContact);
-        const contactId = await createEmergencyContact(newEmergencyContact as EmergencyContact);
-        console.log('Contacto creado con ID:', contactId);
-        refreshUserData();
+        const emergencyContact = await createEmergencyContact(newEmergencyContact as EmergencyContact);
       } else {
         const newExternalContactData = {
           name: contactData.name || '',
@@ -175,40 +194,34 @@ export default function EmergencyContactsSection() {
           relation: contactData.relation || '',
         };
 
-        console.log('Creando contacto externo en backend:', newExternalContactData);
-
-        // If createExternalContact expects ExternalContact, provide id as 0 or a dummy value
-        const contactId = await createExternalContact({
+        await createExternalContact({
           ...newExternalContactData,
-          id: 0 // or any placeholder, backend should ignore/replace this
+          id: 0
         });
-        console.log('Contacto externo creado con ID:', contactId);
-
-        const contactWithId = { ...newExternalContactData, id: contactId };
-
-        const updatedExternalContacts = [
-          ...(user?.externalContacts || []),
-          contactWithId
-        ];
-
-        if (user) {
-          setUser({
-            ...user,
-            externalContacts: updatedExternalContacts,
-          });
-        }
       }
 
       await refreshUserData();
       setModalAddVisible(false);
     } catch (error) {
-      console.error("❌ Error añadiendo contacto:", error);
       Alert.alert("Error", "No se pudo añadir el contacto");
     }
   };
 
   const renderContactItem = (contact: EmergencyContact | ExternalContact, index: number, type: ContactType) => {
     const isEmergency = type === 'emergency';
+    
+    // Para contactos de emergencia, usar datos actualizados del usuario si están disponibles
+    let displayName = contact.name;
+    let displayPhone = contact.phone;
+    
+    if (isEmergency && 'contactId' in contact && contact.contactId) {
+      const userData = emergencyContactsData[contact.contactId];
+      if (userData) {
+        displayName = userData.name || contact.name;
+        displayPhone = userData.phone || contact.phone;
+      }
+    }
+    
     return (
       <View key={`${type}-${contact.id || index}`} style={styles.contactItem}>
         {/* Badge de tipo de contacto */}
@@ -217,6 +230,29 @@ export default function EmergencyContactsSection() {
             {isEmergency ? 'APP' : 'EXT'}
           </Text>
         </View>
+
+        {/* Badge de estado para contactos de emergencia */}
+        {isEmergency && 'status' in contact && (
+          <View style={[
+            styles.statusBadge,
+            contact.status === 'CONFIRMED' ? styles.statusAccepted : 
+            contact.status === 'PENDING' ? styles.statusPending : styles.statusRejected
+          ]}>
+            <View style={[
+              styles.statusDot, 
+              contact.status === 'CONFIRMED' ? styles.acceptedDot : 
+              contact.status === 'PENDING' ? styles.pendingDot : styles.rejectedDot
+            ]} />
+            <Text style={[
+              styles.statusBadgeText,
+              contact.status === 'CONFIRMED' ? styles.statusAcceptedText : 
+              contact.status === 'PENDING' ? styles.statusPendingText : styles.statusRejectedText
+            ]}>
+              {contact.status === 'CONFIRMED' ? 'Aceptado' : 
+               contact.status === 'PENDING' ? 'Pendiente' : 'Rechazado'}
+            </Text>
+          </View>
+        )}
 
         {/* Icono del contacto */}
         <View style={[styles.contactIcon, isEmergency ? styles.emergencyIcon : styles.externalIcon]}>
@@ -229,25 +265,9 @@ export default function EmergencyContactsSection() {
 
         {/* Información del contacto */}
         <View style={styles.contactInfo}>
-          <Text style={styles.contactName}>{contact.name}</Text>
+          <Text style={styles.contactName}>{displayName}</Text>
           <Text style={styles.contactRelation}>{contact.relation}</Text>
-          <Text style={styles.contactPhone}>{contact.phone}</Text>
-          <Text style={{ fontSize: 12, color: '#999', marginTop: 4 }}>ID: {contact.id}</Text>
-          
-          {/* Estado para contactos de emergencia */}
-          {isEmergency && 'status' in contact && (
-            <View style={styles.statusContainer}>
-              <View style={[
-                styles.statusDot, 
-                contact.status === 'CONFIRMED' ? styles.acceptedDot : 
-                contact.status === 'PENDING' ? styles.pendingDot : styles.rejectedDot
-              ]} />
-              <Text style={styles.statusText}>
-                {contact.status === 'CONFIRMED' ? 'Aceptado' : 
-                 contact.status === 'PENDING' ? 'Pendiente' : 'Rechazado'}
-              </Text>
-            </View>
-          )}
+          <Text style={styles.contactPhone}>{displayPhone}</Text>
         </View>
 
         {/* Botones de acción */}
@@ -292,7 +312,40 @@ export default function EmergencyContactsSection() {
         )}
       </View>
 
-      {/* Estado vacío */}
+      {/* Pestañas */}
+      {totalContacts > 0 && (
+        <View style={styles.tabContainer}>
+          <Pressable 
+            style={[styles.tab, activeTab === 'app' && styles.activeTab]} 
+            onPress={() => setActiveTab('app')}
+          >
+            <Ionicons 
+              name="person-circle" 
+              size={20} 
+              color={activeTab === 'app' ? '#7A33CC' : '#666'} 
+            />
+            <Text style={[styles.tabText, activeTab === 'app' && styles.activeTabText]}>
+              En la app ({emergencyContacts.length})
+            </Text>
+          </Pressable>
+          
+          <Pressable 
+            style={[styles.tab, activeTab === 'external' && styles.activeTab]} 
+            onPress={() => setActiveTab('external')}
+          >
+            <Ionicons 
+              name="person-outline" 
+              size={20} 
+              color={activeTab === 'external' ? '#7A33CC' : '#666'} 
+            />
+            <Text style={[styles.tabText, activeTab === 'external' && styles.activeTabText]}>
+              Externos ({externalContacts.length})
+            </Text>
+          </Pressable>
+        </View>
+      )}
+
+      {/* Contenido según la pestaña activa */}
       {totalContacts === 0 ? (
         <View style={styles.emptyState}>
           <Ionicons name="person-add" size={48} color="#ccc" />
@@ -302,42 +355,39 @@ export default function EmergencyContactsSection() {
           </Text>
         </View>
       ) : (
-        <>
-          {/* Leyenda */}
-          <View style={styles.legend}>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendIcon, { backgroundColor: '#f0f0ff' }]}>
-                <Ionicons name="person-circle" size={16} color="#7A33CC" />
+        <View style={styles.tabContent}>
+          {activeTab === 'app' ? (
+            /* Contactos de emergencia (en la app) */
+            emergencyContacts.length === 0 ? (
+              <View style={styles.emptyTabState}>
+                <Ionicons name="phone-portrait" size={36} color="#ccc" />
+                <Text style={styles.emptyTabTitle}>Sin contactos en la app</Text>
+                <Text style={styles.emptyTabSubtitle}>
+                  Añade contactos que usen la aplicación para mayor funcionalidad
+                </Text>
               </View>
-              <Text style={styles.legendText}>En la app ({emergencyContacts.length})</Text>
-            </View>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendIcon, { backgroundColor: '#f5f5f5' }]}>
-                <Ionicons name="person-outline" size={16} color="#666" />
+            ) : (
+              emergencyContacts.map((contact, index) => 
+                renderContactItem(contact, index, 'emergency')
+              )
+            )
+          ) : (
+            /* Contactos externos */
+            externalContacts.length === 0 ? (
+              <View style={styles.emptyTabState}>
+                <Ionicons name="call" size={36} color="#ccc" />
+                <Text style={styles.emptyTabTitle}>Sin contactos externos</Text>
+                <Text style={styles.emptyTabSubtitle}>
+                  Añade contactos para llamadas tradicionales de emergencia
+                </Text>
               </View>
-              <Text style={styles.legendText}>Externos ({externalContacts.length})</Text>
-            </View>
-          </View>
-
-          {/* Contactos de emergencia */}
-          {emergencyContacts.map((contact, index) => 
-            renderContactItem(contact, index, 'emergency')
+            ) : (
+              externalContacts.map((contact, index) => 
+                renderContactItem(contact, index, 'external')
+              )
+            )
           )}
-
-          {/* Separador si hay ambos tipos */}
-          {emergencyContacts.length > 0 && externalContacts.length > 0 && (
-            <View style={styles.separator}>
-              <View style={styles.separatorLine} />
-              <Text style={styles.separatorText}>Contactos Externos</Text>
-              <View style={styles.separatorLine} />
-            </View>
-          )}
-
-          {/* Contactos externos */}
-          {externalContacts.map((contact, index) => 
-            renderContactItem(contact, index, 'external')
-          )}
-        </>
+        </View>
       )}
       
       {/* Botón añadir */}
@@ -424,49 +474,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingHorizontal: 16,
   },
-  // Leyenda
-  legend: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 16,
-    paddingVertical: 8,
-    backgroundColor: '#f8f9fa',
-    borderRadius: 8,
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  legendIcon: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 6,
-  },
-  legendText: {
-    fontSize: 12,
-    color: '#666',
-    fontWeight: '500',
-  },
-  // Separador
-  separator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 16,
-  },
-  separatorLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#e9ecef',
-  },
-  separatorText: {
-    paddingHorizontal: 12,
-    fontSize: 12,
-    color: '#999',
-    fontWeight: '600',
-  },
+
   contactItem: {
     flexDirection: 'row',
     padding: 12,
@@ -504,7 +512,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#f0f0ff',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 15,
@@ -530,7 +537,7 @@ const styles = StyleSheet.create({
   contactPhone: {
     fontSize: 14,
     color: '#666',
-    marginTop: 2,
+    marginTop: 1,
   },
   addButton: {
     flexDirection: 'row',
@@ -564,16 +571,39 @@ const styles = StyleSheet.create({
   deleteActionButton: {
     backgroundColor: '#fff0f0',
   },
-  statusContainer: {
+  // Badge de estado prominente
+  statusBadge: {
+    position: 'absolute',
+    top: 30,
+    right: 8,
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    minWidth: 70,
+    justifyContent: 'center',
+  },
+  statusAccepted: {
+    backgroundColor: '#E8F5E8',
+    borderWidth: 1,
+    borderColor: '#4CAF50',
+  },
+  statusPending: {
+    backgroundColor: '#FFF3E0',
+    borderWidth: 1,
+    borderColor: '#FF9800',
+  },
+  statusRejected: {
+    backgroundColor: '#FFEBEE',
+    borderWidth: 1,
+    borderColor: '#F44336',
   },
   statusDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    marginRight: 6,
+    marginRight: 4,
   },
   acceptedDot: {
     backgroundColor: '#4CAF50',
@@ -584,8 +614,74 @@ const styles = StyleSheet.create({
   rejectedDot: {
     backgroundColor: '#F44336',
   },
-  statusText: {
-    fontSize: 12,
+  statusBadgeText: {
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  statusAcceptedText: {
+    color: '#2E7D32',
+  },
+  statusPendingText: {
+    color: '#F57C00',
+  },
+  statusRejectedText: {
+    color: '#C62828',
+  },
+  // Estilos de pestañas
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#f8f9fa',
+    borderRadius: 10,
+    padding: 4,
+    marginBottom: 16,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  activeTab: {
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '500',
     color: '#666',
+    marginLeft: 8,
+  },
+  activeTabText: {
+    color: '#7A33CC',
+    fontWeight: '600',
+  },
+  tabContent: {
+    minHeight: 100,
+  },
+  // Estados vacíos de pestañas
+  emptyTabState: {
+    alignItems: 'center',
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+  },
+  emptyTabTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#666',
+    marginTop: 12,
+  },
+  emptyTabSubtitle: {
+    fontSize: 13,
+    color: '#999',
+    textAlign: 'center',
+    marginTop: 6,
+    lineHeight: 18,
   },
 });

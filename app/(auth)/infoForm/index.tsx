@@ -12,16 +12,6 @@ import SummaryStep from './SummaryStep';
 
 const TOTAL_STEPS = 5;
 
-/*
-const STEP_TITLES = [
-  'Política de Privacidad',
-  'Foto de Perfil', 
-  'Contacto de Emergencia',
-  'Ubicación Segura',
-  'Resumen'
-];
-*/
-
 export default function InformationScreen() {
   const [step, setStep] = useState(0);
   const [loadingToken, setLoadingToken] = useState(false);
@@ -29,7 +19,6 @@ export default function InformationScreen() {
   const { getToken } = useAuth();
   const { setToken } = useTokenStore();
 
-  // Asegurarse de que el token esté disponible antes de continuar
   useEffect(() => {
     const ensureValidToken = async () => {
       try {
