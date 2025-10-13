@@ -16,6 +16,12 @@ export default function ChatLayout() {
           headerShown: false,
         }}
       />
+      <Stack.Screen 
+        name="chatInfo"
+        options={{
+          headerShown: false,
+        }}
+        />
     </Stack>
   );
 }

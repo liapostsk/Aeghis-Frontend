@@ -17,9 +17,10 @@ import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 import { createInvitation } from '@/api/group/invitationApi';
 import { getGroupById } from '@/api/group/groupApi';
-import { updateGroupFirebase, sendMessageFirebase, listenGroupMessagesexport, markAllMessagesAsRead} from '@/api/firebase/chat/chatService';
+import { sendMessageFirebase, listenGroupMessagesexport, markAllMessagesAsRead} from '@/api/firebase/chat/chatService';
 import { auth } from '@/firebaseconfig';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import InviteModal from '@/components/groups/InviteModal';
 
 interface Message {
   id: string;
@@ -40,7 +41,8 @@ export default function ChatScreen() {
   const [group, setGroup] = useState<Group | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [chatInitialized, setChatInitialized] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteCode, setInviteCode] = useState<string | null>(null);
 
   const { getToken } = useAuth();
   const setToken = useTokenStore((state) => state.setToken);
@@ -72,7 +74,7 @@ export default function ChatScreen() {
         content: m.content ?? '',
         time: (m.timestamp?.toDate ? formatHourMin(m.timestamp.toDate()) : 'enviando…'),
         isUser: m.senderId === uid,
-        isRead: m.read || false, // 🔥 Añadir estado de lectura
+        isRead: m.read || false,
         type: 'message' as const,
       }));
       setMessages(ui);
@@ -118,7 +120,8 @@ export default function ChatScreen() {
       setToken(token);
 
       const data = await createInvitation(g.id);
-      Alert.alert('Invitación generada', `Código: ${data.code}`);
+      setInviteCode(data.code);
+      setShowInviteModal(true);
     } catch (err) {
       console.error('Error generando invitación:', err);
       Alert.alert('Error', 'No se pudo generar la invitación.');
@@ -292,6 +295,13 @@ export default function ChatScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar barStyle="light-content" backgroundColor="#7A33CC" translucent={false} />
       
+      {/* Invite Modal */}
+      <InviteModal
+        visible={showInviteModal}
+        onClose={() => setShowInviteModal(false)}
+        inviteCode={inviteCode}
+      />
+      
       {/* Header */}
       <View style={styles.header}>
 
@@ -321,9 +331,7 @@ export default function ChatScreen() {
         </View>
 
         <Pressable
-          onPress={() => {
-            console.log('Abrir configuración del grupo:', group);
-          }}
+          onPress={() => router.push(`/chat/chatInfo?groupId=${groupId}`)}
           style={styles.headerButton}
         >
           <Ionicons name="people" size={24} color="#FFFFFF" />

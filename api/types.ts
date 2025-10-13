@@ -1,3 +1,4 @@
+
 export type UserDto = {
   id: number;
   name: string;
@@ -10,6 +11,7 @@ export type UserDto = {
   safeLocations: SafeLocation[];
   emergencyContacts?: EmergencyContact[];
   externalContacts?: ExternalContact[];
+  clerkId?: string;
 };
   
 export type ApiError = {

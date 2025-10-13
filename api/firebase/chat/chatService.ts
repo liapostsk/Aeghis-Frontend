@@ -19,6 +19,7 @@ import {
   getCountFromServer,
   increment,
   getDocs,
+  arrayRemove,
 } from 'firebase/firestore';
 import type { ChatDoc, GroupTileInfo, MessageDoc } from '../types';
 import { Group } from '@/api/types';
@@ -318,4 +319,83 @@ export async function getGroupTilesInfo(groupIds: Array<string | number>) {
   
   // Filtrar los null (grupos que fallaron) y devolver solo los exitosos
   return results.filter((result): result is GroupTileInfo => result !== null);
+}
+
+// Eliminar miembro de un grupo
+export async function removeMemberFromGroupFirebase(groupId: string, memberUid: string) {
+  const chatRef = doc(db, 'chats', String(groupId));
+
+  try {
+    await updateDoc(chatRef, {
+      members: arrayRemove(memberUid),
+      updatedAt: serverTimestamp(),
+    });
+    console.log(`✅ Miembro ${memberUid} eliminado del grupo ${groupId}`);
+  } catch (e: any) {
+    console.log('❌ Error eliminando miembro:', e.code, e.message);
+    throw e;
+  }
+}
+
+// Hacer admin a un miembro
+export async function makeMemberAdminFirebase(groupId: string, memberUid: string) {
+  const chatRef = doc(db, 'chats', String(groupId));
+
+  try {
+    await updateDoc(chatRef, {
+      admins: arrayUnion(memberUid),
+      updatedAt: serverTimestamp(),
+    });
+    console.log(`✅ Miembro ${memberUid} promovido a admin en el grupo ${groupId}`);
+  } catch (e: any) {
+    console.log('❌ Error promoviendo a admin:', e.code, e.message);
+    throw e;
+  }
+}
+
+// Quitar admin a un miembro
+export async function removeAdminFirebase(groupId: string, memberUid: string) {
+  const chatRef = doc(db, 'chats', String(groupId));
+
+  try {
+    await updateDoc(chatRef, {
+      admins: arrayRemove(memberUid),
+      updatedAt: serverTimestamp(),
+    });
+    console.log(`✅ Miembro ${memberUid} degradado de admin en el grupo ${groupId}`);
+  } catch (e: any) {
+    console.log('❌ Error degradando de admin:', e.code, e.message);
+    throw e;
+  }
+}
+
+// Eliminar el grupo si eres admin
+export async function deleteGroupFirebase(groupId: string) {
+  const uid = requireUid();
+  const chatRef = doc(db, 'chats', String(groupId));
+
+  try {
+    const chatSnap = await getDoc(chatRef);
+    if (!chatSnap.exists()) {
+      throw new Error(`Chat ${groupId} not found`);
+    }
+    const chat = chatSnap.data() as any;
+    if (chat.ownerId !== uid) {
+      throw new Error('Only the owner can delete the group');
+    }
+
+    // Eliminar todos los mensajes primero
+    const messagesRef = collection(db, 'chats', String(groupId), 'messages');
+    const messagesSnap = await getDocs(messagesRef);
+    const batch = writeBatch(db);
+    messagesSnap.forEach(doc => {
+      batch.delete(doc.ref);
+    });
+    batch.delete(chatRef); // Luego eliminar el chat
+    await batch.commit();
+    console.log(`✅ Grupo ${groupId} eliminado por el propietario ${uid}`);
+  } catch (e: any) {
+    console.log('❌ Error eliminando grupo:', e.code, e.message);
+    throw e;
+  }
 }

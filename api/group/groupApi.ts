@@ -18,11 +18,18 @@ export const joinGroup = async (userId: number, code: string): Promise<number> =
   return response.data;
 };
 
-export const leaveGroup = async (groupId: number, userId: number): Promise<void> => {
-  await api.delete(`/group/${groupId}/leave`, { data: { userId } });
-};
-
 export const getGroupById = async (groupId: number): Promise<Group> => {
   const response = await api.get(`/group/${groupId}`);
   return response.data;
 }
+
+export const exitGroup = async (groupId: number, userId: number): Promise<Group> => {
+  const response = await api.delete(`/group/${groupId}/exit`, {
+    params: { userId }
+  });
+  return response.data;
+};
+
+export const deleteGroup = async (groupId: number): Promise<void> => {
+  await api.delete(`/group/${groupId}`);
+};

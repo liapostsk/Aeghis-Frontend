@@ -53,7 +53,7 @@ export default function PhoneScreen() {
   // Estados
   const [phone, setPhone] = useState('');
   const [countryCode, setCountryCode] = useState<'ES' | string>('ES');
-  const [callingCode, setCallingCode] = useState('34');
+  const [callingCode, setCallingCode] = useState('+34');
   const [isLoading, setIsLoading] = useState(false);
 
   // Valores computados

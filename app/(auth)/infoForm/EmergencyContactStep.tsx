@@ -30,6 +30,10 @@ export default function EmergencyContactStep({
 
   const { getToken } = useAuth();
   const setToken = useTokenStore((state) => state.setToken);
+
+  const isEmptyOrNull = (value: any): boolean => {
+    return value == null || value === "" || value === "null" || value === "undefined";
+  };
   
   // 🔥 Función para limpiar contactos
   const clearContacts = () => {
@@ -73,16 +77,16 @@ export default function EmergencyContactStep({
     try {
       const token = await getToken();
       setToken(token);
-      const contactId = await checkIfUserExists(contactData.phone);
+      const existsUserId = await checkIfUserExists(contactData.phone);
       
-      if (contactId != null) {
+      if (!isEmptyOrNull(existsUserId)) {
         // Usuario registrado - Contacto de emergencia
         const draftEmergency: Partial<EmergencyContact> = {
           id: undefined as any,
           name: contactData.name ?? '',
           phone: contactData.phone,
           relation: contactData.relation ?? '',
-          contactId: contactId,
+          contactId: existsUserId,
           status: 'PENDING',
         };
         const updated = [...(user!.emergencyContacts ?? []), draftEmergency as EmergencyContact];

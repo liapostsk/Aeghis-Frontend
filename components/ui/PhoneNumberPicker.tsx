@@ -18,7 +18,7 @@ export default function PhoneNumberPicker({
   onChange,
 }: Props) {
   const [countryCode, setCountryCode] = useState(initialCountryCode);
-  const [callingCode, setCallingCode] = useState('34');
+  const [callingCode, setCallingCode] = useState('+34');
   const [visible, setVisible] = useState(false);
   const [selectedCountries, setSelectedCountries] = useState<any[]>([]);
 
