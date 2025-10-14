@@ -7,6 +7,7 @@ export interface ChatDoc {
   admins: string[];
   ownerId: string;
   description?: string;
+  image?: string;       // URL de la imagen del grupo
   lastMessage?: MessageDoc;
   lastMessageAt: any;   // Firebase Timestamp
   createdAt: any;       // Firebase Timestamp

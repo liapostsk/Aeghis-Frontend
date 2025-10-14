@@ -17,10 +17,11 @@ import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 import { deleteGroup, exitGroup, getGroupById } from '@/api/group/groupApi';
 import { getUser, getCurrentUser } from '@/api/user/userApi';
-import { removeMemberFromGroupFirebase, makeMemberAdminFirebase, deleteGroupFirebase } from '@/api/firebase/chat/chatService';
+import { removeMemberFromGroupFirebase, makeMemberAdminFirebase, deleteGroupFirebase, editGroupFirebase } from '@/api/firebase/chat/chatService';
 import { getUserProfileFB } from '@/api/firebase/users/userService';
 import AlertModal from '@/components/common/AlertModal';
 import InviteModal from '@/components/groups/InviteModal';
+import EditGroupModal from '@/components/groups/EditGroupModal';
 
 export default function GroupInfoScreen() {
     const { groupId } = useLocalSearchParams<{ groupId: string }>();
@@ -41,6 +42,7 @@ export default function GroupInfoScreen() {
     const [showRemoveModal, setShowRemoveModal] = useState(false);
     const [showPromoteModal, setShowPromoteModal] = useState(false);
     const [showExitGroupModal, setShowExitGroupModal] = useState(false);
+    const [showEditGroupModal, setShowEditGroupModal] = useState(false);
     const [selectedMember, setSelectedMember] = useState<UserDto | null>(null);
 
     // Helper functions
@@ -261,6 +263,29 @@ export default function GroupInfoScreen() {
         setShowExitGroupModal(false);
     };
 
+    // Manejar edición del grupo
+    const handleEditGroup = async (newName: string, newDescription?: string, newImage?: string) => {
+        if (!group) return;
+        
+        try {
+            // Usar el servicio existente para editar el grupo
+            await editGroupFirebase(groupId, newName, newDescription || '', newImage);
+            
+            // Actualizar estado local
+            setGroup(prev => prev ? { 
+                ...prev, 
+                name: newName,
+                description: newDescription,
+                image: newImage || prev.image
+            } : null);
+            
+            Alert.alert('Éxito', 'Grupo actualizado correctamente');
+        } catch (error) {
+            console.error('Error actualizando grupo:', error);
+            Alert.alert('Error', 'No se pudo actualizar el grupo');
+        }
+    };
+
     // Componente para renderizar cada miembro
     const renderMember = (user: UserDto) => {
         const initials = user.name
@@ -382,6 +407,12 @@ export default function GroupInfoScreen() {
                                 {members.length} miembro{members.length !== 1 ? 's' : ''}
                                 </Text>
                             </View>
+                            <Pressable 
+                                style={styles.editButton}
+                                onPress={() => setShowEditGroupModal(true)}
+                            >
+                                <Text style={styles.editButtonText}>Editar</Text>
+                            </Pressable>
                         </View>
 
                         {group.description && (
@@ -410,16 +441,9 @@ export default function GroupInfoScreen() {
 
                     {/* Acciones */}
                     <View style={styles.actionsContainer}>
-                        <Pressable
-                        onPress={() => setShowInviteModal(true)}
-                        style={styles.actionButton}
-                        >
-                            <Ionicons name="share-outline" size={20} color="#7A33CC" />
-                            <Text style={styles.actionButtonText}>Invitar miembros</Text>
-                        </Pressable>
                         <Pressable style={styles.actionButton}>
-                            <Ionicons name="settings-outline" size={20} color="#7A33CC" />
-                            <Text style={styles.actionButtonText}>Configuración</Text>
+                            <Ionicons name="location-outline" size={20} color="#7A33CC" />
+                            <Text style={styles.actionButtonText}>Empezar trayecto</Text>
                         </Pressable>
                     </View>
 
@@ -427,6 +451,18 @@ export default function GroupInfoScreen() {
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>Miembros</Text>
                     </View>
+                    {/* Invitar miembros como primer elemento */}
+                    <Pressable 
+                        style={styles.inviteMemberCard}
+                        onPress={() => setShowInviteModal(true)}
+                    >
+                        <View style={styles.inviteMemberAvatar}>
+                            <Ionicons name="share-outline" size={20} color="#7A33CC" />
+                        </View>
+                        <View style={styles.inviteMemberInfo}>
+                            <Text style={styles.inviteMemberText}>Invitar miembros</Text>
+                        </View>
+                    </Pressable>
                     {members.map(member => renderMember(member))}
                 </ScrollView>
 
@@ -434,7 +470,7 @@ export default function GroupInfoScreen() {
                 <InviteModal
                     visible={showInviteModal}
                     onClose={() => setShowInviteModal(false)}
-                    inviteCode="GRUPO2024AB"
+                    groupId={group.id}
                 />
 
                 {/* Modal de confirmación para eliminar miembro */}
@@ -499,6 +535,17 @@ export default function GroupInfoScreen() {
                     onConfirm={confirmExitGroup}
                     onCancel={() => setShowExitGroupModal(false)}
                 />
+
+                {/* Modal de edición del grupo */}
+                <EditGroupModal
+                    visible={showEditGroupModal}
+                    onClose={() => setShowEditGroupModal(false)}
+                    onSave={handleEditGroup}
+                    groupId={group?.id.toString() || ''}
+                    groupName={group?.name || ''}
+                    groupDescription={group?.description || ''}
+                    groupImage={group?.image}
+                />
             </View>
         </View>
     );
@@ -544,7 +591,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E7EB',
   },
-  groupHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  groupHeader: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    marginBottom: 16,
+    position: 'relative',
+  },
   groupIcon: {
     width: 60,
     height: 60,
@@ -699,6 +751,57 @@ const styles = StyleSheet.create({
   exitButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
+    fontWeight: '600',
+  },
+  // Invite Member Card
+  inviteMemberCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginHorizontal: 8,
+    marginBottom: 8,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  inviteMemberAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#F3E8FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+    borderWidth: 2,
+    borderColor: '#7A33CC',
+  },
+  inviteMemberInfo: {
+    flex: 1,
+  },
+  inviteMemberText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#7A33CC',
+  },
+  groupNameRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  editButton: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    backgroundColor: 'transparent',
+  },
+  editButtonText: {
+    fontSize: 14,
+    color: '#7A33CC',
     fontWeight: '600',
   },
 });

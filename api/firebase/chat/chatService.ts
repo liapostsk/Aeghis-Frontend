@@ -1,7 +1,6 @@
 // Code for Firestore chat service
 import { auth, db } from '@/firebaseconfig';
 import {
-  addDoc,
   collection,
   doc,
   getDoc,
@@ -17,7 +16,6 @@ import {
   writeBatch,
   limit,
   getCountFromServer,
-  increment,
   getDocs,
   arrayRemove,
 } from 'firebase/firestore';
@@ -47,6 +45,7 @@ export async function createGroupFirebase(group: Partial<Group>): Promise<string
     admins: ownerUid ? [ownerUid] : [],
     members: ownerUid ? [ownerUid] : [],
     ownerId: ownerUid || '',
+    image: group.image || '',
     description: group.description || '',
     createdAt: now,
     lastMessage: null as unknown as MessageDoc,
@@ -396,6 +395,40 @@ export async function deleteGroupFirebase(groupId: string) {
     console.log(`✅ Grupo ${groupId} eliminado por el propietario ${uid}`);
   } catch (e: any) {
     console.log('❌ Error eliminando grupo:', e.code, e.message);
+    throw e;
+  }
+}
+
+// Editar nombre/descr del grupo
+export async function editGroupFirebase(groupId: string, name: string, description: string, image?: string) {
+  const uid = requireUid();
+  const chatRef = doc(db, 'chats', String(groupId));
+
+  try {
+    const chatSnap = await getDoc(chatRef);
+    if (!chatSnap.exists()) {
+      throw new Error(`Chat ${groupId} not found`);
+    }
+    const chat = chatSnap.data() as any;
+    if (chat.ownerId !== uid && !(chat.admins || []).includes(uid)) {
+      throw new Error('Only the owner or admins can edit the group');
+    }
+
+    const updateData: any = {
+      name,
+      description,
+      updatedAt: serverTimestamp(),
+    };
+
+    // Solo actualizar imagen si se proporciona
+    if (image) {
+      updateData.image = image;
+    }
+
+    await updateDoc(chatRef, updateData);
+    console.log(`✅ Grupo ${groupId} editado por ${uid}`);
+  } catch (e: any) {
+    console.log('❌ Error editando grupo:', e.code, e.message);
     throw e;
   }
 }

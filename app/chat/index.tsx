@@ -15,7 +15,6 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { Group } from '@/api/types';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
-import { createInvitation } from '@/api/group/invitationApi';
 import { getGroupById } from '@/api/group/groupApi';
 import { sendMessageFirebase, listenGroupMessagesexport, markAllMessagesAsRead} from '@/api/firebase/chat/chatService';
 import { auth } from '@/firebaseconfig';
@@ -42,7 +41,6 @@ export default function ChatScreen() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const [inviteCode, setInviteCode] = useState<string | null>(null);
 
   const { getToken } = useAuth();
   const setToken = useTokenStore((state) => state.setToken);
@@ -114,19 +112,7 @@ export default function ChatScreen() {
     };
   }, [groupId]);
 
-  const generateInvitation = async (g: Group) => {
-    try {
-      const token = await getToken();
-      setToken(token);
 
-      const data = await createInvitation(g.id);
-      setInviteCode(data.code);
-      setShowInviteModal(true);
-    } catch (err) {
-      console.error('Error generando invitación:', err);
-      Alert.alert('Error', 'No se pudo generar la invitación.');
-    }
-  };
 
   const sendMessage = async () => {
     const text = inputText.trim();
@@ -228,7 +214,7 @@ export default function ChatScreen() {
         {g.type?.toLowerCase() || 'confianza'}
       </Text>
 
-      <Pressable style={styles.invitationButton} onPress={() => generateInvitation(g)}>
+      <Pressable style={styles.invitationButton} onPress={() => setShowInviteModal(true)}>
         <Ionicons name="share-outline" size={20} color="#FFFFFF" style={styles.buttonIcon} />
         <Text style={styles.invitationButtonText}>Generar invitación</Text>
       </Pressable>
@@ -296,11 +282,13 @@ export default function ChatScreen() {
       <StatusBar barStyle="light-content" backgroundColor="#7A33CC" translucent={false} />
       
       {/* Invite Modal */}
-      <InviteModal
-        visible={showInviteModal}
-        onClose={() => setShowInviteModal(false)}
-        inviteCode={inviteCode}
-      />
+      {group && (
+        <InviteModal
+          visible={showInviteModal}
+          onClose={() => setShowInviteModal(false)}
+          groupId={group.id}
+        />
+      )}
       
       {/* Header */}
       <View style={styles.header}>

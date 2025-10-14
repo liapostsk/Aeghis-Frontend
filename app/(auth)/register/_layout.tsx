@@ -28,15 +28,6 @@ export default function OnboardingLayout() {
         }}
       />
       <Stack.Screen 
-        name="information"
-        options={{
-          headerShown: true,
-          title: "",
-          headerTransparent: true,
-          headerTintColor: '#fff',
-        }}
-      />
-      <Stack.Screen 
         name="name"
         options={{
           headerShown: true,

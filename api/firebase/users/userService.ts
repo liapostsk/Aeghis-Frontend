@@ -59,3 +59,33 @@ export async function getUserProfileFB(uid: string) {
     throw new Error('No se encontró el perfil de usuario');
   }
 }
+
+// A diferencia de firebaseStorage, Firestore solo almacena metadatos, no archivos (urls)
+
+// Actualizar la foto de perfil del usuario en Firebase
+export async function updateUserPhotoURL(photoURL: string | null) {
+  const uid = auth.currentUser?.uid;
+  if (!uid) throw new Error('No hay sesión Firebase');
+
+  const ref = doc(db, 'users', uid);
+  await updateDoc(ref, {
+    photoURL: photoURL,
+    lastSeen: serverTimestamp(),
+  });
+}
+
+// Actualizar múltiples campos del perfil
+export async function updateUserProfile(updates: {
+  displayName?: string;
+  photoURL?: string;
+  phone?: string;
+}) {
+  const uid = auth.currentUser?.uid;
+  if (!uid) throw new Error('No hay sesión Firebase');
+
+  const ref = doc(db, 'users', uid);
+  await updateDoc(ref, {
+    ...updates,
+    lastSeen: serverTimestamp(),
+  });
+}

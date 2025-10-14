@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,24 +6,69 @@ import {
   Pressable,
   Modal,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
+import QRCode from 'react-native-qrcode-svg';
+import { useAuth } from '@clerk/clerk-expo';
+import { useTokenStore } from '@/lib/auth/tokenStore';
+import { createInvitation } from '@/api/group/invitationApi';
 
 interface InviteModalProps {
   visible: boolean;
   onClose: () => void;
-  inviteCode: string | null;
+  groupId: number;
 }
 
-export default function InviteModal({ visible, onClose, inviteCode }: InviteModalProps) {
+export default function InviteModal({ visible, onClose, groupId }: InviteModalProps) {
   const [copied, setCopied] = useState(false);
+  const [inviteCode, setInviteCode] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showQR, setShowQR] = useState(false);
+
+  
+  const { getToken } = useAuth();
+  const setToken = useTokenStore((state) => state.setToken);
+
+  const toggleQRView = () => {
+    setShowQR(!showQR);
+  };
 
   const handleClose = () => {
-    setCopied(false); // Reset del estado cuando se cierra el modal
+    setCopied(false);
+    setInviteCode(null);
+    setError(null);
+    setShowQR(false);
     onClose();
   };
+
+  const generateInvitation = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const token = await getToken();
+      setToken(token);
+
+      const data = await createInvitation(groupId);
+      setInviteCode(data.code);
+    } catch (err) {
+      console.error('Error generando invitación:', err);
+      setError('No se pudo generar la invitación');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Generar invitación cuando se abre el modal
+  useEffect(() => {
+    if (visible && !inviteCode && !loading) {
+      generateInvitation();
+    }
+  }, [visible]);
 
   const handleCopyCode = async () => {
     if (!inviteCode) {
@@ -65,28 +110,87 @@ export default function InviteModal({ visible, onClose, inviteCode }: InviteModa
           </View>
 
           <View style={styles.modalContent}>
-            <View style={styles.inviteCodeCard}>
-              <Text style={styles.inviteCodeLabel}>Código de invitación</Text>
-              <Text style={styles.inviteCodeText}>{inviteCode}</Text>
-              <Pressable 
-                style={[styles.copyButton, copied && styles.copyButtonSuccess]} 
-                onPress={handleCopyCode}
-                disabled={copied}
-              >
-                <Ionicons 
-                  name={copied ? "checkmark" : "copy"} 
-                  size={16} 
-                  color="#FFFFFF" 
-                />
-                <Text style={styles.copyButtonText}>
-                  {copied ? 'Copiado!' : 'Copiar código'}
-                </Text>
-              </Pressable>
-            </View>
+            {loading && (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#7A33CC" />
+                <Text style={styles.loadingText}>Generando invitación...</Text>
+              </View>
+            )}
 
-            <Text style={styles.inviteInfo}>
-              Comparte este código para que otros miembros se unan al grupo
-            </Text>
+            {error && (
+              <View style={styles.errorContainer}>
+                <Ionicons name="alert-circle" size={48} color="#EF4444" />
+                <Text style={styles.errorText}>{error}</Text>
+                <Pressable 
+                  style={styles.retryButton} 
+                  onPress={generateInvitation}
+                >
+                  <Ionicons name="refresh" size={16} color="#FFFFFF" />
+                  <Text style={styles.retryButtonText}>Reintentar</Text>
+                </Pressable>
+              </View>
+            )}
+
+            {inviteCode && !loading && !error && (
+              <>
+                <View style={styles.inviteCodeCard}>
+                  <Text style={styles.inviteCodeLabel}>Código de invitación</Text>
+                  
+                  {/* Vista QR o texto según el estado */}
+                  {showQR ? (
+                    <View style={styles.qrContainer}>
+                      <QRCode
+                        value={inviteCode}
+                        size={200}
+                        color="#7A33CC"
+                        backgroundColor="#F3E8FF"
+                      />
+                    </View>
+                  ) : (
+                    <Text style={styles.inviteCodeText}>{inviteCode}</Text>
+                  )}
+
+                  {/* Fila de botones */}
+                  <View style={styles.buttonRow}>
+                    <Pressable 
+                      style={[styles.copyButton, copied && styles.copyButtonSuccess]} 
+                      onPress={handleCopyCode}
+                      disabled={copied}
+                    >
+                      <Ionicons 
+                        name={copied ? "checkmark" : "copy"} 
+                        size={16} 
+                        color="#FFFFFF" 
+                      />
+                      <Text style={styles.copyButtonText}>
+                        {copied ? 'Copiado!' : 'Copiar'}
+                      </Text>
+                    </Pressable>
+
+                    <Pressable 
+                      style={styles.toggleButton}
+                      onPress={toggleQRView}
+                    >
+                      <Ionicons 
+                        name={showQR ? "text-outline" : "qr-code-outline"} 
+                        size={16} 
+                        color="#7A33CC" 
+                      />
+                      <Text style={styles.toggleButtonText}>
+                        {showQR ? 'Ver código' : 'Ver QR'}
+                      </Text>
+                    </Pressable>
+                  </View>
+                </View>
+
+                <Text style={styles.inviteInfo}>
+                  {showQR 
+                    ? 'Escanea este código QR para unirse al grupo'
+                    : 'Comparte este código para que otros miembros se unan al grupo'
+                  }
+                </Text>
+              </>
+            )}
           </View>
         </SafeAreaView>
       </View>
@@ -179,5 +283,75 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     textAlign: 'center',
     lineHeight: 20,
+  },
+
+  // Loading styles
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#7A33CC',
+    marginTop: 16,
+    fontWeight: '500',
+  },
+
+  // Error styles
+  errorContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#EF4444',
+    marginTop: 16,
+    marginBottom: 20,
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  retryButton: {
+    backgroundColor: '#7A33CC',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+
+  // QR Code styles
+  qrContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 16,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 16,
+  },
+  toggleButton: {
+    backgroundColor: '#F3E8FF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#7A33CC',
+  },
+  toggleButtonText: {
+    color: '#7A33CC',
+    fontWeight: '600',
+    fontSize: 14,
   },
 });
