@@ -17,7 +17,7 @@ import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 import { deleteGroup, exitGroup, getGroupById } from '@/api/group/groupApi';
 import { getUser, getCurrentUser } from '@/api/user/userApi';
-import { removeMemberFromGroupFirebase, makeMemberAdminFirebase, deleteGroupFirebase, editGroupFirebase } from '@/api/firebase/chat/chatService';
+import { removeMemberFromGroupFirebase, makeMemberAdminFirebase, deleteGroupFirebase } from '@/api/firebase/chat/chatService';
 import { getUserProfileFB } from '@/api/firebase/users/userService';
 import AlertModal from '@/components/common/AlertModal';
 import InviteModal from '@/components/groups/InviteModal';
@@ -261,29 +261,6 @@ export default function GroupInfoScreen() {
         }
         
         setShowExitGroupModal(false);
-    };
-
-    // Manejar edición del grupo
-    const handleEditGroup = async (newName: string, newDescription?: string, newImage?: string) => {
-        if (!group) return;
-        
-        try {
-            // Usar el servicio existente para editar el grupo
-            await editGroupFirebase(groupId, newName, newDescription || '', newImage);
-            
-            // Actualizar estado local
-            setGroup(prev => prev ? { 
-                ...prev, 
-                name: newName,
-                description: newDescription,
-                image: newImage || prev.image
-            } : null);
-            
-            Alert.alert('Éxito', 'Grupo actualizado correctamente');
-        } catch (error) {
-            console.error('Error actualizando grupo:', error);
-            Alert.alert('Error', 'No se pudo actualizar el grupo');
-        }
     };
 
     // Componente para renderizar cada miembro
@@ -540,11 +517,8 @@ export default function GroupInfoScreen() {
                 <EditGroupModal
                     visible={showEditGroupModal}
                     onClose={() => setShowEditGroupModal(false)}
-                    onSave={handleEditGroup}
-                    groupId={group?.id.toString() || ''}
-                    groupName={group?.name || ''}
-                    groupDescription={group?.description || ''}
-                    groupImage={group?.image}
+                    group={group}
+                    onGroupUpdated={(updatedGroup) => setGroup(updatedGroup)}
                 />
             </View>
         </View>

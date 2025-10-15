@@ -6,7 +6,6 @@ import { useUserStore } from "@/lib/storage/useUserStorage";
 import { useAuth } from '@clerk/clerk-expo';
 import { createGroup } from '@/api/group/groupApi';
 import { Group } from '@/api/types';
-import { create } from 'zustand';
 import { createGroupFirebase } from '@/api/firebase/chat/chatService';
 
 

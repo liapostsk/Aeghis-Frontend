@@ -2,15 +2,12 @@ export type ChatType = 'direct' | 'group';
 
 export interface ChatDoc {
   type: ChatType;
-  name?: string;
   members: string[];
   admins: string[];
+  image?: string;
   ownerId: string;
-  description?: string;
-  image?: string;       // URL de la imagen del grupo
   lastMessage?: MessageDoc;
   lastMessageAt: any;   // Firebase Timestamp
-  createdAt: any;       // Firebase Timestamp
 }
 
 export interface MessageDoc {

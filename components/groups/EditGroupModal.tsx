@@ -12,54 +12,84 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { editGroup } from '@/api/group/groupApi';
+import { Group } from '@/api/types';
+import { useAuth } from '@clerk/clerk-expo';
+import { useTokenStore } from '@/lib/auth/tokenStore';
 
 interface EditGroupModalProps {
     visible: boolean;
     onClose: () => void;
-    onSave: (name: string, description?: string, imageUrl?: string) => void;
-    groupId: string;
-    groupName: string;
-    groupDescription?: string;
-    groupImage?: string;
+    group: Group;
+    onGroupUpdated: (updatedGroup: Group) => void;
 }
 
 export default function EditGroupModal({ 
   visible, 
   onClose, 
-  onSave, 
-  groupId,
-  groupName, 
-  groupDescription,
-  groupImage 
+  group,
+  onGroupUpdated
 }: EditGroupModalProps) {
-    const [name, setName] = useState(groupName);
-    const [description, setDescription] = useState(groupDescription);
-    const [imageUri, setImageUri] = useState<string | undefined>(groupImage);
+    const [name, setName] = useState(group.name);
+    const [description, setDescription] = useState(group.description || '');
+    const [imageUri, setImageUri] = useState<string | undefined>(group.image);
     const [imageLoading, setImageLoading] = useState(false);
+    const [saving, setSaving] = useState(false);
 
-    // Actualizar estados cuando cambien las props
+    const { getToken } = useAuth();
+    const setToken = useTokenStore((state) => state.setToken);
+
+    // Actualizar estados cuando cambie el grupo
     useEffect(() => {
-        setName(groupName);
-        setDescription(groupDescription);
-        setImageUri(groupImage);
-    }, [groupName, groupDescription, groupImage]);
+        setName(group.name);
+        setDescription(group.description || '');
+        setImageUri(group.image);
+    }, [group]);
 
     const handleClose = () => {
         // Resetear a valores originales
-        setName(groupName);
-        setDescription(groupDescription);
-        setImageUri(groupImage);
+        setName(group.name);
+        setDescription(group.description || '');
+        setImageUri(group.image);
         onClose();
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         if (name.trim() === '') {
             Alert.alert('Error', 'El nombre del grupo no puede estar vacío');
             return;
         }
         
-        onSave(name.trim(), description.trim());
-        onClose();
+        setSaving(true);
+        
+        try {
+            // Preparar datos para actualizar (solo name, description y lastModified)
+            const updateData: Partial<Group> = {
+                name: name.trim(),
+                description: description.trim() || undefined,
+                lastModified: new Date()
+            };
+
+            const token = await getToken();
+            setToken(token);
+            
+            // Llamar a la API para actualizar el grupo
+            const updatedGroup = await editGroup(group.id, updateData);
+            
+            // Notificar al componente padre que el grupo se actualizó
+            onGroupUpdated(updatedGroup);
+            
+            // Cerrar modal
+            onClose();
+            
+            Alert.alert('Éxito', 'Grupo actualizado correctamente');
+            
+        } catch (error) {
+            console.error('Error updating group:', error);
+            Alert.alert('Error', 'No se pudo actualizar el grupo. Inténtalo de nuevo.');
+        } finally {
+            setSaving(false);
+        }
     };
 
 
@@ -78,8 +108,8 @@ export default function EditGroupModal({
                     <Text style={styles.cancelText}>Cancelar</Text>
                 </Pressable>
                 <Text style={styles.modalTitle}>Editar grupo</Text>
-                <Pressable onPress={handleSave} disabled={imageLoading}>
-                    {imageLoading ? (
+                <Pressable onPress={handleSave} disabled={saving || imageLoading}>
+                    {saving ? (
                         <ActivityIndicator size="small" color="#007AFF" />
                     ) : (
                         <Text style={styles.saveText}>OK</Text>

@@ -30,6 +30,11 @@ export const exitGroup = async (groupId: number, userId: number): Promise<Group>
   return response.data;
 };
 
+export const editGroup = async (groupId: number, groupDto: Partial<Group>): Promise<Group> => {
+  const response = await api.put(`/group/${groupId}`, groupDto);
+  return response.data;
+};
+
 export const deleteGroup = async (groupId: number): Promise<void> => {
   await api.delete(`/group/${groupId}`);
 };

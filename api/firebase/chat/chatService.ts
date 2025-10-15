@@ -40,14 +40,11 @@ export async function createGroupFirebase(group: Partial<Group>): Promise<string
   const now = serverTimestamp();
 
   const payload: ChatDoc = {
-    name: group.name || 'Group Chat',
     type: 'group',
     admins: ownerUid ? [ownerUid] : [],
     members: ownerUid ? [ownerUid] : [],
     ownerId: ownerUid || '',
     image: group.image || '',
-    description: group.description || '',
-    createdAt: now,
     lastMessage: null as unknown as MessageDoc,
     lastMessageAt: "",
   };
@@ -399,8 +396,8 @@ export async function deleteGroupFirebase(groupId: string) {
   }
 }
 
-// Editar nombre/descr del grupo
-export async function editGroupFirebase(groupId: string, name: string, description: string, image?: string) {
+// Función para validar permisos de edición (por si se necesita en el futuro)
+export async function validateGroupEditPermissions(groupId: string): Promise<boolean> {
   const uid = requireUid();
   const chatRef = doc(db, 'chats', String(groupId));
 
@@ -409,26 +406,11 @@ export async function editGroupFirebase(groupId: string, name: string, descripti
     if (!chatSnap.exists()) {
       throw new Error(`Chat ${groupId} not found`);
     }
-    const chat = chatSnap.data() as any;
-    if (chat.ownerId !== uid && !(chat.admins || []).includes(uid)) {
-      throw new Error('Only the owner or admins can edit the group');
-    }
-
-    const updateData: any = {
-      name,
-      description,
-      updatedAt: serverTimestamp(),
-    };
-
-    // Solo actualizar imagen si se proporciona
-    if (image) {
-      updateData.image = image;
-    }
-
-    await updateDoc(chatRef, updateData);
-    console.log(`✅ Grupo ${groupId} editado por ${uid}`);
+    
+    const chat = chatSnap.data() as ChatDoc;
+    return chat.ownerId === uid || chat.admins.includes(uid);
   } catch (e: any) {
-    console.log('❌ Error editando grupo:', e.code, e.message);
-    throw e;
+    console.log('❌ Error validating permissions:', e.code, e.message);
+    return false;
   }
 }
