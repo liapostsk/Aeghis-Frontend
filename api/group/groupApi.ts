@@ -1,5 +1,5 @@
 import api from "../client";
-import { Group } from "../types";
+import { Group } from "./groupType";
 
 export const createGroup = async (groupDto: Partial<Group>): Promise<number> => {
   const response = await api.post(`/group`, groupDto);

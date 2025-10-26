@@ -7,12 +7,11 @@ import {
   TextInput,
   StatusBar,
   Pressable,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
-import { Group } from '@/api/types';
+import { Group } from '@/api/group/groupType';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 import { getGroupById } from '@/api/group/groupApi';

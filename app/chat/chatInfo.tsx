@@ -12,7 +12,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Group, UserDto } from '@/api/types';
+import { UserDto } from '@/api/types';
+import { Group } from '@/api/group/groupType';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 import { deleteGroup, exitGroup, getGroupById } from '@/api/group/groupApi';
@@ -418,7 +419,10 @@ export default function GroupInfoScreen() {
 
                     {/* Acciones */}
                     <View style={styles.actionsContainer}>
-                        <Pressable style={styles.actionButton}>
+                        <Pressable 
+                            style={styles.actionButton} 
+                            onPress={() => router.push(`/chat/journey?groupId=${groupId}`)}
+                        >
                             <Ionicons name="location-outline" size={20} color="#7A33CC" />
                             <Text style={styles.actionButtonText}>Empezar trayecto</Text>
                         </Pressable>

@@ -21,6 +21,7 @@ export type User = {
   externalContacts?: ExternalContact[];
   safeLocations?: SafeLocation[];
   idClerk?: string; // ID de usuario en Clerk
+  role?: "USER" | "ADMIN";
 };
 
 type UserStore = {

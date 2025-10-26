@@ -7,7 +7,7 @@ import { getUserGroups } from '@/api/group/groupApi';
 import { getGroupTilesInfo, updateGroupFirebase, markChatSeen } from '@/api/firebase/chat/chatService';
 import { GroupTileInfo } from '@/api/firebase/types';
 import { auth } from '@/firebaseconfig';
-import type { Group } from '@/api/types';
+import { Group } from '@/api/group/groupType';
 import { useGroupSeach } from '@/app/(tabs)/groups/_layout';
 
 // Helpers

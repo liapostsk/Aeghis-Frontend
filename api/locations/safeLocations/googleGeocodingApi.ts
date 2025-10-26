@@ -1,6 +1,5 @@
-import { use } from "react";
-import api from "../client";
-import { SafeLocation } from "../types";
+import api from "../../client";
+import { SafeLocation } from "../locationType";
 import { calculateDistance } from "./googlePlacesApi";
 import { formatDistance } from "./googlePlacesApi";
 

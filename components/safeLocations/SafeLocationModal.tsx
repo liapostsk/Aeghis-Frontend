@@ -13,9 +13,9 @@ import {
   Alert,
 } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
-import { getPlaceDetails, searchPlacesByText, searchNearbyPlaces } from "@/api/safeLocations/googlePlacesApi";
-import { searchLocationsByText } from "@/api/safeLocations/googleGeocodingApi";
-import { SafeLocation } from "@/api/types";
+import { getPlaceDetails, searchPlacesByText, searchNearbyPlaces } from "@/api/locations/safeLocations/googlePlacesApi";
+import { searchLocationsByText } from "@/api/locations/safeLocations/googleGeocodingApi";
+import { SafeLocation } from "@/api/locations/locationType";
 import { useAuth } from "@clerk/clerk-expo";
 import { useTokenStore } from "@/lib/auth/tokenStore";
 import * as Location from "expo-location";

@@ -1,5 +1,5 @@
-import api from "../client";
-import { SafeLocation } from "../types";
+import api from "../../client";
+import { SafeLocation } from "../locationType";
 
 
 export const createSafeLocation = async (safeLocation: SafeLocation): Promise<number> => {

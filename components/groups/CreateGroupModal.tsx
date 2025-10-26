@@ -5,7 +5,7 @@ import { useTokenStore } from "@/lib/auth/tokenStore";
 import { useUserStore } from "@/lib/storage/useUserStorage";
 import { useAuth } from '@clerk/clerk-expo';
 import { createGroup } from '@/api/group/groupApi';
-import { Group } from '@/api/types';
+import { Group } from '@/api/group/groupType';
 import { createGroupFirebase } from '@/api/firebase/chat/chatService';
 
 

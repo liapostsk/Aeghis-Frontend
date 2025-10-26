@@ -21,7 +21,13 @@ export default function ChatLayout() {
         options={{
           headerShown: false,
         }}
-        />
+      />
+      <Stack.Screen 
+        name="journey"
+        options={{
+          headerShown: false,
+        }}
+      />
     </Stack>
   );
 }
