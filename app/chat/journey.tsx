@@ -19,12 +19,15 @@ import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 import { getGroupById } from '@/api/group/groupApi';
 import { getUser, getCurrentUser } from '@/api/user/userApi';
-import { Location } from '@/api/locations/locationType';
+import { Location, SafeLocation } from '@/api/locations/locationType';
 import { JourneyDto, JourneyTypes, JourneyStates } from '@/api/journeys/journeyType';
 import { ParticipationDto } from '@/api/participations/participationType';
 import { createJourney } from '@/api/journeys/journeyApi';
 import { createParticipation } from '@/api/participations/participationApi';
 import { createLocation } from '@/api/locations/locationsApi';
+import { sendMessageFirebase } from '@/api/firebase/chat/chatService';
+import * as ExpoLocation from 'expo-location';
+import SafeLocationModal from '@/components/safeLocations/SafeLocationModal';
 
 type JourneyType = 'individual' | 'common_destination' | 'personalized';
 
@@ -50,10 +53,11 @@ export default function journey() {
     // Estados del trayecto
     const [journeyType, setJourneyType] = useState<JourneyType | null>(null);
     const [journeyName, setJourneyName] = useState('');
-    const [commonDestination, setCommonDestination] = useState('');
     const [selectedParticipants, setSelectedParticipants] = useState<number[]>([]);
-    const [participantLocations, setParticipantLocations] = useState<Record<number, ParticipantLocation>>({});
     const [creationStep, setCreationStep] = useState('');
+    const [currentLocation, setCurrentLocation] = useState<ExpoLocation.LocationObject | null>(null);
+    const [selectedDestination, setSelectedDestination] = useState<SafeLocation | null>(null);
+    const [showDestinationModal, setShowDestinationModal] = useState(false);
 
     // Cargar datos del grupo
     useEffect(() => {
@@ -106,6 +110,73 @@ export default function journey() {
         return () => { mounted = false; };
     }, [groupId]);
 
+    // Función para obtener ubicación actual del dispositivo
+    const getCurrentLocation = async (): Promise<ExpoLocation.LocationObject | null> => {
+        try {
+            // Verificar permisos
+            const { status } = await ExpoLocation.requestForegroundPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert('Permisos requeridos', 'Necesitamos acceso a tu ubicación para crear el trayecto');
+                return null;
+            }
+
+            // Obtener ubicación actual
+            const location = await ExpoLocation.getCurrentPositionAsync({
+                accuracy: ExpoLocation.Accuracy.High,
+            });
+            setCurrentLocation(location);
+            return location;
+        } catch (error) {
+            console.error('Error getting location:', error);
+            Alert.alert('Error', 'No se pudo obtener tu ubicación actual');
+            return null;
+        }
+    };
+
+    // Función para crear registro de ubicación en backend
+    const createLocationRecord = async (location: ExpoLocation.LocationObject): Promise<number | null> => {
+        try {
+            const locationData: Location = {
+                id: 0, // Se asignará en el backend
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude,
+                timestamp: new Date().toISOString(),
+            };
+
+            const createdLocationId = await createLocation(locationData);
+            return createdLocationId;
+        } catch (error) {
+            console.error('Error creating location record:', error);
+            return null;
+        }
+    };
+
+    // Función para enviar mensaje de solicitud de trayecto al chat
+    const sendJourneyRequestMessage = async (journeyName: string, destination: string) => {
+        try {
+            if (!group?.id) return;
+
+            const message = `🚀 ${currentUser?.name || 'Usuario'} ha creado un nuevo trayecto grupal: "${journeyName}"
+📍 Destino: ${destination}
+
+¡Únete si quieres participar en este trayecto!`;
+
+            await sendMessageFirebase(group.id.toString(), message);
+        } catch (error) {
+            console.error('Error sending journey request message:', error);
+        }
+    };
+
+    // Manejadores de selección de destino
+    const handleSelectDestination = (location: SafeLocation) => {
+        setSelectedDestination(location);
+        setShowDestinationModal(false);
+    };
+
+    const handleCloseDestinationModal = () => {
+        setShowDestinationModal(false);
+    };
+
     // Manejadores de selección de tipo de trayecto
     const handleSelectJourneyType = (type: JourneyType) => {
         setJourneyType(type);
@@ -114,15 +185,15 @@ export default function journey() {
         if (type === 'individual') {
             // Solo el usuario actual puede participar
             setSelectedParticipants([currentUser?.id || 0]);
+            // Para individual no se necesita destino predefinido
+            setSelectedDestination(null);
         } else {
             // Mantener selección actual para tipos grupales
             if (!selectedParticipants.includes(currentUser?.id || 0)) {
                 setSelectedParticipants([currentUser?.id || 0]);
             }
+            // Mantener destino seleccionado para grupales
         }
-        
-        setCommonDestination('');
-        setParticipantLocations({});
     };
 
     // Toggle participante
@@ -134,11 +205,6 @@ export default function journey() {
 
         setSelectedParticipants(prev => {
             if (prev.includes(userId)) {
-                // Remover locations del participante
-                const newLocations = { ...participantLocations };
-                delete newLocations[userId];
-                setParticipantLocations(newLocations);
-                
                 return prev.filter(id => id !== userId);
             } else {
                 return [...prev, userId];
@@ -146,21 +212,10 @@ export default function journey() {
         });
     };
 
-    // Actualizar ubicaciones de participante
+    // Actualizar ubicaciones de participante (simplificado para flujo automático)
     const updateParticipantLocation = (userId: number, field: 'origin' | 'destination', value: string) => {
-        const user = members.find(m => m.id === userId);
-        if (!user) return;
-
-        setParticipantLocations(prev => ({
-            ...prev,
-            [userId]: {
-                ...prev[userId],
-                userId,
-                userName: user.name,
-                origin: field === 'origin' ? value : (prev[userId]?.origin || ''),
-                destination: field === 'destination' ? value : (prev[userId]?.destination || ''),
-            }
-        }));
+        // Ya no necesario con ubicación automática del dispositivo
+        console.log('updateParticipantLocation - funcionalidad obsoleta con ubicación automática');
     };
 
     // Validación del formulario
@@ -180,23 +235,10 @@ export default function journey() {
             return false;
         }
 
-        // Validaciones específicas por tipo
-        if (journeyType === 'common_destination') {
-            if (!commonDestination.trim()) {
-                Alert.alert('Error', 'Ingresa un destino común');
-                return false;
-            }
-        }
-
-        if (journeyType === 'personalized') {
-            for (const participantId of selectedParticipants) {
-                const location = participantLocations[participantId];
-                if (!location?.origin?.trim() || !location?.destination?.trim()) {
-                    const user = members.find(m => m.id === participantId);
-                    Alert.alert('Error', `Completa origen y destino para ${user?.name || 'todos los participantes'}`);
-                    return false;
-                }
-            }
+                // Validación de destino seleccionado para trayectos grupales
+        if (journeyType !== 'individual' && !selectedDestination) {
+            Alert.alert('Error', 'Selecciona un destino para el trayecto grupal');
+            return false;
         }
 
         return true;
@@ -224,63 +266,49 @@ export default function journey() {
             const journeyId = await createJourney(journeyData as JourneyDto);
             console.log('Journey creado con ID:', journeyId);
 
-            // 3. Crear participaciones y ubicaciones para cada participante
+            // 3. Obtener ubicación actual del dispositivo para el usuario que crea el trayecto
+            if (selectedParticipants.includes(currentUser?.id || 0)) {
+                setCreationStep('Obteniendo tu ubicación actual...');
+                const deviceLocation = await getCurrentLocation();
+                if (!deviceLocation) {
+                    throw new Error('No se pudo obtener la ubicación actual');
+                }
+            }
+
+            // 4. Crear ubicaciones de destino
+            setCreationStep('Configurando destino...');
+            let destinationLocationId: number | undefined;
+            
+            if (selectedDestination) {
+                const destLoc: Location = {
+                    id: 0,
+                    latitude: selectedDestination.latitude,
+                    longitude: selectedDestination.longitude,
+                    timestamp: new Date().toISOString()
+                };
+                destinationLocationId = await createLocationRecord(currentLocation!);
+            }
+
+            // 5. Crear participaciones para cada participante
             setCreationStep('Configurando participantes...');
             const participationPromises = selectedParticipants.map(async (participantId) => {
                 const user = members.find(m => m.id === participantId);
                 if (!user) return;
 
-                // 4. Determinar origen y destino según el tipo de trayecto
-                let originLocation: string;
-                let destinationLocation: string;
-
-                if (journeyType === 'individual') {
-                    // Para individual, solo el usuario actual necesita completar sus ubicaciones
-                    originLocation = ''; // Se completará cuando el usuario inicie el trayecto
-                    destinationLocation = '';
-                } else if (journeyType === 'common_destination') {
-                    originLocation = ''; // Se completará cuando el usuario se una
-                    destinationLocation = commonDestination.trim();
-                } else { // personalized
-                    const userLocation = participantLocations[participantId];
-                    originLocation = userLocation?.origin || '';
-                    destinationLocation = userLocation?.destination || '';
-                }
-
-                // 5. Crear ubicaciones de origen y destino
+                // 6. Crear ubicación de origen si es el usuario actual
                 let originLocationId: number | undefined;
-                let destinationLocationId: number | undefined;
-
-                if (originLocation) {
-                    const originLoc: Location = {
-                        id: 0,
-                        latitude: 0, // Se actualizará cuando se obtenga la ubicación real
-                        longitude: 0,
-                        timestamp: new Date().toISOString()
-                    };
-                    await createLocation(originLoc);
-                    // Note: En una implementación real, necesitarías obtener el ID retornado
-                    // originLocationId = createdOriginId;
+                
+                if (participantId === currentUser?.id && currentLocation) {
+                    originLocationId = await createLocationRecord(currentLocation);
                 }
 
-                if (destinationLocation) {
-                    const destLoc: Location = {
-                        id: 0,
-                        latitude: 0, // Se actualizará con geocoding del destino
-                        longitude: 0,
-                        timestamp: new Date().toISOString()
-                    };
-                    await createLocation(destLoc);
-                    // destinationLocationId = createdDestId;
-                }
-
-                // 6. Crear participación
+                // 7. Crear participación
                 const participationData: Partial<ParticipationDto> = {
                     journeyId: journeyId,
                     userId: participantId,
-                    sharedLocation: false, // Inicialmente false, se activará cuando el usuario se una
+                    sharedLocation: participantId === currentUser?.id, // Solo el creador comparte inicialmente
                     participationState: participantId === currentUser?.id ? 'ACCEPTED' : 'PENDING',
-                    sourceId: originLocationId || 0, // Se actualizará cuando se obtenga la ubicación
+                    sourceId: originLocationId || 0, // Solo el creador tiene origen inicialmente
                     destinationId: destinationLocationId || 0
                 };
 
@@ -297,8 +325,15 @@ export default function journey() {
             //     await updateJourney({ ...journeyData, id: journeyId, status: 'ACTIVE' });
             // }
 
+            // 8. Para trayectos grupales, enviar mensaje al chat
+            if (journeyType !== 'individual' && selectedDestination) {
+                setCreationStep('Notificando al grupo...');
+                await sendJourneyRequestMessage(journeyName, selectedDestination.address);
+            }
+
+            // 9. Éxito: Mostrar mensaje y regresar
             Alert.alert(
-                'Trayecto creado',
+                '¡Trayecto creado!',
                 `El trayecto "${journeyName}" se ha creado exitosamente. ` +
                 (journeyType === 'individual' 
                     ? 'Puedes iniciarlo cuando estés listo.'
@@ -431,80 +466,32 @@ export default function journey() {
     const renderLocationFields = () => {
         if (!journeyType) return null;
 
-        if (journeyType === 'common_destination') {
+        // Para trayectos grupales, mostrar selector de destino
+        if (journeyType !== 'individual') {
             return (
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Destino común</Text>
+                    <Text style={styles.sectionTitle}>Seleccionar destino</Text>
                     <Text style={styles.sectionSubtitle}>
-                        Todos los participantes compartirán el mismo destino
+                        El origen será automáticamente tu ubicación actual
                     </Text>
                     
-                    <View style={styles.inputContainer}>
-                        <Ionicons name="location" size={20} color="#7A33CC" style={styles.inputIcon} />
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Ingresa el destino"
-                            value={commonDestination}
-                            onChangeText={setCommonDestination}
-                            placeholderTextColor="#9CA3AF"
-                        />
-                    </View>
-                </View>
-            );
-        }
-
-        if (journeyType === 'personalized') {
-            return (
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Ubicaciones personalizadas</Text>
-                    <Text style={styles.sectionSubtitle}>
-                        Define origen y destino para cada participante
-                    </Text>
-
-                    {selectedParticipants.map(userId => {
-                        const user = members.find(m => m.id === userId);
-                        if (!user) return null;
-
-                        const location = participantLocations[userId] || { origin: '', destination: '', userId, userName: user.name };
-
-                        return (
-                            <View key={userId} style={styles.locationCard}>
-                                <Text style={styles.locationCardTitle}>{user.name}</Text>
-                                
-                                <View style={styles.inputContainer}>
-                                    <Ionicons 
-                                        name="radio-button-on" 
-                                        size={20} 
-                                        color="#10B981" 
-                                        style={styles.inputIcon} 
-                                    />
-                                    <TextInput
-                                        style={styles.input}
-                                        placeholder="Origen"
-                                        value={location.origin || ''}
-                                        onChangeText={(text) => updateParticipantLocation(userId, 'origin', text)}
-                                        placeholderTextColor="#9CA3AF"
-                                    />
-                                </View>
-
-                                <View style={styles.inputContainer}>
-                                    <Ionicons 
-                                        name="location" 
-                                        size={20} 
-                                        color="#EF4444" 
-                                        style={styles.inputIcon} 
-                                    />
-                                    <TextInput
-                                        style={styles.input}
-                                        placeholder="Destino"
-                                        value={location.destination || ''}
-                                        onChangeText={(text) => updateParticipantLocation(userId, 'destination', text)}
-                                        placeholderTextColor="#9CA3AF"
-                                    />
-                                </View>
-                            </View>
-                        );
-                    })}
+                    <Pressable
+                        style={styles.destinationSelector}
+                        onPress={() => setShowDestinationModal(true)}
+                    >
+                        <Ionicons name="location" size={20} color="#7A33CC" />
+                        <View style={styles.destinationInfo}>
+                            <Text style={styles.destinationText}>
+                                {selectedDestination ? selectedDestination.name : 'Seleccionar destino'}
+                            </Text>
+                            {selectedDestination && (
+                                <Text style={styles.destinationAddress}>
+                                    {selectedDestination.address}
+                                </Text>
+                            )}
+                        </View>
+                        <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                    </Pressable>
                 </View>
             );
         }
@@ -613,10 +600,10 @@ export default function journey() {
                     <Pressable
                         style={[
                             styles.createButton,
-                            (!journeyType || creating) && styles.createButtonDisabled
+                            (!journeyType || creating || (journeyType !== 'individual' && !selectedDestination)) && styles.createButtonDisabled
                         ]}
                         onPress={handleCreateJourney}
-                        disabled={!journeyType || creating}
+                        disabled={!journeyType || creating || (journeyType !== 'individual' && !selectedDestination)}
                     >
                         {creating ? (
                             <>
@@ -634,6 +621,14 @@ export default function journey() {
                     </Pressable>
                 </View>
             </View>
+
+            {/* Modal de selección de destino */}
+            <SafeLocationModal
+                visible={showDestinationModal}
+                onClose={handleCloseDestinationModal}
+                onSelectLocation={handleSelectDestination}
+                title="Seleccionar destino del trayecto"
+            />
         </View>
     );
 }
@@ -889,5 +884,30 @@ const styles = StyleSheet.create({
         color: '#FFFFFF',
         fontSize: 16,
         fontWeight: '600',
+    },
+    
+    // Destination Selector
+    destinationSelector: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+        backgroundColor: '#F9FAFB',
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+        gap: 12,
+    },
+    destinationInfo: {
+        flex: 1,
+    },
+    destinationText: {
+        fontSize: 16,
+        color: '#374151',
+        fontWeight: '600',
+    },
+    destinationAddress: {
+        fontSize: 14,
+        color: '#6B7280',
+        marginTop: 2,
     },
 });

@@ -10,6 +10,7 @@ export const mapUserToDto = (user: User): UserDto => {
       email: user.email ?? "",
       phone: user.phone ?? "",
       image: user.image ?? "",
+      role: user.role ?? "USER",
       verify: user.verify ?? false,
       acceptedPrivacyPolicy: user.acceptedPrivacyPolicy ?? false,
       dateOfBirth: user.dateOfBirth ?? new Date(),

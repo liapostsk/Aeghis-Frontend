@@ -25,9 +25,10 @@ interface Props {
   visible: boolean;
   onClose: () => void;
   onSelectLocation: (location: SafeLocation) => void;
+  title?: string; // Título opcional, por defecto será "Buscar ubicación segura"
 }
 
-export default function SafeLocationModal({ visible, onClose, onSelectLocation }: Props) {
+export default function SafeLocationModal({ visible, onClose, onSelectLocation, title = "Buscar ubicación segura" }: Props) {
   // Estados del componente
   const [query, setQuery] = useState(""); // Busqueda de texto
   const [results, setResults] = useState<SafeLocation[]>([]); // Resultados de búsqueda
@@ -38,6 +39,22 @@ export default function SafeLocationModal({ visible, onClose, onSelectLocation }
   // Hooks externos
   const { getToken } = useAuth(); // Hook para obtener el token de autenticación
   const setToken = useTokenStore((state) => state.setToken); // Hook para guardar el token en el store
+
+  // Función para ordenar ubicaciones por distancia
+  const sortLocationsByDistance = (locations: SafeLocation[]): SafeLocation[] => {
+    return locations.sort((a, b) => {
+      // Extraer números de distancia para comparar
+      const getDistanceValue = (distanceStr?: string): number => {
+        if (!distanceStr) return Infinity;
+        const match = distanceStr.match(/(\d+(?:\.\d+)?)/);
+        if (!match) return Infinity;
+        const value = parseFloat(match[1]);
+        return distanceStr.includes('km') ? value * 1000 : value;
+      };
+      
+      return getDistanceValue(a.distance) - getDistanceValue(b.distance);
+    });
+  };
 
   useEffect(() => {
     if (!visible) {
@@ -71,9 +88,11 @@ export default function SafeLocationModal({ visible, onClose, onSelectLocation }
             const nearbyLocations = await searchNearbyPlaces({
               latitude: coords.latitude,
               longitude: coords.longitude,
-              radius: 2000, // 2km de radio
+              radius: 1500, // 1.5km de radio para lugares más cercanos
+              types: ['hospital', 'police', 'pharmacy', 'gas_station', 'subway_station', 'bus_station', 'gym', 'university'], // Tipos de lugares seguros prioritarios
             });
-            setResults(nearbyLocations);
+            const sortedLocations = sortLocationsByDistance(nearbyLocations);
+            setResults(sortedLocations);
           }
         } catch (error) {
           console.error("Error cargando lugares cercanos:", error);
@@ -102,9 +121,11 @@ export default function SafeLocationModal({ visible, onClose, onSelectLocation }
               const nearbyLocations = await searchNearbyPlaces({
                 latitude: currentLocation.latitude,
                 longitude: currentLocation.longitude,
-                radius: 2000,
+                radius: 1500, // 1.5km de radio para lugares más cercanos
+                types: ['hospital', 'police', 'pharmacy', 'gas_station', 'subway_station', 'bus_station'], // Tipos de lugares seguros prioritarios
               });
-              setResults(nearbyLocations);
+              const sortedLocations = sortLocationsByDistance(nearbyLocations);
+              setResults(sortedLocations);
             }
           } catch (error) {
             console.error("Error cargando lugares cercanos:", error);
@@ -135,7 +156,8 @@ export default function SafeLocationModal({ visible, onClose, onSelectLocation }
 
         if (placesResult.length > 0) {
           console.log("Resultados de Google Places:", placesResult);
-          setResults(placesResult);
+          const sortedPlacesResult = sortLocationsByDistance(placesResult);
+          setResults(sortedPlacesResult);
         } else {
           // Si no hay resultados, intentamos con Google Geocoding
           const geocodingResult = await searchLocationsByText(query,
@@ -145,7 +167,8 @@ export default function SafeLocationModal({ visible, onClose, onSelectLocation }
           console.log("Resultados de Google Geocoding:", geocodingResult);
           if (geocodingResult.length > 0) {
             console.log(`Geocoding encontró ${geocodingResult.length} direcciones`);
-            setResults(geocodingResult);
+            const sortedGeocodingResult = sortLocationsByDistance(geocodingResult);
+            setResults(sortedGeocodingResult);
           } else {
             console.log("No se encontraron resultados en ninguna API");
             setResults([]);
@@ -189,7 +212,7 @@ export default function SafeLocationModal({ visible, onClose, onSelectLocation }
           <View style={styles.modal}>
             <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
               <View style={styles.header}>
-                <Text style={styles.title}>Buscar ubicación segura</Text>
+                <Text style={styles.title}>{title}</Text>
                 <Pressable onPress={onClose} style={styles.closeButton}>
                   <Ionicons name="close" size={24} color="#666" />
                 </Pressable>
@@ -224,7 +247,7 @@ export default function SafeLocationModal({ visible, onClose, onSelectLocation }
                   color="#7A33CC" 
                 />
                 <Text style={styles.sectionTitle}>
-                  {query.length > 2 ? "Resultados de búsqueda" : "Lugares cercanos recomendados"}
+                  {query.length > 2 ? "Resultados de búsqueda" : "Lugares seguros cercanos"}
                 </Text>
               </View>
 
@@ -269,7 +292,7 @@ export default function SafeLocationModal({ visible, onClose, onSelectLocation }
                       <View style={styles.emptyState}>
                         <Ionicons name="location-outline" size={48} color="#ccc" />
                         <Text style={styles.emptyText}>
-                          {query.length > 2 ? "No se encontraron resultados" : "Cargando lugares cercanos..."}
+                          {query.length > 2 ? "No se encontraron resultados" : "Cargando lugares seguros cercanos..."}
                         </Text>
                       </View>
                     ) : null

@@ -3,13 +3,13 @@ import { View, Text, TouchableOpacity, StyleSheet, Alert, Pressable } from 'reac
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import SafeLocationModal from '@/components/safeLocations/SafeLocationModal';
-import { SafeLocation } from '@/api/types';
-import { createSafeLocation, deleteSafeLocation } from '../../api/safeLocations/safeLocationApi';
+import { SafeLocation } from '@/api/locations/locationType';
+import { createSafeLocation, deleteSafeLocation } from '@/api/locations/safeLocations/safeLocationApi';
 import { getCurrentUser } from '@/api/user/userApi';
 import { useTokenStore } from '../../lib/auth/tokenStore';
 import { useAuth } from "@clerk/clerk-expo";
 import { useUserStore } from '@/lib/storage/useUserStorage';
-import { editSafeLocation } from '../../api/safeLocations/safeLocationApi';
+import { editSafeLocation } from '@/api/locations/safeLocations/safeLocationApi';
 import LocationEditorModal from '../safeLocations/LocationEditorModal';
 
 interface Props {
