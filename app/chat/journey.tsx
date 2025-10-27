@@ -22,7 +22,7 @@ import { getUser, getCurrentUser } from '@/api/user/userApi';
 import { Location, SafeLocation } from '@/api/locations/locationType';
 import { JourneyDto, JourneyTypes, JourneyStates } from '@/api/journeys/journeyType';
 import { ParticipationDto } from '@/api/participations/participationType';
-import { createJourney } from '@/api/journeys/journeyApi';
+import { createJourney, updateJourney } from '@/api/journeys/journeyApi';
 import { createParticipation } from '@/api/participations/participationApi';
 import { createLocation } from '@/api/locations/locationsApi';
 import { sendMessageFirebase } from '@/api/firebase/chat/chatService';
@@ -30,13 +30,6 @@ import * as ExpoLocation from 'expo-location';
 import SafeLocationModal from '@/components/safeLocations/SafeLocationModal';
 
 type JourneyType = 'individual' | 'common_destination' | 'personalized';
-
-interface ParticipantLocation {
-    userId: number;
-    userName: string;
-    origin: string;
-    destination: string;
-}
 
 export default function journey() {
     const { groupId } = useLocalSearchParams<{ groupId: string }>();
@@ -151,25 +144,19 @@ export default function journey() {
         }
     };
 
-    // Función para enviar mensaje de solicitud de trayecto al chat
-    const sendJourneyRequestMessage = async (journeyName: string, destination: string) => {
-        try {
-            if (!group?.id) return;
-
-            const message = `🚀 ${currentUser?.name || 'Usuario'} ha creado un nuevo trayecto grupal: "${journeyName}"
-📍 Destino: ${destination}
-
-¡Únete si quieres participar en este trayecto!`;
-
-            await sendMessageFirebase(group.id.toString(), message);
-        } catch (error) {
-            console.error('Error sending journey request message:', error);
-        }
-    };
-
     // Manejadores de selección de destino
-    const handleSelectDestination = (location: SafeLocation) => {
-        setSelectedDestination(location);
+    const handleSelectDestination = (location: SafeLocation | Location) => {
+        // Convertir Location a SafeLocation si es necesario
+        const safeLocation: SafeLocation = 'name' in location ? location : {
+            id: location.id,
+            name: `Ubicación personalizada`,
+            address: `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`,
+            type: 'custom',
+            latitude: location.latitude,
+            longitude: location.longitude,
+            externalId: undefined
+        };
+        setSelectedDestination(safeLocation);
         setShowDestinationModal(false);
     };
 
@@ -212,12 +199,6 @@ export default function journey() {
         });
     };
 
-    // Actualizar ubicaciones de participante (simplificado para flujo automático)
-    const updateParticipantLocation = (userId: number, field: 'origin' | 'destination', value: string) => {
-        // Ya no necesario con ubicación automática del dispositivo
-        console.log('updateParticipantLocation - funcionalidad obsoleta con ubicación automática');
-    };
-
     // Validación del formulario
     const validateForm = (): boolean => {
         if (!journeyType) {
@@ -251,104 +232,116 @@ export default function journey() {
         try {
             setCreating(true);
 
-            // 1. Crear DTO de trayecto
+            // 1. ✅ ESTRATEGIA SECUENCIAL: Crear Journey primero (sin participantsIds)
             setCreationStep('Creando trayecto...');
             const journeyData: Partial<JourneyDto> = {
                 groupId: Number(groupId),
-                type: journeyType === 'individual' ? JourneyTypes.INDIVIDUAL : 
+                journeyType: journeyType === 'individual' ? JourneyTypes.INDIVIDUAL : 
                       journeyType === 'common_destination' ? JourneyTypes.COMMON_DESTINATION : JourneyTypes.PERSONALIZED,
-                state: JourneyStates.PENDING, // Inicialmente pendiente
+                state: journeyType === 'individual' ? JourneyStates.IN_PROGRESS : JourneyStates.PENDING,
                 iniDate: new Date().toISOString(),
-                participantsIds: selectedParticipants
+                participantsIds: [] // ✅ Empieza vacío, se llena cuando se unen miembros
             };
 
-            // 2. Crear el journey en el backend
-            const journeyId = await createJourney(journeyData as JourneyDto);
-            console.log('Journey creado con ID:', journeyId);
+            console.log('📝 Creando journey:', journeyData);
+            const token = await getToken();
+            setToken(token);
 
-            // 3. Obtener ubicación actual del dispositivo para el usuario que crea el trayecto
-            if (selectedParticipants.includes(currentUser?.id || 0)) {
-                setCreationStep('Obteniendo tu ubicación actual...');
-                const deviceLocation = await getCurrentLocation();
-                if (!deviceLocation) {
-                    throw new Error('No se pudo obtener la ubicación actual');
-                }
+            const journeyId = await createJourney(journeyData as JourneyDto);
+            console.log('✅ Journey creado con ID:', journeyId);
+
+            // 2. ✅ Añadir automáticamente al CREADOR como participante
+            setCreationStep('Añadiéndote como participante...');
+            
+            // Obtener ubicación actual del creador
+            const deviceLocation = await getCurrentLocation();
+            if (!deviceLocation) {
+                throw new Error('No se pudo obtener tu ubicación actual');
             }
 
-            // 4. Crear ubicaciones de destino
-            setCreationStep('Configurando destino...');
+            // Crear ubicación de origen del creador
+            const originLocationId = await createLocationRecord(deviceLocation);
+            if (!originLocationId) {
+                throw new Error('No se pudo registrar tu ubicación');
+            }
+
+            // Crear ubicación de destino (solo si está seleccionada)
             let destinationLocationId: number | undefined;
-            
             if (selectedDestination) {
-                const destLoc: Location = {
-                    id: 0,
+                const destLocation: Partial<Location> = {
                     latitude: selectedDestination.latitude,
                     longitude: selectedDestination.longitude,
                     timestamp: new Date().toISOString()
                 };
-                destinationLocationId = await createLocationRecord(currentLocation!);
+                destinationLocationId = await createLocation(destLocation as Location);
             }
 
-            // 5. Crear participaciones para cada participante
-            setCreationStep('Configurando participantes...');
-            const participationPromises = selectedParticipants.map(async (participantId) => {
-                const user = members.find(m => m.id === participantId);
-                if (!user) return;
-
-                // 6. Crear ubicación de origen si es el usuario actual
-                let originLocationId: number | undefined;
-                
-                if (participantId === currentUser?.id && currentLocation) {
-                    originLocationId = await createLocationRecord(currentLocation);
-                }
-
-                // 7. Crear participación
-                const participationData: Partial<ParticipationDto> = {
-                    journeyId: journeyId,
-                    userId: participantId,
-                    sharedLocation: participantId === currentUser?.id, // Solo el creador comparte inicialmente
-                    participationState: participantId === currentUser?.id ? 'ACCEPTED' : 'PENDING',
-                    sourceId: originLocationId || 0, // Solo el creador tiene origen inicialmente
-                    destinationId: destinationLocationId || 0
-                };
-
-                await createParticipation(participationData as ParticipationDto);
-            });
-
-            await Promise.all(participationPromises);
-
-            // 7. Verificar si hay más de un miembro listo para activar el trayecto
-            const readyMembers = selectedParticipants.filter(id => id === currentUser?.id).length;
+            // Crear participación del creador
+            const creatorParticipationData: Partial<ParticipationDto> = {
+                journeyId: journeyId, // ✅ Ahora ya tenemos el journeyId
+                userId: currentUser?.id || 0,
+                sharedLocation: true, // El creador siempre comparte ubicación
+                state: 'ACCEPTED', // El creador siempre está aceptado
+                sourceId: originLocationId,
+                destinationId: destinationLocationId || originLocationId // Si no hay destino específico, usar origen
+            };
             
-            // En una implementación real, harías una llamada para actualizar el estado del journey
-            // if (readyMembers > 1) {
-            //     await updateJourney({ ...journeyData, id: journeyId, status: 'ACTIVE' });
-            // }
+            const creatorParticipationId = await createParticipation(creatorParticipationData as ParticipationDto);
+            console.log('✅ Creador añadido como participante con ID:', creatorParticipationId);
 
-            // 8. Para trayectos grupales, enviar mensaje al chat
-            if (journeyType !== 'individual' && selectedDestination) {
-                setCreationStep('Notificando al grupo...');
-                await sendJourneyRequestMessage(journeyName, selectedDestination.address);
+            // 3. ✅ Actualizar journey con ID de participación del creador
+            setCreationStep('Actualizando trayecto...');
+            const updatedJourneyData = {
+                ...journeyData,
+                id: journeyId,
+                participantsIds: [creatorParticipationId] // ✅ Almacenar ID de participación del creador
+            };
+            
+            await updateJourney(updatedJourneyData as JourneyDto);
+            console.log('✅ Journey actualizado con participación del creador');
+
+            // 4. ✅ Manejar según tipo de trayecto
+            if (journeyType === 'individual') {
+                // Para individual: ya está listo, solo participa el creador
+                Alert.alert(
+                    '¡Trayecto individual creado!',
+                    `El trayecto "${journeyName}" está listo. Puedes iniciarlo cuando quieras desde la vista del mapa.`,
+                    [{ text: 'OK', onPress: () => router.back() }]
+                );
+            } else {
+                // Para grupal: enviar solicitud al chat para que otros se unan
+                setCreationStep('Enviando solicitud al grupo...');
+                
+                try {
+                    // Mensaje especial para solicitudes de journey con journeyId
+                    const targetParticipants = selectedParticipants.filter(id => id !== currentUser?.id);
+                    
+                    //await sendJourneyRequestMessage(journeyId, journeyName, targetParticipants);
+
+                    const participantNames = members
+                        .filter(m => targetParticipants.includes(m.id))
+                        .map(m => m.name)
+                        .join(', ');
+
+                    Alert.alert(
+                        '¡Solicitud de trayecto enviada!',
+                        `Se ha enviado una solicitud para el trayecto "${journeyName}" a ${participantNames}. ` +
+                        'Podrán unirse desde el chat del grupo seleccionando su destino.',
+                        [{ text: 'OK', onPress: () => router.back() }]
+                    );
+                } catch (chatError) {
+                    console.warn('Error enviando mensaje al chat:', chatError);
+                    Alert.alert(
+                        'Trayecto creado',
+                        `El trayecto "${journeyName}" se ha creado correctamente, pero no se pudo notificar al grupo. ` +
+                        'Puedes compartir manualmente la información del trayecto.',
+                        [{ text: 'OK', onPress: () => router.back() }]
+                    );
+                }
             }
-
-            // 9. Éxito: Mostrar mensaje y regresar
-            Alert.alert(
-                '¡Trayecto creado!',
-                `El trayecto "${journeyName}" se ha creado exitosamente. ` +
-                (journeyType === 'individual' 
-                    ? 'Puedes iniciarlo cuando estés listo.'
-                    : 'Los otros participantes recibirán una notificación para unirse.'
-                ),
-                [
-                    {
-                        text: 'OK',
-                        onPress: () => router.back()
-                    }
-                ]
-            );
 
         } catch (error) {
-            console.error('Error creating journey:', error);
+            console.error('❌ Error creating journey:', error);
             Alert.alert(
                 'Error', 
                 'No se pudo crear el trayecto. Verifica tu conexión e inténtalo de nuevo.'
@@ -628,6 +621,7 @@ export default function journey() {
                 onClose={handleCloseDestinationModal}
                 onSelectLocation={handleSelectDestination}
                 title="Seleccionar destino del trayecto"
+                acceptLocationTypes="all"
             />
         </View>
     );

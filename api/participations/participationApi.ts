@@ -15,7 +15,7 @@ export const getParticipation = async (id: number): Promise<ParticipationDto> =>
  * POST /participation
  */
 export const createParticipation = async (participation: ParticipationDto): Promise<number> => {
-  const response = await api.post('/participation', participation);
+  const response = await api.post('/participation/create', participation);
   return response.data;
 };
 
@@ -24,5 +24,5 @@ export const createParticipation = async (participation: ParticipationDto): Prom
  * PUT /participation
  */
 export const updateParticipation = async (participation: ParticipationDto): Promise<void> => {
-  await api.put('/participation', participation);
+  await api.put('/participation/update', participation);
 };

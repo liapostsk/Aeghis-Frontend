@@ -1,0 +1,321 @@
+import React, { useState } from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    Pressable,
+    Alert,
+    ActivityIndicator,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import SafeLocationModal from '@/components/safeLocations/SafeLocationModal';
+import { SafeLocation } from '@/api/locations/locationType';
+import { getJourney, updateJourney } from '@/api/journeys/journeyApi';
+import { createParticipation } from '@/api/participations/participationApi';
+import { createLocation } from '@/api/locations/locationsApi';
+import { ParticipationDto } from '@/api/participations/participationType';
+import { Location } from '@/api/locations/locationType';
+import { useAuth } from '@clerk/clerk-expo';
+import { getCurrentUser } from '@/api/user/userApi';
+import * as ExpoLocation from 'expo-location';
+
+interface JourneyRequestMessageProps {
+    journeyId: number;
+    journeyName: string;
+    creatorName: string;
+    destination?: string;
+    onJoinSuccess?: (journeyId: number) => void;
+    onDecline?: (journeyId: number) => void;
+    hasUserJoined?: boolean;
+}
+
+export default function JourneyRequestMessage({ 
+    journeyId, 
+    journeyName, 
+    creatorName, 
+    destination,
+    onJoinSuccess,
+    onDecline,
+    hasUserJoined = false
+}: JourneyRequestMessageProps) {
+    const [joining, setJoining] = useState(false);
+    const [showDestinationModal, setShowDestinationModal] = useState(false);
+    const { getToken } = useAuth();
+
+    // Función para obtener ubicación actual del dispositivo
+    const getCurrentLocation = async (): Promise<ExpoLocation.LocationObject | null> => {
+        try {
+            const { status } = await ExpoLocation.requestForegroundPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert('Permisos requeridos', 'Necesitamos acceso a tu ubicación para unirte al trayecto');
+                return null;
+            }
+
+            const location = await ExpoLocation.getCurrentPositionAsync({
+                accuracy: ExpoLocation.Accuracy.High,
+            });
+            return location;
+        } catch (error) {
+            console.error('Error getting location:', error);
+            Alert.alert('Error', 'No se pudo obtener tu ubicación actual');
+            return null;
+        }
+    };
+
+    const handleJoinJourney = async (selectedDestination: SafeLocation) => {
+        try {
+            setJoining(true);
+
+            // 1. Obtener usuario actual
+            const currentUser = await getCurrentUser();
+            
+            // 2. Obtener ubicación actual del dispositivo
+            const deviceLocation = await getCurrentLocation();
+            if (!deviceLocation) {
+                throw new Error('No se pudo obtener tu ubicación actual');
+            }
+
+            // 3. Crear ubicación de origen
+            const originLocation: Partial<Location> = {
+                latitude: deviceLocation.coords.latitude,
+                longitude: deviceLocation.coords.longitude,
+                timestamp: new Date().toISOString(),
+            };
+            const originLocationId = await createLocation(originLocation as Location);
+
+            // 4. Crear ubicación de destino
+            const destLocation: Partial<Location> = {
+                latitude: selectedDestination.latitude,
+                longitude: selectedDestination.longitude,
+                timestamp: new Date().toISOString()
+            };
+            const destinationLocationId = await createLocation(destLocation as Location);
+
+            // 5. Crear participación
+            const participationData: Partial<ParticipationDto> = {
+                journeyId: journeyId,
+                userId: currentUser.id,
+                sharedLocation: true, // El usuario acepta compartir ubicación
+                state: 'ACCEPTED', // Se une voluntariamente
+                sourceId: originLocationId,
+                destinationId: destinationLocationId
+            };
+
+            const participationId = await createParticipation(participationData as ParticipationDto);
+            console.log('✅ Participación creada con ID:', participationId);
+
+            // 6. Obtener journey actual y actualizar con nueva participación
+            const currentJourney = await getJourney(journeyId);
+            const updatedJourney = {
+                ...currentJourney,
+                participantsIds: [...currentJourney.participantsIds, participationId]
+            };
+            
+            await updateJourney(updatedJourney);
+            console.log('✅ Journey actualizado con nueva participación');
+
+            Alert.alert(
+                '¡Te has unido al trayecto!',
+                `Te has unido exitosamente al trayecto "${journeyName}". ` +
+                `Tu destino: ${selectedDestination.name}`,
+                [{ text: 'OK' }]
+            );
+
+            onJoinSuccess?.(journeyId);
+
+        } catch (error) {
+            console.error('❌ Error joining journey:', error);
+            Alert.alert('Error', 'No se pudo unir al trayecto. Inténtalo de nuevo.');
+        } finally {
+            setJoining(false);
+            setShowDestinationModal(false);
+        }
+    };
+
+    const handleDecline = () => {
+        Alert.alert(
+            'Declinar trayecto',
+            `¿Estás seguro de que no quieres participar en "${journeyName}"?`,
+            [
+                { text: 'Cancelar', style: 'cancel' },
+                { 
+                    text: 'Declinar', 
+                    style: 'destructive',
+                    onPress: () => onDecline?.(journeyId)
+                }
+            ]
+        );
+    };
+
+    return (
+        <View style={styles.container}>
+            <View style={styles.header}>
+                <View style={styles.iconContainer}>
+                    <Ionicons name="car" size={20} color="#7A33CC" />
+                </View>
+                <Text style={styles.title}>Solicitud de Trayecto</Text>
+            </View>
+            
+            <Text style={styles.description}>
+                <Text style={styles.creatorName}>{creatorName}</Text> te invita a unirte al trayecto{' '}
+                <Text style={styles.journeyName}>"{journeyName}"</Text>
+            </Text>
+
+            {destination && (
+                <View style={styles.destinationInfo}>
+                    <Ionicons name="location" size={16} color="#6B7280" />
+                    <Text style={styles.destinationText}>Destino sugerido: {destination}</Text>
+                </View>
+            )}
+
+            <Text style={styles.journeyId}>ID: {journeyId}</Text>
+
+            {!hasUserJoined ? (
+                <View style={styles.actions}>
+                    <Pressable style={styles.declineButton} onPress={handleDecline}>
+                        <Ionicons name="close-circle" size={16} color="#EF4444" />
+                        <Text style={styles.declineText}>Declinar</Text>
+                    </Pressable>
+                    
+                    <Pressable 
+                        style={styles.joinButton} 
+                        onPress={() => setShowDestinationModal(true)}
+                        disabled={joining}
+                    >
+                        {joining ? (
+                            <ActivityIndicator color="#FFFFFF" size="small" />
+                        ) : (
+                            <>
+                                <Ionicons name="checkmark-circle" size={16} color="#FFFFFF" />
+                                <Text style={styles.joinText}>Unirse</Text>
+                            </>
+                        )}
+                    </Pressable>
+                </View>
+            ) : (
+                <View style={styles.joinedStatus}>
+                    <Ionicons name="checkmark-circle" size={16} color="#10B981" />
+                    <Text style={styles.joinedText}>Te has unido al trayecto</Text>
+                </View>
+            )}
+
+            {/* Modal de selección de destino */}
+            <SafeLocationModal
+                visible={showDestinationModal}
+                onClose={() => setShowDestinationModal(false)}
+                onSelectLocation={handleJoinJourney}
+                title="Selecciona tu destino para el trayecto"
+            />
+        </View>
+    );
+}
+
+const styles = StyleSheet.create({
+    container: {
+        backgroundColor: '#F3E8FF',
+        borderRadius: 12,
+        padding: 16,
+        marginVertical: 8,
+        borderLeftWidth: 4,
+        borderLeftColor: '#7A33CC',
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 8,
+    },
+    iconContainer: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: '#FFFFFF',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 8,
+    },
+    title: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: '#7A33CC',
+    },
+    description: {
+        fontSize: 14,
+        color: '#374151',
+        lineHeight: 20,
+        marginBottom: 12,
+    },
+    creatorName: {
+        fontWeight: '600',
+        color: '#7A33CC',
+    },
+    journeyName: {
+        fontWeight: '600',
+        color: '#1F2937',
+    },
+    destinationInfo: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 8,
+        gap: 4,
+    },
+    destinationText: {
+        fontSize: 13,
+        color: '#6B7280',
+        flex: 1,
+    },
+    journeyId: {
+        fontSize: 12,
+        color: '#9CA3AF',
+        marginBottom: 12,
+    },
+    actions: {
+        flexDirection: 'row',
+        gap: 8,
+    },
+    declineButton: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#EF4444',
+        gap: 6,
+    },
+    declineText: {
+        color: '#EF4444',
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    joinButton: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        backgroundColor: '#7A33CC',
+        borderRadius: 8,
+        gap: 6,
+    },
+    joinText: {
+        color: '#FFFFFF',
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    joinedStatus: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 8,
+        gap: 6,
+    },
+    joinedText: {
+        color: '#10B981',
+        fontSize: 14,
+        fontWeight: '600',
+    },
+});

@@ -9,7 +9,7 @@ export interface Participation {
     sharedLocation: boolean;
     source: Location;
     destination: Location;
-    participationState: ParticipationState;
+    state: ParticipationState;
     arrivalTime?: Date;
     // Valoración del usuario sobre el journey una vez completado
 }
@@ -21,7 +21,7 @@ export interface ParticipationDto {
     sharedLocation: boolean;
     sourceId: number;
     destinationId: number;
-    participationState: ParticipationState;
+    state: ParticipationState;
     arrivalTime?: Date;
 }
 
@@ -36,7 +36,7 @@ export const mapParticipationToDto = (participation: Participation): Participati
         sharedLocation: participation.sharedLocation,
         sourceId: participation.source.id!,
         destinationId: participation.destination.id!,
-        participationState: participation.participationState,
+        state: participation.state,
         arrivalTime: participation.arrivalTime,
     };
 }
@@ -50,7 +50,7 @@ export const mapDtoToParticipation = (dto: ParticipationDto, journey: Journey, u
         sharedLocation: dto.sharedLocation,
         source,
         destination,
-        participationState: dto.participationState,
+        state: dto.state,
         arrivalTime: dto.arrivalTime,
     };
 }

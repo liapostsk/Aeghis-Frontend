@@ -52,7 +52,7 @@ export default function JourneyOverlay({ onStartJourney }: Props) {
     const interval = setInterval(loadJourneyData, 30000); // Actualizar cada 30 segundos
     return () => clearInterval(interval);
   }, []);
-
+  
   const loadJourneyData = async () => {
     try {
       setLoading(true);
@@ -157,7 +157,7 @@ export default function JourneyOverlay({ onStartJourney }: Props) {
       </View>
 
       <Text style={styles.journeyName}>
-        {`Trayecto - ${activeJourney?.type || 'En curso'}`}
+        {`Trayecto - ${activeJourney?.journeyType || 'En curso'}`}
       </Text>
 
       <ScrollView style={styles.participantsList} showsVerticalScrollIndicator={false}>

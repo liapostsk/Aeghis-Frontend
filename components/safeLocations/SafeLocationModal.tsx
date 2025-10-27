@@ -15,23 +15,39 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { getPlaceDetails, searchPlacesByText, searchNearbyPlaces } from "@/api/locations/safeLocations/googlePlacesApi";
 import { searchLocationsByText } from "@/api/locations/safeLocations/googleGeocodingApi";
-import { SafeLocation } from "@/api/locations/locationType";
+import { SafeLocation, Location as LocationType } from "@/api/locations/locationType";
 import { useAuth } from "@clerk/clerk-expo";
 import { useTokenStore } from "@/lib/auth/tokenStore";
 import * as Location from "expo-location";
 import MapLocationPicker from "../map/MapLocationPicker";
 
+// Tipo unión que acepta tanto Location como SafeLocation
+type SelectableLocation = SafeLocation | (LocationType & { 
+  name?: string; 
+  address?: string; 
+  type?: string; 
+  distance?: string; 
+  externalId?: string; 
+});
+
 interface Props {
   visible: boolean;
   onClose: () => void;
-  onSelectLocation: (location: SafeLocation) => void;
+  onSelectLocation: (location: SelectableLocation) => void;
   title?: string; // Título opcional, por defecto será "Buscar ubicación segura"
+  acceptLocationTypes?: 'safe' | 'all'; // Nuevo prop para controlar qué tipos acepta
 }
 
-export default function SafeLocationModal({ visible, onClose, onSelectLocation, title = "Buscar ubicación segura" }: Props) {
+export default function SafeLocationModal({ 
+  visible, 
+  onClose, 
+  onSelectLocation, 
+  title = "Buscar ubicación segura",
+  acceptLocationTypes = 'safe' 
+}: Props) {
   // Estados del componente
   const [query, setQuery] = useState(""); // Busqueda de texto
-  const [results, setResults] = useState<SafeLocation[]>([]); // Resultados de búsqueda
+  const [results, setResults] = useState<SelectableLocation[]>([]); // Resultados de búsqueda que pueden ser Location o SafeLocation
   const [loading, setLoading] = useState(false); // Estado de carga
   const [currentLocation, setCurrentLocation] = useState<{ latitude: number; longitude: number } | null>(null); // Ubicación actual del usuario
   const [mapVisible, setMapVisible] = useState(false); // Estado del mapa
@@ -41,7 +57,7 @@ export default function SafeLocationModal({ visible, onClose, onSelectLocation, 
   const setToken = useTokenStore((state) => state.setToken); // Hook para guardar el token en el store
 
   // Función para ordenar ubicaciones por distancia
-  const sortLocationsByDistance = (locations: SafeLocation[]): SafeLocation[] => {
+  const sortLocationsByDistance = (locations: SelectableLocation[]): SelectableLocation[] => {
     return locations.sort((a, b) => {
       // Extraer números de distancia para comparar
       const getDistanceValue = (distanceStr?: string): number => {
@@ -54,6 +70,37 @@ export default function SafeLocationModal({ visible, onClose, onSelectLocation, 
       
       return getDistanceValue(a.distance) - getDistanceValue(b.distance);
     });
+  };
+
+  // Función helper para convertir Location a SelectableLocation
+  const locationToSelectableLocation = (location: LocationType, name?: string, address?: string): SelectableLocation => {
+    return {
+      ...location,
+      name: name || `Ubicación (${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)})`,
+      address: address || 'Coordenadas personalizadas',
+      type: 'custom',
+      distance: undefined,
+      externalId: undefined,
+    };
+  };
+
+  // Función helper para verificar si es SafeLocation
+  const isSafeLocation = (location: SelectableLocation): location is SafeLocation => {
+    return 'name' in location && 'address' in location && 'type' in location;
+  };
+
+  // Función para combinar resultados si acceptLocationTypes es 'all'
+  const combineResults = (safeLocations: SafeLocation[], basicLocations?: LocationType[]): SelectableLocation[] => {
+    const combined: SelectableLocation[] = [...safeLocations];
+    
+    if (acceptLocationTypes === 'all' && basicLocations) {
+      const convertedBasicLocations = basicLocations.map(loc => 
+        locationToSelectableLocation(loc)
+      );
+      combined.push(...convertedBasicLocations);
+    }
+    
+    return sortLocationsByDistance(combined);
   };
 
   useEffect(() => {
@@ -261,9 +308,14 @@ export default function SafeLocationModal({ visible, onClose, onSelectLocation, 
                     <Pressable
                       style={styles.item}
                       onPress={() => {
-                        if (item.externalId) handleSelect(item.externalId);
+                        if (item.externalId) {
+                          handleSelect(item.externalId);
+                        } else {
+                          // Para ubicaciones sin externalId (tipo Location), seleccionar directamente
+                          onSelectLocation(item);
+                          onClose();
+                        }
                       }}
-                      disabled={!item.externalId}
                     >
                       <View style={styles.itemIcon}>
                         <Ionicons
@@ -279,8 +331,12 @@ export default function SafeLocationModal({ visible, onClose, onSelectLocation, 
                         />
                       </View>
                       <View style={styles.itemInfo}>
-                        <Text style={styles.name}>{item.name}</Text>
-                        <Text style={styles.address}>{item.address}</Text>
+                        <Text style={styles.name}>
+                          {item.name || `Ubicación (${item.latitude.toFixed(4)}, ${item.longitude.toFixed(4)})`}
+                        </Text>
+                        <Text style={styles.address}>
+                          {item.address || 'Coordenadas personalizadas'}
+                        </Text>
                         {item.distance && (
                           <Text style={styles.distance}>{item.distance}</Text>
                         )}
