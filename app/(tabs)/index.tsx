@@ -21,7 +21,7 @@ export default function MapScreen() {
   const { clearUser } = useUserStore();
   const { signOut } = useAuth();
 
-  // ✅ Estado real conectado entre componentes
+  // Estado real conectado entre componentes
   const [selectedGroupJourney, setSelectedGroupJourney] = useState<GroupWithJourney | null>(null);
 
 
@@ -46,7 +46,7 @@ export default function MapScreen() {
   return (
     <SafeAreaView style={styles.container}>
       
-      {/* ✅ Header con funcionalidad completa */}
+      {/* Header con funcionalidad completa */}
       <MapHeader 
         activeGroupJourney={selectedGroupJourney}
         onGroupJourneySelect={setSelectedGroupJourney}
@@ -56,7 +56,7 @@ export default function MapScreen() {
       
       <EmergencyButton onPress={() => console.log('Emergency triggered')} />
       
-      {/* ✅ Overlay conectado con información real */}
+      {/* Overlay conectado con información real */}
       <JourneyOverlay 
         groupJourney={selectedGroupJourney}
         onStartJourney={handleStartJourney}

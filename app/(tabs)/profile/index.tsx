@@ -34,22 +34,22 @@ export default function ProfileScreen() {
       // 1. Actualizar estado Firebase ANTES de cerrar sesión
       try {
         await updateUserProfileOnLogout();
-        console.log('✅ Usuario marcado como offline en Firebase');
+        console.log('Usuario marcado como offline en Firebase');
       } catch (firebaseError) {
-        console.warn('⚠️ Error actualizando estado Firebase:', firebaseError);
+        console.warn('Error actualizando estado Firebase:', firebaseError);
       }
 
       // 2. Cerrar sesión de Firebase
       try {
         await unlinkFirebaseSession();
-        console.log('✅ Sesión de Firebase cerrada');
+        console.log(' Sesión de Firebase cerrada');
       } catch (firebaseError) {
-        console.warn('⚠️ Error cerrando Firebase:', firebaseError);
+        console.warn('Error cerrando Firebase:', firebaseError);
       }
 
       // 3. Cerrar sesión de Clerk
       await signOut();
-      console.log('✅ Sesión de Clerk cerrada');
+      console.log('Sesión de Clerk cerrada');
 
       // 4. Limpiar datos locales
       clearUser();
@@ -57,10 +57,10 @@ export default function ProfileScreen() {
       // 5. Redirigir
       router.replace("/(auth)");
       
-      console.log('✅ Logout completado');
+      console.log('Logout completado');
 
     } catch (error) {
-      console.error('❌ Error durante logout:', error);
+      console.error('Error durante logout:', error);
       
       // Fallback: al menos cerrar Clerk y redirigir
       try {
@@ -68,7 +68,7 @@ export default function ProfileScreen() {
         clearUser();
         router.replace("/(auth)");
       } catch (fallbackError) {
-        console.error('❌ Error en fallback:', fallbackError);
+        console.error('Error en fallback:', fallbackError);
       }
     }
   };
