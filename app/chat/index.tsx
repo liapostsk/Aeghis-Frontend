@@ -19,6 +19,8 @@ import { sendMessageFirebase, listenGroupMessagesexport, markAllMessagesAsRead} 
 import { auth } from '@/firebaseconfig';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import InviteModal from '@/components/groups/InviteModal';
+import { getCurrentJourneyForGroup } from '@/api/journeys/journeyApi';
+import { JourneyDto } from '@/api/journeys/journeyType';
 
 interface Message {
   id: string;
@@ -40,6 +42,7 @@ export default function ChatScreen() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [activeJourney, setActiveJourney] = useState<JourneyDto | null>(null);
 
   const { getToken } = useAuth();
   const setToken = useTokenStore((state) => state.setToken);
@@ -47,6 +50,85 @@ export default function ChatScreen() {
   function formatHourMin(d: Date) {
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
+
+  const renderJourneyBanner = () => {
+    console.log('Rendering journey banner, activeJourney:', activeJourney);
+    if (!activeJourney) return null;
+    
+    const isInProgress = activeJourney.state === 'IN_PROGRESS';
+    const isPending = activeJourney.state === 'PENDING';
+    
+    // Solo mostrar si está PENDING o IN_PROGRESS
+    if (!isInProgress && !isPending) return null;
+
+    const handleJoinJourney = () => {
+      const journeyInfo = {
+        journeyId: activeJourney.id,
+        journeyType: activeJourney.journeyType,
+        state: activeJourney.state,
+        groupId: activeJourney.groupId,
+        startDate: new Date(activeJourney.iniDate).toLocaleDateString()
+      };
+      
+      console.log('🚗 Usuario quiere unirse al journey:', journeyInfo);
+    };
+
+    const getJourneyDisplayInfo = () => {
+      const typeDisplayName = {
+        'INDIVIDUAL': 'Individual',
+        'COMMON_DESTINATION': 'Grupal',
+        'PERSONALIZED': 'Grupal'
+      }[activeJourney.journeyType] || 'Desconocido';
+
+      if (isInProgress) {
+        return {
+          icon: 'navigate-circle' as const,
+          title: `Trayecto ${typeDisplayName.toLowerCase()} en progreso`,
+          subtitle: 'El trayecto ha comenzado. ¡Únete ahora!',
+          color: '#10B981',
+          bgColor: '#ECFDF5',
+          buttonText: 'Unirse al trayecto'
+        };
+      } else {
+        return {
+          icon: 'time' as const,
+          title: `Trayecto ${typeDisplayName.toLowerCase()} pendiente`,
+          subtitle: 'Esperando a que más miembros se unan',
+          color: '#F59E0B',
+          bgColor: '#FFFBEB',
+          buttonText: 'Unirse al trayecto'
+        };
+      }
+    };
+
+    const displayInfo = getJourneyDisplayInfo();
+
+    return (
+      <View style={styles.journeyBannerContainer}>
+        <Pressable style={styles.journeyBannerButton} onPress={handleJoinJourney}>
+          <View style={styles.journeyBannerContent}>
+            <View style={[styles.journeyIconContainer, { backgroundColor: displayInfo.bgColor }]}>
+              <Ionicons name={displayInfo.icon} size={24} color={displayInfo.color} />
+            </View>
+            
+            <View style={styles.journeyTextContainer}>
+              <Text style={styles.journeyBannerTitle}>
+                {displayInfo.title}
+              </Text>
+              <Text style={styles.journeyBannerSubtitle}>
+                {displayInfo.subtitle}
+              </Text>
+            </View>
+            
+            <View style={styles.journeyActionContainer}>
+              <Text style={styles.joinButtonText}>{displayInfo.buttonText}</Text>
+              <Ionicons name="chevron-forward" size={18} color="#7A33CC" />
+            </View>
+          </View>
+        </Pressable>
+      </View>
+    );
+  };
 
   useEffect(() => {
     // Marcar como leídos cuando se abre el chat
@@ -95,9 +177,16 @@ export default function ChatScreen() {
           throw new Error('Invalid group id');
         }
 
-        const data = await getGroupById(id);
+        const [groupData, journeyData] = await Promise.all([
+          getGroupById(id),
+          getCurrentJourneyForGroup(id).catch(() => null) // Si no hay journey, devolver null
+        ]);
+
+        console.log('Loaded journey data:', journeyData);
+        
         if (mounted) {
-          setGroup(data);
+          setGroup(groupData);
+          setActiveJourney(journeyData);
           setError(null);
         }
       } catch (e: any) {
@@ -224,57 +313,67 @@ export default function ChatScreen() {
     </View>
   );
 
-  const renderChatScreen = (g: Group) => (
-    <View style={styles.chatContainer}>
-      {g.state === 'ACTIVO' && (
-        <View style={styles.tripStatus}>
-          <Ionicons name="location" size={20} style={styles.locationIcon} />
-          <View style={styles.tripStatusInfo}>
-            <Text style={styles.tripStatusText}>Trip active • Share location active</Text>
-            <Pressable onPress={() => { /* Navegar a mapa */ }}>
-              <Text style={styles.showLocationsText}>Show locations</Text>
-            </Pressable>
-          </View>
-        </View>
-      )}
+  const renderChatScreen = (g: Group) => {
+    // Calcular si necesitamos padding extra para el banner del journey
+    const hasActiveJourney = activeJourney && (activeJourney.state === 'PENDING' || activeJourney.state === 'IN_PROGRESS');
+    const journeyBannerHeight = hasActiveJourney ? 92 : 0; // Altura aproximada del banner
 
-      <FlatList
-        data={messages}
-        keyExtractor={(item) => item.id}
-        renderItem={renderMessage}
-        style={styles.messagesList}
-        contentContainerStyle={[
-          styles.messagesContent,
-          messages.length === 0 && styles.emptyMessagesContent,
-        ]}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={() => (
-          <View style={styles.emptyContainer}>
-            <Ionicons name="chatbubbles-outline" size={48} color="#ccc" />
-            <Text style={styles.emptyText}>No hay mensajes aún</Text>
-            <Text style={styles.emptySubtext}>¡Envía el primer mensaje!</Text>
+    return (
+      <View style={styles.chatContainer}>
+        {/* Banner del Journey - Posición fija arriba */}
+        {renderJourneyBanner()}
+
+        {g.state === 'ACTIVO' && (
+          <View style={[styles.tripStatus, hasActiveJourney && { marginTop: journeyBannerHeight + 16 }]}>
+            <Ionicons name="location" size={20} style={styles.locationIcon} />
+            <View style={styles.tripStatusInfo}>
+              <Text style={styles.tripStatusText}>Trip active • Share location active</Text>
+              <Pressable onPress={() => { console.log('Mostrar ubicaciones del viaje'); }}>
+                <Text style={styles.showLocationsText}>Show locations</Text>
+              </Pressable>
+            </View>
           </View>
         )}
-      />
 
-      <View style={styles.inputContainer}>
-        <View style={styles.inputWrapper}>
-          <TextInput
-            style={styles.textInput}
-            value={inputText}
-            onChangeText={setInputText}
-            placeholder="Escribe un mensaje..."
-            multiline
-          />
-          {inputText.trim().length > 0 && (
-            <Pressable style={styles.sendButton} onPress={sendMessage}>
-              <Ionicons name="send" size={17} color="#7A33CC" />
-            </Pressable>
+        <FlatList
+          data={messages}
+          keyExtractor={(item) => item.id}
+          renderItem={renderMessage}
+          style={styles.messagesList}
+          contentContainerStyle={[
+            styles.messagesContent,
+            messages.length === 0 && styles.emptyMessagesContent,
+            hasActiveJourney && { paddingTop: journeyBannerHeight + 16 }, // Espacio para el banner fijo
+          ]}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={() => (
+            <View style={styles.emptyContainer}>
+              <Ionicons name="chatbubbles-outline" size={48} color="#ccc" />
+              <Text style={styles.emptyText}>No hay mensajes aún</Text>
+              <Text style={styles.emptySubtext}>¡Envía el primer mensaje!</Text>
+            </View>
           )}
+        />
+
+        <View style={styles.inputContainer}>
+          <View style={styles.inputWrapper}>
+            <TextInput
+              style={styles.textInput}
+              value={inputText}
+              onChangeText={setInputText}
+              placeholder="Escribe un mensaje..."
+              multiline
+            />
+            {inputText.trim().length > 0 && (
+              <Pressable style={styles.sendButton} onPress={sendMessage}>
+                <Ionicons name="send" size={17} color="#7A33CC" />
+              </Pressable>
+            )}
+          </View>
         </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -438,4 +537,71 @@ const styles = StyleSheet.create({
   checkMarkContainer: { flexDirection: 'row', alignItems: 'center', marginLeft: 4 },
   doubleCheck: { color: '#7A33CC' },
   secondCheck: { marginLeft: -8 }, // Superpone el segundo check
+
+  // Journey Banner - Fijo arriba del chat
+  journeyBannerContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1000,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  journeyBannerButton: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#7A33CC',
+    overflow: 'hidden',
+  },
+  journeyBannerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+  },
+  journeyIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  journeyTextContainer: {
+    flex: 1,
+  },
+  journeyBannerTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 2,
+  },
+  journeyBannerSubtitle: {
+    fontSize: 13,
+    color: '#6B7280',
+    lineHeight: 18,
+  },
+  journeyActionContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: '#7A33CC',
+    borderRadius: 8,
+  },
+  joinButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginRight: 4,
+  },
 });

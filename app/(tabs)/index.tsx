@@ -1,4 +1,4 @@
-// File: app/(tabs)/debug.tsx
+// File: app/(tabs)/index.tsx
 import { useUserStore } from '@/lib/storage/useUserStorage';
 import { useAuth } from '@clerk/clerk-expo';
 import { router } from 'expo-router';
@@ -8,23 +8,26 @@ import MapHeader from '@/components/map/MapHeader';
 import PeopleOnMap from '@/components/map/PeopleOnMap';
 import JourneyOverlay from '@/components/map/JourneyOverlay';
 import EmergencyButton from '@/components/map/EmergencyButton';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { Group } from '@/api/group/groupType';
+import { JourneyDto } from '@/api/journeys/journeyType';
+
+interface GroupWithJourney {
+  group: Group;
+  activeJourney: JourneyDto;
+}
 
 export default function MapScreen() {
-  const { user, clearUser } = useUserStore();
+  const { clearUser } = useUserStore();
   const { signOut } = useAuth();
 
-  const [activeGroup, setActiveGroup] = useState<{ name: string } | null>(null);
+  // ✅ Estado real conectado entre componentes
+  const [selectedGroupJourney, setSelectedGroupJourney] = useState<GroupWithJourney | null>(null);
 
-  useEffect(() => {
-    // Simulación de grupo activo
-    setActiveGroup({ name: 'Return Safe Buddies' });
-  }, []);
 
-  const handleLogout = async () => {
-    await signOut();
-    clearUser();
-    router.replace("/(auth)");
+  const handleStartJourney = () => {
+    console.log('Navegar a crear journey');
+    router.push('/chat/journey');
   };
 
   /*
@@ -42,15 +45,22 @@ export default function MapScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-       <Pressable  onPress={handleLogout}>
-        <Text>Cerrar sesión</Text>
-      </Pressable>
-      <MapHeader activeGroup={activeGroup} />
+      
+      {/* ✅ Header con funcionalidad completa */}
+      <MapHeader 
+        activeGroupJourney={selectedGroupJourney}
+        onGroupJourneySelect={setSelectedGroupJourney}
+      />
+      
       <PeopleOnMap />
+      
       <EmergencyButton onPress={() => console.log('Emergency triggered')} />
-      <JourneyOverlay onStartJourney={function (): void {
-        throw new Error('Function not implemented.');
-      } } />
+      
+      {/* ✅ Overlay conectado con información real */}
+      <JourneyOverlay 
+        groupJourney={selectedGroupJourney}
+        onStartJourney={handleStartJourney}
+      />
     </SafeAreaView>
   );
 }

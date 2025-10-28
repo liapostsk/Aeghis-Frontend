@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, FlatList, RefreshControl, Pressable } from 'rea
 import { router } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
-import { getUserGroups } from '@/api/group/groupApi';
+import { getUserGroupsByType } from '@/api/group/groupApi';
 import { getGroupTilesInfo, updateGroupFirebase, markChatSeen } from '@/api/firebase/chat/chatService';
 import { GroupTileInfo } from '@/api/firebase/types';
 import { auth } from '@/firebaseconfig';
@@ -54,7 +54,7 @@ export default function GroupsList({ groupType, emptyTitle, emptySubtitle, noteT
     try {
       const token = await getToken();
       setToken(token);
-      const data = await getUserGroups(groupType);
+      const data = await getUserGroupsByType(groupType);
       setGroups(data ?? []);
       console.log(`🧪 Grupos ${groupType} cargados:`, data);
       

@@ -6,8 +6,13 @@ export const createGroup = async (groupDto: Partial<Group>): Promise<number> => 
   return response.data;
 };
 
-export const getUserGroups = async (type?: String): Promise<Group[]> => {
+export const getUserGroupsByType = async (type?: String): Promise<Group[]> => {
   const response = await api.get(`/group/${type}/my-groups`);
+  return response.data;
+};
+
+export const getUserGroups = async (): Promise<Group[]> => {
+  const response = await api.get(`/group/my-groups`);
   return response.data;
 };
 

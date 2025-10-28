@@ -144,6 +144,30 @@ export default function journey() {
         }
     };
 
+    // Función para enviar mensaje de solicitud de trayecto al chat
+    const sendJourneyRequestMessage = async (journeyId: number, journeyName: string, targetParticipants: number[]) => {
+        try {
+            if (!group?.id) return;
+
+            const targetNames = members
+                .filter(m => targetParticipants.includes(m.id))
+                .map(m => m.name)
+                .join(', ');
+
+            const destinationText = selectedDestination ? selectedDestination.name : 'Por definir';
+
+            const message = `${currentUser?.name || 'Usuario'} ha creado un nuevo trayecto grupal: "${journeyName}"
+📍 Destino: ${destinationText}
+
+ID del trayecto: ${journeyId}`;
+
+            await sendMessageFirebase(group.id.toString(), message);
+        } catch (error) {
+            console.error('Error sending journey request message:', error);
+            throw error; // Re-throw para que el caller pueda manejar el error
+        }
+    };
+
     // Manejadores de selección de destino
     const handleSelectDestination = (location: SafeLocation | Location) => {
         // Convertir Location a SafeLocation si es necesario
@@ -232,7 +256,7 @@ export default function journey() {
         try {
             setCreating(true);
 
-            // 1. ✅ ESTRATEGIA SECUENCIAL: Crear Journey primero (sin participantsIds)
+            // 1. ESTRATEGIA SECUENCIAL: Crear Journey primero (sin participantsIds)
             setCreationStep('Creando trayecto...');
             const journeyData: Partial<JourneyDto> = {
                 groupId: Number(groupId),
@@ -240,7 +264,7 @@ export default function journey() {
                       journeyType === 'common_destination' ? JourneyTypes.COMMON_DESTINATION : JourneyTypes.PERSONALIZED,
                 state: journeyType === 'individual' ? JourneyStates.IN_PROGRESS : JourneyStates.PENDING,
                 iniDate: new Date().toISOString(),
-                participantsIds: [] // ✅ Empieza vacío, se llena cuando se unen miembros
+                participantsIds: [] // Empieza vacío, se llena cuando se unen miembros
             };
 
             console.log('📝 Creando journey:', journeyData);
@@ -248,9 +272,9 @@ export default function journey() {
             setToken(token);
 
             const journeyId = await createJourney(journeyData as JourneyDto);
-            console.log('✅ Journey creado con ID:', journeyId);
+            console.log('Journey creado con ID:', journeyId);
 
-            // 2. ✅ Añadir automáticamente al CREADOR como participante
+            // 2. Añadir automáticamente al CREADOR como participante
             setCreationStep('Añadiéndote como participante...');
             
             // Obtener ubicación actual del creador
@@ -278,7 +302,7 @@ export default function journey() {
 
             // Crear participación del creador
             const creatorParticipationData: Partial<ParticipationDto> = {
-                journeyId: journeyId, // ✅ Ahora ya tenemos el journeyId
+                journeyId: journeyId, // Ahora ya tenemos el journeyId
                 userId: currentUser?.id || 0,
                 sharedLocation: true, // El creador siempre comparte ubicación
                 state: 'ACCEPTED', // El creador siempre está aceptado
@@ -287,20 +311,20 @@ export default function journey() {
             };
             
             const creatorParticipationId = await createParticipation(creatorParticipationData as ParticipationDto);
-            console.log('✅ Creador añadido como participante con ID:', creatorParticipationId);
+            console.log('Creador añadido como participante con ID:', creatorParticipationId);
 
-            // 3. ✅ Actualizar journey con ID de participación del creador
+            // 3. Actualizar journey con ID de participación del creador
             setCreationStep('Actualizando trayecto...');
             const updatedJourneyData = {
                 ...journeyData,
                 id: journeyId,
-                participantsIds: [creatorParticipationId] // ✅ Almacenar ID de participación del creador
+                participantsIds: [creatorParticipationId] // Almacenar ID de participación del creador
             };
             
             await updateJourney(updatedJourneyData as JourneyDto);
-            console.log('✅ Journey actualizado con participación del creador');
+            console.log('Journey actualizado con participación del creador');
 
-            // 4. ✅ Manejar según tipo de trayecto
+            // 4. Manejar según tipo de trayecto
             if (journeyType === 'individual') {
                 // Para individual: ya está listo, solo participa el creador
                 Alert.alert(
@@ -315,8 +339,7 @@ export default function journey() {
                 try {
                     // Mensaje especial para solicitudes de journey con journeyId
                     const targetParticipants = selectedParticipants.filter(id => id !== currentUser?.id);
-                    
-                    //await sendJourneyRequestMessage(journeyId, journeyName, targetParticipants);
+                    await sendJourneyRequestMessage(journeyId, journeyName, targetParticipants);
 
                     const participantNames = members
                         .filter(m => targetParticipants.includes(m.id))
