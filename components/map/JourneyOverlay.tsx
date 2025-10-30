@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import BottomSheet, { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
 
 // Importar APIs y tipos
 import { JourneyDto, JourneyStates } from '@/api/journeys/journeyType';
-import { ParticipationDto } from '@/api/participations/participationType';
 import { UserDto } from '@/api/types';
 import { Group } from '@/api/group/groupType';
-import { getCurrentJourneyForGroup } from '@/api/journeys/journeyApi';
-import { getCurrentUser } from '@/api/user/userApi';
-import { getUserGroupsByType } from '@/api/group/groupApi';
+
+// Importar componentes y hooks de batería
+import BatteryDisplay, { ParticipantsList } from '@/components/common/BatteryDisplay';
 
 // Importar modales existentes
 import CreateGroupModal from '@/components/groups/CreateGroupModal';
@@ -27,17 +27,10 @@ interface Props {
   onStartJourney: () => void;
 }
 
-interface ParticipantStatus {
-  user: UserDto;
-  batteryLevel: number;
-  isConnected: boolean;
-  lastSeen: Date;
-}
-
 export default function JourneyOverlay({ groupJourney, onStartJourney }: Props) {
   // Estados principales
   const [activeJourney, setActiveJourney] = useState<JourneyDto | null>(null);
-  const [participantsStatus, setParticipantsStatus] = useState<ParticipantStatus[]>([]);
+  
   const [userGroups, setUserGroups] = useState<Group[]>([]);
   const [currentUser, setCurrentUser] = useState<UserDto | null>(null);
   const [loading, setLoading] = useState(false); // Cambiar a false ya que no tenemos carga inicial activa
@@ -49,78 +42,37 @@ export default function JourneyOverlay({ groupJourney, onStartJourney }: Props) 
   const [showJourneyOptions, setShowJourneyOptions] = useState(false);
 
   // Hooks externos
-    const { getToken } = useAuth(); // Hook para obtener el token de autenticación
-    const setToken = useTokenStore((state) => state.setToken); // Hook para guardar el token en el store
+  const { getToken } = useAuth(); // Hook para obtener el token de autenticación
+  const setToken = useTokenStore((state) => state.setToken); // Hook para guardar el token en el store
 
-  // Cargar datos iniciales
-  /*
-  useEffect(() => {
-    loadJourneyData();
-    const interval = setInterval(loadJourneyData, 30000); // Actualizar cada 30 segundos
-    return () => clearInterval(interval);
+  // Referencias y configuración del Bottom Sheet
+  const bottomSheetRef = useRef<BottomSheet>(null);
+
+  // Snap points: collapsed (pequeño tab), half (medio), expanded (completo)
+  const snapPoints = useMemo(() => {
+    if (groupJourney) {
+      // Para journey activo: tab pequeño, medio, completo
+      return ['12%', '60%'];
+    } else {
+      // Para opciones de crear/unirse: solo pequeño y completo
+      return ['12%', '25%', '50%'];
+    }
+  }, [groupJourney]);
+
+  // Callbacks para manejar cambios del sheet
+  const handleSheetChanges = useCallback((index: number) => {
+    console.log('Bottom sheet cambió a índice:', index);
   }, []);
-  */
 
-  /*
-  const loadJourneyData = async () => {
-    try {
-      setLoading(true);
+  // Función para expandir programáticamente
+  const expandSheet = useCallback(() => {
+    bottomSheetRef.current?.expand();
+  }, []);
 
-      const token = await getToken();
-      setToken(token);
-      
-      // Obtener usuario actual
-      const user = await getCurrentUser();
-      setCurrentUser(user);
-
-      // Buscar journeys activos
-      const activeJourneys = await getActiveJourneys();
-      const userActiveJourney = activeJourneys.find(journey => 
-        journey.participantsIds?.includes(user.id) && 
-        journey.state === JourneyStates.IN_PROGRESS
-      );
-
-      if (userActiveJourney) {
-        setActiveJourney(userActiveJourney);
-        await loadParticipantsStatus(userActiveJourney);
-      } else {
-        setActiveJourney(null);
-        // Cargar grupos del usuario para mostrar opciones
-        const groups = await getUserGroups();
-        setUserGroups(groups);
-      }
-    } catch (error) {
-      console.error('Error loading journey data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-  */
-
-  const loadParticipantsStatus = async (journey: JourneyDto) => {
-    try {
-      // TODO: Implementar API para obtener estado de participantes
-      // Por ahora simulamos algunos datos
-      const mockStatus: ParticipantStatus[] = [
-        {
-          user: { id: 1, name: "Usuario 1", email: "user1@test.com", phone: "123456789", image: "", verify: true, dateOfBirth: new Date(), acceptedPrivacyPolicy: true, safeLocations: [], role: "USER" },
-          batteryLevel: 85,
-          isConnected: true,
-          lastSeen: new Date(Date.now() - 2 * 60 * 1000) // 2 minutos atrás
-        },
-        {
-          user: { id: 2, name: "Usuario 2", email: "user2@test.com", phone: "987654321", image: "", verify: true, dateOfBirth: new Date(), acceptedPrivacyPolicy: true, safeLocations: [], role: "USER" },
-          batteryLevel: 42,
-          isConnected: false,
-          lastSeen: new Date(Date.now() - 10 * 60 * 1000) // 10 minutos atrás
-        }
-      ];
-      
-      setParticipantsStatus(mockStatus);
-    } catch (error) {
-      console.error('Error loading participants status:', error);
-    }
-  };
+  // Función para colapsar a tab
+  const collapseToTab = useCallback(() => {
+    bottomSheetRef.current?.snapToIndex(0);
+  }, []);
 
   // Funciones para manejar acciones
   const handleStartJourneyClick = () => {
@@ -157,36 +109,110 @@ export default function JourneyOverlay({ groupJourney, onStartJourney }: Props) 
     onStartJourney();
   };
 
-  // Renderizar información del journey activo desde MapHeader
-  const renderActiveJourneyFromGroup = (selectedGroupJourney: GroupWithJourney) => {
-    // Crear datos mockeados de participantes basados en los miembros del grupo
-    const mockParticipants: ParticipantStatus[] = selectedGroupJourney.group.membersIds.map((memberId, index) => ({
-      user: { 
-        id: memberId, 
-        name: `Usuario ${index + 1}`, 
-        email: `user${index + 1}@test.com`, 
-        phone: `12345678${index}`, 
-        image: "", 
-        verify: true, 
-        dateOfBirth: new Date(), 
-        acceptedPrivacyPolicy: true, 
-        safeLocations: [], 
-        role: "USER" 
-      },
-      batteryLevel: Math.floor(Math.random() * 80) + 20, // Entre 20% y 100%
-      isConnected: Math.random() > 0.3, // 70% probabilidad de estar conectado
-      lastSeen: new Date(Date.now() - Math.random() * 15 * 60 * 1000) // Hasta 15 minutos atrás
-    }));
+  // Renderizar el tab colapsado (estado mínimo)
+  const renderCollapsedTab = () => {
+    if (groupJourney) {
+      return (
+        <BottomSheetView style={styles.collapsedContainer}>
+          <Pressable style={styles.collapsedContent} onPress={expandSheet}>
+            
+            <View style={styles.collapsedHeader}>
+              <View style={styles.collapsedIconContainer}>
+                <Ionicons name="navigate-circle" size={20} color="#4CAF50" />
+                <View style={[
+                  styles.statusDot,
+                  { backgroundColor: groupJourney.activeJourney.state === 'IN_PROGRESS' ? '#4CAF50' : '#FF9800' }
+                ]} />
+              </View>
+              
+              <View style={styles.collapsedTextContainer}>
+                <Text style={styles.collapsedTitle}>
+                  {groupJourney.group.name}
+                </Text>
+                <Text style={styles.collapsedSubtitle}>
+                  {groupJourney.activeJourney.state === 'IN_PROGRESS' ? 'En progreso' : 'Pendiente'} • 
+                  {groupJourney.group.membersIds.length} participantes
+                </Text>
+              </View>
+              
+              <Ionicons name="chevron-up" size={20} color="#6B7280" />
+            </View>
+          </Pressable>
+        </BottomSheetView>
+      );
+    } else {
+      return (
+        <BottomSheetView style={styles.collapsedContainer}>
+          <Pressable style={styles.collapsedContent} onPress={expandSheet}>
+            
+            <View style={styles.collapsedHeader}>
+              <View style={styles.collapsedIconContainer}>
+                <Ionicons name="location" size={20} color="#7A33CC" />
+              </View>
+              
+              <View style={styles.collapsedTextContainer}>
+                <Text style={styles.collapsedTitle}>Iniciar Trayecto</Text>
+                <Text style={styles.collapsedSubtitle}>Toca para ver opciones</Text>
+              </View>
+              
+              <Ionicons name="chevron-up" size={20} color="#6B7280" />
+            </View>
+          </Pressable>
+        </BottomSheetView>
+      );
+    }
+  };
+
+  // Renderizar contenido expandido
+  const renderExpandedContent = () => {
+    if (groupJourney) {
+      return renderActiveJourneyFromGroupForSheet(groupJourney);
+    } else if (showJourneyOptions) {
+      return renderGroupOptionsForSheet();
+    } else {
+      return renderSimpleInterfaceForSheet();
+    }
+  };
+
+  // Versión adaptada para bottom sheet del journey activo
+  const renderActiveJourneyFromGroupForSheet = (selectedGroupJourney: GroupWithJourney) => {
 
     return (
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Ionicons name="navigate-circle" size={24} color="#4CAF50" />
-          <Text style={styles.title}>Trayecto Activo</Text>
-          <View style={[
-            styles.statusDot, 
-            { backgroundColor: selectedGroupJourney.activeJourney.state === 'IN_PROGRESS' ? '#4CAF50' : '#FF9800' }
-          ]} />
+      <BottomSheetView style={styles.sheetContent}>
+        
+        <View style={styles.sheetHeader}>
+          <View style={styles.headerLeft}>
+            <Ionicons name="navigate-circle" size={24} color="#4CAF50" />
+            <Text style={styles.sheetTitle}>Trayecto Activo</Text>
+          </View>
+          <View style={styles.headerRight}>
+            {/* Batería del usuario actual usando BatteryDisplay */}
+            <View style={styles.currentUserBattery}>
+              <BatteryDisplay 
+                userId="current-user" // TODO: Obtener el ID del usuario actual
+                showControls={false}
+                autoRefresh={true}
+                refreshInterval={60000} // 1 minuto
+              />
+            </View>
+            <Pressable 
+              onPress={() => {
+                // ParticipantsList maneja su propio refresh automáticamente
+                console.log('Refresh manual solicitado - ParticipantsList lo maneja automáticamente');
+              }} 
+              style={styles.refreshButton}
+              disabled={loading}
+            >
+              <Ionicons 
+                name="refresh" 
+                size={18} 
+                color={loading ? '#9CA3AF' : '#6B7280'} 
+              />
+            </Pressable>
+            <Pressable onPress={collapseToTab} style={styles.collapseButton}>
+              <Ionicons name="chevron-down" size={20} color="#6B7280" />
+            </Pressable>
+          </View>
         </View>
 
         <Text style={styles.journeyName}>
@@ -206,178 +232,68 @@ export default function JourneyOverlay({ groupJourney, onStartJourney }: Props) 
           )}
         </View>
 
-        {/* Mostrar información de participantes mockeada */}
-        <ScrollView style={styles.participantsList} showsVerticalScrollIndicator={false}>
-          {mockParticipants.map((participant) => (
-            <View key={participant.user.id} style={styles.participantCard}>
-              <View style={styles.participantInfo}>
-                <View style={styles.participantAvatar}>
-                  <Text style={styles.participantAvatarText}>
-                    {participant.user.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                  </Text>
-                </View>
-                <View style={styles.participantDetails}>
-                  <Text style={styles.participantName}>{participant.user.name}</Text>
-                  <Text style={styles.participantLastSeen}>
-                    Visto hace {Math.floor((Date.now() - participant.lastSeen.getTime()) / 60000)} min
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.participantStatus}>
-                {/* Nivel de batería */}
-                <View style={styles.statusItem}>
-                  <Ionicons 
-                    name="battery-half" 
-                    size={16} 
-                    color={participant.batteryLevel > 20 ? '#4CAF50' : '#FF5722'} 
-                  />
-                  <Text style={[
-                    styles.statusText,
-                    { color: participant.batteryLevel > 20 ? '#4CAF50' : '#FF5722' }
-                  ]}>
-                    {participant.batteryLevel}%
-                  </Text>
-                </View>
-
-                {/* Conexión a internet */}
-                <View style={styles.statusItem}>
-                  <Ionicons 
-                    name={participant.isConnected ? "wifi" : "wifi-outline"} 
-                    size={16} 
-                    color={participant.isConnected ? '#4CAF50' : '#FF5722'} 
-                  />
-                  <Text style={[
-                    styles.statusText,
-                    { color: participant.isConnected ? '#4CAF50' : '#FF5722' }
-                  ]}>
-                    {participant.isConnected ? 'Online' : 'Offline'}
-                  </Text>
-                </View>
-              </View>
-            </View>
-          ))}
-        </ScrollView>
+        {/* Lista de participantes usando el componente dedicado */}
+        <BottomSheetScrollView 
+          style={styles.participantsList} 
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.participantsListContent}
+        >
+          <ParticipantsList 
+            participants={selectedGroupJourney.group.membersIds.map((memberId, index) => ({
+              id: memberId,
+              name: `Usuario ${index + 1}`, // TODO: Obtener nombres reales de la API
+              email: `user${index + 1}@example.com`,
+              phone: `12345678${index}`
+            }))}
+            autoRefresh={true}
+            refreshInterval={30000}
+          />
+        </BottomSheetScrollView>
 
         {selectedGroupJourney.activeJourney.state === 'IN_PROGRESS' && (
-          <Pressable style={styles.endButton} onPress={() => {
-            Alert.alert(
-              'Finalizar trayecto',
-              '¿Estás seguro de que quieres finalizar el trayecto?',
-              [
-                { text: 'Cancelar', style: 'cancel' },
-                { text: 'Finalizar', onPress: () => console.log('Finalizar trayecto') }
-              ]
-            );
-          }}>
-            <Ionicons name="stop-circle" size={20} color="#FFFFFF" />
-            <Text style={styles.endButtonText}>Finalizar Trayecto</Text>
-          </Pressable>
+          <View style={styles.sheetFooter}>
+            <Pressable style={styles.endButton} onPress={() => {
+              Alert.alert(
+                'Finalizar trayecto',
+                '¿Estás seguro de que quieres finalizar el trayecto?',
+                [
+                  { text: 'Cancelar', style: 'cancel' },
+                  { text: 'Finalizar', onPress: () => console.log('Finalizar trayecto') }
+                ]
+              );
+            }}>
+              <Ionicons name="stop-circle" size={20} color="#FFFFFF" />
+              <Text style={styles.endButtonText}>Finalizar Trayecto</Text>
+            </Pressable>
+          </View>
         )}
-      </View>
+      </BottomSheetView>
     );
   };
 
-  // Renderizar información del journey activo
-  const renderActiveJourney = () => (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Ionicons name="navigate-circle" size={24} color="#4CAF50" />
-        <Text style={styles.title}>Trayecto Activo</Text>
-        <View style={styles.statusDot} />
-      </View>
-
-      <Text style={styles.journeyName}>
-        {`Trayecto - ${activeJourney?.journeyType || 'En curso'}`}
-      </Text>
-
-      <ScrollView style={styles.participantsList} showsVerticalScrollIndicator={false}>
-        {participantsStatus.map((participant) => (
-          <View key={participant.user.id} style={styles.participantCard}>
-            <View style={styles.participantInfo}>
-              <View style={styles.participantAvatar}>
-                <Text style={styles.participantAvatarText}>
-                  {participant.user.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                </Text>
-              </View>
-              <View style={styles.participantDetails}>
-                <Text style={styles.participantName}>{participant.user.name}</Text>
-                <Text style={styles.participantLastSeen}>
-                  Visto hace {Math.floor((Date.now() - participant.lastSeen.getTime()) / 60000)} min
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.participantStatus}>
-              {/* Nivel de batería */}
-              <View style={styles.statusItem}>
-                <Ionicons 
-                  name="battery-half" 
-                  size={16} 
-                  color={participant.batteryLevel > 20 ? '#4CAF50' : '#FF5722'} 
-                />
-                <Text style={[
-                  styles.statusText,
-                  { color: participant.batteryLevel > 20 ? '#4CAF50' : '#FF5722' }
-                ]}>
-                  {participant.batteryLevel}%
-                </Text>
-              </View>
-
-              {/* Conexión a internet */}
-              <View style={styles.statusItem}>
-                <Ionicons 
-                  name={participant.isConnected ? "wifi" : "wifi-outline"} 
-                  size={16} 
-                  color={participant.isConnected ? '#4CAF50' : '#FF5722'} 
-                />
-                <Text style={[
-                  styles.statusText,
-                  { color: participant.isConnected ? '#4CAF50' : '#FF5722' }
-                ]}>
-                  {participant.isConnected ? 'Online' : 'Offline'}
-                </Text>
-              </View>
-            </View>
-          </View>
-        ))}
-      </ScrollView>
-
-      <Pressable style={styles.endButton} onPress={() => {
-        Alert.alert(
-          'Finalizar trayecto',
-          '¿Estás seguro de que quieres finalizar el trayecto?',
-          [
-            { text: 'Cancelar', style: 'cancel' },
-            { text: 'Finalizar', onPress: () => setActiveJourney(null) }
-          ]
-        );
-      }}>
-        <Ionicons name="stop-circle" size={20} color="#FFFFFF" />
-        <Text style={styles.endButtonText}>Finalizar Trayecto</Text>
-      </Pressable>
-    </View>
-  );
-
-  // Renderizar interfaz simple inicial
-  const renderSimpleInterface = () => (
-    <View style={styles.simpleContainer}>
+  // Versión adaptada para bottom sheet de opciones simples
+  const renderSimpleInterfaceForSheet = () => (
+    <BottomSheetView style={styles.sheetContent}>
+      
       <Text style={styles.simpleText}>
         You're currently not on a trip. Activate one if you'd like someone to keep an eye on you 😊
       </Text>
-      <Pressable style={styles.simpleButton} onPress={handleStartJourneyClick}>
+      
+      <Pressable style={styles.simpleButton} onPress={() => setShowJourneyOptions(true)}>
         <Text style={styles.simpleButtonText}>Start a journey</Text>
       </Pressable>
-    </View>
+    </BottomSheetView>
   );
 
-  // Renderizar opciones para crear/unirse a grupos
-  const renderGroupOptions = () => (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Ionicons name="location" size={24} color="#7A33CC" />
-        <Text style={styles.title}>Iniciar Trayecto</Text>
-        <Pressable onPress={() => setShowJourneyOptions(false)} style={styles.closeButton}>
+  // Versión adaptada para bottom sheet de opciones de grupo
+  const renderGroupOptionsForSheet = () => (
+    <BottomSheetView style={styles.sheetContent}>
+      <View style={styles.sheetHeader}>
+        <View style={styles.headerLeft}>
+          <Ionicons name="location" size={24} color="#7A33CC" />
+          <Text style={styles.sheetTitle}>Iniciar Trayecto</Text>
+        </View>
+        <Pressable onPress={() => setShowJourneyOptions(false)} style={styles.collapseButton}>
           <Ionicons name="close" size={20} color="#6B7280" />
         </Pressable>
       </View>
@@ -386,7 +302,10 @@ export default function JourneyOverlay({ groupJourney, onStartJourney }: Props) 
         No tienes ningún trayecto activo. ¿Qué te gustaría hacer?
       </Text>
 
-      <View style={styles.optionsContainer}>
+      <BottomSheetScrollView 
+        contentContainerStyle={styles.optionsContainer}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Crear nuevo grupo */}
         <Pressable style={styles.optionCard} onPress={handleCreateGroup}>
           <View style={styles.optionIcon}>
@@ -401,7 +320,6 @@ export default function JourneyOverlay({ groupJourney, onStartJourney }: Props) 
           <Ionicons name="chevron-forward" size={20} color="#ccc" />
         </Pressable>
 
-        {/* Unirse a grupo */}
         <Pressable style={styles.optionCard} onPress={handleJoinGroup}>
           <View style={styles.optionIcon}>
             <Ionicons name="person-add" size={32} color="#FF9800" />
@@ -415,7 +333,6 @@ export default function JourneyOverlay({ groupJourney, onStartJourney }: Props) 
           <Ionicons name="chevron-forward" size={20} color="#ccc" />
         </Pressable>
 
-        {/* Seleccionar grupo existente */}
         {userGroups.length > 0 && (
           <Pressable style={styles.optionCard} onPress={handleSelectExistingGroup}>
             <View style={styles.optionIcon}>
@@ -430,7 +347,7 @@ export default function JourneyOverlay({ groupJourney, onStartJourney }: Props) 
             <Ionicons name="chevron-forward" size={20} color="#ccc" />
           </Pressable>
         )}
-      </View>
+      </BottomSheetScrollView>
 
       {/* Modales */}
       <CreateGroupModal
@@ -443,70 +360,37 @@ export default function JourneyOverlay({ groupJourney, onStartJourney }: Props) 
         visible={showJoinGroupModal}
         onClose={() => setShowJoinGroupModal(false)}
       />
-
-      {/* Modal de selección de grupo */}
-      {showGroupSelection && (
-        <View style={styles.modalOverlay}>
-          <View style={styles.modal}>
-            <Text style={styles.modalTitle}>Seleccionar Grupo</Text>
-            <ScrollView style={styles.groupsList}>
-              {userGroups.map((group) => (
-                <Pressable 
-                  key={group.id} 
-                  style={styles.groupCard}
-                  onPress={() => handleGroupSelected(group)}
-                >
-                  <View style={styles.groupIcon}>
-                    <Ionicons name="people" size={20} color="#7A33CC" />
-                  </View>
-                  <View style={styles.groupInfo}>
-                    <Text style={styles.groupName}>{group.name}</Text>
-                    <Text style={styles.groupMembers}>
-                      {group.membersIds.length} miembros
-                    </Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={16} color="#ccc" />
-                </Pressable>
-              ))}
-            </ScrollView>
-            <Pressable 
-              style={styles.modalCloseButton}
-              onPress={() => setShowGroupSelection(false)}
-            >
-              <Text style={styles.modalCloseText}>Cancelar</Text>
-            </Pressable>
-          </View>
-        </View>
-      )}
-    </View>
+    </BottomSheetView>
   );
 
   if (loading) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.loadingText}>Cargando...</Text>
-      </View>
+      <BottomSheet
+        ref={bottomSheetRef}
+        index={0}
+        snapPoints={['20%']}
+        onChange={handleSheetChanges}
+      >
+        <BottomSheetView style={styles.sheetContent}>
+          <Text style={styles.loadingText}>Cargando...</Text>
+        </BottomSheetView>
+      </BottomSheet>
     );
   }
 
-  // Si hay grupo con journey seleccionado desde el MapHeader, usar esa información
-  if (groupJourney) {
-    return renderActiveJourneyFromGroup(groupJourney);
-  }
-
-  // Si hay journey activo local, mostrar información del journey
-  if (activeJourney) {
-    return renderActiveJourney();
-  }
-
-  // Si NO hay grupo seleccionado desde MapHeader, mostrar opciones para crear/unirse a grupos
-  // Si no hay journey activo y no se han expandido las opciones, mostrar interfaz simple
-  if (!showJourneyOptions) {
-    return renderSimpleInterface();
-  }
-
-  // Si se han expandido las opciones, mostrar opciones de grupo (CreateGroupModal, JoinGroupModal)
-  return renderGroupOptions();
+  return (
+    <BottomSheet
+      ref={bottomSheetRef}
+      index={0} // Empezar colapsado
+      snapPoints={snapPoints}
+      onChange={handleSheetChanges}
+      enablePanDownToClose={false} // No permitir cerrar completamente
+      handleIndicatorStyle={styles.handleIndicator}
+      backgroundStyle={styles.bottomSheetBackground}
+    >
+      {renderExpandedContent()}
+    </BottomSheet>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -540,9 +424,6 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     flex: 1,
   },
-  closeButton: {
-    padding: 4,
-  },
   subtitle: {
     fontSize: 14,
     color: '#6B7280',
@@ -569,61 +450,6 @@ const styles = StyleSheet.create({
     maxHeight: 200,
     marginBottom: 16,
   },
-  participantCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 12,
-    backgroundColor: '#F9FAFB',
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  participantInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  participantAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#7A33CC',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  participantAvatarText: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-    fontSize: 12,
-  },
-  participantDetails: {
-    flex: 1,
-  },
-  participantName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1F2937',
-  },
-  participantLastSeen: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginTop: 2,
-  },
-  participantStatus: {
-    alignItems: 'flex-end',
-  },
-  statusItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '600',
-    marginLeft: 4,
-  },
-
   // Group options styles
   optionsContainer: {
     gap: 12,
@@ -741,18 +567,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // Simple interface styles
-  simpleContainer: {
-    position: 'absolute',
-    bottom: 70,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    padding: 20,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    alignItems: 'center',
-  },
   simpleText: {
     textAlign: 'center',
     marginBottom: 15,
@@ -806,5 +620,163 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+
+  // Nuevos estilos para Bottom Sheet
+  handle: {
+    width: 40,
+    height: 4,
+    backgroundColor: '#D1D5DB',
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  
+  handleIndicator: {
+    backgroundColor: '#D1D5DB',
+    width: 40,
+  },
+  
+  bottomSheetBackground: {
+    backgroundColor: 'rgba(255, 255, 255, 0.98)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+
+  // Contenido del sheet
+  sheetContent: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  
+  sheetHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+
+  refreshButton: {
+    padding: 8,
+    borderRadius: 6,
+    backgroundColor: '#F3F4F6',
+  },
+
+  currentUserBattery: {
+    transform: [{ scale: 0.8 }], // Hacer más pequeño para el header
+  },
+  
+  sheetTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginLeft: 8,
+  },
+  
+  collapseButton: {
+    padding: 4,
+  },
+  
+  sheetFooter: {
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    marginTop: 'auto',
+  },
+
+  // Tab colapsado
+  collapsedContainer: {
+    flex: 1,
+  },
+  
+  collapsedContent: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+  },
+  
+  collapsedHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  
+  collapsedIconContainer: {
+    position: 'relative',
+    marginRight: 12,
+  },
+  
+  collapsedTextContainer: {
+    flex: 1,
+  },
+  
+  collapsedTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  
+  collapsedSubtitle: {
+    fontSize: 13,
+    color: '#6B7280',
+    marginTop: 2,
+  },
+
+  // Lista de participantes
+  participantsListContent: {
+    paddingBottom: 16,
+  },
+
+  // Indicador de batería
+  batteryIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8F9FA',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    minWidth: 60,
+    justifyContent: 'center',
+  },
+  batteryText: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+
+  // Contenedores de estado
+  loadingContainer: {
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyContainer: {
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+  },
+
+  // Sección de batería
+  batterySection: {
+    marginVertical: 16,
   },
 });

@@ -1,8 +1,5 @@
-// File: app/(tabs)/index.tsx
-import { useUserStore } from '@/lib/storage/useUserStorage';
-import { useAuth } from '@clerk/clerk-expo';
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MapHeader from '@/components/map/MapHeader';
 import PeopleOnMap from '@/components/map/PeopleOnMap';
@@ -18,8 +15,6 @@ interface GroupWithJourney {
 }
 
 export default function MapScreen() {
-  const { clearUser } = useUserStore();
-  const { signOut } = useAuth();
 
   // Estado real conectado entre componentes
   const [selectedGroupJourney, setSelectedGroupJourney] = useState<GroupWithJourney | null>(null);
@@ -30,33 +25,15 @@ export default function MapScreen() {
     router.push('/chat/journey');
   };
 
-  /*
-  <MapHeader activeGroup={activeGroup} />
-      <GroupMap activeGroup={activeGroup} />
-      <EmergencyButton />
-      <JourneyOverlay activeGroup={activeGroup} />
-  */
-
-  /*
-    <TouchableOpacity  onPress={handleLogout}>
-      <Text>Cerrar sesión</Text>
-    </TouchableOpacity>
-  */
-
   return (
     <SafeAreaView style={styles.container}>
       
-      {/* Header con funcionalidad completa */}
       <MapHeader 
         activeGroupJourney={selectedGroupJourney}
         onGroupJourneySelect={setSelectedGroupJourney}
       />
-      
       <PeopleOnMap />
-      
       <EmergencyButton onPress={() => console.log('Emergency triggered')} />
-      
-      {/* Overlay conectado con información real */}
       <JourneyOverlay 
         groupJourney={selectedGroupJourney}
         onStartJourney={handleStartJourney}

@@ -3,13 +3,19 @@ import { ClerkProvider } from '@clerk/clerk-expo';
 import { tokenCache } from '@clerk/clerk-expo/token-cache';
 import { Slot } from 'expo-router';
 import TokenProvider from '@/lib/auth/tokenProvider';
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 
 export default function RootLayout() {
   return (
-    <ClerkProvider tokenCache={tokenCache}>
-      <TokenProvider>
-        <Slot />
-      </TokenProvider>
-    </ClerkProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <BottomSheetModalProvider>
+        <ClerkProvider tokenCache={tokenCache}>
+          <TokenProvider>
+            <Slot />
+          </TokenProvider>
+        </ClerkProvider>
+      </BottomSheetModalProvider>
+    </GestureHandlerRootView>
   );
 }
