@@ -127,6 +127,7 @@ export default function SafeLocationModal({
 
       // Cargar lugares cercanos recomendados por defecto
       if (visible) {
+        console.log("Cargando lugares cercanos por defecto...");
         setLoading(true);
         try {
           const token = await getToken();

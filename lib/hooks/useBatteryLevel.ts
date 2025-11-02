@@ -41,7 +41,7 @@ export function useBatteryLevel(options: UseBatteryLevelOptions = {}) {
       const batteryLevel = await Battery.getBatteryLevelAsync();
       const batteryState = await Battery.getBatteryStateAsync();
       const isCharging = batteryState === Battery.BatteryState.CHARGING;
-
+      console.log('Device battery level:', batteryLevel, 'Charging:', isCharging);
       return {
         level: Math.round(batteryLevel * 100),
         isCharging,

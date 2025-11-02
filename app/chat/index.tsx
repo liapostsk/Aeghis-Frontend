@@ -8,10 +8,12 @@ import {
   StatusBar,
   Pressable,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Group } from '@/api/group/groupType';
+import { UserDto } from '@/api/types';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 import { getGroupById } from '@/api/group/groupApi';
@@ -21,6 +23,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import InviteModal from '@/components/groups/InviteModal';
 import { getCurrentJourneyForGroup } from '@/api/journeys/journeyApi';
 import { JourneyDto } from '@/api/journeys/journeyType';
+import { getParticipation } from '@/api/participations/participationApi';
+import { ParticipationDto } from '@/api/participations/participationType';
+import { getCurrentUser } from '@/api/user/userApi';
+import JourneyBanner from '@/components/chat/JourneyBanner';
+import JoinJourneyModal from '@/components/chat/JoinJourneyModal';
+import { SafeLocation, Location } from '@/api/locations/locationType';
+import SafeLocationModal from '@/components/safeLocations/SafeLocationModal';
 
 interface Message {
   id: string;
@@ -43,6 +52,12 @@ export default function ChatScreen() {
   const [loading, setLoading] = useState(true);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [activeJourney, setActiveJourney] = useState<JourneyDto | null>(null);
+  const [userParticipation, setUserParticipation] = useState<ParticipationDto | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [currentUserData, setCurrentUserData] = useState<UserDto | null>(null);
+  const [showJoinModal, setShowJoinModal] = useState(false);
+  const [showDestinationModal, setShowDestinationModal] = useState(false);
+  const [selectedDestination, setSelectedDestination] = useState<SafeLocation | null>(null);
 
   const { getToken } = useAuth();
   const setToken = useTokenStore((state) => state.setToken);
@@ -51,82 +66,72 @@ export default function ChatScreen() {
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
 
+  // Función para verificar si el usuario está participando en el trayecto
+  const checkUserParticipation = async (journey: JourneyDto, userId: number): Promise<ParticipationDto | null> => {
+    try {
+      // Buscar si el usuario tiene una participación en este journey
+      if (journey.participantsIds && journey.participantsIds.length > 0) {
+        for (const participationId of journey.participantsIds) {
+          try {
+            const participation = await getParticipation(participationId);
+            console.log('Checking participation:', participation);
+            if (participation.userId === userId) {
+              return participation;
+            }
+          } catch (error) {
+            console.warn(`Error fetching participation ${participationId}:`, error);
+            continue;
+          }
+        }
+      }
+      return null;
+    } catch (error) {
+      console.error('Error checking user participation:', error);
+      return null;
+    }
+  };
+
+  const handleJoinJourney = () => {
+    setShowJoinModal(true);
+  };
+
+  const handleJoinSuccess = (participation: ParticipationDto) => {
+    setUserParticipation(participation);
+    setShowJoinModal(false);
+    setSelectedDestination(null); // Limpiar destino seleccionado
+    // Refrescar datos si es necesario
+  };
+
+  const handleRequestDestinationSelection = () => {
+    console.log('🎯 Solicitando selección de destino...');
+    setShowDestinationModal(true);
+  };
+
+  const handleSelectDestination = (location: SafeLocation | Location) => {
+    // Convertir Location a SafeLocation si es necesario
+    const safeLocation: SafeLocation = 'name' in location ? location : {
+      id: location.id,
+      name: `Ubicación personalizada`,
+      address: `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`,
+      type: 'custom',
+      latitude: location.latitude,
+      longitude: location.longitude,
+      externalId: undefined
+    };
+    console.log('📍 Destino seleccionado:', safeLocation);
+    setSelectedDestination(safeLocation);
+    setShowDestinationModal(false);
+  };
+
   const renderJourneyBanner = () => {
-    console.log('Rendering journey banner, activeJourney:', activeJourney);
     if (!activeJourney) return null;
     
-    const isInProgress = activeJourney.state === 'IN_PROGRESS';
-    const isPending = activeJourney.state === 'PENDING';
-    
-    // Solo mostrar si está PENDING o IN_PROGRESS
-    if (!isInProgress && !isPending) return null;
-
-    const handleJoinJourney = () => {
-      const journeyInfo = {
-        journeyId: activeJourney.id,
-        journeyType: activeJourney.journeyType,
-        state: activeJourney.state,
-        groupId: activeJourney.groupId,
-        startDate: new Date(activeJourney.iniDate).toLocaleDateString()
-      };
-      
-      console.log('🚗 Usuario quiere unirse al journey:', journeyInfo);
-    };
-
-    const getJourneyDisplayInfo = () => {
-      const typeDisplayName = {
-        'INDIVIDUAL': 'Individual',
-        'COMMON_DESTINATION': 'Grupal',
-        'PERSONALIZED': 'Grupal'
-      }[activeJourney.journeyType] || 'Desconocido';
-
-      if (isInProgress) {
-        return {
-          icon: 'navigate-circle' as const,
-          title: `Trayecto ${typeDisplayName.toLowerCase()} en progreso`,
-          subtitle: 'El trayecto ha comenzado. ¡Únete ahora!',
-          color: '#10B981',
-          bgColor: '#ECFDF5',
-          buttonText: 'Unirse al trayecto'
-        };
-      } else {
-        return {
-          icon: 'time' as const,
-          title: `Trayecto ${typeDisplayName.toLowerCase()} pendiente`,
-          subtitle: 'Esperando a que más miembros se unan',
-          color: '#F59E0B',
-          bgColor: '#FFFBEB',
-          buttonText: 'Unirse al trayecto'
-        };
-      }
-    };
-
-    const displayInfo = getJourneyDisplayInfo();
-
     return (
-      <View style={styles.journeyBannerContainer}>
-        <Pressable style={styles.journeyBannerButton} onPress={handleJoinJourney}>
-          <View style={styles.journeyBannerContent}>
-            <View style={[styles.journeyIconContainer, { backgroundColor: displayInfo.bgColor }]}>
-              <Ionicons name={displayInfo.icon} size={24} color={displayInfo.color} />
-            </View>
-            
-            <View style={styles.journeyTextContainer}>
-              <Text style={styles.journeyBannerTitle}>
-                {displayInfo.title}
-              </Text>
-              <Text style={styles.journeyBannerSubtitle}>
-                {displayInfo.subtitle}
-              </Text>
-            </View>
-            
-            <View style={styles.journeyActionContainer}>
-              <Text style={styles.joinButtonText}>{displayInfo.buttonText}</Text>
-              <Ionicons name="chevron-forward" size={18} color="#7A33CC" />
-            </View>
-          </View>
-        </Pressable>
-      </View>
+      <JourneyBanner 
+        activeJourney={activeJourney}
+        userParticipation={userParticipation}
+        onJoinJourney={handleJoinJourney}
+      />
     );
   };
 
@@ -177,17 +182,28 @@ export default function ChatScreen() {
           throw new Error('Invalid group id');
         }
 
-        const [groupData, journeyData] = await Promise.all([
+        const [groupData, journeyData, userData] = await Promise.all([
           getGroupById(id),
-          getCurrentJourneyForGroup(id).catch(() => null) // Si no hay journey, devolver null
+          getCurrentJourneyForGroup(id).catch(() => null), // Si no hay journey, devolver null
+          getCurrentUser().catch(() => null) // Obtener usuario actual
         ]);
 
         console.log('Loaded journey data:', journeyData);
+        console.log('Loaded user data:', userData);
         
         if (mounted) {
           setGroup(groupData);
           setActiveJourney(journeyData);
+          setCurrentUserId(userData?.id || null);
+          setCurrentUserData(userData);
           setError(null);
+
+          // Si hay journey y usuario, verificar participación
+          if (journeyData && userData) {
+            const participation = await checkUserParticipation(journeyData, userData.id);
+            setUserParticipation(participation);
+            console.log('User participation:', participation);
+          }
         }
       } catch (e: any) {
         if (mounted) setError(e?.message ?? 'Unable to load group');
@@ -387,6 +403,32 @@ export default function ChatScreen() {
           groupId={group.id}
         />
       )}
+
+      {/* Join Journey Modal */}
+      {activeJourney && (
+        <JoinJourneyModal
+          visible={showJoinModal}
+          onClose={() => {
+            setShowJoinModal(false);
+            setSelectedDestination(null); // Limpiar destino al cerrar
+          }}
+          journey={activeJourney}
+          currentUser={currentUserData}
+          onJoinSuccess={handleJoinSuccess}
+        />
+      )}
+
+      {/* Destination Selection Modal */}
+      <SafeLocationModal
+        visible={showDestinationModal}
+        onClose={() => {
+          console.log('🚪 Cerrando modal de destino');
+          setShowDestinationModal(false);
+        }}
+        onSelectLocation={handleSelectDestination}
+        title="Seleccionar tu destino"
+        acceptLocationTypes="all"
+      />
       
       {/* Header */}
       <View style={styles.header}>
@@ -537,71 +579,4 @@ const styles = StyleSheet.create({
   checkMarkContainer: { flexDirection: 'row', alignItems: 'center', marginLeft: 4 },
   doubleCheck: { color: '#7A33CC' },
   secondCheck: { marginLeft: -8 }, // Superpone el segundo check
-
-  // Journey Banner - Fijo arriba del chat
-  journeyBannerContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 1000,
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  journeyBannerButton: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#7A33CC',
-    overflow: 'hidden',
-  },
-  journeyBannerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-  },
-  journeyIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  journeyTextContainer: {
-    flex: 1,
-  },
-  journeyBannerTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
-    marginBottom: 2,
-  },
-  journeyBannerSubtitle: {
-    fontSize: 13,
-    color: '#6B7280',
-    lineHeight: 18,
-  },
-  journeyActionContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: '#7A33CC',
-    borderRadius: 8,
-  },
-  joinButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginRight: 4,
-  },
 });

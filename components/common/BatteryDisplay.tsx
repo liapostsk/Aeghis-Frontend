@@ -9,7 +9,7 @@ import {
 import { useBatteryLevel } from '@/lib/hooks/useBatteryLevel';
 
 interface BatteryDisplayProps {
-  userId?: string;
+  userId?: number | string;
   showControls?: boolean;
   autoRefresh?: boolean;
   refreshInterval?: number;
@@ -36,25 +36,51 @@ export default function BatteryDisplay({
     silentUpdate: false
   });
 
-  // Actualizar batería (ahora usa el nivel real del dispositivo)
-  const simulateBatteryUpdate = async () => {
+  // Actualizar batería con el nivel real del dispositivo
+  const updateBatteryFromDevice = async () => {
     try {
-      if (batteryLevel !== null) {
-        // Si ya tenemos el nivel del dispositivo, sincronizar con Firebase
-        await syncWithFirebase(batteryLevel);
-        Alert.alert('Éxito', `Nivel de batería sincronizado: ${batteryLevel}%${isCharging ? ' (Cargando)' : ''}`);
+      // Refrescar el nivel de batería del dispositivo
+      const level = await refreshBatteryLevel();
+      
+      if (level !== null) {
+        // Sincronizar con Firebase
+        await syncWithFirebase(level);
+        Alert.alert(
+          'Éxito', 
+          `Nivel de batería actualizado: ${level}%${isCharging ? ' (Cargando)' : ''}`
+        );
       } else {
-        // Si no hay nivel disponible, forzar refresh
-        const level = await refreshBatteryLevel();
-        if (level !== null) {
-          Alert.alert('Éxito', `Nivel de batería actualizado: ${level}%`);
+        // Si no se pudo obtener, intentar usar el último valor conocido
+        if (batteryLevel !== null) {
+          await syncWithFirebase(batteryLevel);
+          Alert.alert(
+            'Advertencia', 
+            `Usando último nivel conocido: ${batteryLevel}%\nNo se pudo obtener nivel actual del dispositivo`
+          );
         } else {
-          Alert.alert('Error', 'No se pudo obtener el nivel de batería del dispositivo');
+          Alert.alert(
+            'Error', 
+            'No se pudo obtener el nivel de batería del dispositivo'
+          );
         }
       }
     } catch (error) {
-      console.error('Error syncing battery level:', error);
-      Alert.alert('Error', 'No se pudo sincronizar el nivel de batería');
+      console.error('Error updating battery level:', error);
+      
+      // Intentar guardar el último nivel conocido como fallback
+      if (batteryLevel !== null) {
+        try {
+          await syncWithFirebase(batteryLevel);
+          Alert.alert(
+            'Guardado parcial', 
+            `Se guardó el último nivel conocido: ${batteryLevel}%`
+          );
+        } catch (syncError) {
+          Alert.alert('Error', 'No se pudo sincronizar con Firebase');
+        }
+      } else {
+        Alert.alert('Error', 'No hay nivel de batería disponible para guardar');
+      }
     }
   };
 
@@ -92,8 +118,6 @@ export default function BatteryDisplay({
     return date.toLocaleDateString();
   };
 
-  // El hook useBatteryLevel maneja el auto-refresh automáticamente
-
   return (
     <View style={styles.container}>
       <View style={styles.batteryContainer}>
@@ -110,8 +134,14 @@ export default function BatteryDisplay({
       
       {showControls && (
         <View style={styles.controls}>
-          <Pressable onPress={simulateBatteryUpdate} style={styles.button}>
-            <Text style={styles.refreshButtonText}>Actualizar</Text>
+          <Pressable 
+            onPress={updateBatteryFromDevice} 
+            style={styles.button}
+            disabled={isLoading}
+          >
+            <Text style={styles.refreshButtonText}>
+              {isLoading ? 'Actualizando...' : 'Actualizar'}
+            </Text>
           </Pressable>
         </View>
       )}
@@ -157,18 +187,6 @@ export function ParticipantsList({
   }>>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Hook para el usuario actual (opcional para comparar)
-  const currentUserBattery = {
-    level: null,
-    isLoading: false,
-    refreshBatteryLevel: () => {},
-  };
-  // const currentUserBattery = useBatteryLevel({
-  //   updateInterval: refreshInterval,
-  //   autoSync: true,
-  //   silentUpdate: false
-  // });
-
   const fetchParticipantsData = async () => {
     try {
       setIsLoading(true);
@@ -183,25 +201,28 @@ export function ParticipantsList({
       const batteryInfo = await getMultipleUsersBatteryInfo(userIds);
       
       // Combinar datos de participantes con información de batería
-      const participantsWithData = participants.map(participant => ({
-        user: participant,
-        batteryLevel: batteryInfo[String(participant.id)]?.batteryLevel || null,
-        isConnected: batteryInfo[String(participant.id)]?.isOnline || false,
-        lastSeen: batteryInfo[String(participant.id)]?.lastSeen 
-          ? new Date(batteryInfo[String(participant.id)].lastSeen.seconds * 1000)
-          : new Date(Date.now() - Math.random() * 15 * 60 * 1000) // Fallback
-      }));
+      const participantsWithData = participants.map(participant => {
+        const info = batteryInfo[String(participant.id)];
+        return {
+          user: participant,
+          batteryLevel: info?.batteryLevel ?? null,
+          isConnected: info?.isOnline ?? false,
+          lastSeen: info?.lastSeen 
+            ? new Date(info.lastSeen.seconds * 1000)
+            : new Date() // Usar fecha actual si no hay lastSeen
+        };
+      });
 
       setParticipantsData(participantsWithData);
     } catch (error) {
       console.error('Error fetching participants data:', error);
       
-      // Fallback con datos simulados en caso de error
+      // En caso de error, mostrar participantes sin datos de batería
       const fallbackData = participants.map(participant => ({
         user: participant,
-        batteryLevel: Math.floor(Math.random() * 80) + 20,
-        isConnected: Math.random() > 0.3,
-        lastSeen: new Date(Date.now() - Math.random() * 15 * 60 * 1000)
+        batteryLevel: null,
+        isConnected: false,
+        lastSeen: new Date()
       }));
       
       setParticipantsData(fallbackData);
@@ -327,37 +348,36 @@ export function DetailedBatteryDisplay({
   autoRefresh = false,
   refreshInterval = 30000 
 }: BatteryDisplayProps) {
-  const [batteryLevel, setBatteryLevel] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const {
+    level: batteryLevel,
+    isCharging,
+    isLoading,
+    error,
+    lastUpdated,
+    refreshBatteryLevel,
+    syncWithFirebase
+  } = useBatteryLevel({
+    updateInterval: autoRefresh ? refreshInterval : 0,
+    autoSync: autoRefresh,
+    silentUpdate: false
+  });
 
-  const fetchBatteryLevel = async () => {
+  const updateBatteryFromDevice = async () => {
     try {
-      setIsLoading(true);
-      const level = await getCurrentUserBatteryLevel();
-      setBatteryLevel(level);
-      setLastUpdated(new Date());
-    } catch (error) {
-      console.error('Error fetching battery level:', error);
-      Alert.alert('Error', 'No se pudo obtener el nivel de batería');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const simulateBatteryUpdate = async () => {
-    try {
-      setIsLoading(true);
-      const randomLevel = Math.floor(Math.random() * 90) + 10;
-      await updateUserBatteryLevel(randomLevel);
-      setBatteryLevel(randomLevel);
-      setLastUpdated(new Date());
-      Alert.alert('Éxito', `Nivel de batería actualizado a ${randomLevel}%`);
+      const level = await refreshBatteryLevel();
+      
+      if (level !== null) {
+        await syncWithFirebase(level);
+        Alert.alert('Éxito', `Nivel de batería actualizado a ${level}%`);
+      } else if (batteryLevel !== null) {
+        await syncWithFirebase(batteryLevel);
+        Alert.alert('Advertencia', `Usando último nivel conocido: ${batteryLevel}%`);
+      } else {
+        Alert.alert('Error', 'No se pudo obtener el nivel de batería');
+      }
     } catch (error) {
       console.error('Error updating battery level:', error);
       Alert.alert('Error', 'No se pudo actualizar el nivel de batería');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -391,14 +411,6 @@ export function DetailedBatteryDisplay({
     return date.toLocaleDateString();
   };
 
-  useEffect(() => {
-    fetchBatteryLevel();
-    if (autoRefresh) {
-      const interval = setInterval(fetchBatteryLevel, refreshInterval);
-      return () => clearInterval(interval);
-    }
-  }, [autoRefresh, refreshInterval]);
-
   return (
     <View style={styles.detailedContainer}>
       <View style={styles.batteryInfo}>
@@ -410,6 +422,7 @@ export function DetailedBatteryDisplay({
         <View style={styles.textContainer}>
           <Text style={styles.batteryLevel}>
             {batteryLevel !== null ? `${batteryLevel}%` : 'Sin datos'}
+            {isCharging && batteryLevel !== null ? ' ⚡' : ''}
           </Text>
           <Text style={styles.lastUpdated}>
             Actualizado: {formatLastUpdated(lastUpdated)}
@@ -421,22 +434,32 @@ export function DetailedBatteryDisplay({
         <View style={styles.controls}>
           <Pressable 
             style={[styles.button, styles.refreshButton]} 
-            onPress={fetchBatteryLevel}
+            onPress={refreshBatteryLevel}
             disabled={isLoading}
           >
             <Ionicons name="refresh" size={20} color="#3B82F6" />
-            <Text style={styles.refreshButtonText}>Actualizar</Text>
+            <Text style={styles.refreshButtonText}>
+              {isLoading ? 'Cargando...' : 'Refrescar'}
+            </Text>
           </Pressable>
 
           <Pressable 
             style={[styles.button, styles.simulateButton]} 
-            onPress={simulateBatteryUpdate}
+            onPress={updateBatteryFromDevice}
             disabled={isLoading}
           >
-            <Ionicons name="flash" size={20} color="#10B981" />
-            <Text style={styles.simulateButtonText}>Simular</Text>
+            <Ionicons name="cloud-upload" size={20} color="#10B981" />
+            <Text style={styles.simulateButtonText}>
+              {isLoading ? 'Guardando...' : 'Guardar en Firebase'}
+            </Text>
           </Pressable>
         </View>
+      )}
+
+      {error && (
+        <Text style={[styles.lastUpdated, { color: '#EF4444', marginTop: 8 }]}>
+          Error: {error}
+        </Text>
       )}
 
       {isLoading && (
@@ -526,9 +549,6 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     fontWeight: '500',
   },
-
-
-  // Estilos compactos para el nuevo look
   compactContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -548,8 +568,6 @@ const styles = StyleSheet.create({
     padding: 2,
     marginLeft: 4,
   },
-
-  // Container para la versión detallada
   detailedContainer: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
@@ -561,10 +579,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-
-
-
-  // Estilos para ParticipantsList
   participantsContainer: {
     flex: 1,
   },
@@ -655,7 +669,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
-  // Estilos para BatteryDisplay simple
   batteryContainer: {
     flexDirection: 'row',
     alignItems: 'center',

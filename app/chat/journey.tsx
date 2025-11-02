@@ -8,7 +8,6 @@ import {
     Alert,
     ActivityIndicator,
     StatusBar,
-    TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
@@ -28,8 +27,18 @@ import { createLocation } from '@/api/locations/locationsApi';
 import { sendMessageFirebase } from '@/api/firebase/chat/chatService';
 import * as ExpoLocation from 'expo-location';
 import SafeLocationModal from '@/components/safeLocations/SafeLocationModal';
-
-type JourneyType = 'individual' | 'common_destination' | 'personalized';
+import {
+    DestinationSelector,
+    JourneyTypeSelector,
+    ParticipantSelector,
+    GroupBanner,
+    JourneyNameInput,
+    CreateJourneyButton,
+    JourneyType,
+    validateJourneyForm,
+    generateDefaultJourneyName,
+    mapJourneyTypeToAPI
+} from '@/components/journey';
 
 export default function journey() {
     const { groupId } = useLocalSearchParams<{ groupId: string }>();
@@ -85,10 +94,8 @@ export default function journey() {
                 // Auto-seleccionar al usuario actual
                 setSelectedParticipants([userData.id]);
 
-                // Generar nombre por defecto
-                const now = new Date();
-                const defaultName = `Trayecto ${now.toLocaleDateString()} ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-                setJourneyName(defaultName);
+                // Generar nombre por defecto usando utilidad
+                setJourneyName(generateDefaultJourneyName());
 
             } catch (error) {
                 console.error('Error loading group:', error);
@@ -223,26 +230,20 @@ ID del trayecto: ${journeyId}`;
         });
     };
 
-    // Validación del formulario
+    // Validación del formulario usando utilidad
     const validateForm = (): boolean => {
-        if (!journeyType) {
-            Alert.alert('Error', 'Selecciona un tipo de trayecto');
-            return false;
-        }
+        const formData = {
+            journeyType,
+            journeyName,
+            selectedParticipants,
+            selectedDestination
+        };
 
-        if (!journeyName.trim()) {
-            Alert.alert('Error', 'Ingresa un nombre para el trayecto');
-            return false;
-        }
-
-        if (selectedParticipants.length === 0) {
-            Alert.alert('Error', 'Debe haber al menos un participante');
-            return false;
-        }
-
-                // Validación de destino seleccionado para trayectos grupales
-        if (journeyType !== 'individual' && !selectedDestination) {
-            Alert.alert('Error', 'Selecciona un destino para el trayecto grupal');
+        const validation = validateJourneyForm(formData);
+        
+        if (!validation.isValid) {
+            const firstError = validation.errors[0];
+            Alert.alert('Error', firstError.message);
             return false;
         }
 
@@ -375,145 +376,7 @@ ID del trayecto: ${journeyId}`;
         }
     };
 
-    // Renderizar opciones de tipo de trayecto
-    const renderJourneyTypeOption = (
-        type: JourneyType,
-        icon: string,
-        title: string,
-        description: string
-    ) => {
-        const isSelected = journeyType === type;
-
-        return (
-            <Pressable
-                key={type}
-                style={[styles.typeCard, isSelected && styles.typeCardSelected]}
-                onPress={() => handleSelectJourneyType(type)}
-            >
-                <View style={[styles.typeIcon, isSelected && styles.typeIconSelected]}>
-                    <Ionicons 
-                        name={icon as any} 
-                        size={28} 
-                        color={isSelected ? '#7A33CC' : '#6B7280'} 
-                    />
-                </View>
-                <View style={styles.typeContent}>
-                    <Text style={[styles.typeTitle, isSelected && styles.typeTitleSelected]}>
-                        {title}
-                    </Text>
-                    <Text style={styles.typeDescription}>{description}</Text>
-                </View>
-                {isSelected && (
-                    <View style={styles.typeCheck}>
-                        <Ionicons name="checkmark-circle" size={24} color="#7A33CC" />
-                    </View>
-                )}
-            </Pressable>
-        );
-    };
-
-    // Renderizar selector de participantes
-    const renderParticipantSelector = () => {
-        if (journeyType === 'individual') return null;
-
-        return (
-            <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Participantes</Text>
-                <Text style={styles.sectionSubtitle}>
-                    Selecciona quién participará en este trayecto
-                </Text>
-                
-                <View style={styles.participantsList}>
-                    {members.map(member => {
-                        const isSelected = selectedParticipants.includes(member.id);
-                        const isCurrentUserMember = member.id === currentUser?.id;
-                        const initials = member.name
-                            .split(' ')
-                            .map(n => n[0])
-                            .join('')
-                            .toUpperCase();
-
-                        return (
-                            <Pressable
-                                key={member.id}
-                                style={[
-                                    styles.participantCard,
-                                    isSelected && styles.participantCardSelected,
-                                    isCurrentUserMember && styles.participantCardDisabled
-                                ]}
-                                onPress={() => toggleParticipant(member.id)}
-                                disabled={isCurrentUserMember}
-                            >
-                                <View style={[
-                                    styles.participantAvatar,
-                                    isSelected && styles.participantAvatarSelected
-                                ]}>
-                                    <Text style={[
-                                        styles.participantAvatarText,
-                                        isSelected && styles.participantAvatarTextSelected
-                                    ]}>
-                                        {initials}
-                                    </Text>
-                                </View>
-                                <View style={styles.participantInfo}>
-                                    <Text style={[
-                                        styles.participantName,
-                                        isSelected && styles.participantNameSelected
-                                    ]}>
-                                        {member.name}
-                                        {isCurrentUserMember && ' (Tú)'}
-                                    </Text>
-                                    <Text style={styles.participantPhone}>{member.phone}</Text>
-                                </View>
-                                {isSelected && (
-                                    <View style={styles.participantCheck}>
-                                        <Ionicons name="checkmark-circle" size={20} color="#7A33CC" />
-                                    </View>
-                                )}
-                            </Pressable>
-                        );
-                    })}
-                </View>
-            </View>
-        );
-    };
-
-    // Renderizar campos de ubicación
-    const renderLocationFields = () => {
-        if (!journeyType) return null;
-
-        // Para trayectos grupales, mostrar selector de destino
-        if (journeyType !== 'individual') {
-            return (
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Seleccionar destino</Text>
-                    <Text style={styles.sectionSubtitle}>
-                        El origen será automáticamente tu ubicación actual
-                    </Text>
-                    
-                    <Pressable
-                        style={styles.destinationSelector}
-                        onPress={() => setShowDestinationModal(true)}
-                    >
-                        <Ionicons name="location" size={20} color="#7A33CC" />
-                        <View style={styles.destinationInfo}>
-                            <Text style={styles.destinationText}>
-                                {selectedDestination ? selectedDestination.name : 'Seleccionar destino'}
-                            </Text>
-                            {selectedDestination && (
-                                <Text style={styles.destinationAddress}>
-                                    {selectedDestination.address}
-                                </Text>
-                            )}
-                        </View>
-                        <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
-                    </Pressable>
-                </View>
-            );
-        }
-
-        return null;
-    };
+    // Los componentes render se han movido a componentes modulares
 
     if (loading) {
         return (
@@ -545,97 +408,50 @@ ID del trayecto: ${journeyId}`;
                     showsVerticalScrollIndicator={false}
                 >
                     {/* Información del grupo */}
-                    <View style={styles.groupBanner}>
-                        <View style={styles.groupBannerIcon}>
-                            <Ionicons name="people" size={24} color="#7A33CC" />
-                        </View>
-                        <View style={styles.groupBannerInfo}>
-                            <Text style={styles.groupBannerTitle}>{group?.name}</Text>
-                            <Text style={styles.groupBannerSubtitle}>
-                                {members.length} miembro{members.length !== 1 ? 's' : ''}
-                            </Text>
-                        </View>
-                    </View>
+                    <GroupBanner group={group} members={members} />
 
                     {/* Nombre del trayecto */}
-                    <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>Nombre del trayecto</Text>
-                        <View style={styles.inputContainer}>
-                            <Ionicons name="navigate" size={20} color="#7A33CC" style={styles.inputIcon} />
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Ej: Trayecto al trabajo"
-                                value={journeyName}
-                                onChangeText={setJourneyName}
-                                placeholderTextColor="#9CA3AF"
-                            />
-                        </View>
-                    </View>
+                    <JourneyNameInput 
+                        value={journeyName}
+                        onChangeText={setJourneyName}
+                        placeholder="Ej: Trayecto al trabajo"
+                    />
 
                     {/* Tipo de trayecto */}
-                    <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>Tipo de trayecto</Text>
-                        <Text style={styles.sectionSubtitle}>
-                            Selecciona cómo quieres compartir las ubicaciones
-                        </Text>
-                        
-                        {renderJourneyTypeOption(
-                            'individual',
-                            'person',
-                            'Individual',
-                            'Solo tú compartirás tu ubicación con el grupo'
-                        )}
-                        
-                        {renderJourneyTypeOption(
-                            'common_destination',
-                            'people',
-                            'Grupal con destino común',
-                            'Todos comparten ubicación hacia el mismo destino'
-                        )}
-                        
-                        {renderJourneyTypeOption(
-                            'personalized',
-                            'git-network',
-                            'Grupal personalizado',
-                            'Cada participante tiene su propio destino'
-                        )}
-                    </View>
+                    <JourneyTypeSelector 
+                        selectedType={journeyType}
+                        onSelectType={handleSelectJourneyType}
+                    />
 
                     {/* Selector de participantes */}
-                    {renderParticipantSelector()}
+                    <ParticipantSelector
+                        journeyType={journeyType}
+                        members={members}
+                        currentUser={currentUser}
+                        selectedParticipants={selectedParticipants}
+                        onToggleParticipant={toggleParticipant}
+                    />
 
-                    {/* Campos de ubicación */}
-                    {renderLocationFields()}
+                    {/* Selector de destino */}
+                    {journeyType && journeyType !== 'individual' && (
+                        <DestinationSelector
+                            selectedDestination={selectedDestination}
+                            onPress={() => setShowDestinationModal(true)}
+                            isRequired={true}
+                        />
+                    )}
 
                     {/* Espacio para el botón */}
                     <View style={{ height: 100 }} />
                 </ScrollView>
 
                 {/* Botón de crear */}
-                <View style={styles.buttonContainer}>
-                    <Pressable
-                        style={[
-                            styles.createButton,
-                            (!journeyType || creating || (journeyType !== 'individual' && !selectedDestination)) && styles.createButtonDisabled
-                        ]}
-                        onPress={handleCreateJourney}
-                        disabled={!journeyType || creating || (journeyType !== 'individual' && !selectedDestination)}
-                    >
-                        {creating ? (
-                            <>
-                                <ActivityIndicator color="#FFFFFF" />
-                                <Text style={styles.createButtonText}>
-                                    {creationStep || 'Creando trayecto...'}
-                                </Text>
-                            </>
-                        ) : (
-                            <>
-                                <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
-                                <Text style={styles.createButtonText}>Crear trayecto</Text>
-                            </>
-                        )}
-                    </Pressable>
-                </View>
+                <CreateJourneyButton
+                    onPress={handleCreateJourney}
+                    disabled={!journeyType || creating || (journeyType !== 'individual' && !selectedDestination)}
+                    loading={creating}
+                    creationStep={creationStep}
+                />
             </View>
 
             {/* Modal de selección de destino */}
@@ -651,17 +467,32 @@ ID del trayecto: ${journeyId}`;
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#7A33CC' },
-    topArea: { backgroundColor: '#7A33CC' },
-    body: { flex: 1, backgroundColor: '#F9FAFB' },
+    // Layout principal
+    container: { 
+        flex: 1, 
+        backgroundColor: '#7A33CC' 
+    },
+    topArea: { 
+        backgroundColor: '#7A33CC' 
+    },
+    body: { 
+        flex: 1, 
+        backgroundColor: '#F9FAFB' 
+    },
+    
+    // Estados de carga
     center: {
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
         padding: 16,
     },
-    loadingText: { color: '#6B7280', marginTop: 12, fontSize: 14 },
-
+    loadingText: { 
+        color: '#6B7280', 
+        marginTop: 12, 
+        fontSize: 14 
+    },
+    
     // Header
     header: {
         paddingHorizontal: 16,
@@ -669,262 +500,16 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
     },
-    backButton: { marginRight: 12 },
+    backButton: { 
+        marginRight: 12 
+    },
     headerTitle: {
         color: 'white',
         fontSize: 20,
         fontWeight: '600',
         flex: 1,
     },
-
-    // Scroll Content
     scrollContent: {
-        paddingBottom: 20,
-    },
-
-    // Group Banner
-    groupBanner: {
-        margin: 16,
-        marginBottom: 8,
-        padding: 16,
-        backgroundColor: '#FFFFFF',
-        borderRadius: 12,
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: '#E5E7EB',
-    },
-    groupBannerIcon: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
-        backgroundColor: '#F3E8FF',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginRight: 12,
-    },
-    groupBannerInfo: { flex: 1 },
-    groupBannerTitle: {
-        fontSize: 16,
-        fontWeight: '700',
-        color: '#1F2937',
-    },
-    groupBannerSubtitle: {
-        fontSize: 13,
-        color: '#6B7280',
-        marginTop: 2,
-    },
-
-    // Section
-    section: {
-        marginHorizontal: 16,
-        marginTop: 20,
-    },
-    sectionTitle: {
-        fontSize: 16,
-        fontWeight: '700',
-        color: '#1F2937',
-        marginBottom: 4,
-    },
-    sectionSubtitle: {
-        fontSize: 13,
-        color: '#6B7280',
-        marginBottom: 12,
-    },
-
-    // Input
-    inputContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#FFFFFF',
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: '#E5E7EB',
-        paddingHorizontal: 12,
-        marginTop: 8,
-    },
-    inputIcon: {
-        marginRight: 8,
-    },
-    input: {
-        flex: 1,
-        paddingVertical: 12,
-        fontSize: 14,
-        color: '#1F2937',
-    },
-
-    // Type Card
-    typeCard: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 16,
-        backgroundColor: '#FFFFFF',
-        borderRadius: 12,
-        borderWidth: 2,
-        borderColor: '#E5E7EB',
-        marginTop: 12,
-    },
-    typeCardSelected: {
-        borderColor: '#7A33CC',
-        backgroundColor: '#F3E8FF',
-    },
-    typeIcon: {
-        width: 56,
-        height: 56,
-        borderRadius: 28,
-        backgroundColor: '#F3F4F6',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginRight: 12,
-    },
-    typeIconSelected: {
-        backgroundColor: '#FFFFFF',
-    },
-    typeContent: { flex: 1 },
-    typeTitle: {
-        fontSize: 15,
-        fontWeight: '700',
-        color: '#1F2937',
-        marginBottom: 4,
-    },
-    typeTitleSelected: {
-        color: '#7A33CC',
-    },
-    typeDescription: {
-        fontSize: 13,
-        color: '#6B7280',
-        lineHeight: 18,
-    },
-    typeCheck: {
-        marginLeft: 8,
-    },
-
-    // Participants
-    participantsList: {
-        gap: 8,
-    },
-    participantCard: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 12,
-        backgroundColor: '#FFFFFF',
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: '#E5E7EB',
-    },
-    participantCardSelected: {
-        borderColor: '#7A33CC',
-        backgroundColor: '#F3E8FF',
-    },
-    participantCardDisabled: {
-        opacity: 0.6,
-    },
-    participantAvatar: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: '#E5E7EB',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginRight: 12,
-    },
-    participantAvatarSelected: {
-        backgroundColor: '#7A33CC',
-    },
-    participantAvatarText: {
-        color: '#6B7280',
-        fontWeight: '700',
-        fontSize: 12,
-    },
-    participantAvatarTextSelected: {
-        color: '#FFFFFF',
-    },
-    participantInfo: { flex: 1 },
-    participantName: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#1F2937',
-    },
-    participantNameSelected: {
-        color: '#7A33CC',
-    },
-    participantPhone: {
-        fontSize: 12,
-        color: '#6B7280',
-        marginTop: 2,
-    },
-    participantCheck: {
-        marginLeft: 8,
-    },
-
-    // Location Card
-    locationCard: {
-        padding: 16,
-        backgroundColor: '#FFFFFF',
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: '#E5E7EB',
-        marginTop: 12,
-    },
-    locationCardTitle: {
-        fontSize: 14,
-        fontWeight: '700',
-        color: '#1F2937',
-        marginBottom: 12,
-    },
-
-    // Button
-    buttonContainer: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        padding: 16,
-        backgroundColor: '#FFFFFF',
-        borderTopWidth: 1,
-        borderTopColor: '#E5E7EB',
-    },
-    createButton: {
-        backgroundColor: '#7A33CC',
-        paddingVertical: 14,
-        borderRadius: 12,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 8,
-    },
-    createButtonDisabled: {
-        backgroundColor: '#D1D5DB',
-        opacity: 0.6,
-    },
-    createButtonText: {
-        color: '#FFFFFF',
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    
-    // Destination Selector
-    destinationSelector: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 16,
-        backgroundColor: '#F9FAFB',
-        borderRadius: 12,
-        borderWidth: 1,
-        borderColor: '#E5E7EB',
-        gap: 12,
-    },
-    destinationInfo: {
-        flex: 1,
-    },
-    destinationText: {
-        fontSize: 16,
-        color: '#374151',
-        fontWeight: '600',
-    },
-    destinationAddress: {
-        fontSize: 14,
-        color: '#6B7280',
-        marginTop: 2,
+        paddingBottom: 120, // Espacio para el botón flotante
     },
 });

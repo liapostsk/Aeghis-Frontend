@@ -7,6 +7,7 @@ import BottomSheet, { BottomSheetScrollView, BottomSheetView } from '@gorhom/bot
 import { JourneyDto, JourneyStates } from '@/api/journeys/journeyType';
 import { UserDto } from '@/api/types';
 import { Group } from '@/api/group/groupType';
+import { User, useUserStore } from "../../lib/storage/useUserStorage";
 
 // Importar componentes y hooks de batería
 import BatteryDisplay, { ParticipantsList } from '@/components/common/BatteryDisplay';
@@ -40,6 +41,8 @@ export default function JourneyOverlay({ groupJourney, onStartJourney }: Props) 
   const [showJoinGroupModal, setShowJoinGroupModal] = useState(false);
   const [showGroupSelection, setShowGroupSelection] = useState(false);
   const [showJourneyOptions, setShowJourneyOptions] = useState(false);
+
+  const {user} = useUserStore();
 
   // Hooks externos
   const { getToken } = useAuth(); // Hook para obtener el token de autenticación
@@ -189,7 +192,7 @@ export default function JourneyOverlay({ groupJourney, onStartJourney }: Props) 
             {/* Batería del usuario actual usando BatteryDisplay */}
             <View style={styles.currentUserBattery}>
               <BatteryDisplay 
-                userId="current-user" // TODO: Obtener el ID del usuario actual
+                userId={user.id} // TODO: Obtener el ID del usuario actual
                 showControls={false}
                 autoRefresh={true}
                 refreshInterval={60000} // 1 minuto

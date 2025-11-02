@@ -1,4 +1,7 @@
 export type ChatType = 'direct' | 'group';
+import {JourneyTypes} from '../journeys/journeyType';
+import {JourneyStates} from '../journeys/journeyType';
+import { ParticipationState } from '../participations/participationType';
 
 // Firebase User Profile Types
 export interface FirebaseUserProfile {
@@ -64,4 +67,36 @@ export type GroupTileInfo = {
   lastSenderName: string | null;
   unreadCount: number;
   membersCount: number;
+};
+
+// Firebase JOURNEY TYPES:
+
+export interface JourneyDoc {
+  ownerId: string;
+  type: typeof JourneyTypes;
+  state: typeof JourneyStates;
+  startedAt: any;       // Firebase Timestamp
+  endedAt?: any;        // Firebase Timestamp
+}
+
+export interface Participation {
+  userId: string;
+  journeyId: string;
+  satate: ParticipationState;
+}
+
+export interface Position {
+  latitude: number;
+  longitude: number;
+  timestamp: any;       // Firebase Timestamp
+}
+
+// Position Tile Info
+export type PositionTileInfo = {
+  userId: string;
+  latitude: number;
+  longitude: number;
+  accuracy: number;
+  lastUpdated: any;     // Timestamp
+  isOnline: boolean;
 };
