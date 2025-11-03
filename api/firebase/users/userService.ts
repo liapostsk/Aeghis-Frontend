@@ -214,5 +214,40 @@ export async function getMultipleUsersBatteryInfo(userIds: string[]): Promise<Re
   }
 }
 
+/**
+ * Obtener perfil completo de un usuario por su Clerk ID
+ * @param clerkId ID de Clerk del usuario
+ * @returns Perfil completo del usuario
+ */
+export async function getUserProfileFB(clerkId: string): Promise<FirebaseUserProfile> {
+  console.log('👤 getUserProfileFB - Obteniendo perfil para:', clerkId);
+  
+  try {
+    const ref = doc(db, 'users', clerkId);
+    const snap = await getDoc(ref);
+    
+    if (snap.exists()) {
+      const data = snap.data() as FirebaseUserProfile;
+      console.log('✅ Perfil obtenido exitosamente');
+      return data;
+    } else {
+      console.log('⚠️ Usuario no encontrado, devolviendo perfil por defecto');
+      // Devolver perfil por defecto en lugar de error
+      return {
+        displayName: null,
+        photoURL: null,
+        phone: null,
+        createdAt: serverTimestamp(),
+        lastSeen: serverTimestamp(),
+        isOnline: false,
+        batteryLevel: null,
+      };
+    }
+  } catch (error) {
+    console.error('💥 Error obteniendo perfil de usuario:', error);
+    throw error;
+  }
+}
+
 // ===== FUNCIONES ELIMINADAS - NO SE USAN =====
 // - updateBatteryLevelSilent() - No se usa en ningún lugar

@@ -397,12 +397,200 @@ export async function getGroupTilesInfo(groupIds: Array<string | number>) {
   return results.filter((result): result is GroupTileInfo => result !== null);
 }
 
-// ===== FUNCIONES ELIMINADAS - NO SE USAN =====
-// - removeMemberFromGroupFirebase() - No se usa en ningún lugar
-// - makeMemberAdminFirebase() - No se usa en ningún lugar  
-// - removeAdminFirebase() - No se usa en ningún lugar
-// - deleteGroupFirebase() - No se usa en ningún lugar
-// - validateGroupEditPermissions() - No se usa en ningún lugar
-//
-// Estas funciones se pueden restaurar cuando se implementen las 
-// funcionalidades de administración de grupos.
+// ===== FUNCIONES DE ADMINISTRACIÓN DE GRUPOS =====
+
+/**
+ * Promover un usuario a administrador en Firebase
+ * @param groupId ID del grupo
+ * @param userClerkId Clerk ID del usuario a promover
+ */
+export async function makeMemberAdminFirebase(groupId: string, userClerkId: string): Promise<void> {
+  console.log('👑 makeMemberAdminFirebase - Promoviendo usuario a admin:', { groupId, userClerkId });
+  
+  try {
+    const uid = requireUid();
+    const chatRef = doc(db, 'chats', String(groupId));
+
+    // Verificar que el usuario actual es admin
+    const chatDoc = await getDoc(chatRef);
+    if (!chatDoc.exists()) {
+      throw new Error(`Chat ${groupId} no existe`);
+    }
+
+    const chatData = chatDoc.data() as any;
+    if (!chatData.admins?.includes(uid)) {
+      throw new Error('No tienes permisos de administrador');
+    }
+
+    // Agregar el usuario a la lista de admins si no está ya
+    console.log('🔄 Agregando usuario a lista de administradores...');
+    await updateDoc(chatRef, {
+      admins: arrayUnion(userClerkId),
+      updatedAt: serverTimestamp(),
+    });
+    
+    console.log('✅ Usuario promovido a administrador exitosamente');
+  } catch (error) {
+    console.error('💥 Error promoviendo usuario a admin:', error);
+    throw error;
+  }
+}
+
+/**
+ * Degradar un administrador a miembro regular en Firebase
+ * @param groupId ID del grupo
+ * @param userClerkId Clerk ID del usuario a degradar
+ */
+export async function removeAdminFirebase(groupId: string, userClerkId: string): Promise<void> {
+  console.log('👤 removeAdminFirebase - Degradando admin a miembro:', { groupId, userClerkId });
+  
+  try {
+    const uid = requireUid();
+    const chatRef = doc(db, 'chats', String(groupId));
+
+    // Verificar que el usuario actual es admin
+    const chatDoc = await getDoc(chatRef);
+    if (!chatDoc.exists()) {
+      throw new Error(`Chat ${groupId} no existe`);
+    }
+
+    const chatData = chatDoc.data() as any;
+    if (!chatData.admins?.includes(uid)) {
+      throw new Error('No tienes permisos de administrador');
+    }
+
+    // Verificar que no se está auto-degradando si es el único admin
+    if (chatData.admins?.length <= 1 && userClerkId === uid) {
+      throw new Error('No puedes degradarte siendo el único administrador');
+    }
+
+    // Remover el usuario de la lista de admins
+    console.log('🔄 Removiendo usuario de lista de administradores...');
+    await updateDoc(chatRef, {
+      admins: arrayRemove(userClerkId),
+      updatedAt: serverTimestamp(),
+    });
+    
+    console.log('✅ Usuario degradado de administrador exitosamente');
+  } catch (error) {
+    console.error('💥 Error degradando admin:', error);
+    throw error;
+  }
+}
+
+/**
+ * Remover un miembro del grupo en Firebase
+ * @param groupId ID del grupo
+ * @param userClerkId Clerk ID del usuario a remover
+ */
+export async function removeMemberFromGroupFirebase(groupId: string, userClerkId: string): Promise<void> {
+  console.log('🚪 removeMemberFromGroupFirebase - Removiendo miembro:', { groupId, userClerkId });
+  
+  try {
+    const uid = requireUid();
+    const chatRef = doc(db, 'chats', String(groupId));
+
+    // Verificar que el usuario actual es admin
+    const chatDoc = await getDoc(chatRef);
+    if (!chatDoc.exists()) {
+      throw new Error(`Chat ${groupId} no existe`);
+    }
+
+    const chatData = chatDoc.data() as any;
+    if (!chatData.admins?.includes(uid)) {
+      throw new Error('No tienes permisos de administrador');
+    }
+
+    // No permitir auto-remover si es el único admin
+    if (chatData.admins?.includes(userClerkId) && chatData.admins?.length <= 1) {
+      throw new Error('No puedes removerte siendo el único administrador');
+    }
+
+    console.log('🔄 Removiendo usuario del grupo...');
+    const batch = writeBatch(db);
+    
+    // Remover de miembros y admins
+    batch.update(chatRef, {
+      members: arrayRemove(userClerkId),
+      admins: arrayRemove(userClerkId),
+      updatedAt: serverTimestamp(),
+    });
+
+    await batch.commit();
+    console.log('✅ Miembro removido exitosamente');
+  } catch (error) {
+    console.error('💥 Error removiendo miembro:', error);
+    throw error;
+  }
+}
+
+/**
+ * Eliminar un grupo completamente de Firebase
+ * @param groupId ID del grupo a eliminar
+ */
+export async function deleteGroupFirebase(groupId: string): Promise<void> {
+  console.log('🗑️ deleteGroupFirebase - Eliminando grupo:', groupId);
+  
+  try {
+    const uid = requireUid();
+    const chatRef = doc(db, 'chats', String(groupId));
+
+    // Verificar que el usuario actual es admin/owner
+    const chatDoc = await getDoc(chatRef);
+    if (!chatDoc.exists()) {
+      console.log('⚠️ Chat ya no existe, considerando como eliminado');
+      return;
+    }
+
+    const chatData = chatDoc.data() as any;
+    if (!chatData.admins?.includes(uid) && chatData.ownerId !== uid) {
+      throw new Error('No tienes permisos para eliminar este grupo');
+    }
+
+    console.log('🔄 Eliminando chat y subcollections...');
+    const batch = writeBatch(db);
+    
+    // Eliminar el documento principal del chat
+    batch.delete(chatRef);
+
+    // Nota: En un entorno de producción, deberías usar Cloud Functions
+    // para eliminar las subcollections (messages) de forma segura
+    // Por ahora solo eliminamos el documento principal
+    
+    await batch.commit();
+    console.log('✅ Grupo eliminado exitosamente de Firebase');
+  } catch (error) {
+    console.error('💥 Error eliminando grupo:', error);
+    throw error;
+  }
+}
+
+/**
+ * Actualizar información del grupo en Firebase cuando cambia en el backend
+ * @param group Datos actualizados del grupo
+ */
+export async function updateGroupFirebase(group: Group): Promise<void> {
+  console.log('🔄 updateGroupFirebase - Actualizando grupo:', group.id, group.name);
+  
+  try {
+    const chatRef = doc(db, 'chats', String(group.id));
+
+    console.log('💾 Actualizando información del grupo en Firebase...');
+    await setDoc(chatRef, {
+      // Convertir IDs numéricos a strings para Clerk IDs si es necesario
+      // members: group.membersIds?.map(id => String(id)) || [],
+      // admins: group.adminsIds?.map(id => String(id)) || [],
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+    
+    console.log('✅ Grupo actualizado exitosamente en Firebase');
+  } catch (error) {
+    console.error('💥 Error actualizando grupo en Firebase:', error);
+    console.error('📋 UpdateGroup error details:', { 
+      code: error.code, 
+      message: error.message, 
+      groupId: group.id 
+    });
+    throw error;
+  }
+}

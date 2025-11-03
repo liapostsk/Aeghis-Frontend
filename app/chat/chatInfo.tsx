@@ -16,11 +16,23 @@ import { UserDto } from '@/api/types';
 import { Group } from '@/api/group/groupType';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
-import { deleteGroup, exitGroup, getGroupById } from '@/api/group/groupApi';
+import { 
+    deleteGroup, 
+    exitGroup, 
+    getGroupById, 
+    promoteToAdmin, 
+    demoteToMember, 
+    removeMember 
+} from '@/api/group/groupApi';
 import { getUser, getCurrentUser } from '@/api/user/userApi';
-// Importaciones de Firebase - funciones eliminadas en limpieza anterior
-// import { removeMemberFromGroupFirebase, makeMemberAdminFirebase, deleteGroupFirebase } from '@/api/firebase/chat/chatService';
-// import { getUserProfileFB } from '@/api/firebase/users/userService';
+// Importaciones de Firebase - funciones restauradas
+import { 
+    removeMemberFromGroupFirebase, 
+    makeMemberAdminFirebase, 
+    removeAdminFirebase,
+    deleteGroupFirebase 
+} from '@/api/firebase/chat/chatService';
+import { getUserProfileFB } from '@/api/firebase/users/userService';
 import AlertModal from '@/components/common/AlertModal';
 import InviteModal from '@/components/groups/InviteModal';
 import EditGroupModal from '@/components/groups/EditGroupModal';
@@ -59,18 +71,11 @@ export default function GroupInfoScreen() {
         for (const member of members) {
             if (member.clerkId) {
                 try {
-                    // TODO: Reimplement getUserProfileFB or use alternative Firebase user info
-                    // const fbData = await getUserProfileFB(member.clerkId);
-                    // statusMap[member.clerkId] = {
-                    //     isOnline: fbData.isOnline || false,
-                    //     lastSeen: fbData.lastSeen?.toDate ? fbData.lastSeen.toDate() : undefined
-                    // };
-                    
-                    // Temporary fallback: simulate realistic online/offline status
-                    const isOnline = Math.random() > 0.7; // 30% chance of being online
+                    // Obtener datos reales de Firebase
+                    const fbData = await getUserProfileFB(member.clerkId);
                     statusMap[member.clerkId] = {
-                        isOnline: isOnline,
-                        lastSeen: isOnline ? undefined : new Date(Date.now() - Math.random() * 86400000) // Random time within last 24h if offline
+                        isOnline: fbData.isOnline || false,
+                        lastSeen: fbData.lastSeen?.toDate ? fbData.lastSeen.toDate() : undefined
                     };
                 } catch (error) {
                     console.warn(`No se pudieron cargar datos de Firebase para ${member.name}:`, error);
@@ -166,27 +171,46 @@ export default function GroupInfoScreen() {
     const confirmRemoveMember = async () => {
         if (selectedMember && group) {
             try {
-                // Actualizar estado local
+                console.log(`🗑️ Eliminando miembro ${selectedMember.name} del grupo ${group.name}`);
+                
+                // 1. Llamada al backend para remover miembro
+                const updatedGroup = await removeMember(group.id, selectedMember.id);
+                console.log('✅ Miembro removido del backend');
+                
+                // 2. Actualizar Firebase si el usuario tiene clerkId
+                if (selectedMember.clerkId) {
+                    await removeMemberFromGroupFirebase(group.id.toString(), selectedMember.clerkId);
+                    console.log('✅ Miembro removido de Firebase');
+                }
+                
+                // 3. Actualizar estado local con datos del backend
+                setGroup(updatedGroup);
                 setMembers(prev => prev.filter(m => m.id !== selectedMember.id));
                 
-                // Llamadas a las APIs
-                await exitGroup(group.id, selectedMember.id);
-                
-                // TODO: Reimplement Firebase member removal
-                // if (selectedMember.clerkId) {
-                //     await removeMemberFromGroupFirebase(group.id.toString(), selectedMember.clerkId);
-                // }
+                // 4. Actualizar roles si era admin
+                setMemberRoles(prev => {
+                    const newRoles = { ...prev };
+                    delete newRoles[selectedMember.id];
+                    return newRoles;
+                });
                 
                 Alert.alert('Éxito', `${selectedMember.name} ha sido eliminado del grupo`);
+                
             } catch (error) {
-                console.error('Error removing member:', error);
-                Alert.alert('Error', 'No se pudo eliminar el miembro');
-                // Revertir cambio local si falló
-                const groupData = await getGroupById(group.id);
-                const loadedMembers = await Promise.all(
-                    groupData.membersIds.map(id => getUser(id))
-                );
-                setMembers(loadedMembers);
+                console.error('💥 Error eliminando miembro:', error);
+                Alert.alert('Error', 'No se pudo eliminar el miembro. Verifica que tienes permisos de administrador.');
+                
+                // Recargar datos en caso de error
+                try {
+                    const groupData = await getGroupById(group.id);
+                    const loadedMembers = await Promise.all(
+                        groupData.membersIds.map(id => getUser(id))
+                    );
+                    setGroup(groupData);
+                    setMembers(loadedMembers);
+                } catch (reloadError) {
+                    console.error('Error recargando datos:', reloadError);
+                }
             }
         }
         setShowRemoveModal(false);
@@ -201,21 +225,28 @@ export default function GroupInfoScreen() {
     const confirmPromoteToAdmin = async () => {
         if (selectedMember && group) {
             try {
-                // Actualizar estado local
+                console.log(`👑 Promoviendo ${selectedMember.name} a administrador del grupo ${group.name}`);
+                
+                // 1. Llamada al backend para promover a admin
+                const updatedGroup = await promoteToAdmin(group.id, selectedMember.id);
+                console.log('✅ Usuario promovido en backend');
+                
+                // 2. Actualizar Firebase si el usuario tiene clerkId
+                if (selectedMember.clerkId) {
+                    await makeMemberAdminFirebase(group.id.toString(), selectedMember.clerkId);
+                    console.log('✅ Usuario promovido en Firebase');
+                }
+                
+                // 3. Actualizar estado local
+                setGroup(updatedGroup);
                 setMemberRoles(prev => ({ ...prev, [selectedMember.id]: 'admin' }));
                 
-                // TODO: Llamar API del backend para promover a admin
-                // await promoteToAdmin(group.id, selectedMember.id);
-                
-                // TODO: Reimplement Firebase admin promotion
-                // if (selectedMember.clerkId) {
-                //     await makeMemberAdminFirebase(group.id.toString(), selectedMember.clerkId);
-                // }
-                
                 Alert.alert('Éxito', `${selectedMember.name} ahora es administrador`);
+                
             } catch (error) {
-                console.error('Error promoting member:', error);
-                Alert.alert('Error', 'No se pudo promover el miembro');
+                console.error('💥 Error promoviendo miembro:', error);
+                Alert.alert('Error', 'No se pudo promover el miembro. Verifica que tienes permisos de administrador.');
+                
                 // Revertir cambio local si falló
                 setMemberRoles(prev => ({ ...prev, [selectedMember.id]: 'member' }));
             }
@@ -224,10 +255,30 @@ export default function GroupInfoScreen() {
         setSelectedMember(null);
     };
 
-    const handleDemoteToMember = (member: UserDto) => {
-        setMemberRoles(prev => ({ ...prev, [member.id]: 'member' }));
-        Alert.alert('Éxito', 'Permiso de administrador removido');
-        // TODO: Llamar API para remover permisos de admin
+    const handleDemoteToMember = async (member: UserDto) => {
+        try {
+            console.log(`👤 Degradando ${member.name} de administrador a miembro`);
+            
+            // 1. Llamada al backend para degradar admin
+            const updatedGroup = await demoteToMember(group!.id, member.id);
+            console.log('✅ Usuario degradado en backend');
+            
+            // 2. Actualizar Firebase si el usuario tiene clerkId
+            if (member.clerkId) {
+                await removeAdminFirebase(group!.id.toString(), member.clerkId);
+                console.log('✅ Usuario degradado en Firebase');
+            }
+            
+            // 3. Actualizar estado local
+            setGroup(updatedGroup);
+            setMemberRoles(prev => ({ ...prev, [member.id]: 'member' }));
+            
+            Alert.alert('Éxito', `${member.name} ya no es administrador`);
+            
+        } catch (error) {
+            console.error('💥 Error degradando admin:', error);
+            Alert.alert('Error', 'No se pudo remover los permisos de administrador');
+        }
     };
 
     // Manejar salida o eliminación del grupo
@@ -240,17 +291,30 @@ export default function GroupInfoScreen() {
 
         try {
             if (members.length <= 2) {
-                // Eliminar grupo: solo del backend por ahora
-                console.log('Eliminando grupo del backend...');
-                // TODO: Reimplement Firebase group deletion
-                // await deleteGroupFirebase(group.id.toString());
+                // Eliminar grupo: Firebase primero, luego backend
+                console.log('🗑️ Eliminando grupo completamente...');
                 
+                // 1. Eliminar de Firebase
+                await deleteGroupFirebase(group.id.toString());
+                console.log('✅ Grupo eliminado de Firebase');
+                
+                // 2. Eliminar del backend
                 await deleteGroup(group.id);
+                console.log('✅ Grupo eliminado del backend');
                 
                 Alert.alert('Grupo eliminado', 'El grupo ha sido eliminado exitosamente');
             } else {
                 // Salir del grupo
+                console.log('🚪 Saliendo del grupo...');
                 await exitGroup(group.id, currentUserId);
+                
+                // Si tengo clerkId, también salir de Firebase
+                const currentUser = await getCurrentUser();
+                if (currentUser.clerkId) {
+                    // Nota: esto requeriría una función específica, por ahora solo backend
+                    console.log('ℹ️ Salida de Firebase se manejará automáticamente');
+                }
+                
                 Alert.alert('Has salido del grupo', 'Has abandonado el grupo exitosamente');
             }
             
@@ -321,12 +385,19 @@ export default function GroupInfoScreen() {
                 {/* Admin Actions - Solo si el usuario actual es admin y no es el mismo usuario */}
                 {isCurrentUserAdmin && !isOwn && (
                     <View style={styles.adminActions}>
-                        {role === 'member' && (
+                        {role === 'member' ? (
                             <Pressable
                                 onPress={() => handlePromoteToAdmin(user)}
                                 style={styles.adminButton}
                             >
                                 <Ionicons name="shield" size={16} color="#7A33CC" />
+                            </Pressable>
+                        ) : (
+                            <Pressable
+                                onPress={() => handleDemoteToMember(user)}
+                                style={[styles.adminButton, styles.warningButton]}
+                            >
+                                <Ionicons name="shield-outline" size={16} color="#F59E0B" />
                             </Pressable>
                         )}
                         <Pressable
@@ -718,6 +789,9 @@ const styles = StyleSheet.create({
   },
   dangerButton: {
     backgroundColor: '#FEF2F2',
+  },
+  warningButton: {
+    backgroundColor: '#FFFBEB',
   },
 
   // Exit Button

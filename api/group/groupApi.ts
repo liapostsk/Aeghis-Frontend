@@ -43,3 +43,36 @@ export const editGroup = async (groupId: number, groupDto: Partial<Group>): Prom
 export const deleteGroup = async (groupId: number): Promise<void> => {
   await api.delete(`/group/${groupId}`);
 };
+
+/**
+ * Promover un usuario a administrador del grupo
+ * POST /group/{groupId}/promote-admin
+ */
+export const promoteToAdmin = async (groupId: number, userId: number): Promise<Group> => {
+  const response = await api.post(`/group/${groupId}/promote-admin`, null, {
+    params: { userId }
+  });
+  return response.data;
+};
+
+/**
+ * Degradar un administrador a miembro regular
+ * POST /group/{groupId}/demote-admin
+ */
+export const demoteToMember = async (groupId: number, userId: number): Promise<Group> => {
+  const response = await api.post(`/group/${groupId}/demote-admin`, null, {
+    params: { userId }
+  });
+  return response.data;
+};
+
+/**
+ * Remover un miembro del grupo (solo administradores)
+ * DELETE /group/{groupId}/remove-member
+ */
+export const removeMember = async (groupId: number, userId: number): Promise<Group> => {
+  const response = await api.delete(`/group/${groupId}/remove-member`, {
+    params: { userId }
+  });
+  return response.data;
+};
