@@ -20,6 +20,9 @@ import * as ExpoLocation from 'expo-location';
 import SafeLocationModal from '@/components/safeLocations/SafeLocationModal';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
+import { joinJourneyParticipation } from '@/api/firebase/journey/participationsService';
+import { addUserPosition } from '@/api/firebase/journey/positionsService';
+import { auth } from '@/firebaseconfig';
 
 interface JoinJourneyModalProps {
   visible: boolean;
@@ -27,6 +30,7 @@ interface JoinJourneyModalProps {
   journey: JourneyDto;
   currentUser: UserDto | null;
   onJoinSuccess: (participation: ParticipationDto) => void;
+  chatId: string; // ID del chat para Firebase
 }
 
 export default function JoinJourneyModal({
@@ -34,7 +38,8 @@ export default function JoinJourneyModal({
   onClose,
   journey,
   currentUser,
-  onJoinSuccess
+  onJoinSuccess,
+  chatId
 }: JoinJourneyModalProps) {
   
   const [loading, setLoading] = useState(false);
@@ -159,6 +164,37 @@ export default function JoinJourneyModal({
 
       await updateJourney(updatedJourney);
       console.log('Journey actualizado con nueva participación');
+
+      // 5.5. Sincronizar con Firebase
+      try {
+        const destinationPosition = selectedDestination ? {
+          latitude: selectedDestination.latitude,
+          longitude: selectedDestination.longitude,
+          timestamp: new Date()
+        } : undefined;
+
+        await joinJourneyParticipation(chatId, journey.id.toString(), {
+          destination: destinationPosition,
+          backendParticipationId: participationId,
+          initialState: 'ACCEPTED'
+        });
+
+        // Añadir posición inicial
+        if (deviceLocation && auth.currentUser?.uid) {
+          await addUserPosition(
+            chatId,
+            journey.id.toString(),
+            auth.currentUser.uid,
+            deviceLocation.coords.latitude,
+            deviceLocation.coords.longitude
+          );
+        }
+
+        console.log('Participación sincronizada con Firebase');
+      } catch (firebaseError) {
+        console.warn('Error sincronizando con Firebase:', firebaseError);
+        // No fallar la operación principal por errores de Firebase
+      }
 
       // 6. Notificar éxito
       const createdParticipation: ParticipationDto = {

@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 import { getUserGroupsByType } from '@/api/group/groupApi';
-import { getGroupTilesInfo, updateGroupFirebase, markChatSeen } from '@/api/firebase/chat/chatService';
+import { getGroupTilesInfo, markChatSeen } from '@/api/firebase/chat/chatService';
 import { GroupTileInfo } from '@/api/firebase/types';
 import { auth } from '@/firebaseconfig';
 import { Group } from '@/api/group/groupType';
@@ -91,7 +91,8 @@ export default function GroupsList({ groupType, emptyTitle, emptySubtitle, noteT
   }, [groups, search]);
 
   const navigateToChat = (group: Group) => {
-    updateGroupFirebase(group);
+    console.log("Info del grupo seleccionado:", group);
+    //updateGroupFirebase(group);
     void markChatSeen(String(group.id)).catch(() => {});
     router.push({
       pathname: '/chat',

@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, Alert } from 'react-native';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
+import { View, Text, StyleSheet, Pressable} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import BottomSheet, { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
 
@@ -26,9 +26,10 @@ interface GroupWithJourney {
 interface Props {
   groupJourney?: GroupWithJourney | null;
   onStartJourney: () => void;
+  onCompleteJourney?: () => void;
 }
 
-export default function JourneyOverlay({ groupJourney, onStartJourney }: Props) {
+export default function JourneyOverlay({ groupJourney, onStartJourney, onCompleteJourney }: Props) {
   // Estados principales
   const [activeJourney, setActiveJourney] = useState<JourneyDto | null>(null);
   
@@ -233,6 +234,14 @@ export default function JourneyOverlay({ groupJourney, onStartJourney }: Props) 
               <Text style={styles.startButtonText}>Iniciar Trayecto</Text>
             </Pressable>
           )}
+          
+          {selectedGroupJourney.activeJourney.state === 'IN_PROGRESS' && (
+            <View style={styles.actionButtonsContainer}>
+              <Text style={styles.inProgressText}>
+                🟢 Trayecto en curso • Ubicación compartida
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Lista de participantes usando el componente dedicado */}
@@ -242,29 +251,15 @@ export default function JourneyOverlay({ groupJourney, onStartJourney }: Props) 
           contentContainerStyle={styles.participantsListContent}
         >
           <ParticipantsList 
-            participants={selectedGroupJourney.group.membersIds.map((memberId, index) => ({
-              id: memberId,
-              name: `Usuario ${index + 1}`, // TODO: Obtener nombres reales de la API
-              email: `user${index + 1}@example.com`,
-              phone: `12345678${index}`
-            }))}
+            journey={selectedGroupJourney.activeJourney}
             autoRefresh={true}
             refreshInterval={30000}
           />
         </BottomSheetScrollView>
 
-        {selectedGroupJourney.activeJourney.state === 'IN_PROGRESS' && (
+        {selectedGroupJourney.activeJourney.state === 'IN_PROGRESS' && onCompleteJourney && (
           <View style={styles.sheetFooter}>
-            <Pressable style={styles.endButton} onPress={() => {
-              Alert.alert(
-                'Finalizar trayecto',
-                '¿Estás seguro de que quieres finalizar el trayecto?',
-                [
-                  { text: 'Cancelar', style: 'cancel' },
-                  { text: 'Finalizar', onPress: () => console.log('Finalizar trayecto') }
-                ]
-              );
-            }}>
+            <Pressable style={styles.endButton} onPress={onCompleteJourney}>
               <Ionicons name="stop-circle" size={20} color="#FFFFFF" />
               <Text style={styles.endButtonText}>Finalizar Trayecto</Text>
             </Pressable>
@@ -781,5 +776,17 @@ const styles = StyleSheet.create({
   // Sección de batería
   batterySection: {
     marginVertical: 16,
+  },
+
+  // Estilos para botones de acción
+  actionButtonsContainer: {
+    marginTop: 8,
+  },
+  inProgressText: {
+    fontSize: 14,
+    color: '#10B981',
+    fontWeight: '600',
+    textAlign: 'center',
+    paddingVertical: 8,
   },
 });

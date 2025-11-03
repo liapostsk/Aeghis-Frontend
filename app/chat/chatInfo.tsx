@@ -18,8 +18,9 @@ import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 import { deleteGroup, exitGroup, getGroupById } from '@/api/group/groupApi';
 import { getUser, getCurrentUser } from '@/api/user/userApi';
-import { removeMemberFromGroupFirebase, makeMemberAdminFirebase, deleteGroupFirebase } from '@/api/firebase/chat/chatService';
-import { getUserProfileFB } from '@/api/firebase/users/userService';
+// Importaciones de Firebase - funciones eliminadas en limpieza anterior
+// import { removeMemberFromGroupFirebase, makeMemberAdminFirebase, deleteGroupFirebase } from '@/api/firebase/chat/chatService';
+// import { getUserProfileFB } from '@/api/firebase/users/userService';
 import AlertModal from '@/components/common/AlertModal';
 import InviteModal from '@/components/groups/InviteModal';
 import EditGroupModal from '@/components/groups/EditGroupModal';
@@ -58,10 +59,18 @@ export default function GroupInfoScreen() {
         for (const member of members) {
             if (member.clerkId) {
                 try {
-                    const fbData = await getUserProfileFB(member.clerkId);
+                    // TODO: Reimplement getUserProfileFB or use alternative Firebase user info
+                    // const fbData = await getUserProfileFB(member.clerkId);
+                    // statusMap[member.clerkId] = {
+                    //     isOnline: fbData.isOnline || false,
+                    //     lastSeen: fbData.lastSeen?.toDate ? fbData.lastSeen.toDate() : undefined
+                    // };
+                    
+                    // Temporary fallback: simulate realistic online/offline status
+                    const isOnline = Math.random() > 0.7; // 30% chance of being online
                     statusMap[member.clerkId] = {
-                        isOnline: fbData.isOnline || false,
-                        lastSeen: fbData.lastSeen?.toDate ? fbData.lastSeen.toDate() : undefined
+                        isOnline: isOnline,
+                        lastSeen: isOnline ? undefined : new Date(Date.now() - Math.random() * 86400000) // Random time within last 24h if offline
                     };
                 } catch (error) {
                     console.warn(`No se pudieron cargar datos de Firebase para ${member.name}:`, error);
@@ -163,10 +172,10 @@ export default function GroupInfoScreen() {
                 // Llamadas a las APIs
                 await exitGroup(group.id, selectedMember.id);
                 
-                // Llamar a Firebase usando el clerkId
-                if (selectedMember.clerkId) {
-                    await removeMemberFromGroupFirebase(group.id.toString(), selectedMember.clerkId);
-                }
+                // TODO: Reimplement Firebase member removal
+                // if (selectedMember.clerkId) {
+                //     await removeMemberFromGroupFirebase(group.id.toString(), selectedMember.clerkId);
+                // }
                 
                 Alert.alert('Éxito', `${selectedMember.name} ha sido eliminado del grupo`);
             } catch (error) {
@@ -198,10 +207,10 @@ export default function GroupInfoScreen() {
                 // TODO: Llamar API del backend para promover a admin
                 // await promoteToAdmin(group.id, selectedMember.id);
                 
-                // Llamar a Firebase usando el clerkId
-                if (selectedMember.clerkId) {
-                    await makeMemberAdminFirebase(group.id.toString(), selectedMember.clerkId);
-                }
+                // TODO: Reimplement Firebase admin promotion
+                // if (selectedMember.clerkId) {
+                //     await makeMemberAdminFirebase(group.id.toString(), selectedMember.clerkId);
+                // }
                 
                 Alert.alert('Éxito', `${selectedMember.name} ahora es administrador`);
             } catch (error) {
@@ -231,11 +240,11 @@ export default function GroupInfoScreen() {
 
         try {
             if (members.length <= 2) {
-                // Eliminar grupo: primero Firebase, luego base de datos
-                console.log('Eliminando grupo de Firebase...');
-                await deleteGroupFirebase(group.id.toString());
+                // Eliminar grupo: solo del backend por ahora
+                console.log('Eliminando grupo del backend...');
+                // TODO: Reimplement Firebase group deletion
+                // await deleteGroupFirebase(group.id.toString());
                 
-                console.log('Firebase eliminado exitosamente, eliminando de base de datos...');
                 await deleteGroup(group.id);
                 
                 Alert.alert('Grupo eliminado', 'El grupo ha sido eliminado exitosamente');

@@ -2,7 +2,9 @@ import axios from "axios";
 import { getAuthToken } from "@/lib/auth/tokenStore";
 
 const api = axios.create({
-  baseURL: process.env.EXPO_PUBLIC_API_URL,
+  baseURL: process.env.EXPO_PUBLIC_API_URL_LOCAL,
+  //process.env.EXPO_PUBLIC_API_URL, --> PROD
+  //process.env.EXPO_PUBLIC_API_URL_LOCAL, --> DEV
   timeout: 10000,
 });
 

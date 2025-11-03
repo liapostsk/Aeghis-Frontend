@@ -25,6 +25,10 @@ import { createJourney, updateJourney } from '@/api/journeys/journeyApi';
 import { createParticipation } from '@/api/participations/participationApi';
 import { createLocation } from '@/api/locations/locationsApi';
 import { sendMessageFirebase } from '@/api/firebase/chat/chatService';
+import { createJourneyInChat } from '@/api/firebase/journey/journeyService';
+import { joinJourneyParticipation } from '@/api/firebase/journey/participationsService';
+import { addUserPosition } from '@/api/firebase/journey/positionsService';
+import { auth } from '@/firebaseconfig';
 import * as ExpoLocation from 'expo-location';
 import SafeLocationModal from '@/components/safeLocations/SafeLocationModal';
 import {
@@ -37,7 +41,6 @@ import {
     JourneyType,
     validateJourneyForm,
     generateDefaultJourneyName,
-    mapJourneyTypeToAPI
 } from '@/components/journey';
 
 export default function journey() {
@@ -272,8 +275,17 @@ ID del trayecto: ${journeyId}`;
             const token = await getToken();
             setToken(token);
 
+            // Crear journey en el backend
             const journeyId = await createJourney(journeyData as JourneyDto);
             console.log('Journey creado con ID:', journeyId);
+
+            // Crear journey en Firebase para tiempo real
+            setCreationStep('Configurando journey en tiempo real...');
+            const chatId = group?.id?.toString();
+            if (chatId) {
+                await createJourneyInChat(chatId, { ...journeyData, id: journeyId } as JourneyDto);
+                console.log('Journey creado en Firebase:', chatId, journeyId);
+            }
 
             // 2. Añadir automáticamente al CREADOR como participante
             setCreationStep('Añadiéndote como participante...');
@@ -311,8 +323,38 @@ ID del trayecto: ${journeyId}`;
                 destinationId: destinationLocationId || originLocationId // Si no hay destino específico, usar origen
             };
             
+            // Crear participación en backend
             const creatorParticipationId = await createParticipation(creatorParticipationData as ParticipationDto);
             console.log('Creador añadido como participante con ID:', creatorParticipationId);
+
+            // Crear participación en Firebase para tiempo real
+            if (chatId) {
+                const destinationPosition = selectedDestination ? {
+                    latitude: selectedDestination.latitude,
+                    longitude: selectedDestination.longitude,
+                    timestamp: new Date()
+                } : undefined;
+
+                await joinJourneyParticipation(chatId, journeyId.toString(), {
+                    destination: destinationPosition,
+                    backendParticipationId: creatorParticipationId,
+                    initialState: 'ACCEPTED'
+                });
+                console.log('Participación creada en Firebase');
+
+                // Añadir posición inicial del creador (usar Clerk UID)
+                if (deviceLocation) {
+                    // El servicio de Firebase usa el UID de Clerk automáticamente
+                    await addUserPosition(
+                        chatId, 
+                        journeyId.toString(), 
+                        auth.currentUser?.uid || '', 
+                        deviceLocation.coords.latitude, 
+                        deviceLocation.coords.longitude
+                    );
+                    console.log('Posición inicial añadida');
+                }
+            }
 
             // 3. Actualizar journey con ID de participación del creador
             setCreationStep('Actualizando trayecto...');

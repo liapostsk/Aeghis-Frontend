@@ -163,7 +163,19 @@ export default function SafeLocationsSection({ locations, onAddLocation }: Props
         visible={modalAddSaveLocationVisible}
         onClose={() => setModalAddSaveLocationVisible(false)}
         onSelectLocation={(location) => {
-          handleLocationAdded(location);
+          // Convertir SelectableLocation a SafeLocation
+          const safeLocation: SafeLocation = {
+            id: location.id,
+            name: location.name || `Ubicación (${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)})`,
+            description: ('description' in location) ? location.description : undefined,
+            address: location.address || 'Coordenadas personalizadas',
+            type: location.type || 'custom',
+            distance: location.distance,
+            latitude: location.latitude,
+            longitude: location.longitude,
+            externalId: location.externalId,
+          };
+          handleLocationAdded(safeLocation);
           setModalAddSaveLocationVisible(false);
         }}
       />

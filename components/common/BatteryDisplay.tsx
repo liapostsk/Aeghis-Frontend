@@ -3,10 +3,16 @@ import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { 
   updateUserBatteryLevel,
-  getCurrentUserBatteryLevel,
   getMultipleUsersBatteryInfo
 } from '@/api/firebase/users/userService';
 import { useBatteryLevel } from '@/lib/hooks/useBatteryLevel';
+
+// Importar tipos y APIs existentes
+import { JourneyDto } from '@/api/journeys/journeyType';
+import { UserDto } from '@/api/types';
+import { getParticipation } from '@/api/participations/participationApi';
+import { getUser } from '@/api/user/userApi';
+import { useUserStore } from '@/lib/storage/useUserStorage';
 
 interface BatteryDisplayProps {
   userId?: number | string;
@@ -28,12 +34,10 @@ export default function BatteryDisplay({
     isLoading,
     error,
     lastUpdated,
-    refreshBatteryLevel,
-    syncWithFirebase
+    refreshBatteryLevel
   } = useBatteryLevel({
     updateInterval: autoRefresh ? refreshInterval : 0,
-    autoSync: autoRefresh,
-    silentUpdate: false
+    autoSync: autoRefresh
   });
 
   // Actualizar batería con el nivel real del dispositivo
@@ -44,7 +48,7 @@ export default function BatteryDisplay({
       
       if (level !== null) {
         // Sincronizar con Firebase
-        await syncWithFirebase(level);
+        await updateUserBatteryLevel(level);
         Alert.alert(
           'Éxito', 
           `Nivel de batería actualizado: ${level}%${isCharging ? ' (Cargando)' : ''}`
@@ -52,7 +56,7 @@ export default function BatteryDisplay({
       } else {
         // Si no se pudo obtener, intentar usar el último valor conocido
         if (batteryLevel !== null) {
-          await syncWithFirebase(batteryLevel);
+          await updateUserBatteryLevel(batteryLevel);
           Alert.alert(
             'Advertencia', 
             `Usando último nivel conocido: ${batteryLevel}%\nNo se pudo obtener nivel actual del dispositivo`
@@ -70,7 +74,7 @@ export default function BatteryDisplay({
       // Intentar guardar el último nivel conocido como fallback
       if (batteryLevel !== null) {
         try {
-          await syncWithFirebase(batteryLevel);
+          await updateUserBatteryLevel(batteryLevel);
           Alert.alert(
             'Guardado parcial', 
             `Se guardó el último nivel conocido: ${batteryLevel}%`
@@ -159,73 +163,98 @@ export default function BatteryDisplay({
   );
 }
 
-// Lista detallada de participantes con información completa
+// Lista simplificada de participantes usando los tipos existentes
 export function ParticipantsList({ 
-  participants, 
+  journey,
   autoRefresh = true, 
   refreshInterval = 30000 
 }: { 
-  participants: Array<{
-    id: string | number;
-    name: string;
-    email?: string;
-    phone?: string;
-  }>;
+  journey: JourneyDto;
   autoRefresh?: boolean;
   refreshInterval?: number;
 }) {
   const [participantsData, setParticipantsData] = useState<Array<{
-    user: {
-      id: string | number;
-      name: string;
-      email?: string;
-      phone?: string;
-    };
+    user: UserDto;
     batteryLevel: number | null;
     isConnected: boolean;
     lastSeen: Date;
   }>>([]);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Obtener el usuario actual del store
+  const { user: currentUser } = useUserStore();
 
   const fetchParticipantsData = async () => {
     try {
       setIsLoading(true);
-      const userIds = participants.map(p => String(p.id));
+      console.log('📊 Cargando datos de participantes para journey:', journey.id);
       
-      if (userIds.length === 0) {
+      if (!journey.participantsIds || journey.participantsIds.length === 0) {
+        console.log('⚠️ No hay participantes en este journey');
         setParticipantsData([]);
         return;
       }
 
-      // Obtener información de batería de Firebase
-      const batteryInfo = await getMultipleUsersBatteryInfo(userIds);
+      // 1. Obtener información de participantes del backend
+      const participantUsers: UserDto[] = [];
       
-      // Combinar datos de participantes con información de batería
-      const participantsWithData = participants.map(participant => {
-        const info = batteryInfo[String(participant.id)];
+      for (const participationId of journey.participantsIds) {
+        try {
+          // Obtener la participación para conseguir el userId
+          const participation = await getParticipation(participationId);
+          console.log('🔍 Participación obtenida:', participation);
+          
+          // Obtener los datos del usuario
+          const user = await getUser(participation.userId);
+          console.log('👤 Usuario obtenido:', user);
+          
+          // Excluir al usuario actual de la lista
+          if (currentUser && user.id !== currentUser.id) {
+            participantUsers.push(user);
+          }
+        } catch (error) {
+          console.warn('⚠️ Error obteniendo participante:', participationId, error);
+        }
+      }
+
+      console.log('👥 Total participantes cargados (excluyendo usuario actual):', participantUsers.length);
+
+      // 2. Obtener información de batería de Firebase (usando Clerk IDs)
+      const clerkIds = participantUsers
+        .map(user => user.clerkId || user.id.toString()) // Usar clerkId si existe, sino el ID
+        .filter(Boolean);
+        
+      console.log('🔋 Obteniendo batería para IDs:', clerkIds);
+      
+      const batteryInfo = clerkIds.length > 0 
+        ? await getMultipleUsersBatteryInfo(clerkIds)
+        : {};
+      
+      console.log('📊 Información de batería obtenida:', batteryInfo);
+
+      // 3. Combinar datos
+      const participantsWithData = participantUsers.map(user => {
+        const firebaseId = user.clerkId || user.id.toString();
+        const info = batteryInfo[firebaseId];
+        
         return {
-          user: participant,
+          user,
           batteryLevel: info?.batteryLevel ?? null,
           isConnected: info?.isOnline ?? false,
           lastSeen: info?.lastSeen 
             ? new Date(info.lastSeen.seconds * 1000)
-            : new Date() // Usar fecha actual si no hay lastSeen
+            : new Date()
         };
       });
 
+      console.log('✅ Datos combinados de participantes:', participantsWithData);
       setParticipantsData(participantsWithData);
+      
     } catch (error) {
-      console.error('Error fetching participants data:', error);
+      console.error('💥 Error cargando datos de participantes:', error);
       
-      // En caso de error, mostrar participantes sin datos de batería
-      const fallbackData = participants.map(participant => ({
-        user: participant,
-        batteryLevel: null,
-        isConnected: false,
-        lastSeen: new Date()
-      }));
-      
-      setParticipantsData(fallbackData);
+      // En caso de error, mostrar lista vacía
+      setParticipantsData([]);
     } finally {
       setIsLoading(false);
     }
@@ -236,10 +265,11 @@ export function ParticipantsList({
     fetchParticipantsData();
     
     if (autoRefresh) {
+      console.log(`⏰ Configurando auto-refresh cada ${refreshInterval}ms`);
       const interval = setInterval(fetchParticipantsData, refreshInterval);
       return () => clearInterval(interval);
     }
-  }, [participants, autoRefresh, refreshInterval]);
+  }, [journey.participantsIds, autoRefresh, refreshInterval, currentUser?.id]);
 
   const getBatteryIcon = (level: number | null) => {
     if (level === null) return 'battery-dead-outline';
@@ -288,16 +318,49 @@ export function ParticipantsList({
 
   return (
     <View style={styles.participantsContainer}>
+      <View style={styles.participantsHeader}>
+        <Text style={styles.participantsTitle}>
+          Participantes ({participantsData.length})
+        </Text>
+        {autoRefresh && (
+          <Pressable 
+            onPress={fetchParticipantsData} 
+            style={styles.refreshIconButton}
+            disabled={isLoading}
+          >
+            <Ionicons 
+              name="refresh" 
+              size={16} 
+              color={isLoading ? '#9CA3AF' : '#6B7280'} 
+            />
+          </Pressable>
+        )}
+      </View>
+
       {participantsData.map((participant) => (
         <View key={participant.user.id} style={styles.participantCard}>
           <View style={styles.participantInfo}>
+            {/* Avatar con iniciales */}
             <View style={styles.participantAvatar}>
               <Text style={styles.participantAvatarText}>
-                {participant.user.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                {participant.user.name
+                  .split(' ')
+                  .map(n => n[0])
+                  .join('')
+                  .toUpperCase()
+                  .substring(0, 2)
+                }
               </Text>
             </View>
+            
+            {/* Información del usuario */}
             <View style={styles.participantDetails}>
-              <Text style={styles.participantName}>{participant.user.name}</Text>
+              <Text style={styles.participantName}>
+                {participant.user.name}
+              </Text>
+              <Text style={styles.participantEmail}>
+                {participant.user.phone}
+              </Text>
               <Text style={styles.participantLastSeen}>
                 {formatLastSeen(participant.lastSeen)}
               </Text>
@@ -322,11 +385,10 @@ export function ParticipantsList({
 
             {/* Estado de conexión */}
             <View style={styles.connectionIndicator}>
-              <Ionicons 
-                name={participant.isConnected ? "wifi" : "wifi-outline"} 
-                size={16} 
-                color={participant.isConnected ? '#4CAF50' : '#FF5722'} 
-              />
+              <View style={[
+                styles.connectionDot,
+                { backgroundColor: participant.isConnected ? '#4CAF50' : '#FF5722' }
+              ]} />
               <Text style={[
                 styles.connectionText,
                 { color: participant.isConnected ? '#4CAF50' : '#FF5722' }
@@ -354,12 +416,10 @@ export function DetailedBatteryDisplay({
     isLoading,
     error,
     lastUpdated,
-    refreshBatteryLevel,
-    syncWithFirebase
+    refreshBatteryLevel
   } = useBatteryLevel({
     updateInterval: autoRefresh ? refreshInterval : 0,
-    autoSync: autoRefresh,
-    silentUpdate: false
+    autoSync: autoRefresh
   });
 
   const updateBatteryFromDevice = async () => {
@@ -367,10 +427,10 @@ export function DetailedBatteryDisplay({
       const level = await refreshBatteryLevel();
       
       if (level !== null) {
-        await syncWithFirebase(level);
+        await updateUserBatteryLevel(level);
         Alert.alert('Éxito', `Nivel de batería actualizado a ${level}%`);
       } else if (batteryLevel !== null) {
-        await syncWithFirebase(batteryLevel);
+        await updateUserBatteryLevel(batteryLevel);
         Alert.alert('Advertencia', `Usando último nivel conocido: ${batteryLevel}%`);
       } else {
         Alert.alert('Error', 'No se pudo obtener el nivel de batería');
@@ -677,5 +737,34 @@ const styles = StyleSheet.create({
   batteryText: {
     fontSize: 14,
     fontWeight: '600',
+  },
+
+  // Nuevos estilos para ParticipantsList mejorado
+  participantsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+    paddingHorizontal: 4,
+  },
+  participantsTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  refreshIconButton: {
+    padding: 6,
+    borderRadius: 6,
+  },
+  participantEmail: {
+    fontSize: 11,
+    color: '#9CA3AF',
+    marginTop: 1,
+  },
+  connectionDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 4,
   },
 });

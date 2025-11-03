@@ -17,7 +17,7 @@ import { UserDto } from '@/api/types';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 import { getGroupById } from '@/api/group/groupApi';
-import { sendMessageFirebase, listenGroupMessagesexport, markAllMessagesAsRead} from '@/api/firebase/chat/chatService';
+import { sendMessageFirebase, listenGroupMessages, markAllMessagesAsRead} from '@/api/firebase/chat/chatService';
 import { auth } from '@/firebaseconfig';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import InviteModal from '@/components/groups/InviteModal';
@@ -148,7 +148,7 @@ export default function ChatScreen() {
   if (!groupId) return;
   const uid = auth.currentUser?.uid;
 
-  const unsub = listenGroupMessagesexport(
+  const unsub = listenGroupMessages(
     String(groupId),
     (docs) => {
       const ui = docs.map((m) => ({
@@ -415,6 +415,7 @@ export default function ChatScreen() {
           journey={activeJourney}
           currentUser={currentUserData}
           onJoinSuccess={handleJoinSuccess}
+          chatId={groupId}
         />
       )}
 

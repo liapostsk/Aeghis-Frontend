@@ -21,13 +21,15 @@ export async function createJourneyInChat(chatId: string, journey: JourneyDto) {
   const uid = auth.currentUser?.uid;
   if (!uid) throw new Error("No hay sesión activa en Firebase");
 
+  console.log(`Creando journey ${journey} en chat ${chatId}`);
+
   // Crear el documento usando el tipo JourneyDoc de Firebase
   const journeyDoc: JourneyDoc = {
     ownerId: uid,
     type: journey.journeyType,
     state: journey.state,
     startedAt: serverTimestamp(),
-    endedAt: journey.endDate ? serverTimestamp() : undefined,
+    endedAt: journey.endDate ? serverTimestamp() : null,
   };
 
   const ref = doc(db, `chats/${chatId}/journeys/${journey.id}`);

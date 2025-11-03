@@ -28,101 +28,150 @@ import { Group } from '../../group/groupType';
  */
 function requireUid(): string {
   const uid = auth.currentUser?.uid;
-  if (!uid) throw new Error('No Firebase session. Call linkFirebaseSessionOnce() after Clerk login.');
+  console.log('🔐 requireUid - Usuario actual:', uid);
+  if (!uid) {
+    console.error('❌ No Firebase session en requireUid');
+    throw new Error('No Firebase session. Call linkFirebaseSessionOnce() after Clerk login.');
+  }
   return uid;
 }
 
 // Creación de chats en Firestore
 export async function createGroupFirebase(group: Partial<Group>): Promise<string> {
-  const ownerUid = requireUid();
+  console.log('🏗️ createGroupFirebase - Creando grupo:', group.id, group.name);
+  
+  try {
+    const ownerUid = requireUid();
+    const chatRef = doc(db, 'chats', String(group.id));
+    const now = serverTimestamp();
 
-  const chatRef = doc(db, 'chats', String(group.id));
-  const now = serverTimestamp();
+    const payload: ChatDoc = {
+      type: 'group',
+      admins: ownerUid ? [ownerUid] : [],
+      members: ownerUid ? [ownerUid] : [],
+      ownerId: ownerUid || '',
+      image: group.image || '',
+      lastMessage: null as unknown as MessageDoc,
+      lastMessageAt: "",
+    };
 
-  const payload: ChatDoc = {
-    type: 'group',
-    admins: ownerUid ? [ownerUid] : [],
-    members: ownerUid ? [ownerUid] : [],
-    ownerId: ownerUid || '',
-    image: group.image || '',
-    lastMessage: null as unknown as MessageDoc,
-    lastMessageAt: "",
-  };
-
-  await setDoc(chatRef, payload, { merge: true });
-  return chatRef.id;
+    console.log('💾 Guardando grupo en Firestore...');
+    await setDoc(chatRef, payload, { merge: true });
+    console.log('✅ Grupo creado exitosamente en Firebase:', chatRef.id);
+    return chatRef.id;
+  } catch (error) {
+    console.error('💥 Error creando grupo en Firebase:', error);
+    console.error('📋 Error details:', { code: error.code, message: error.message, groupId: group.id });
+    throw error;
+  }
 }
 
 export async function joinGroupChatFirebase(groupId: string) {
-  const uid = requireUid();
-  const chatRef = doc(db, 'chats', String(groupId));
-
+  console.log('🚪 joinGroupChatFirebase - Uniéndose al grupo:', groupId);
+  
   try {
+    const uid = requireUid();
+    const chatRef = doc(db, 'chats', String(groupId));
+
+    console.log('🔄 Añadiendo usuario a miembros del grupo...');
     await updateDoc(chatRef, {
       members: arrayUnion(uid),
       updatedAt: serverTimestamp(),
     });
-    // ahora que YA eres miembro, si quieres, pon el listener:
-    // const snap = await getDoc(chatRef); // <- si lo necesitas, ahora sí
+    console.log('✅ Usuario unido exitosamente al grupo:', groupId);
   } catch (e: any) {
-    console.log('Join failed:', e.code, e.message);
+    console.error('💥 Error uniéndose al grupo:', e.code, e.message);
+    console.error('📋 Join failed details:', { groupId, code: e.code, message: e.message });
     throw e;
   }
 }
 
 //Update group chat participants when members are added/removed in backend
+/*
 export async function updateGroupFirebase(group: Group) {
-  const chatRef = doc(db, 'chats', String(group.id));
+  console.log('🔄 updateGroupFirebase - Actualizando grupo:', group.id, group.name);
+  
+  try {
+    const chatRef = doc(db, 'chats', String(group.id));
 
-  await setDoc(chatRef, {
-    groupName: group.name,
-    admins: group.adminsIds || [],
-    members: group.membersIds || [],
-    description: group.description || '',
-    updatedAt: serverTimestamp(),
-  }, { merge: true });
+    console.log('💾 Actualizando información del grupo en Firebase...');
+    await setDoc(chatRef, {
+      admins: group.adminsIds || [],
+      members: group.membersIds || [],
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+    console.log('✅ Grupo actualizado exitosamente en Firebase');
+  } catch (error) {
+    console.error('💥 Error actualizando grupo en Firebase:', error);
+    console.error('📋 UpdateGroup error details:', { 
+      code: error.code, 
+      message: error.message, 
+      groupId: group.id 
+    });
+    throw error;
+  }
 }
+*/
 
 // FUNCIONES DE MENSAJERÍA
 
 // sendMessageToGroup, como ahora ya somos miembros, podemos enviar mensajes
 export async function sendMessageFirebase(groupId: string, text: string) {
-  const uid = requireUid();
-  const userSnap = await getDoc(doc(db, 'users', uid));
-  const senderName =
-  (userSnap.exists() && (userSnap.data() as any).displayName) ||
-  (userSnap.exists() && (userSnap.data() as any).name) ||
-  'Unknown';
-  const trimmed = text.trim();
-  if (!trimmed) return;
+  console.log('💬 sendMessageFirebase - Enviando mensaje al grupo:', groupId);
+  
+  try {
+    const uid = requireUid();
+    const trimmed = text.trim();
+    if (!trimmed) {
+      console.log('⚠️ Mensaje vacío, cancelando envío');
+      return;
+    }
 
-  const chatRef = doc(db, 'chats', groupId);
-  const messagesRef = collection(db, 'chats', groupId, 'messages');
-  const newMsgRef = doc(messagesRef); // generas ID primero
+    console.log('👤 Obteniendo información del usuario...');
+    const userSnap = await getDoc(doc(db, 'users', uid));
+    const senderName =
+      (userSnap.exists() && (userSnap.data() as any).displayName) ||
+      (userSnap.exists() && (userSnap.data() as any).name) ||
+      'Unknown';
 
-  const batch = writeBatch(db);
-  batch.set(newMsgRef, {
-    senderId: uid,
-    senderName: senderName,
-    type: 'text',
-    content: trimmed,
-    read: false,
-    timestamp: serverTimestamp(),
-  });
-  batch.set(
-    chatRef,
-    {
-      lastMessage: trimmed.slice(0, 100),
-      lastMessageAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-      lastSenderId: uid,
-      lastSenderName: senderName,
-    },
-    { merge: true }
-  );
+    const chatRef = doc(db, 'chats', groupId);
+    const messagesRef = collection(db, 'chats', groupId, 'messages');
+    const newMsgRef = doc(messagesRef);
 
-  await batch.commit();
-  return newMsgRef.id;
+    console.log('📝 Creando mensaje con batch...');
+    const batch = writeBatch(db);
+    batch.set(newMsgRef, {
+      senderId: uid,
+      senderName: senderName,
+      type: 'text',
+      content: trimmed,
+      read: false,
+      timestamp: serverTimestamp(),
+    });
+    batch.set(
+      chatRef,
+      {
+        lastMessage: trimmed.slice(0, 100),
+        lastMessageAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        lastSenderId: uid,
+        lastSenderName: senderName,
+      },
+      { merge: true }
+    );
+
+    await batch.commit();
+    console.log('✅ Mensaje enviado exitosamente:', newMsgRef.id);
+    return newMsgRef.id;
+  } catch (error) {
+    console.error('💥 Error enviando mensaje:', error);
+    console.error('📋 SendMessage error details:', { 
+      code: error.code, 
+      message: error.message, 
+      groupId 
+    });
+    throw error;
+  }
 }
 
 export async function markAllMessagesAsRead(groupId: string) {
@@ -167,28 +216,59 @@ export async function markAllMessagesAsRead(groupId: string) {
 }
 
 export async function markChatSeen(groupId: string) {
-  const uid = requireUid();
-  const ref = doc(db, 'users', uid, 'chatState', String(groupId));
+  console.log('👁️ markChatSeen - Marcando chat como visto:', groupId);
   
-  await setDoc(ref, { lastReadAt: serverTimestamp() }, { merge: true });
+  try {
+    const uid = requireUid();
+    const ref = doc(db, 'users', uid, 'chatState', String(groupId));
+    
+    console.log('💾 Actualizando estado de chat visto...');
+    await setDoc(ref, { lastReadAt: serverTimestamp() }, { merge: true });
+    console.log('✅ Chat marcado como visto exitosamente');
+  } catch (error) {
+    console.error('💥 Error marcando chat como visto:', error);
+    console.error('📋 MarkChatSeen error details:', { 
+      code: error.code, 
+      message: error.message, 
+      groupId 
+    });
+    throw error;
+  }
 }
 
 //Escucha los mensajes de un grupo en tiempo real
-export function listenGroupMessagesexport (
+export function listenGroupMessages(
   groupId: string,
   onChange: (docs: Array<{ id: string } & MessageDoc>) => void,
   onError?: (err: any) => void,
   max = 200
 ): Unsubscribe {
-  const q = query(
-    collection(db, 'chats', String(groupId), 'messages'),
-    orderBy('timestamp', 'asc'),
-    limit(max),
-  );
-  return onSnapshot(q, snap => {
-    const items = snap.docs.map(d => ({ id: d.id, ...(d.data() as MessageDoc) }));
-    onChange(items);
-  }, onError);
+  console.log('👂 listenGroupMessages - Configurando listener para grupo:', groupId);
+  
+  try {
+    const q = query(
+      collection(db, 'chats', String(groupId), 'messages'),
+      orderBy('timestamp', 'asc'),
+      limit(max),
+    );
+    
+    return onSnapshot(q, snap => {
+      console.log('📡 Mensajes recibidos en snapshot:', snap.docs.length);
+      const items = snap.docs.map(d => ({ id: d.id, ...(d.data() as MessageDoc) }));
+      onChange(items);
+    }, (error) => {
+      console.error('💥 Error en listener de mensajes:', error);
+      console.error('📋 Listener error details:', { 
+        code: error?.code, 
+        message: error?.message, 
+        groupId 
+      });
+      if (onError) onError(error);
+    });
+  } catch (error) {
+    console.error('💥 Error configurando listener de mensajes:', error);
+    throw error;
+  }
 }
 
 export  async function getGroupTileInfo(groupId: string): Promise<GroupTileInfo> {
@@ -317,100 +397,12 @@ export async function getGroupTilesInfo(groupIds: Array<string | number>) {
   return results.filter((result): result is GroupTileInfo => result !== null);
 }
 
-// Eliminar miembro de un grupo
-export async function removeMemberFromGroupFirebase(groupId: string, memberUid: string) {
-  const chatRef = doc(db, 'chats', String(groupId));
-
-  try {
-    await updateDoc(chatRef, {
-      members: arrayRemove(memberUid),
-      updatedAt: serverTimestamp(),
-    });
-    console.log(`✅ Miembro ${memberUid} eliminado del grupo ${groupId}`);
-  } catch (e: any) {
-    console.log('❌ Error eliminando miembro:', e.code, e.message);
-    throw e;
-  }
-}
-
-// Hacer admin a un miembro
-export async function makeMemberAdminFirebase(groupId: string, memberUid: string) {
-  const chatRef = doc(db, 'chats', String(groupId));
-
-  try {
-    await updateDoc(chatRef, {
-      admins: arrayUnion(memberUid),
-      updatedAt: serverTimestamp(),
-    });
-    console.log(`✅ Miembro ${memberUid} promovido a admin en el grupo ${groupId}`);
-  } catch (e: any) {
-    console.log('❌ Error promoviendo a admin:', e.code, e.message);
-    throw e;
-  }
-}
-
-// Quitar admin a un miembro
-export async function removeAdminFirebase(groupId: string, memberUid: string) {
-  const chatRef = doc(db, 'chats', String(groupId));
-
-  try {
-    await updateDoc(chatRef, {
-      admins: arrayRemove(memberUid),
-      updatedAt: serverTimestamp(),
-    });
-    console.log(`✅ Miembro ${memberUid} degradado de admin en el grupo ${groupId}`);
-  } catch (e: any) {
-    console.log('❌ Error degradando de admin:', e.code, e.message);
-    throw e;
-  }
-}
-
-// Eliminar el grupo si eres admin
-export async function deleteGroupFirebase(groupId: string) {
-  const uid = requireUid();
-  const chatRef = doc(db, 'chats', String(groupId));
-
-  try {
-    const chatSnap = await getDoc(chatRef);
-    if (!chatSnap.exists()) {
-      throw new Error(`Chat ${groupId} not found`);
-    }
-    const chat = chatSnap.data() as any;
-    if (chat.ownerId !== uid) {
-      throw new Error('Only the owner can delete the group');
-    }
-
-    // Eliminar todos los mensajes primero
-    const messagesRef = collection(db, 'chats', String(groupId), 'messages');
-    const messagesSnap = await getDocs(messagesRef);
-    const batch = writeBatch(db);
-    messagesSnap.forEach(doc => {
-      batch.delete(doc.ref);
-    });
-    batch.delete(chatRef); // Luego eliminar el chat
-    await batch.commit();
-    console.log(`✅ Grupo ${groupId} eliminado por el propietario ${uid}`);
-  } catch (e: any) {
-    console.log('❌ Error eliminando grupo:', e.code, e.message);
-    throw e;
-  }
-}
-
-// Función para validar permisos de edición (por si se necesita en el futuro)
-export async function validateGroupEditPermissions(groupId: string): Promise<boolean> {
-  const uid = requireUid();
-  const chatRef = doc(db, 'chats', String(groupId));
-
-  try {
-    const chatSnap = await getDoc(chatRef);
-    if (!chatSnap.exists()) {
-      throw new Error(`Chat ${groupId} not found`);
-    }
-    
-    const chat = chatSnap.data() as ChatDoc;
-    return chat.ownerId === uid || chat.admins.includes(uid);
-  } catch (e: any) {
-    console.log('❌ Error validating permissions:', e.code, e.message);
-    return false;
-  }
-}
+// ===== FUNCIONES ELIMINADAS - NO SE USAN =====
+// - removeMemberFromGroupFirebase() - No se usa en ningún lugar
+// - makeMemberAdminFirebase() - No se usa en ningún lugar  
+// - removeAdminFirebase() - No se usa en ningún lugar
+// - deleteGroupFirebase() - No se usa en ningún lugar
+// - validateGroupEditPermissions() - No se usa en ningún lugar
+//
+// Estas funciones se pueden restaurar cuando se implementen las 
+// funcionalidades de administración de grupos.

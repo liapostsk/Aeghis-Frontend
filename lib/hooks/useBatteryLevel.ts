@@ -1,15 +1,20 @@
 import { useState, useEffect, useCallback } from 'react';
 import * as Battery from 'expo-battery';
 import { 
-  updateUserBatteryLevel, 
-  getCurrentUserBatteryLevel,
-  updateBatteryLevelSilent 
+  updateUserBatteryLevel
 } from '../../api/firebase/users/userService';
+
+/*
+El hook automáticamente:
+  1. Lee batería del dispositivo → valida (0-100) → actualiza estado
+  2. Si autoSync=true → guarda en Firebase automáticamente  
+  3. refreshBatteryLevel() → fuerza nueva lectura manual
+  4. updateBatteryFromDevice() → guarda manualmente en Firebase
+*/
 
 interface UseBatteryLevelOptions {
   updateInterval?: number;  // Intervalo en milisegundos para actualizaciones automáticas
   autoSync?: boolean;       // Si debe sincronizar automáticamente con Firebase
-  silentUpdate?: boolean;   // Si debe usar actualización silenciosa (sin lastSeen)
 }
 
 interface BatteryLevelState {
@@ -23,8 +28,7 @@ interface BatteryLevelState {
 export function useBatteryLevel(options: UseBatteryLevelOptions = {}) {
   const {
     updateInterval = 60000, // 1 minuto por defecto
-    autoSync = true,
-    silentUpdate = false
+    autoSync = true
   } = options;
 
   const [batteryState, setBatteryState] = useState<BatteryLevelState>({
@@ -41,9 +45,17 @@ export function useBatteryLevel(options: UseBatteryLevelOptions = {}) {
       const batteryLevel = await Battery.getBatteryLevelAsync();
       const batteryState = await Battery.getBatteryStateAsync();
       const isCharging = batteryState === Battery.BatteryState.CHARGING;
-      console.log('Device battery level:', batteryLevel, 'Charging:', isCharging);
+      
+      // Calcular el nivel y validar que esté entre 0 y 100
+      let level = Math.round(batteryLevel * 100);
+      if (level < 0 || level > 100 || isNaN(level)) {
+        console.warn('Invalid battery level detected:', level, 'Setting to 0');
+        level = 0;
+      }
+      
+      console.log('Device battery level:', level, 'Charging:', isCharging);
       return {
-        level: Math.round(batteryLevel * 100),
+        level,
         isCharging,
       };
     } catch (error) {
@@ -55,16 +67,12 @@ export function useBatteryLevel(options: UseBatteryLevelOptions = {}) {
   // Sincronizar con Firebase
   const syncWithFirebase = useCallback(async (level: number) => {
     try {
-      if (silentUpdate) {
-        //await updateBatteryLevelSilent(level);
-      } else {
-        await updateUserBatteryLevel(level);
-      }
+      await updateUserBatteryLevel(level);
     } catch (error) {
       console.error('Error syncing battery level with Firebase:', error);
       throw error;
     }
-  }, [silentUpdate]);
+  }, []);
 
   // Actualizar el estado de la batería
   const updateBatteryState = useCallback(async () => {
@@ -98,17 +106,6 @@ export function useBatteryLevel(options: UseBatteryLevelOptions = {}) {
     }
   }, [getDeviceBatteryLevel, syncWithFirebase, autoSync]);
 
-  // Obtener el nivel de batería almacenado en Firebase
-  const getFirebaseBatteryLevel = useCallback(async () => {
-    try {
-      const level = await getCurrentUserBatteryLevel();
-      return level;
-    } catch (error) {
-      console.error('Error getting Firebase battery level:', error);
-      throw new Error('No se pudo obtener el nivel de batería de Firebase');
-    }
-  }, []);
-
   // Forzar actualización manual
   const refreshBatteryLevel = useCallback(async () => {
     return await updateBatteryState();
@@ -137,7 +134,13 @@ export function useBatteryLevel(options: UseBatteryLevelOptions = {}) {
         // Solo configurar listener si está disponible
         if (Battery.addBatteryLevelListener) {
           subscription = Battery.addBatteryLevelListener(({ batteryLevel }) => {
-            const level = Math.round(batteryLevel * 100);
+            // Calcular el nivel y validar que esté entre 0 y 100
+            let level = Math.round(batteryLevel * 100);
+            if (level < 0 || level > 100 || isNaN(level)) {
+              console.warn('Invalid battery level detected in listener:', level, 'Setting to 0');
+              level = 0;
+            }
+            
             setBatteryState(prev => ({
               ...prev,
               level,
@@ -167,7 +170,5 @@ export function useBatteryLevel(options: UseBatteryLevelOptions = {}) {
   return {
     ...batteryState,
     refreshBatteryLevel,
-    getFirebaseBatteryLevel,
-    syncWithFirebase: (level: number) => syncWithFirebase(level),
   };
 }
