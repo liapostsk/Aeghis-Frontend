@@ -1,6 +1,5 @@
 export type ChatType = 'direct' | 'group';
-import {JourneyTypes} from '../journeys/journeyType';
-import {JourneyStates} from '../journeys/journeyType';
+import { JourneyType, JourneyState } from '../journeys/journeyType';
 import { ParticipationState } from '../participations/participationType';
 
 // Firebase User Profile Types
@@ -73,16 +72,20 @@ export type GroupTileInfo = {
 
 export interface JourneyDoc {
   ownerId: string;
-  type: typeof JourneyTypes;
-  state: typeof JourneyStates;
+  type: JourneyType;
+  state: JourneyState;
   startedAt: any;       // Firebase Timestamp
   endedAt?: any;        // Firebase Timestamp
 }
 
 export interface Participation {
   userId: string;
-  journeyId: string;
-  satate: ParticipationState;
+  journeyId?: string; // Opcional ya que está implícito en la ruta
+  state: ParticipationState;
+  destination?: Position;
+  backendParticipationId?: number | string;
+  joinedAt: any;      // Firebase Timestamp
+  updatedAt: any;     // Firebase Timestamp
 }
 
 export interface Position {

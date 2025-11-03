@@ -56,7 +56,7 @@ export function useBatteryLevel(options: UseBatteryLevelOptions = {}) {
   const syncWithFirebase = useCallback(async (level: number) => {
     try {
       if (silentUpdate) {
-        await updateBatteryLevelSilent(level);
+        //await updateBatteryLevelSilent(level);
       } else {
         await updateUserBatteryLevel(level);
       }

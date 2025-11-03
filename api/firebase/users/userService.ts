@@ -1,4 +1,4 @@
-import { auth, db } from "../../../firebaseconfig";
+import { auth, db } from "@/firebaseconfig";
 import { doc, getDoc, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import type { 
   FirebaseUserProfile, 
@@ -103,7 +103,7 @@ export async function updateUserBatteryLevel(batteryLevel: number) {
 
   // Validar que el nivel esté entre 0 y 100
   if (batteryLevel < 0 || batteryLevel > 100) {
-    throw new Error('El nivel de batería debe estar entre 0 y 100');
+    //throw new Error('El nivel de batería debe estar entre 0 y 100');   <---- Probar cuando no se use el simulador
   }
 
   const ref = doc(db, 'users', uid);
@@ -188,7 +188,7 @@ export async function updateBatteryLevelSilent(batteryLevel: number) {
 
   // Validar que el nivel esté entre 0 y 100
   if (batteryLevel < 0 || batteryLevel > 100) {
-    throw new Error('El nivel de batería debe estar entre 0 y 100');
+    //throw new Error('El nivel de batería debe estar entre 0 y 100');
   }
 
   const ref = doc(db, 'users', uid);
