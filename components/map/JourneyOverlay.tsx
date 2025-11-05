@@ -1,13 +1,14 @@
-import React, { useState, useCallback, useMemo, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable} from 'react-native';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, Pressable, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import BottomSheet, { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
 
 // Importar APIs y tipos
 import { JourneyDto, JourneyStates } from '@/api/journeys/journeyType';
 import { UserDto } from '@/api/types';
-import { Group } from '@/api/group/groupType';
+import { Group, GROUP_TYPES } from '@/api/group/groupType';
 import { User, useUserStore } from "../../lib/storage/useUserStorage";
+import { getUserGroups } from '@/api/group/groupApi';
 
 // Importar componentes y hooks de batería
 import BatteryDisplay, { ParticipantsList } from '@/components/common/BatteryDisplay';
@@ -29,19 +30,22 @@ interface Props {
   onCompleteJourney?: () => void;
 }
 
-export default function JourneyOverlay({ groupJourney, onStartJourney, onCompleteJourney }: Props) {
+const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStartJourney, onCompleteJourney }: Props) {
   // Estados principales
   const [activeJourney, setActiveJourney] = useState<JourneyDto | null>(null);
   
   const [userGroups, setUserGroups] = useState<Group[]>([]);
   const [currentUser, setCurrentUser] = useState<UserDto | null>(null);
-  const [loading, setLoading] = useState(false); // Cambiar a false ya que no tenemos carga inicial activa
+  const [loading, setLoading] = useState(true); // Cambiar a true para cargar grupos
+  const [groupsLoaded, setGroupsLoaded] = useState(false);
 
   // Estados de modales y UI
   const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
   const [showJoinGroupModal, setShowJoinGroupModal] = useState(false);
   const [showGroupSelection, setShowGroupSelection] = useState(false);
   const [showJourneyOptions, setShowJourneyOptions] = useState(false);
+  const [showGroupTypeSelector, setShowGroupTypeSelector] = useState(false);
+  const [selectedGroupType, setSelectedGroupType] = useState<'CONFIANZA' | 'TEMPORAL' | null>(null);
 
   const {user} = useUserStore();
 
@@ -49,29 +53,130 @@ export default function JourneyOverlay({ groupJourney, onStartJourney, onComplet
   const { getToken } = useAuth(); // Hook para obtener el token de autenticación
   const setToken = useTokenStore((state) => state.setToken); // Hook para guardar el token en el store
 
+  // Cargar grupos del usuario al montar el componente
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadUserGroups = async () => {
+      if (groupJourney) {
+        // Si ya hay un journey activo, no necesitamos cargar grupos
+        if (isMounted) {
+          setLoading(false);
+          setGroupsLoaded(true);
+        }
+        return;
+      }
+
+      if (groupsLoaded) {
+        // Ya se cargaron los grupos, no volver a cargar
+        return;
+      }
+
+      try {
+        console.log('🔄 Cargando grupos del usuario...');
+        const token = await getToken();
+        if (isMounted) {
+          setToken(token);
+        }
+        
+        const groups = await getUserGroups();
+        if (isMounted) {
+          console.log('✅ Grupos cargados:', groups.length);
+          setUserGroups(groups);
+          setGroupsLoaded(true);
+        }
+      } catch (error) {
+        console.error('💥 Error cargando grupos:', error);
+        if (isMounted) {
+          setUserGroups([]);
+          setGroupsLoaded(true);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    if (!groupsLoaded) {
+      loadUserGroups();
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, []); // Solo ejecutar una vez al montar el componente
+
   // Referencias y configuración del Bottom Sheet
   const bottomSheetRef = useRef<BottomSheet>(null);
+  const [contentHeight, setContentHeight] = useState<number>(300); // Valor inicial más apropiado
 
-  // Snap points: collapsed (pequeño tab), half (medio), expanded (completo)
+    // Snap points dinámicos basados en el contenido
   const snapPoints = useMemo(() => {
+    const tabHeight = 150; // Altura del tab colapsado más grande para ser más visible
+    
+    let expandedHeight;
+    let context;
+    
     if (groupJourney) {
-      // Para journey activo: tab pequeño, medio, completo
-      return ['12%', '60%'];
+      // Para journey activo: tab más visible y expandido al contenido
+      expandedHeight = Math.max(contentHeight, 400); // Mínimo 400px
+      context = 'journey activo';
+    } else if (showJourneyOptions) {
+      // Para opciones de grupo: tab más visible y expandido al contenido de la lista
+      expandedHeight = Math.max(contentHeight, 500); // Mínimo 500px para opciones
+      context = 'opciones de grupo';
     } else {
-      // Para opciones de crear/unirse: solo pequeño y completo
-      return ['12%', '25%', '50%'];
+      // Para interfaz simple: tab más visible y altura del botón
+      expandedHeight = Math.max(contentHeight, 250); // Mínimo 250px para botón
+      context = 'interfaz simple';
     }
-  }, [groupJourney]);
+    
+    const points = [tabHeight, expandedHeight];
+    console.log('📐 Snap Points calculados:', { context, contentHeight, points });
+    
+    return points;
+  }, [groupJourney, showJourneyOptions, contentHeight]);
+
+  // Estado para rastrear si está colapsado
+  const [isCollapsed, setIsCollapsed] = useState(true);
 
   // Callbacks para manejar cambios del sheet
   const handleSheetChanges = useCallback((index: number) => {
     console.log('Bottom sheet cambió a índice:', index);
+    setIsCollapsed(index === 0); // Actualizar estado de colapso
+  }, []);
+
+  // Callback para medir el contenido y ajustar snap points
+  const handleContentLayout = useCallback((event: any) => {
+    const { height } = event.nativeEvent.layout;
+    // Agregar padding adicional para que no quede cortado
+    const totalHeight = height + 100; // 100px de padding extra (safe area + márgenes)
+    console.log('📏 Midiendo contenido - Altura:', height, '→ Total:', totalHeight);
+    setContentHeight(totalHeight);
   }, []);
 
   // Función para expandir programáticamente
   const expandSheet = useCallback(() => {
-    bottomSheetRef.current?.expand();
+    bottomSheetRef.current?.snapToIndex(1); // Expandir al segundo snap point (contenido)
   }, []);
+
+  // Auto-expandir el Bottom Sheet cuando hay contenido relevante
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (groupJourney || (!loading && groupsLoaded)) {
+        console.log('🔄 Auto-expandiendo BottomSheet:', { 
+          hasGroupJourney: !!groupJourney, 
+          loading, 
+          groupsLoaded,
+          userGroupsCount: userGroups.length 
+        });
+        expandSheet();
+      }
+    }, 300); // Delay pequeño para asegurar que el sheet esté listo
+
+    return () => clearTimeout(timer);
+  }, [groupJourney, loading, groupsLoaded, userGroups.length, expandSheet]);
 
   // Función para colapsar a tab
   const collapseToTab = useCallback(() => {
@@ -88,6 +193,19 @@ export default function JourneyOverlay({ groupJourney, onStartJourney, onComplet
   };
 
   const handleCreateGroup = () => {
+    // Si no hay grupos, mostrar selector de tipo
+    if (userGroups.length === 0) {
+      setShowGroupTypeSelector(true);
+    } else {
+      // Si ya hay grupos, crear directamente (será temporal por defecto)
+      setSelectedGroupType('TEMPORAL');
+      setShowCreateGroupModal(true);
+    }
+  };
+
+  const handleCreateGroupWithType = (type: 'CONFIANZA' | 'TEMPORAL') => {
+    setSelectedGroupType(type);
+    setShowGroupTypeSelector(false);
     setShowCreateGroupModal(true);
   };
 
@@ -95,21 +213,33 @@ export default function JourneyOverlay({ groupJourney, onStartJourney, onComplet
     setShowJoinGroupModal(true);
   };
 
-  const handleSelectExistingGroup = () => {
+  const handleGroupSelected = (group: Group) => {
+    setShowGroupSelection(false);
+    // Aquí se puede navegar directamente a la pantalla de journey con el grupo seleccionado
+    // o almacenar el grupo seleccionado y llamar a onStartJourney
+    console.log('🎯 Grupo seleccionado para iniciar journey:', group.name);
+    onStartJourney();
+  };
+
+  const handleShowGroupSelection = () => {
     setShowGroupSelection(true);
   };
 
   const handleGroupCreated = () => {
     setShowCreateGroupModal(false);
-    // Recargar datos después de crear grupo
-    //loadJourneyData();
+    // Recargar datos después de crear grupo - actualizar lista
+    const reloadGroups = async () => {
+      try {
+        const groups = await getUserGroups();
+        setUserGroups(groups);
+        console.log('🔄 Grupos recargados después de crear:', groups.length);
+      } catch (error) {
+        console.error('Error recargando grupos:', error);
+      }
+    };
+    reloadGroups();
+    
     // Navegar a la pantalla de journey del nuevo grupo
-    onStartJourney();
-  };
-
-  const handleGroupSelected = (group: Group) => {
-    setShowGroupSelection(false);
-    // Navegar a la pantalla de journey del grupo seleccionado
     onStartJourney();
   };
 
@@ -182,7 +312,10 @@ export default function JourneyOverlay({ groupJourney, onStartJourney, onComplet
   const renderActiveJourneyFromGroupForSheet = (selectedGroupJourney: GroupWithJourney) => {
 
     return (
-      <BottomSheetView style={styles.sheetContent}>
+      <BottomSheetView 
+        style={styles.sheetContent}
+        onLayout={handleContentLayout}
+      >
         
         <View style={styles.sheetHeader}>
           <View style={styles.headerLeft}>
@@ -271,7 +404,10 @@ export default function JourneyOverlay({ groupJourney, onStartJourney, onComplet
 
   // Versión adaptada para bottom sheet de opciones simples
   const renderSimpleInterfaceForSheet = () => (
-    <BottomSheetView style={styles.sheetContent}>
+    <BottomSheetView 
+      style={styles.sheetContent}
+      onLayout={handleContentLayout}
+    >
       
       <Text style={styles.simpleText}>
         You're currently not on a trip. Activate one if you'd like someone to keep an eye on you 😊
@@ -284,81 +420,180 @@ export default function JourneyOverlay({ groupJourney, onStartJourney, onComplet
   );
 
   // Versión adaptada para bottom sheet de opciones de grupo
-  const renderGroupOptionsForSheet = () => (
-    <BottomSheetView style={styles.sheetContent}>
-      <View style={styles.sheetHeader}>
-        <View style={styles.headerLeft}>
-          <Ionicons name="location" size={24} color="#7A33CC" />
-          <Text style={styles.sheetTitle}>Iniciar Trayecto</Text>
-        </View>
-        <Pressable onPress={() => setShowJourneyOptions(false)} style={styles.collapseButton}>
-          <Ionicons name="close" size={20} color="#6B7280" />
-        </Pressable>
-      </View>
+  const renderGroupOptionsForSheet = () => {
+    const hasGroups = userGroups.length > 0;
 
-      <Text style={styles.subtitle}>
-        No tienes ningún trayecto activo. ¿Qué te gustaría hacer?
-      </Text>
-
-      <BottomSheetScrollView 
-        contentContainerStyle={styles.optionsContainer}
-        showsVerticalScrollIndicator={false}
+    return (
+      <BottomSheetView 
+        style={styles.sheetContent}
+        onLayout={handleContentLayout}
       >
-        {/* Crear nuevo grupo */}
-        <Pressable style={styles.optionCard} onPress={handleCreateGroup}>
-          <View style={styles.optionIcon}>
-            <Ionicons name="add-circle" size={32} color="#4CAF50" />
-          </View>
-          <View style={styles.optionContent}>
-            <Text style={styles.optionTitle}>Crear Grupo</Text>
-            <Text style={styles.optionDescription}>
-              Crea un nuevo grupo e invita personas
+        <View style={styles.sheetHeader}>
+          <View style={styles.headerLeft}>
+            <Ionicons name="location" size={24} color="#7A33CC" />
+            <Text style={styles.sheetTitle}>
+              {hasGroups ? 'Iniciar Trayecto' : 'Crear tu Primer Trayecto'}
             </Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#ccc" />
-        </Pressable>
+          <Pressable onPress={() => setShowJourneyOptions(false)} style={styles.collapseButton}>
+            <Ionicons name="close" size={20} color="#6B7280" />
+          </Pressable>
+        </View>
 
-        <Pressable style={styles.optionCard} onPress={handleJoinGroup}>
-          <View style={styles.optionIcon}>
-            <Ionicons name="person-add" size={32} color="#FF9800" />
-          </View>
-          <View style={styles.optionContent}>
-            <Text style={styles.optionTitle}>Unirse a Grupo</Text>
-            <Text style={styles.optionDescription}>
-              Únete a un grupo existente con código
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color="#ccc" />
-        </Pressable>
+        <Text style={styles.subtitle}>
+          {hasGroups 
+            ? `Tienes ${userGroups.length} grupo${userGroups.length > 1 ? 's' : ''} disponible${userGroups.length > 1 ? 's' : ''}. ¿Con cuál quieres empezar?`
+            : 'Para iniciar un trayecto necesitas un grupo. ¿Qué te gustaría hacer?'
+          }
+        </Text>
 
-        {userGroups.length > 0 && (
-          <Pressable style={styles.optionCard} onPress={handleSelectExistingGroup}>
+        <BottomSheetScrollView 
+          contentContainerStyle={styles.optionsContainer}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Si tiene grupos, mostrar lista de grupos existentes */}
+          {hasGroups && (
+            <>
+              <Text style={styles.sectionTitle}>Tus grupos:</Text>
+              {userGroups.map((group) => (
+                <Pressable 
+                  key={group.id} 
+                  style={styles.groupCard} 
+                  onPress={() => handleGroupSelected(group)}
+                >
+                  <View style={styles.groupIcon}>
+                    <Ionicons 
+                      name={group.type === 'CONFIANZA' ? 'shield' : group.type === 'TEMPORAL' ? 'time' : 'people'} 
+                      size={24} 
+                      color="#7A33CC" 
+                    />
+                  </View>
+                  <View style={styles.groupInfo}>
+                    <Text style={styles.groupName}>{group.name}</Text>
+                    <Text style={styles.groupType}>
+                      {group.type} • {group.membersIds.length} miembro{group.membersIds.length > 1 ? 's' : ''}
+                    </Text>
+                    {group.description && (
+                      <Text style={styles.groupDescription}>{group.description}</Text>
+                    )}
+                  </View>
+                  <View style={styles.startJourneyButton}>
+                    <Ionicons name="play-circle" size={32} color="#4CAF50" />
+                  </View>
+                </Pressable>
+              ))}
+              
+              <View style={styles.divider} />
+              <Text style={styles.sectionTitle}>Más opciones:</Text>
+            </>
+          )}
+
+          {/* Crear nuevo grupo */}
+          <Pressable style={styles.optionCard} onPress={handleCreateGroup}>
             <View style={styles.optionIcon}>
-              <Ionicons name="people" size={32} color="#7A33CC" />
+              <Ionicons name="add-circle" size={32} color="#4CAF50" />
             </View>
             <View style={styles.optionContent}>
-              <Text style={styles.optionTitle}>Mis Grupos</Text>
+              <Text style={styles.optionTitle}>
+                {hasGroups ? 'Crear Otro Grupo' : 'Crear Grupo'}
+              </Text>
               <Text style={styles.optionDescription}>
-                Iniciar trayecto con uno de mis {userGroups.length} grupos
+                {hasGroups 
+                  ? 'Crea un nuevo grupo temporal o de confianza'
+                  : 'Crea un grupo de confianza o temporal'
+                }
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#ccc" />
           </Pressable>
-        )}
-      </BottomSheetScrollView>
 
-      {/* Modales */}
+          {/* Unirse a grupo */}
+          <Pressable style={styles.optionCard} onPress={handleJoinGroup}>
+            <View style={styles.optionIcon}>
+              <Ionicons name="person-add" size={32} color="#FF9800" />
+            </View>
+            <View style={styles.optionContent}>
+              <Text style={styles.optionTitle}>Unirse a Grupo</Text>
+              <Text style={styles.optionDescription}>
+                Únete a un grupo existente con código de invitación
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#ccc" />
+          </Pressable>
+        </BottomSheetScrollView>
+
+        {/* Modales */}
+        {renderModals()}
+      </BottomSheetView>
+    );
+  };
+
+  // Función separada para renderizar modales
+  const renderModals = () => (
+    <>
+      {/* Modal selector de tipo de grupo */}
+      {showGroupTypeSelector && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.groupTypeModal}>
+            <Text style={styles.groupTypeTitle}>¿Qué tipo de grupo quieres crear?</Text>
+            
+            <Pressable 
+              style={styles.groupTypeOption} 
+              onPress={() => handleCreateGroupWithType('CONFIANZA')}
+            >
+              <View style={styles.typeIcon}>
+                <Ionicons name="shield" size={32} color="#7A33CC" />
+              </View>
+              <View style={styles.typeInfo}>
+                <Text style={styles.typeName}>Grupo de Confianza</Text>
+                <Text style={styles.typeDescription}>
+                  Para familia y amigos cercanos. Permanente y con más funciones de seguridad.
+                </Text>
+              </View>
+            </Pressable>
+
+            <Pressable 
+              style={styles.groupTypeOption} 
+              onPress={() => handleCreateGroupWithType('TEMPORAL')}
+            >
+              <View style={styles.typeIcon}>
+                <Ionicons name="time" size={32} color="#FF9800" />
+              </View>
+              <View style={styles.typeInfo}>
+                <Text style={styles.typeName}>Grupo Temporal</Text>
+                <Text style={styles.typeDescription}>
+                  Para ocasiones específicas. Se puede configurar para expirar automáticamente.
+                </Text>
+              </View>
+            </Pressable>
+
+            <Pressable 
+              style={styles.cancelButton} 
+              onPress={() => setShowGroupTypeSelector(false)}
+            >
+              <Text style={styles.cancelButtonText}>Cancelar</Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
+
+      {/* Modal de crear grupo con tipo */}
       <CreateGroupModal
         visible={showCreateGroupModal}
-        onClose={() => setShowCreateGroupModal(false)}
+        onClose={() => {
+          setShowCreateGroupModal(false);
+          setSelectedGroupType(null);
+        }}
         onSuccess={handleGroupCreated}
+        type={selectedGroupType || 'TEMPORAL'}
       />
 
+      {/* Modal de unirse a grupo */}
       <JoinGroupModal
         visible={showJoinGroupModal}
         onClose={() => setShowJoinGroupModal(false)}
       />
-    </BottomSheetView>
+    </>
   );
 
   if (loading) {
@@ -366,8 +601,11 @@ export default function JourneyOverlay({ groupJourney, onStartJourney, onComplet
       <BottomSheet
         ref={bottomSheetRef}
         index={0}
-        snapPoints={['20%']}
+        snapPoints={[80, 200]}
         onChange={handleSheetChanges}
+        enablePanDownToClose={false}
+        handleIndicatorStyle={styles.handleIndicator}
+        backgroundStyle={styles.bottomSheetBackground}
       >
         <BottomSheetView style={styles.sheetContent}>
           <Text style={styles.loadingText}>Cargando...</Text>
@@ -375,6 +613,12 @@ export default function JourneyOverlay({ groupJourney, onStartJourney, onComplet
       </BottomSheet>
     );
   }
+
+  // Función que renderiza el contenido según el estado del sheet
+  const renderSheetContent = () => {
+    // Siempre mostrar el contenido expandido ya que el BottomSheet maneja el colapso automáticamente
+    return renderExpandedContent();
+  };
 
   return (
     <BottomSheet
@@ -386,10 +630,11 @@ export default function JourneyOverlay({ groupJourney, onStartJourney, onComplet
       handleIndicatorStyle={styles.handleIndicator}
       backgroundStyle={styles.bottomSheetBackground}
     >
-      {renderExpandedContent()}
+      {renderSheetContent()}
     </BottomSheet>
   );
-}
+});
+
 
 const styles = StyleSheet.create({
   container: {
@@ -408,10 +653,7 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 10,
   },
-  
-  // Header styles
   header: {
-    flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
   },
@@ -435,8 +677,6 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: '#4CAF50',
   },
-
-  // Journey active styles
   journeyName: {
     fontSize: 16,
     fontWeight: '600',
@@ -448,7 +688,6 @@ const styles = StyleSheet.create({
     maxHeight: 200,
     marginBottom: 16,
   },
-  // Group options styles
   optionsContainer: {
     gap: 12,
   },
@@ -478,8 +717,6 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     lineHeight: 18,
   },
-
-  // Buttons
   endButton: {
     backgroundColor: '#FF5722',
     paddingHorizontal: 20,
@@ -495,8 +732,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 16,
   },
-
-  // Modal styles
   modalOverlay: {
     position: 'absolute',
     top: -1000,
@@ -564,7 +799,6 @@ const styles = StyleSheet.create({
     color: '#7A33CC',
     fontWeight: '600',
   },
-
   simpleText: {
     textAlign: 'center',
     marginBottom: 15,
@@ -572,6 +806,7 @@ const styles = StyleSheet.create({
   },
   simpleButton: {
     backgroundColor: '#6200ee',
+    alignContent: 'center',
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 25,
@@ -581,17 +816,14 @@ const styles = StyleSheet.create({
   simpleButtonText: {
     color: 'white',
     fontWeight: 'bold',
+    textAlign: 'center',
     fontSize: 16,
   },
-
-  // Loading
   loadingText: {
     textAlign: 'center',
     color: '#6B7280',
     fontSize: 16,
   },
-
-  // Journey info styles
   journeyInfo: {
     marginTop: 16,
     padding: 16,
@@ -789,4 +1021,104 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingVertical: 8,
   },
+
+  // Nuevos estilos para la funcionalidad mejorada
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginTop: 16,
+    marginBottom: 12,
+  },
+  
+  groupType: {
+    fontSize: 12,
+    color: '#6B7280',
+    textTransform: 'capitalize',
+    marginTop: 2,
+  },
+  
+  groupDescription: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 4,
+    fontStyle: 'italic',
+  },
+  
+  startJourneyButton: {
+    marginLeft: 12,
+  },
+  
+  divider: {
+    height: 1,
+    backgroundColor: '#E5E7EB',
+    marginVertical: 16,
+  },
+
+  // Modal de selección de tipo de grupo
+  
+  groupTypeModal: {
+    backgroundColor: '#FFFFFF',
+    margin: 20,
+    borderRadius: 16,
+    padding: 20,
+    maxWidth: 400,
+    width: '90%',
+  },
+  
+  groupTypeTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1F2937',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  
+  groupTypeOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    backgroundColor: '#F8F9FA',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  
+  typeIcon: {
+    marginRight: 16,
+  },
+  
+  typeInfo: {
+    flex: 1,
+  },
+  
+  typeName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 4,
+  },
+  
+  typeDescription: {
+    fontSize: 14,
+    color: '#6B7280',
+    lineHeight: 20,
+  },
+  
+  cancelButton: {
+    marginTop: 12,
+    padding: 12,
+    alignItems: 'center',
+    borderRadius: 8,
+    backgroundColor: '#F3F4F6',
+  },
+  
+  cancelButtonText: {
+    fontSize: 16,
+    color: '#374151',
+    fontWeight: '600',
+  },
 });
+
+export default JourneyOverlay;

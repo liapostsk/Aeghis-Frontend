@@ -46,33 +46,26 @@ export const deleteGroup = async (groupId: number): Promise<void> => {
 
 /**
  * Promover un usuario a administrador del grupo
- * POST /group/{groupId}/promote-admin
+ * POST /group/{groupId}/promote-admin/{userId}
  */
 export const promoteToAdmin = async (groupId: number, userId: number): Promise<Group> => {
-  const response = await api.post(`/group/${groupId}/promote-admin`, null, {
-    params: { userId }
-  });
+  const response = await api.post(`/group/${groupId}/promote-admin/${userId}`);
   return response.data;
 };
 
 /**
  * Degradar un administrador a miembro regular
- * POST /group/{groupId}/demote-admin
+ * DELETE /group/{groupId}/demote-admin/{userId}
  */
 export const demoteToMember = async (groupId: number, userId: number): Promise<Group> => {
-  const response = await api.post(`/group/${groupId}/demote-admin`, null, {
-    params: { userId }
-  });
+  const response = await api.delete(`/group/${groupId}/demote-admin/${userId}`);
   return response.data;
 };
 
 /**
  * Remover un miembro del grupo (solo administradores)
- * DELETE /group/{groupId}/remove-member
+ * DELETE /group/{groupId}/remove-member/{userId}
  */
-export const removeMember = async (groupId: number, userId: number): Promise<Group> => {
-  const response = await api.delete(`/group/${groupId}/remove-member`, {
-    params: { userId }
-  });
-  return response.data;
+export const removeMember = async (groupId: number, userId: number): Promise<void> => {
+  await api.delete(`/group/${groupId}/remove-member/${userId}`);
 };

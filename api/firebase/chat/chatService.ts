@@ -257,6 +257,15 @@ export function listenGroupMessages(
       const items = snap.docs.map(d => ({ id: d.id, ...(d.data() as MessageDoc) }));
       onChange(items);
     }, (error) => {
+      // Si es error de permisos (grupo eliminado o sin acceso), manejarlo silenciosamente
+      if (error?.code === 'permission-denied') {
+        console.warn('⚠️ No se pudieron leer mensajes:', error.message);
+        // Limpiar mensajes para reflejar que el chat ya no está disponible
+        onChange([]);
+        return; // No propagar el error
+      }
+      
+      // Para otros errores, sí registrarlos y propagarlos
       console.error('💥 Error en listener de mensajes:', error);
       console.error('📋 Listener error details:', { 
         code: error?.code, 
@@ -547,7 +556,8 @@ export async function deleteGroupFirebase(groupId: string): Promise<void> {
       throw new Error('No tienes permisos para eliminar este grupo');
     }
 
-    console.log('🔄 Eliminando chat y subcollections...');
+    console.log('🔄 Eliminando chat...');
+    
     const batch = writeBatch(db);
     
     // Eliminar el documento principal del chat
@@ -559,6 +569,11 @@ export async function deleteGroupFirebase(groupId: string): Promise<void> {
     
     await batch.commit();
     console.log('✅ Grupo eliminado exitosamente de Firebase');
+    
+    // Pequeña espera para dar tiempo a que los listeners se desconecten
+    // y procesen el cambio antes de continuar
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
   } catch (error) {
     console.error('💥 Error eliminando grupo:', error);
     throw error;

@@ -173,8 +173,11 @@ export default function GroupInfoScreen() {
             try {
                 console.log(`🗑️ Eliminando miembro ${selectedMember.name} del grupo ${group.name}`);
                 
+                const token = await getToken();
+                setToken(token);
+
                 // 1. Llamada al backend para remover miembro
-                const updatedGroup = await removeMember(group.id, selectedMember.id);
+                await removeMember(group.id, selectedMember.id);
                 console.log('✅ Miembro removido del backend');
                 
                 // 2. Actualizar Firebase si el usuario tiene clerkId
@@ -183,15 +186,21 @@ export default function GroupInfoScreen() {
                     console.log('✅ Miembro removido de Firebase');
                 }
                 
-                // 3. Actualizar estado local con datos del backend
-                setGroup(updatedGroup);
+                // 3. Actualizar estado local directamente (más eficiente que recargar)
                 setMembers(prev => prev.filter(m => m.id !== selectedMember.id));
                 
-                // 4. Actualizar roles si era admin
+                // 4. Actualizar roles (eliminar el rol del miembro removido)
                 setMemberRoles(prev => {
-                    const newRoles = { ...prev };
-                    delete newRoles[selectedMember.id];
-                    return newRoles;
+                    const updated = { ...prev };
+                    delete updated[selectedMember.id];
+                    return updated;
+                });
+                
+                // 5. Actualizar el grupo (quitar de membersIds y adminsIds)
+                setGroup({
+                    ...group,
+                    membersIds: group.membersIds.filter(id => id !== selectedMember.id),
+                    adminsIds: group.adminsIds.filter(id => id !== selectedMember.id),
                 });
                 
                 Alert.alert('Éxito', `${selectedMember.name} ha sido eliminado del grupo`);
@@ -203,11 +212,20 @@ export default function GroupInfoScreen() {
                 // Recargar datos en caso de error
                 try {
                     const groupData = await getGroupById(group.id);
+                    setGroup(groupData);
+                    
                     const loadedMembers = await Promise.all(
                         groupData.membersIds.map(id => getUser(id))
                     );
-                    setGroup(groupData);
                     setMembers(loadedMembers);
+                    
+                    // Actualizar roles basados en el grupo recargado
+                    const roles: Record<number, 'admin' | 'member'> = {};
+                    groupData.membersIds.forEach(memberId => {
+                        roles[memberId] = groupData.adminsIds.includes(memberId) ? 'admin' : 'member';
+                    });
+                    setMemberRoles(roles);
+                    
                 } catch (reloadError) {
                     console.error('Error recargando datos:', reloadError);
                 }
@@ -227,6 +245,9 @@ export default function GroupInfoScreen() {
             try {
                 console.log(`👑 Promoviendo ${selectedMember.name} a administrador del grupo ${group.name}`);
                 
+                const token = await getToken();
+                setToken(token);
+
                 // 1. Llamada al backend para promover a admin
                 const updatedGroup = await promoteToAdmin(group.id, selectedMember.id);
                 console.log('✅ Usuario promovido en backend');
@@ -259,6 +280,9 @@ export default function GroupInfoScreen() {
         try {
             console.log(`👤 Degradando ${member.name} de administrador a miembro`);
             
+            const token = await getToken();
+            setToken(token);
+
             // 1. Llamada al backend para degradar admin
             const updatedGroup = await demoteToMember(group!.id, member.id);
             console.log('✅ Usuario degradado en backend');
@@ -290,11 +314,13 @@ export default function GroupInfoScreen() {
         if (!group || !currentUserId) return;
 
         try {
-            if (members.length <= 2) {
-                // Eliminar grupo: Firebase primero, luego backend
-                console.log('🗑️ Eliminando grupo completamente...');
+            const isLastMember = members.length <= 1;
+            
+            if (isLastMember) {
+                // Si eres el último miembro, eliminar el grupo
+                console.log('🗑️ Eres el último miembro, eliminando grupo...');
                 
-                // 1. Eliminar de Firebase
+                // 1. Eliminar de Firebase primero
                 await deleteGroupFirebase(group.id.toString());
                 console.log('✅ Grupo eliminado de Firebase');
                 
@@ -303,34 +329,47 @@ export default function GroupInfoScreen() {
                 console.log('✅ Grupo eliminado del backend');
                 
                 Alert.alert('Grupo eliminado', 'El grupo ha sido eliminado exitosamente');
-            } else {
-                // Salir del grupo
-                console.log('🚪 Saliendo del grupo...');
-                await exitGroup(group.id, currentUserId);
+                router.replace('/groups');
                 
-                // Si tengo clerkId, también salir de Firebase
+            } else {
+                // Salir del grupo normalmente
+                console.log('🚪 Saliendo del grupo...');
+                
+                // 1. Salir del backend
+                await exitGroup(group.id, currentUserId);
+                console.log('✅ Usuario removido del grupo en backend');
+                
+                // 2. Actualizar Firebase si tengo clerkId
                 const currentUser = await getCurrentUser();
                 if (currentUser.clerkId) {
-                    // Nota: esto requeriría una función específica, por ahora solo backend
-                    console.log('ℹ️ Salida de Firebase se manejará automáticamente');
+                    await removeMemberFromGroupFirebase(group.id.toString(), currentUser.clerkId);
+                    console.log('✅ Usuario removido de Firebase');
                 }
                 
                 Alert.alert('Has salido del grupo', 'Has abandonado el grupo exitosamente');
+                // 
+                router.replace('/chat');
             }
             
-            // Volver a la pantalla anterior
-            router.back();
-        } catch (error) {
-            console.error('Error al salir/eliminar grupo:', error);
+        } catch (error: any) {
+            console.error('💥 Error al salir/eliminar grupo:', error);
+            console.error('📋 Error details:', {
+                message: error?.message,
+                status: error?.response?.status,
+                data: error?.response?.data
+            });
             
             // Mensaje de error más específico
-            if (members.length <= 2) {
+            if (members.length <= 1) {
                 Alert.alert(
                     'Error al eliminar grupo', 
-                    'No se pudo eliminar el grupo. Verifica que tienes permisos de administrador.'
+                    error?.response?.data?.message || 'No se pudo eliminar el grupo. Verifica que tienes permisos de administrador.'
                 );
             } else {
-                Alert.alert('Error', 'No se pudo salir del grupo');
+                Alert.alert(
+                    'Error', 
+                    error?.response?.data?.message || 'No se pudo salir del grupo'
+                );
             }
         }
         
@@ -571,12 +610,12 @@ export default function GroupInfoScreen() {
                         onPress={handleExitGroup}
                     >
                         <Ionicons 
-                            name={members.length <= 2 ? "trash-outline" : "exit-outline"} 
+                            name={members.length <= 1 ? "trash-outline" : "exit-outline"} 
                             size={20} 
                             color="#FFFFFF" 
                         />
                         <Text style={styles.exitButtonText}>
-                            {members.length < 2 ? "Eliminar grupo" : "Salir del grupo"}
+                            {members.length <= 1 ? "Eliminar grupo" : "Salir del grupo"}
                         </Text>
                     </Pressable>
                 </View>
@@ -584,14 +623,14 @@ export default function GroupInfoScreen() {
                 {/* Modal de confirmación para salir/eliminar grupo */}
                 <AlertModal
                     visible={showExitGroupModal}
-                    title={members.length <= 2 ? "Eliminar grupo" : "Salir del grupo"}
+                    title={members.length <= 1 ? "Eliminar grupo" : "Salir del grupo"}
                     message={
-                        members.length <= 2 
-                            ? "¿Estás seguro de que quieres eliminar este grupo? Esta acción no se puede deshacer."
+                        members.length <= 1 
+                            ? "Eres el último miembro. ¿Quieres eliminar este grupo? Esta acción no se puede deshacer."
                             : "¿Estás seguro de que quieres salir de este grupo?"
                     }
                     type="danger"
-                    confirmText={members.length <= 2 ? "Eliminar" : "Salir"}
+                    confirmText={members.length <= 1 ? "Eliminar" : "Salir"}
                     cancelText="Cancelar"
                     onConfirm={confirmExitGroup}
                     onCancel={() => setShowExitGroupModal(false)}
