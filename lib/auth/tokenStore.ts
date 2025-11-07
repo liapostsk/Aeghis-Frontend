@@ -1,4 +1,3 @@
-// File: lib/auth/tokenStore.ts
 import { create } from "zustand";
 
 // Se hace uso de Zustand para manejar el estado del token de autenticación
