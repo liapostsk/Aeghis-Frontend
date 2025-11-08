@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "FrontAegis",
-    "slug": "FrontAegis",
+    "slug": "aeghis",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/aegis.png",
@@ -16,7 +16,9 @@
     },
     "android": {
       "permissions": [
-        "READ_CONTACTS"
+        "READ_CONTACTS",
+        "android.permission.READ_CONTACTS",
+        "android.permission.WRITE_CONTACTS"
       ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/aegis.png",
@@ -45,6 +47,13 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "98d5016c-b829-48dc-94d3-46c73f739920"
+      }
+    },
+    "owner": "noelialopez"
   }
 }

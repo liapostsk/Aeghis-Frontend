@@ -5,13 +5,14 @@ import MapHeader from '@/components/map/MapHeader';
 import PeopleOnMap from '@/components/map/PeopleOnMap';
 import JourneyOverlay from '@/components/map/JourneyOverlay';
 import EmergencyButton from '@/components/map/EmergencyButton';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Group } from '@/api/group/groupType';
 import { JourneyDto, JourneyStates } from '@/api/journeys/journeyType';
 import { updateJourney } from '@/api/journeys/journeyApi';
 import { updateJourneyState } from '@/api/firebase/journey/journeyService';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
+import * as Notifications from 'expo-notifications';
 
 interface GroupWithJourney {
   group: Group;
@@ -26,6 +27,37 @@ export default function MapScreen() {
 
   const { getToken } = useAuth();
   const setToken = useTokenStore((state) => state.setToken);
+
+  // ✅ Notificación de prueba al entrar al mapa
+  useEffect(() => {
+    const sendWelcomeNotification = async () => {
+      try {
+        console.log('🔔 [MapScreen] Enviando notificación de bienvenida...');
+        
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: "Bienvenido al Mapa 🗺️",
+            body: "¡Aegis está listo para protegerte! Tus notificaciones funcionan correctamente.",
+            data: { 
+              type: 'welcome',
+              screen: 'map',
+              timestamp: Date.now() 
+            },
+          },
+          trigger: { 
+            type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+            seconds: 2, // 2 segundos después de entrar
+          },
+        });
+        
+        console.log('✅ [MapScreen] Notificación de prueba programada');
+      } catch (error) {
+        console.error('❌ [MapScreen] Error enviando notificación:', error);
+      }
+    };
+
+    sendWelcomeNotification();
+  }, []); // Solo se ejecuta al montar el componente
 
   const handleStartJourney = async () => {
     console.log('🚀 handleStartJourney - Iniciando proceso...');

@@ -10,6 +10,7 @@ import { registerToken as registerTokenEndpoint, revokeToken as revokeTokenEndpo
  */
 export async function registerDeviceForPush(userId: number): Promise<string | null> {
   const token = await getExpoPushToken();
+  console.log('🔔 [registerDeviceForPush] Expo Push Token:', token);
   if (!token) return null;
 
   const platform: PlatformName = Platform.OS === 'ios' ? 'IOS' : 'ANDROID';

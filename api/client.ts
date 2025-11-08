@@ -3,7 +3,7 @@ import { getAuthToken } from "@/lib/auth/tokenStore";
 import { Platform } from "react-native";
 
 const api = axios.create({
-  baseURL: process.env.EXPO_PUBLIC_API_URL_ANDROID,
+  baseURL: process.env.EXPO_PUBLIC_API_URL,
   //process.env.EXPO_PUBLIC_API_URL, --> PROD
   //process.env.EXPO_PUBLIC_API_URL_LOCAL, --> DEV
   timeout: 10000,
