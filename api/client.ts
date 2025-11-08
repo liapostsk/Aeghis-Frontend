@@ -3,7 +3,7 @@ import { getAuthToken } from "@/lib/auth/tokenStore";
 import { Platform } from "react-native";
 
 const api = axios.create({
-  baseURL: process.env.EXPO_PUBLIC_API_URL_ANDROID_SIM || process.env.EXPO_PUBLIC_API_URL_ANDROID || process.env.EXPO_PUBLIC_API_URL,
+  baseURL: process.env.EXPO_PUBLIC_API_URL_ANDROID,
   //process.env.EXPO_PUBLIC_API_URL, --> PROD
   //process.env.EXPO_PUBLIC_API_URL_LOCAL, --> DEV
   timeout: 10000,
@@ -16,33 +16,35 @@ const api = axios.create({
 api.interceptors.request.use(
   async (config) => {
     const token = getAuthToken();
-    
-    // Debug info
+
+    // Asegura objeto headers
+    if (!config.headers) {
+      config.headers = {} as any;
+    }
+
+    // Axios v1 usa AxiosHeaders con .set(...)
+    // Si existe .set, úsalo; si no, asigna plano.
+    // @ts-ignore
+    if (typeof config.headers.set === "function") {
+      // @ts-ignore
+      config.headers.set("Authorization", token ? `Bearer ${token}` : "");
+      // @ts-ignore
+      config.headers.set("Content-Type", "application/json");
+    } else {
+      (config.headers as any)["Authorization"] = token ? `Bearer ${token}` : "";
+      (config.headers as any)["Content-Type"] = "application/json";
+    }
+
+    // Logs útiles
     console.log("📱 Platform:", Platform.OS);
     console.log("🌐 Base URL:", config.baseURL);
     console.log("📡 Request to:", config.url);
-    console.log("🔗 Full URL:", `${config.baseURL}${config.url}`);
-    console.log("🔐 Token:", token ? `${token.substring(0, 20)}...` : "null");
-    console.log("🧾 Payload:", config.data);
-    
-    if (!token) {
-      console.warn("⚠️ No token found, request will not include Authorization header.");
-    }
-    
-    if (!config) {
-      console.warn("⚠️ No config found, request will not include Authorization header.");
-    }
-    
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    
+    console.log("🔗 Full URL:", `${config.baseURL ?? ""}${config.url ?? ""}`);
+    console.log("🔐 Has token?:", !!token);
+
     return config;
   },
-  (error) => {
-    console.error("❌ Request interceptor error:", error);
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 // Response Interceptor
