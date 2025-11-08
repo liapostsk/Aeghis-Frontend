@@ -43,7 +43,6 @@ export async function getExpoPushToken(): Promise<string | null> {
 // Reglas de presentación en foreground
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,
     shouldShowBanner: true,
     shouldShowList: true,
     shouldPlaySound: true,

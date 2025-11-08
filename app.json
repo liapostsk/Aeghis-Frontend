@@ -9,6 +9,7 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
+      "icon": "./assets/images/aegis.png",
       "supportsTablet": true,
       "infoPlist": {
         "NSContactsUsageDescription": "This app uses your contacts to let you pick emergency contacts."
