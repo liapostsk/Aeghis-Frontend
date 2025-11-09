@@ -35,29 +35,59 @@ export function usePushNotifications(opts: UsePushNotificationsOptions = {}) {
 
   const receiveListener = useRef<Notifications.EventSubscription | null>(null);
   const responseListener = useRef<Notifications.EventSubscription | null>(null);
+  
+  // ✅ Guard para evitar registros simultáneos
+  const busyRef = useRef(false);
 
-  // ---- Registro del token (puedes llamarlo manualmente si autoRegister=false)
+  // ---- Registro del token con guards mejorados
   const register = useCallback(async () => {
-    if (userId == null) {
-      console.warn('⚠️ [usePushNotifications] No userId provided, skipping registration');
+    // ✅ Guard 1: Verificar userId válido
+    if (!userId || userId <= 0) {
+      console.warn('⚠️ [usePushNotifications] sin userId backend válido -> skip');
       return null;
     }
 
+    // ✅ Guard 2: Evitar registros simultáneos
+    if (busyRef.current) {
+      console.warn('⚠️ [usePushNotifications] registro ya en curso -> skip');
+      return null;
+    }
+
+    busyRef.current = true;
+
     try {
       console.log('🔄 [usePushNotifications] Registrando token para userId:', userId);
-      const token = await registerDeviceForPush(userId);
+
+      // ✅ Guard 3: Verificar y solicitar permisos si es necesario
+      let { status } = await Notifications.getPermissionsAsync();
+      console.log('🔐 [usePushNotifications] Permission status actual:', status);
       
-      if (token) {
-        console.log('✅ [usePushNotifications] Token obtenido:', token);
-        setExpoPushToken(token);
-      } else {
-        console.warn('⚠️ [usePushNotifications] No se obtuvo token (probablemente emulador)');
+      if (status !== 'granted') {
+        console.log('🔐 [usePushNotifications] Solicitando permisos...');
+        const result = await Notifications.requestPermissionsAsync();
+        status = result.status;
+        console.log('🔐 [usePushNotifications] Permisos otorgados:', status);
       }
       
-      // Actualiza permiso (útil para UI)
-      const { status } = await Notifications.getPermissionsAsync();
-      console.log('🔐 [usePushNotifications] Permission status:', status);
+      if (status !== 'granted') {
+        console.warn('⚠️ [usePushNotifications] permisos no concedidos -> skip');
+        setPermissionStatus(status);
+        return null;
+      }
+
       setPermissionStatus(status);
+
+      // ✅ Guard 4: Obtener token de Expo
+      console.log('📱 [usePushNotifications] Obteniendo Expo Push Token...');
+      const token = await registerDeviceForPush(userId);
+      
+      if (!token) {
+        console.warn('⚠️ [usePushNotifications] no hay expo token (probablemente emulador) -> skip');
+        return null;
+      }
+
+      console.log('✅ [usePushNotifications] Token obtenido y registrado:', token.substring(0, 30) + '...');
+      setExpoPushToken(token);
       
       return token;
     } catch (err: any) {
@@ -68,6 +98,8 @@ export function usePushNotifications(opts: UsePushNotificationsOptions = {}) {
         userId,
       });
       return null;
+    } finally {
+      busyRef.current = false;
     }
   }, [userId]);
 
@@ -110,45 +142,49 @@ export function usePushNotifications(opts: UsePushNotificationsOptions = {}) {
     console.log('✅ [usePushNotifications] Badge limpiado');
   }, []);
 
-  // ---- Efecto: registro automático si está habilitado
+  // ✅ Efecto: registro automático con guards mejorados
   useEffect(() => {
     let mounted = true;
 
     (async () => {
-      console.log('🚀 [usePushNotifications] Inicializando...', { autoRegister, userId });
-      
-      // Lee estado de permisos al montar
-      const { status } = await Notifications.getPermissionsAsync();
-      console.log('🔐 [usePushNotifications] Estado inicial de permisos:', status);
-      if (mounted) setPermissionStatus(status);
+      console.log('🚀 [usePushNotifications] Inicializando...', { 
+        autoRegister, 
+        userId,
+        hasValidUserId: userId && userId > 0,
+      });
 
-      if (autoRegister && userId != null) {
-        try {
-          console.log('🔄 [usePushNotifications] Auto-registro habilitado, registrando...');
-          const token = await register();
-          if (mounted) {
-            setExpoPushToken(token);
-            if (token) {
-              console.log('✅ [usePushNotifications] Auto-registro exitoso');
-            } else {
-              console.warn('⚠️ [usePushNotifications] Auto-registro no obtuvo token');
-            }
-          }
-        } catch (e) {
-          console.error('❌ [usePushNotifications] Error en auto-registro:', e);
+      // ✅ NO intentes registrar hasta tener userId backend real
+      if (!autoRegister) {
+        console.log('ℹ️ [usePushNotifications] Auto-registro deshabilitado');
+        return;
+      }
+
+      if (!userId || userId <= 0) {
+        console.log('⚠️ [usePushNotifications] Sin userId válido, esperando...');
+        return;
+      }
+
+      try {
+        console.log('🔄 [usePushNotifications] Auto-registro habilitado, iniciando...');
+        const token = await register();
+        
+        if (mounted && token) {
+          console.log('✅ [usePushNotifications] Auto-registro exitoso');
+        } else if (mounted) {
+          console.warn('⚠️ [usePushNotifications] Auto-registro completado pero sin token');
         }
-      } else {
-        console.log('ℹ️ [usePushNotifications] Auto-registro deshabilitado o sin userId');
+      } catch (e) {
+        console.error('❌ [usePushNotifications] Error en auto-registro:', e);
       }
     })();
 
     return () => {
       mounted = false;
-      console.log('🧹 [usePushNotifications] Componente desmontado');
+      console.log('🧹 [usePushNotifications] Limpieza de efecto de registro');
     };
   }, [autoRegister, userId, register]);
 
-  // ---- Efecto: listeners (recibida y respuesta)
+  // ✅ Efecto: listeners (solo se montan una vez)
   useEffect(() => {
     console.log('👂 [usePushNotifications] Configurando listeners de notificaciones');
     
@@ -175,7 +211,7 @@ export function usePushNotifications(opts: UsePushNotificationsOptions = {}) {
       receiveListener.current?.remove();
       responseListener.current?.remove();
     };
-  }, [onNotification, onResponse]);
+  }, [onNotification, onResponse]); // Solo depende de los callbacks
 
   return {
     expoPushToken,

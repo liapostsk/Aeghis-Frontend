@@ -8,6 +8,7 @@ import { mapUserToDto } from '@/api/user/mapper';
 import { createUser, getCurrentUser } from '@/api/user/userApi';
 import { linkFirebaseSession } from '@/api/firebase/auth/firebase';
 import { ensureCurrentUserProfile } from '@/api/firebase/users/userService';
+import { registerDeviceForPush } from '@/api/notifications';
 
 const { height } = Dimensions.get('window');
 
@@ -79,7 +80,25 @@ export default function SummaryStep({ onBack }: { onBack: () => void }) {
         safeLocations: userData.safeLocations,
       });
 
-      // 5. VINCULAR CON FIREBASE
+      // 5. REGISTRAR NOTIFICACIONES PUSH (ahora que tenemos userId válido)
+      try {
+        setLoadingMessage('Configurando notificaciones...');
+        console.log("🔔 Registrando dispositivo para notificaciones push...");
+        
+        const pushToken = await registerDeviceForPush(userId);
+        
+        if (pushToken) {
+          console.log("✅ Dispositivo registrado exitosamente para notificaciones");
+        } else {
+          console.warn("⚠️ No se pudo obtener el token de notificaciones (continuando...)");
+        }
+      } catch (pushError) {
+        console.error("❌ Error configurando notificaciones:", pushError);
+        // No bloquear el acceso - las notificaciones son opcionales
+        console.warn("⚠️ Continuando sin notificaciones push");
+      }
+
+      // 6. VINCULAR CON FIREBASE
       try {
         setLoadingMessage('Configurando servicios en tiempo real...');
         console.log("Vinculando sesión de Firebase...");
@@ -100,7 +119,7 @@ export default function SummaryStep({ onBack }: { onBack: () => void }) {
         console.warn("⚠️ Continuando sin Firebase - Funcionalidades de chat limitadas");
       }
 
-      // 6. Navegación final
+      // 7. Navegación final
       setLoadingMessage('¡Bienvenido a Aegis!');
       
       // Pequeña pausa para mostrar mensaje final

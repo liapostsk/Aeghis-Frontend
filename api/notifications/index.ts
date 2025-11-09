@@ -6,21 +6,52 @@ import { registerToken as registerTokenEndpoint, revokeToken as revokeTokenEndpo
 
 /**
  * Obtiene el token de Expo y lo registra en backend.
- * Devuelve el token (o null si no hay permisos/no es dispositivo real).
+ * ✅ CORREGIDO: Manejo de errores mejorado
  */
 export async function registerDeviceForPush(userId: number): Promise<string | null> {
-  const token = await getExpoPushToken();
-  console.log('🔔 [registerDeviceForPush] Expo Push Token:', token);
-  if (!token) return null;
+  try {
+    console.log('🔔 [registerDeviceForPush] Iniciando registro para userId:', userId);
+    
+    // ✅ Obtener token de Expo
+    const token = await getExpoPushToken();
+    console.log('🔔 [registerDeviceForPush] Expo Push Token obtenido:', token ? 'OK' : 'NULL');
+    
+    if (!token) {
+      console.warn('⚠️ [registerDeviceForPush] No se pudo obtener token de Expo');
+      return null;
+    }
 
-  const platform: PlatformName = Platform.OS === 'ios' ? 'IOS' : 'ANDROID';
-  await registerTokenEndpoint(userId, { token, platform });
-  return token;
+    // ✅ Determinar plataforma
+    const platform: PlatformName = Platform.OS === 'ios' ? 'IOS' : 'ANDROID';
+    console.log('📱 [registerDeviceForPush] Plataforma:', platform);
+
+    // ✅ Registrar en backend
+    await registerTokenEndpoint(userId, { token, platform });
+    
+    console.log('✅ [registerDeviceForPush] Registro completado exitosamente');
+    return token;
+  } catch (error: any) {
+    console.error('❌ [registerDeviceForPush] Error en registro:', {
+      message: error.message,
+      code: error.code,
+      userId,
+    });
+    
+    // ✅ No lanzar el error para no romper la app
+    return null;
+  }
 }
 
 /**
  * Revoca el token concreto en tu backend (p.ej. en logout).
  */
 export async function revokeDevicePushToken(userId: number, token: string): Promise<void> {
-  await revokeTokenEndpoint(userId, token);
+  try {
+    console.log('🗑️ [revokeDevicePushToken] Revocando token para userId:', userId);
+    await revokeTokenEndpoint(userId, token);
+    console.log('✅ [revokeDevicePushToken] Token revocado exitosamente');
+  } catch (error: any) {
+    console.error('❌ [revokeDevicePushToken] Error revocando token:', error);
+    // No lanzar el error para no bloquear el logout
+  }
 }

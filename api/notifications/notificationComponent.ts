@@ -1,32 +1,38 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useUser } from '@clerk/clerk-expo';
 import { router } from 'expo-router';
 import { usePushNotifications } from './usePushNotifications';
 import { useUserStore } from '@/lib/storage/useUserStorage';
 
 /**
- * Componente que inicializa las notificaciones push.
- * Debe estar dentro del ClerkProvider para acceder a useUser().
+ * Componente que SOLO escucha notificaciones.
+ * El registro inicial se hace en SummaryStep después de crear el usuario.
+ * ✅ autoRegister: false para evitar intentos de registro sin userId
  */
 export function PushNotificationsInitializer() {
-  const { isSignedIn } = useUser(); // Clerk para saber si está autenticado
-  const user = useUserStore((state) => state.user); // Usuario desde storage
+  const { isSignedIn } = useUser();
+  const user = useUserStore((state) => state.user);
   const refreshUserFromBackend = useUserStore((state) => state.refreshUserFromBackend);
   
-  // Obtener el userId numérico del usuario almacenado
   const userId = user?.id;
+  const mountedOnce = useRef(false);
 
-  // ✅ Refrescar usuario cuando se autentica
+  // Refrescar usuario cuando se autentica (solo una vez)
   useEffect(() => {
+    if (mountedOnce.current) return;
+    
     if (isSignedIn && !user) {
       console.log('🔄 [PushNotifications] Usuario autenticado, cargando desde backend...');
       refreshUserFromBackend();
     }
+    
+    mountedOnce.current = true;
   }, [isSignedIn, user, refreshUserFromBackend]);
 
+  // ✅ autoRegister: false - Solo escuchar notificaciones, NO registrar automáticamente
   const { expoPushToken, permissionStatus } = usePushNotifications({
     userId,
-    autoRegister: true,
+    autoRegister: false,
     onNotification: (notification) => {
       const { title, body, data } = notification.request.content;
       console.log('🔔 [PushNotifications] Nueva notificación:', title);
@@ -51,20 +57,16 @@ export function PushNotificationsInitializer() {
     },
   });
 
+  // Log estado solo cuando cambia
   useEffect(() => {
-    if (expoPushToken && userId) {
-      console.log('✅ [PushNotifications] Push token registrado:', expoPushToken);
-      console.log('  👤 UserId:', userId);
-      console.log('  👤 Usuario:', user?.name);
-      console.log('  🔐 Permisos:', permissionStatus);
-    } else if (permissionStatus === 'denied') {
-      console.warn('🚫 [PushNotifications] Permisos de notificaciones denegados');
-    } else if (isSignedIn && !userId) {
-      console.log('⏳ [PushNotifications] Esperando que se cargue el usuario...');
-    } else if (userId && !expoPushToken) {
-      console.log('⏳ [PushNotifications] Esperando token... (puede ser emulador)');
+    if (userId && expoPushToken) {
+      console.log('✅ [PushNotifications] Configuración completada', {
+        userId,
+        hasToken: !!expoPushToken,
+        permissions: permissionStatus,
+      });
     }
-  }, [expoPushToken, permissionStatus, userId, user, isSignedIn]);
+  }, [userId, expoPushToken, permissionStatus]);
 
-  return null; // No renderiza nada visual
+  return null;
 }
