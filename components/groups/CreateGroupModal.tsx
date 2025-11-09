@@ -7,6 +7,7 @@ import { useAuth } from '@clerk/clerk-expo';
 import { createGroup } from '@/api/backend/group/groupApi';
 import { Group } from '@/api/backend/group/groupType';
 import { createGroupFirebase } from '@/api/firebase/chat/chatService';
+import { invalidateGroupsCache } from '@/lib/hooks/useUserGroups'; // ✅ Importar invalidación de caché
 
 
 type Props = { 
@@ -77,6 +78,10 @@ export default function CreateGroupModal({ visible, onClose, onSuccess, type }: 
       // Inicializar chat en Firebase
       const chatId = await createGroupFirebase(groupData);
       console.log('Firebase group chat initialized with ID:', chatId);
+
+      // ✅ Invalidar caché para que todos los componentes recarguen
+      invalidateGroupsCache();
+      console.log('🔄 Caché de grupos invalidado después de crear');
 
       if (onSuccess) {
         onSuccess();

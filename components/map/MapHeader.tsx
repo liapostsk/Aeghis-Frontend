@@ -1,7 +1,7 @@
 // File: components/map/MapHeader.tsx
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, TouchableWithoutFeedback } from 'react-native';
 import Icon from '@expo/vector-icons/Ionicons';
-import { getUserGroups } from '@/api/backend/group/groupApi';
+import { useUserGroups } from '@/lib/hooks/useUserGroups'; // ✅ Usar hook con caché
 import { getCurrentJourneyForGroup } from '@/api/backend/journeys/journeyApi';
 import { Group } from '@/api/backend/group/groupType';
 import { JourneyDto } from '@/api/backend/journeys/journeyType';
@@ -26,20 +26,21 @@ export default function MapHeader({ activeGroupJourney, onGroupJourneySelect }: 
 
   const { getToken } = useAuth();
   const setToken = useTokenStore((state) => state.setToken);
+  const { groups: userGroups } = useUserGroups(); // ✅ Usar hook con caché
 
   useEffect(() => {
     loadGroupsWithActiveJourneys();
-  }, []);
+  }, [userGroups]); // ✅ Recargar cuando cambien los grupos
 
   const loadGroupsWithActiveJourneys = async () => {
+    if (userGroups.length === 0) return; // ✅ No hacer nada si no hay grupos
+
     try {
       setLoading(true);
       const token = await getToken();
       setToken(token);
-      // 1. Obtener todos los grupos del usuario
-      const userGroups = await getUserGroups();
-
-      console.log('Grupos del usuario:', userGroups);
+      
+      console.log('🔍 [MapHeader] Verificando journeys activos para', userGroups.length, 'grupos');
       
       // 2. Para cada grupo, verificar si tiene journey activo
       const groupJourneyPromises = userGroups.map(async (group) => {

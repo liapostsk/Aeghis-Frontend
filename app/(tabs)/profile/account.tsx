@@ -1,6 +1,7 @@
 
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, SafeAreaView, Pressable, Modal, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, Pressable, Modal, ScrollView } from 'react-native';
 import { useUserStore } from '@/lib/storage/useUserStorage';
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useTokenStore } from '@/lib/auth/tokenStore';

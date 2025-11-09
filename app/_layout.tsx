@@ -1,5 +1,5 @@
 // app/layout.tsx o app/_layout.tsx
-import { ClerkProvider } from '@clerk/clerk-expo';
+import { ClerkLoaded, ClerkProvider } from '@clerk/clerk-expo';
 import { tokenCache } from '@clerk/clerk-expo/token-cache';
 import { Slot } from 'expo-router';
 import TokenProvider from '@/lib/auth/tokenProvider';
@@ -12,10 +12,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <BottomSheetModalProvider>
         <ClerkProvider tokenCache={tokenCache}>
-          <TokenProvider>
-            {/* ✅ Inicializar notificaciones push */}
-            <PushNotificationsInitializer />
-            
+          <TokenProvider>            
             <Slot />
           </TokenProvider>
         </ClerkProvider>

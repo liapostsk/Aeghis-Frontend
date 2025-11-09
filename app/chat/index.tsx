@@ -13,6 +13,7 @@ import { UserDto } from '@/api/backend/types';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 import { getGroupById } from '@/api/backend/group/groupApi';
+import { getUser } from '@/api/backend/user/userApi';
 import { sendMessageFirebase, listenGroupMessages, markAllMessagesAsRead} from '@/api/firebase/chat/chatService';
 import { auth } from '@/firebaseconfig';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -24,6 +25,7 @@ import { ParticipationDto } from '@/api/backend/participations/participationType
 import { getCurrentUser } from '@/api/backend/user/userApi';
 import { SafeLocation, Location } from '@/api/backend/locations/locationType';
 import SafeLocationModal from '@/components/safeLocations/SafeLocationModal';
+import { useNotificationSender } from '@/components/notifications/useNotificationSender';
 import { 
   MessageBubble, 
   ChatHeader, 
@@ -62,9 +64,11 @@ export default function ChatScreen() {
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [showDestinationModal, setShowDestinationModal] = useState(false);
   const [selectedDestination, setSelectedDestination] = useState<SafeLocation | null>(null);
+  const [groupMembers, setGroupMembers] = useState<UserDto[]>([]); // ✅ Miembros del grupo
 
   const { getToken } = useAuth();
   const setToken = useTokenStore((state) => state.setToken);
+  const { sendChatNotification } = useNotificationSender(); // ✅ Hook de notificaciones
 
   // Función para verificar si el usuario está participando en el trayecto
   const checkUserParticipation = async (journey: JourneyDto, userId: number): Promise<ParticipationDto | null> => {
@@ -134,6 +138,7 @@ export default function ChatScreen() {
     }
   }, [groupId]);
 
+  // ✅ Listener de mensajes con marcado automático y envío de notificaciones
   useEffect(() => {
     if (!groupId) return;
     const uid = auth.currentUser?.uid;
@@ -148,17 +153,58 @@ export default function ChatScreen() {
           content: m.content ?? '',
           time: (m.timestamp?.toDate ? m.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'enviando…'),
           isUser: m.senderId === uid,
-          isRead: m.readBy?.includes(uid || '') || false, // ✅ Verificar si está en readBy
-          readBy: m.readBy || [], // ✅ Array de UIDs
+          isRead: m.readBy?.includes(uid || '') || false,
+          readBy: m.readBy || [],
           type: 'message' as const,
         }));
         setMessages(ui);
+
+        // ✅ Marcar mensajes como leídos automáticamente si hay mensajes no leídos
+        const hasUnreadMessages = ui.some(msg => 
+          !msg.readBy?.includes(uid || '') && msg.senderId !== uid
+        );
+
+        if (hasUnreadMessages) {
+          console.log('📖 Marcando mensajes nuevos como leídos automáticamente...');
+          markAllMessagesAsRead(String(groupId)).catch(err => 
+            console.warn('Error marcando como leído:', err)
+          );
+        }
+
+        // ✅ Enviar notificaciones a usuarios que no han leído el último mensaje
+        if (ui.length > 0 && groupMembers.length > 0) {
+          const latestMessage = ui[ui.length - 1];
+          
+          // Solo enviar si es de otro usuario (no del actual)
+          if (latestMessage.senderId !== uid) {
+            const unreadMembers = groupMembers.filter(member => {
+              const hasRead = latestMessage.readBy?.includes(member.clerkId);
+              const isSender = member.clerkId === latestMessage.senderId;
+              return !hasRead && !isSender;
+            });
+
+            if (unreadMembers.length > 0) {
+              console.log(`📬 Enviando notificaciones a ${unreadMembers.length} usuarios`);
+              
+              unreadMembers.forEach(member => {
+                sendChatNotification(
+                  member.id,
+                  String(groupId),
+                  latestMessage.senderName,
+                  latestMessage.content.length > 100 
+                    ? latestMessage.content.substring(0, 100) + '...' 
+                    : latestMessage.content
+                ).catch(err => console.warn('Error enviando notificación:', err));
+              });
+            }
+          }
+        }
       },
       (err) => console.warn('Error leyendo mensajes:', err)
     );
 
     return unsub;
-  }, [groupId]);
+  }, [groupId, groupMembers]);
 
   // Cargar datos del grupo y usuario
   useEffect(() => {
@@ -186,6 +232,18 @@ export default function ChatScreen() {
           setActiveJourney(journeyData);
           setCurrentUserId(userData?.id || null);
           setCurrentUserData(userData);
+          
+          // ✅ Cargar información completa de los miembros del grupo
+          if (groupData.membersIds && groupData.membersIds.length > 0) {
+            const memberPromises = groupData.membersIds.map(memberId => 
+              getUser(memberId).catch(() => null)
+            );
+            const loadedMembers = await Promise.all(memberPromises);
+            const validMembers = loadedMembers.filter((m): m is UserDto => m !== null);
+            setGroupMembers(validMembers);
+            console.log(`✅ ${validMembers.length} miembros cargados para notificaciones`);
+          }
+          
           setError(null);
 
           if (journeyData && userData) {

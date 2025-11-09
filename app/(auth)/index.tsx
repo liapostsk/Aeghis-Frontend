@@ -11,7 +11,7 @@ import { ensureCurrentUserProfile } from "@/api/firebase/users/userService";
 
 
 export default function Index() {
-  const { isSignedIn, userId, signOut, getToken } = useAuth();
+  const { isSignedIn, userId, signOut, getToken, isLoaded } = useAuth(); // ✅ Agregar isLoaded
   const { user: clerkUser } = useUser();
   const router = useRouter();
   const [isValidating, setIsValidating] = useState(false);
@@ -28,6 +28,12 @@ export default function Index() {
 
   // Redirigir a la pantalla de tabs si existe una sesion activa en clerk o en el backend
   useEffect(() => {
+    // ✅ Esperar a que Clerk termine de cargar
+    if (!isLoaded) {
+      console.log("⏳ Esperando a que Clerk cargue...");
+      return;
+    }
+
     const validateSession = async () => {
       console.log("🔍 Validando sesión... isSignedIn:", isSignedIn, "userId:", userId);
       
@@ -113,7 +119,7 @@ export default function Index() {
     };
 
     validateSession();
-  }, [isSignedIn, userId]);
+  }, [isLoaded, isSignedIn, userId]); // ✅ Agregar isLoaded a dependencias
 
   const borradoClerk = async () => {
     try {

@@ -60,6 +60,7 @@ export function PushNotificationsInitializer() {
   // Log estado solo cuando cambia
   useEffect(() => {
     if (userId && expoPushToken) {
+      console.log("Token de notificación push registrado:", expoPushToken);
       console.log('✅ [PushNotifications] Configuración completada', {
         userId,
         hasToken: !!expoPushToken,

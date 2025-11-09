@@ -6,9 +6,9 @@ import {
   ScrollView,
   Animated,
   Dimensions,
-  SafeAreaView,
   Pressable,
 } from 'react-native';
+import { SafeAreaView } from "react-native-safe-area-context";
 import privacyPolicyContent from '@/privacyPolicy.json';
 import { useUserStore } from '@/lib/storage/useUserStorage';
 

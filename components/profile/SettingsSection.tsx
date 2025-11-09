@@ -1,6 +1,7 @@
 // File: components/profile/SettingsSection.tsx
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, SafeAreaView, Modal } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Modal } from 'react-native';
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 

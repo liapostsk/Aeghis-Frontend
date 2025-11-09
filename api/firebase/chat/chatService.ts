@@ -152,7 +152,7 @@ export async function sendMessageFirebase(
       senderName: senderName,
       type: type,
       content: trimmed,
-      readBy: [],  // ✅ Inicializar vacío - los usuarios lo marcarán como leído
+      readBy: [uid],  // ✅ El remitente automáticamente "leyó" su propio mensaje
       timestamp: serverTimestamp(),
     });
     batch.set(
@@ -198,13 +198,13 @@ export async function markAllMessagesAsRead(groupId: string): Promise<void> {
       query(messagesRef, orderBy('timestamp', 'desc'), limit(100))
     );
     
-    // ✅ Filtrar mensajes donde el usuario NO está en readBy y NO es el remitente
+    // ✅ Filtrar mensajes donde el usuario NO está en readBy
+    // Ya no excluimos al remitente porque se auto-agrega al crear el mensaje
     const unreadMessages = allMessagesSnapshot.docs.filter(doc => {
       const data = doc.data();
       const readBy = data.readBy || [];
-      const senderId = data.senderId;
       
-      return !readBy.includes(uid) && senderId !== uid;
+      return !readBy.includes(uid);
     });
     
     if (unreadMessages.length === 0) {

@@ -8,7 +8,7 @@ import { JourneyDto, JourneyStates } from '@/api/backend/journeys/journeyType';
 import { UserDto } from '@/api/backend/types';
 import { Group, GROUP_TYPES } from '@/api/backend/group/groupType';
 import { User, useUserStore } from "../../lib/storage/useUserStorage";
-import { getUserGroups } from '@/api/backend/group/groupApi';
+import { useUserGroups } from '@/lib/hooks/useUserGroups'; // ✅ Usar hook con caché
 
 // Importar componentes y hooks de batería
 import BatteryDisplay, { ParticipantsList } from '@/components/common/BatteryDisplay';
@@ -34,10 +34,8 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
   // Estados principales
   const [activeJourney, setActiveJourney] = useState<JourneyDto | null>(null);
   
-  const [userGroups, setUserGroups] = useState<Group[]>([]);
   const [currentUser, setCurrentUser] = useState<UserDto | null>(null);
-  const [loading, setLoading] = useState(true); // Cambiar a true para cargar grupos
-  const [groupsLoaded, setGroupsLoaded] = useState(false);
+  const [loading, setLoading] = useState(false); // ✅ El hook maneja el loading
 
   // Estados de modales y UI
   const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
@@ -50,62 +48,9 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
   const {user} = useUserStore();
 
   // Hooks externos
-  const { getToken } = useAuth(); // Hook para obtener el token de autenticación
-  const setToken = useTokenStore((state) => state.setToken); // Hook para guardar el token en el store
-
-  // Cargar grupos del usuario al montar el componente
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadUserGroups = async () => {
-      if (groupJourney) {
-        // Si ya hay un journey activo, no necesitamos cargar grupos
-        if (isMounted) {
-          setLoading(false);
-          setGroupsLoaded(true);
-        }
-        return;
-      }
-
-      if (groupsLoaded) {
-        // Ya se cargaron los grupos, no volver a cargar
-        return;
-      }
-
-      try {
-        console.log('🔄 Cargando grupos del usuario...');
-        const token = await getToken();
-        if (isMounted) {
-          setToken(token);
-        }
-        
-        const groups = await getUserGroups();
-        if (isMounted) {
-          console.log('✅ Grupos cargados:', groups.length);
-          setUserGroups(groups);
-          setGroupsLoaded(true);
-        }
-      } catch (error) {
-        console.error('💥 Error cargando grupos:', error);
-        if (isMounted) {
-          setUserGroups([]);
-          setGroupsLoaded(true);
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    if (!groupsLoaded) {
-      loadUserGroups();
-    }
-
-    return () => {
-      isMounted = false;
-    };
-  }, []); // Solo ejecutar una vez al montar el componente
+  const { getToken } = useAuth();
+  const setToken = useTokenStore((state) => state.setToken);
+  const { groups: userGroups, loading: groupsLoading } = useUserGroups(); // ✅ Usar hook con caché
 
   // Referencias y configuración del Bottom Sheet
   const bottomSheetRef = useRef<BottomSheet>(null);
@@ -164,11 +109,11 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
   // Auto-expandir el Bottom Sheet cuando hay contenido relevante
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (groupJourney || (!loading && groupsLoaded)) {
+      if (groupJourney || (!loading && !groupsLoading)) { // ✅ Usar groupsLoading del hook
         console.log('🔄 Auto-expandiendo BottomSheet:', { 
           hasGroupJourney: !!groupJourney, 
           loading, 
-          groupsLoaded,
+          groupsLoaded: !groupsLoading, // ✅ Invertir groupsLoading
           userGroupsCount: userGroups.length 
         });
         expandSheet();
@@ -176,7 +121,7 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
     }, 300); // Delay pequeño para asegurar que el sheet esté listo
 
     return () => clearTimeout(timer);
-  }, [groupJourney, loading, groupsLoaded, userGroups.length, expandSheet]);
+  }, [groupJourney, loading, groupsLoading, userGroups.length, expandSheet]); // ✅ Cambiar groupsLoaded por groupsLoading
 
   // Función para colapsar a tab
   const collapseToTab = useCallback(() => {
@@ -227,17 +172,10 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
 
   const handleGroupCreated = () => {
     setShowCreateGroupModal(false);
-    // Recargar datos después de crear grupo - actualizar lista
-    const reloadGroups = async () => {
-      try {
-        const groups = await getUserGroups();
-        setUserGroups(groups);
-        console.log('🔄 Grupos recargados después de crear:', groups.length);
-      } catch (error) {
-        console.error('Error recargando grupos:', error);
-      }
-    };
-    reloadGroups();
+    // ✅ Invalidar caché para que todos los componentes recarguen
+    const { invalidateGroupsCache } = require('@/lib/hooks/useUserGroups');
+    invalidateGroupsCache();
+    console.log('🔄 Caché de grupos invalidado después de crear');
     
     // Navegar a la pantalla de journey del nuevo grupo
     onStartJourney();
