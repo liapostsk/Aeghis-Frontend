@@ -79,10 +79,12 @@ export default function ProfileScreen() {
     { name: 'Casa', address: 'Calle Principal 123', type: 'Hogar', latitude: 40.4168, longitude: -3.7038 },
   ];
 
-  // <StatusBar barStyle="dark-content" backgroundColor="#7A33CC" />
 
   return (
+    
     <SafeAreaView style={styles.container}>
+
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
           <ProfileHeader

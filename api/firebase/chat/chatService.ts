@@ -115,8 +115,15 @@ export async function updateGroupFirebase(group: Group) {
 
 // FUNCIONES DE MENSAJERÍA
 
-// sendMessageToGroup, como ahora ya somos miembros, podemos enviar mensajes
-export async function sendMessageFirebase(groupId: string, text: string) {
+/**
+ * Enviar mensaje a un grupo
+ * ✅ ACTUALIZADO: Inicializa readBy como array vacío
+ */
+export async function sendMessageFirebase(
+  groupId: string, 
+  text: string,
+  type: 'text' | 'status' | 'arrival' | 'journey_request' = 'text'
+) {
   console.log('💬 sendMessageFirebase - Enviando mensaje al grupo:', groupId);
   
   try {
@@ -143,9 +150,9 @@ export async function sendMessageFirebase(groupId: string, text: string) {
     batch.set(newMsgRef, {
       senderId: uid,
       senderName: senderName,
-      type: 'text',
+      type: type,
       content: trimmed,
-      read: false,
+      readBy: [],  // ✅ Inicializar vacío - los usuarios lo marcarán como leído
       timestamp: serverTimestamp(),
     });
     batch.set(
@@ -174,44 +181,134 @@ export async function sendMessageFirebase(groupId: string, text: string) {
   }
 }
 
-export async function markAllMessagesAsRead(groupId: string) {
-  console.log("🔍 markAllMessagesAsRead INICIADA para groupId:", groupId);
+/**
+ * Marcar todos los mensajes como leídos por el usuario actual
+ * ✅ ACTUALIZADO: Usa readBy en lugar de read
+ */
+export async function markAllMessagesAsRead(groupId: string): Promise<void> {
+  console.log("🔍 markAllMessagesAsRead para groupId:", groupId);
   
   try {
     const uid = requireUid();
     console.log("🔍 UID obtenido:", uid);
     
-    const messagesQuery = query(
-      collection(db, 'chats', String(groupId), 'messages'),
-      where('read', '==', false), // Solo esta condición primero
-      orderBy('timestamp', 'desc'),
-      limit(50)
+    // ✅ Obtener todos los mensajes recientes
+    const messagesRef = collection(db, 'chats', String(groupId), 'messages');
+    const allMessagesSnapshot = await getDocs(
+      query(messagesRef, orderBy('timestamp', 'desc'), limit(100))
     );
-
-    const snapshot = await getDocs(messagesQuery);
     
-    const otherUsersMessages = snapshot.docs.filter(doc => {
+    // ✅ Filtrar mensajes donde el usuario NO está en readBy y NO es el remitente
+    const unreadMessages = allMessagesSnapshot.docs.filter(doc => {
       const data = doc.data();
-      return data.senderId !== uid; // Excluir mis propios mensajes
+      const readBy = data.readBy || [];
+      const senderId = data.senderId;
+      
+      return !readBy.includes(uid) && senderId !== uid;
     });
     
-    if (otherUsersMessages.length === 0) {
-      console.log("ℹ️ No hay mensajes de otros usuarios para marcar como leídos");
+    if (unreadMessages.length === 0) {
+      console.log("ℹ️ No hay mensajes para marcar como leídos");
       return;
     }
     
+    console.log(`📝 Marcando ${unreadMessages.length} mensajes como leídos...`);
     const batch = writeBatch(db);
     
-    otherUsersMessages.forEach(doc => {
-      batch.update(doc.ref, { read: true });
+    unreadMessages.forEach(docSnap => {
+      // ✅ Agregar userId al array readBy
+      batch.update(docSnap.ref, {
+        readBy: arrayUnion(uid),
+      });
     });
     
     await batch.commit();
-    console.log(`✅ ${otherUsersMessages.length} mensajes marcados como leídos`);
+    console.log(`✅ ${unreadMessages.length} mensajes marcados como leídos`);
     
   } catch (error) {
     console.error("❌ Error en markAllMessagesAsRead:", error);
     console.error("❌ Error details:", error.code, error.message);
+  }
+}
+
+/**
+ * Marcar un mensaje específico como leído
+ * ✅ NUEVO: Función para marcar mensaje individual
+ */
+export async function markMessageAsRead(groupId: string, messageId: string): Promise<void> {
+  console.log('👁️ markMessageAsRead - Marcando mensaje:', { groupId, messageId });
+  
+  try {
+    const uid = requireUid();
+    const messageRef = doc(db, 'chats', String(groupId), 'messages', messageId);
+    
+    const messageSnap = await getDoc(messageRef);
+    if (!messageSnap.exists()) {
+      console.warn('⚠️ Mensaje no encontrado:', messageId);
+      return;
+    }
+    
+    const data = messageSnap.data();
+    const readBy = data.readBy || [];
+    
+    // No hacer nada si ya está leído
+    if (readBy.includes(uid)) {
+      console.log('ℹ️ Mensaje ya marcado como leído');
+      return;
+    }
+    
+    // No marcar como leído si es el remitente
+    if (data.senderId === uid) {
+      console.log('ℹ️ No marcar propio mensaje como leído');
+      return;
+    }
+    
+    console.log('🔄 Agregando usuario a readBy...');
+    await updateDoc(messageRef, {
+      readBy: arrayUnion(uid),
+    });
+    
+    console.log('✅ Mensaje marcado como leído');
+  } catch (error) {
+    console.error('💥 Error marcando mensaje como leído:', error);
+  }
+}
+
+/**
+ * Obtener usuarios que NO han leído un mensaje específico
+ * ✅ NUEVO: Para enviar notificaciones selectivas
+ */
+export async function getUnreadUserIds(
+  groupId: string,
+  messageId: string,
+  allMemberClerkIds: string[]
+): Promise<string[]> {
+  console.log('🔍 getUnreadUserIds:', { groupId, messageId });
+  
+  try {
+    const messageRef = doc(db, 'chats', String(groupId), 'messages', messageId);
+    const messageSnap = await getDoc(messageRef);
+    
+    if (!messageSnap.exists()) {
+      console.warn('⚠️ Mensaje no encontrado');
+      return [];
+    }
+    
+    const data = messageSnap.data();
+    const readBy = data.readBy || [];
+    const senderId = data.senderId;
+    
+    // ✅ Filtrar: miembros que NO están en readBy y NO son el remitente
+    const unreadUsers = allMemberClerkIds.filter(
+      clerkId => !readBy.includes(clerkId) && clerkId !== senderId
+    );
+    
+    console.log(`✅ ${unreadUsers.length} usuarios no han leído el mensaje`);
+    return unreadUsers;
+    
+  } catch (error) {
+    console.error('❌ Error obteniendo usuarios no leídos:', error);
+    return [];
   }
 }
 
@@ -345,6 +442,7 @@ export  async function getGroupTileInfo(groupId: string): Promise<GroupTileInfo>
 
 /**
  * Obtiene únicamente el número de mensajes no leídos de un chat específico
+ * ✅ ACTUALIZADO: Usa readBy en lugar de read
  * @param groupId ID del grupo/chat
  * @returns Promise<number> - Número de mensajes no leídos
  */
@@ -353,16 +451,23 @@ export async function getUnreadMessagesCount(groupId: string): Promise<number> {
     const uid = requireUid();
     console.log(`🔍 getUnreadMessagesCount para groupId: ${groupId}, uid: ${uid}`);
     
-    // Consulta mensajes no leídos que NO sean del usuario actual
-    const messagesQuery = query(
-      collection(db, 'chats', String(groupId), 'messages'),
-      where('read', '==', false),
-      where('senderId', '!=', uid) // Excluir mis propios mensajes
+    // ✅ Obtener todos los mensajes recientes
+    const messagesRef = collection(db, 'chats', String(groupId), 'messages');
+    const messagesSnapshot = await getDocs(
+      query(messagesRef, orderBy('timestamp', 'desc'), limit(100))
     );
-
-    console.log(`🔍 Ejecutando query de conteo para chat ${groupId}...`);
-    const countSnapshot = await getCountFromServer(messagesQuery);
-    const count = countSnapshot.data().count;
+    
+    // ✅ Contar mensajes donde el usuario NO está en readBy y NO es el remitente
+    let count = 0;
+    messagesSnapshot.docs.forEach(doc => {
+      const data = doc.data();
+      const readBy = data.readBy || [];
+      const senderId = data.senderId;
+      
+      if (!readBy.includes(uid) && senderId !== uid) {
+        count++;
+      }
+    });
     
     console.log(`✅ Mensajes no leídos en chat ${groupId}: ${count}`);
     return count;
@@ -371,12 +476,11 @@ export async function getUnreadMessagesCount(groupId: string): Promise<number> {
     console.error(`❌ Error obteniendo mensajes no leídos para chat ${groupId}:`, error);
     console.error(`❌ Error code: ${error.code}, message: ${error.message}`);
     
-    // Si es un error de permisos, intentar una consulta más simple
     if (error.code === 'permission-denied') {
       console.warn(`⚠️ Sin permisos para contar mensajes en chat ${groupId}, devolviendo 0`);
     }
     
-    return 0; // Retorna 0 en caso de error
+    return 0;
   }
 }
 

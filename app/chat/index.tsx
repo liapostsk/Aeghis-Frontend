@@ -42,6 +42,7 @@ interface Message {
   time: string;
   isUser?: boolean;
   isRead?: boolean;
+  readBy?: string[]; // ✅ Array de UIDs que leyeron el mensaje
   type?: 'message' | 'status' | 'arrival';
 }
 
@@ -147,7 +148,8 @@ export default function ChatScreen() {
           content: m.content ?? '',
           time: (m.timestamp?.toDate ? m.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'enviando…'),
           isUser: m.senderId === uid,
-          isRead: m.read || false,
+          isRead: m.readBy?.includes(uid || '') || false, // ✅ Verificar si está en readBy
+          readBy: m.readBy || [], // ✅ Array de UIDs
           type: 'message' as const,
         }));
         setMessages(ui);

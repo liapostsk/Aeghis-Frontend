@@ -346,8 +346,7 @@ export default function GroupInfoScreen() {
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" backgroundColor="#7A33CC" />
-            
+            <StatusBar barStyle="dark-content" backgroundColor="#7A33CC" />
             <SafeAreaView style={styles.topArea}>
                 {/* Header */}
                 <View style={styles.header}>

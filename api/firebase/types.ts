@@ -48,14 +48,15 @@ export interface ChatDoc {
   lastMessageAt: any;   // Firebase Timestamp
 }
 
+// ✅ ACTUALIZADO: Agregado readBy y expandido tipos
 export interface MessageDoc {
   id: string;
   senderId: string;
   senderName: string;
-  read: boolean;
+  readBy: string[];           // ✅ Array de UIDs que leyeron el mensaje
   type: 'text' | 'image';
   content: string;
-  timestamp: any;       // Firebase Timestamp
+  timestamp: any;             // Firebase Timestamp
 }
 
 export type GroupTileInfo = {

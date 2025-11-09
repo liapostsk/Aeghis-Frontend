@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useMemo, useState } from 'react';
 import { Stack, Slot, Link, usePathname, Href } from 'expo-router';
-import { View, Text, Pressable, TextInput, StyleSheet, SafeAreaView } from 'react-native';
+import { View, Text, Pressable, TextInput, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 // Define el contexto para pasar el estado de búsqueda
 type context = {
