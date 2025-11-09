@@ -16,7 +16,7 @@ import { useRouter } from 'expo-router';
 import { useSignIn, useAuth, useUser } from '@clerk/clerk-expo';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import VerificationCodeField from '@/components/ui/VerificationCodeField';
-import { getCurrentUser } from '@/api/user/userApi';
+import { getCurrentUser } from '@/api/backend/user/userApi';
 import { useUserStore } from '@/lib/storage/useUserStorage';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 import { linkFirebaseSession } from '@/api/firebase/auth/firebase';

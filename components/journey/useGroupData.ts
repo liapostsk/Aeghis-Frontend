@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Alert } from 'react-native';
 import { router } from 'expo-router';
-import { UserDto } from '@/api/types';
-import { Group } from '@/api/group/groupType';
-import { getGroupById } from '@/api/group/groupApi';
-import { getUser, getCurrentUser } from '@/api/user/userApi';
+import { UserDto } from '@/api/backend/types';
+import { Group } from '@/api/backend/group/groupType';
+import { getGroupById } from '@/api/backend/group/groupApi';
+import { getUser, getCurrentUser } from '@/api/backend/user/userApi';
 
 interface UseGroupDataProps {
   groupId: string;

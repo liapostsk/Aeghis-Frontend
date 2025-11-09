@@ -3,11 +3,11 @@ import { View, Text, StyleSheet, FlatList, RefreshControl, Pressable } from 'rea
 import { router } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
-import { getUserGroupsByType } from '@/api/group/groupApi';
+import { getUserGroupsByType } from '@/api/backend/group/groupApi';
 import { getGroupTilesInfo, markChatSeen } from '@/api/firebase/chat/chatService';
 import { GroupTileInfo } from '@/api/firebase/types';
 import { auth } from '@/firebaseconfig';
-import { Group } from '@/api/group/groupType';
+import { Group } from '@/api/backend/group/groupType';
 import { useGroupSeach } from '@/app/(tabs)/groups/_layout';
 
 // Helpers

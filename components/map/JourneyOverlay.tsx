@@ -4,11 +4,11 @@ import { Ionicons } from '@expo/vector-icons';
 import BottomSheet, { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
 
 // Importar APIs y tipos
-import { JourneyDto, JourneyStates } from '@/api/journeys/journeyType';
-import { UserDto } from '@/api/types';
-import { Group, GROUP_TYPES } from '@/api/group/groupType';
+import { JourneyDto, JourneyStates } from '@/api/backend/journeys/journeyType';
+import { UserDto } from '@/api/backend/types';
+import { Group, GROUP_TYPES } from '@/api/backend/group/groupType';
 import { User, useUserStore } from "../../lib/storage/useUserStorage";
-import { getUserGroups } from '@/api/group/groupApi';
+import { getUserGroups } from '@/api/backend/group/groupApi';
 
 // Importar componentes y hooks de batería
 import BatteryDisplay, { ParticipantsList } from '@/components/common/BatteryDisplay';

@@ -1,9 +1,9 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { EmergencyContact, ExternalContact } from '@/api/types';
-import { SafeLocation } from '@/api/locations/locationType';
-import { getCurrentUser } from '../../api/user/userApi';
+import { EmergencyContact, ExternalContact } from '@/api/backend/types';
+import { SafeLocation } from '@/api/backend/locations/locationType';
+import { getCurrentUser } from '../../api/backend/user/userApi';
 
 
 export type User = {

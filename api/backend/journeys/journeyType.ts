@@ -1,4 +1,4 @@
-import { Participation } from "@/api/participations/participationType";
+import { Participation } from "@/api/backend/participations/participationType";
 import { Group } from "../group/groupType";
 
 export interface Journey {

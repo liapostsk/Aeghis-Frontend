@@ -10,7 +10,7 @@ import {
   deleteDoc,
 } from "firebase/firestore";
 import type { Position, JourneyDoc, Participation } from '../types';
-import { JourneyDto, JourneyState } from '@/api/journeys/journeyType';
+import { JourneyDto, JourneyState } from '@/api/backend/journeys/journeyType';
 
 /**
  * Crea un nuevo Journey dentro de un chat

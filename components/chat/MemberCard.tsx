@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { UserDto } from '@/api/types';
+import { UserDto } from '@/api/backend/types';
 
 interface MemberCardProps {
   user: UserDto;

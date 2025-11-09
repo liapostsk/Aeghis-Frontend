@@ -1,6 +1,6 @@
 
-import { UserDto } from "../types";
-import { User } from "../../lib/storage/useUserStorage";
+import { UserDto } from "../../backend/types";
+import { User } from "../../../lib/storage/useUserStorage";
 
 // Mapper function to convert User context type to UserDto
 export const mapUserToDto = (user: User): UserDto => {

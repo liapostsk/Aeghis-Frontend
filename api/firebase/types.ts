@@ -1,6 +1,6 @@
 export type ChatType = 'direct' | 'group';
-import { JourneyType, JourneyState } from '../journeys/journeyType';
-import { ParticipationState } from '../participations/participationType';
+import { JourneyType, JourneyState } from '../backend/journeys/journeyType';
+import { ParticipationState } from '../backend/participations/participationType';
 
 // Firebase User Profile Types
 export interface FirebaseUserProfile {

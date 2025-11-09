@@ -1,4 +1,4 @@
-import api from "../client";
+import api from "../../client";
 import { Group } from "./groupType";
 
 export const createGroup = async (groupDto: Partial<Group>): Promise<number> => {

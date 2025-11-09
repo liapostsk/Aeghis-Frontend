@@ -14,7 +14,7 @@ import {
 import * as Contacts from 'expo-contacts';
 import ManualContactForm from './ManualContactForm';
 import ContactList from './ContactList';
-import { Contact } from '@/api/types';
+import { Contact } from '@/api/backend/types';
 
 
 const { height } = Dimensions.get('window');

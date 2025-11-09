@@ -8,21 +8,21 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { Group } from '@/api/group/groupType';
-import { UserDto } from '@/api/types';
+import { Group } from '@/api/backend/group/groupType';
+import { UserDto } from '@/api/backend/types';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
-import { getGroupById } from '@/api/group/groupApi';
+import { getGroupById } from '@/api/backend/group/groupApi';
 import { sendMessageFirebase, listenGroupMessages, markAllMessagesAsRead} from '@/api/firebase/chat/chatService';
 import { auth } from '@/firebaseconfig';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import InviteModal from '@/components/groups/InviteModal';
-import { getCurrentJourneyForGroup } from '@/api/journeys/journeyApi';
-import { JourneyDto } from '@/api/journeys/journeyType';
-import { getParticipation } from '@/api/participations/participationApi';
-import { ParticipationDto } from '@/api/participations/participationType';
-import { getCurrentUser } from '@/api/user/userApi';
-import { SafeLocation, Location } from '@/api/locations/locationType';
+import { getCurrentJourneyForGroup } from '@/api/backend/journeys/journeyApi';
+import { JourneyDto } from '@/api/backend/journeys/journeyType';
+import { getParticipation } from '@/api/backend/participations/participationApi';
+import { ParticipationDto } from '@/api/backend/participations/participationType';
+import { getCurrentUser } from '@/api/backend/user/userApi';
+import { SafeLocation, Location } from '@/api/backend/locations/locationType';
 import SafeLocationModal from '@/components/safeLocations/SafeLocationModal';
 import { 
   MessageBubble, 
@@ -87,16 +87,19 @@ export default function ChatScreen() {
     }
   };
 
+  // Manejar acción de unirse al trayecto
   const handleJoinJourney = () => {
     setShowJoinModal(true);
   };
 
+  // Manejar éxito al unirse al trayecto
   const handleJoinSuccess = (participation: ParticipationDto) => {
     setUserParticipation(participation);
     setShowJoinModal(false);
     setSelectedDestination(null);
   };
 
+  // Manejar selección de destino desde el modal
   const handleSelectDestination = (location: SafeLocation | Location) => {
     const safeLocation: SafeLocation = 'name' in location ? location : {
       id: location.id,
@@ -123,6 +126,7 @@ export default function ChatScreen() {
     );
   };
 
+  // Marcar mensajes como leídos al entrar al chat
   useEffect(() => {
     if (groupId) {
       markAllMessagesAsRead(String(groupId));
@@ -154,6 +158,7 @@ export default function ChatScreen() {
     return unsub;
   }, [groupId]);
 
+  // Cargar datos del grupo y usuario
   useEffect(() => {
     let mounted = true;
     
@@ -197,8 +202,7 @@ export default function ChatScreen() {
     return () => { mounted = false; };
   }, [groupId]);
 
-
-
+  // Enviar mensaje
   const sendMessage = async () => {
     const text = inputText.trim();
     if (!text) return;
@@ -212,6 +216,7 @@ export default function ChatScreen() {
   };
 
   /** Guards */
+  // Loading state
   if (loading) {
     return (
       <View style={styles.center}>
@@ -220,7 +225,7 @@ export default function ChatScreen() {
       </View>
     );
   }
-
+  // Error state
   if (error || !group) {
     return (
       <View style={styles.center}>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { UserDto } from '@/api/types';
-import { SafeLocation, Location } from '@/api/locations/locationType';
+import { UserDto } from '@/api/backend/types';
+import { SafeLocation, Location } from '@/api/backend/locations/locationType';
 import { JourneyType, generateDefaultJourneyName } from './journeyUtils';
 
 interface UseJourneyFormProps {

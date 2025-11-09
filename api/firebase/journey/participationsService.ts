@@ -13,7 +13,7 @@ import {
 } from 'firebase/firestore';
 
 import type { Position, Participation } from '../types';
-import { ParticipationState } from '@/api/participations/participationType';
+import { ParticipationState } from '@/api/backend/participations/participationType';
 
 /**
  * Unirse a un Journey (crea/actualiza la participación del usuario actual)

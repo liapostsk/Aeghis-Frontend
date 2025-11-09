@@ -13,7 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
-import { joinGroup } from '@/api/group/groupApi';
+import { joinGroup } from '@/api/backend/group/groupApi';
 import { useUserStore } from '@/lib/storage/useUserStorage';
 import { joinGroupChatFirebase } from '@/api/firebase/chat/chatService';
 

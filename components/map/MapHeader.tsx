@@ -1,10 +1,10 @@
 // File: components/map/MapHeader.tsx
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, TouchableWithoutFeedback } from 'react-native';
 import Icon from '@expo/vector-icons/Ionicons';
-import { getUserGroups } from '@/api/group/groupApi';
-import { getCurrentJourneyForGroup } from '@/api/journeys/journeyApi';
-import { Group } from '@/api/group/groupType';
-import { JourneyDto } from '@/api/journeys/journeyType';
+import { getUserGroups } from '@/api/backend/group/groupApi';
+import { getCurrentJourneyForGroup } from '@/api/backend/journeys/journeyApi';
+import { Group } from '@/api/backend/group/groupType';
+import { JourneyDto } from '@/api/backend/journeys/journeyType';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';

@@ -1,4 +1,4 @@
-import api from "../../client";
+import api from "../../../client";
 import { NearbySearchParams, SafeLocation, TextSearchParams } from "../locationType";
 
 // Mapeo de tipos de Google Places a nombres en español

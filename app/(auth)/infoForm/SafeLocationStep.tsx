@@ -9,7 +9,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from '@expo/vector-icons';
 import SafeLocationModal from '@/components/safeLocations/SafeLocationModal';
-import { SafeLocation } from '@/api/locations/locationType';
+import { SafeLocation } from '@/api/backend/locations/locationType';
 import { useUserStore } from '@/lib/storage/useUserStorage';
 
 export default function SafeLocationStep({

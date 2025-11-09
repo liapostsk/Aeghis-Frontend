@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable, Alert } from 'react-native';
 import { Ionicons, FontAwesome5, Feather } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import ContactEditorModal from '../emergencyContact/ContactEditorModal';
-import { Contact, EmergencyContact, EmergencyContactDto, ExternalContact } from '@/api/types';
+import { Contact, EmergencyContact, EmergencyContactDto, ExternalContact } from '@/api/backend/types';
 import { useTokenStore } from '../../lib/auth/tokenStore';
 import { useAuth } from "@clerk/clerk-expo";
 import { useUserStore } from '@/lib/storage/useUserStorage';
@@ -11,13 +11,13 @@ import {
   deleteEmergencyContact, 
   editEmergencyContact,
   createEmergencyContact 
-} from '@/api/contacts/emergencyContactsApi';
+} from '@/api/backend/contacts/emergencyContactsApi';
 import { 
   deleteExternalContact, 
   editExternalContact,
   createExternalContact 
-} from '@/api/contacts/externalContactsApi';
-import { checkIfUserExists, getCurrentUser, getUser } from '@/api/user/userApi';
+} from '@/api/backend/contacts/externalContactsApi';
+import { checkIfUserExists, getCurrentUser, getUser } from '@/api/backend/user/userApi';
 import EmergencyContactAddModal from '../emergencyContact/EmergencyContactAddModal';
 
 type ContactType = 'emergency' | 'external';

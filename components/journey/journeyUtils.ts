@@ -1,5 +1,5 @@
 import { JourneyType } from './JourneyTypeSelector';
-import { SafeLocation } from '@/api/locations/locationType';
+import { SafeLocation } from '@/api/backend/locations/locationType';
 
 // Re-exportar JourneyType para conveniencia
 export type { JourneyType } from './JourneyTypeSelector';

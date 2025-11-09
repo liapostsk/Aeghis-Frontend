@@ -7,8 +7,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { JourneyDto } from '@/api/journeys/journeyType';
-import { ParticipationDto } from '@/api/participations/participationType';
+import { JourneyDto } from '@/api/backend/journeys/journeyType';
+import { ParticipationDto } from '@/api/backend/participations/participationType';
 
 interface JourneyBannerProps {
   activeJourney: JourneyDto;

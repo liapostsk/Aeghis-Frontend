@@ -7,7 +7,7 @@ import {
     TextInput,
 } from 'react-native';
 import PhoneNumberPicker from '@/components/ui/PhoneNumberPicker';
-import { Contact } from '@/api/types';
+import { Contact } from '@/api/backend/types';
 
 type Props = {
     onSave: (contact: Contact) => void;

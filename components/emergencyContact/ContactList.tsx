@@ -1,6 +1,6 @@
 import React from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
-import { Contact } from '@/api/types';
+import { Contact } from '@/api/backend/types';
 
 type Props = {
   contacts: Contact[];

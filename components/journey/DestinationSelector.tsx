@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { SafeLocation } from '@/api/locations/locationType';
+import { SafeLocation } from '@/api/backend/locations/locationType';
 
 interface DestinationSelectorProps {
   selectedDestination: SafeLocation | null;

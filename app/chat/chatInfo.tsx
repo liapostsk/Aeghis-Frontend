@@ -12,8 +12,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { UserDto } from '@/api/types';
-import { Group } from '@/api/group/groupType';
+import { UserDto } from '@/api/backend/types';
+import { Group } from '@/api/backend/group/groupType';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 import { 
@@ -23,8 +23,8 @@ import {
     promoteToAdmin, 
     demoteToMember, 
     removeMember 
-} from '@/api/group/groupApi';
-import { getUser, getCurrentUser } from '@/api/user/userApi';
+} from '@/api/backend/group/groupApi';
+import { getUser, getCurrentUser } from '@/api/backend/user/userApi';
 import { 
     removeMemberFromGroupFirebase, 
     makeMemberAdminFirebase, 

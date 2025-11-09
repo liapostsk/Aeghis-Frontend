@@ -1,4 +1,4 @@
-import api from "../client";
+import api from "../../client";
 import { Invitation } from "./groupType";
 
 export const createInvitation = async (groupId: number, expiry?: number): Promise<Invitation> => {

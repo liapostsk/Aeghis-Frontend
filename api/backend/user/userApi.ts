@@ -1,5 +1,5 @@
-import api from "../client";
-import { UserDto } from "../types";
+import api from "../../client";
+import { UserDto } from "../../backend/types";
 
 export const getCurrentUser = async (): Promise<UserDto> => {
   console.log("📡 API: Llamando /user/me...");

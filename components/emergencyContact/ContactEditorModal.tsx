@@ -10,7 +10,7 @@ import {
   Platform,
   Alert,
 } from 'react-native';
-import { EmergencyContact, ExternalContact, Contact } from '@/api/types';
+import { EmergencyContact, ExternalContact, Contact } from '@/api/backend/types';
 
 type Props = {
   visible: boolean;

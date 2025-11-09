@@ -1,4 +1,4 @@
-import api from "../../client";
+import api from "../../../client";
 import { SafeLocation } from "../locationType";
 import { calculateDistance } from "./googlePlacesApi";
 import { formatDistance } from "./googlePlacesApi";

@@ -9,13 +9,13 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { JourneyDto, JourneyTypes } from '@/api/journeys/journeyType';
-import { ParticipationDto } from '@/api/participations/participationType';
-import { UserDto } from '@/api/types';
-import { SafeLocation, Location } from '@/api/locations/locationType';
-import { createParticipation } from '@/api/participations/participationApi';
-import { createLocation } from '@/api/locations/locationsApi';
-import { updateJourney } from '@/api/journeys/journeyApi';
+import { JourneyDto, JourneyTypes } from '@/api/backend/journeys/journeyType';
+import { ParticipationDto } from '@/api/backend/participations/participationType';
+import { UserDto } from '@/api/backend/types';
+import { SafeLocation, Location } from '@/api/backend/locations/locationType';
+import { createParticipation } from '@/api/backend/participations/participationApi';
+import { createLocation } from '@/api/backend/locations/locationsApi';
+import { updateJourney } from '@/api/backend/journeys/journeyApi';
 import * as ExpoLocation from 'expo-location';
 import SafeLocationModal from '@/components/safeLocations/SafeLocationModal';
 import { useAuth } from '@clerk/clerk-expo';

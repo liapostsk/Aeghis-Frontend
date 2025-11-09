@@ -3,8 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import MapView, { Marker, Region } from 'react-native-maps';
 import * as Location from 'expo-location';
-import { SafeLocation } from '@/api/locations/locationType';
-import { getLocationFromCoordinates } from '@/api/locations/safeLocations/googleGeocodingApi';
+import { SafeLocation } from '@/api/backend/locations/locationType';
+import { getLocationFromCoordinates } from '@/api/backend/locations/safeLocations/googleGeocodingApi';
 
 type MapLocationPickerProps = {
     visible: boolean;

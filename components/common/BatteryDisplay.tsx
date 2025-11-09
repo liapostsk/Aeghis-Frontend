@@ -8,10 +8,10 @@ import {
 import { useBatteryLevel } from '@/lib/hooks/useBatteryLevel';
 
 // Importar tipos y APIs existentes
-import { JourneyDto } from '@/api/journeys/journeyType';
-import { UserDto } from '@/api/types';
-import { getParticipation } from '@/api/participations/participationApi';
-import { getUser } from '@/api/user/userApi';
+import { JourneyDto } from '@/api/backend/journeys/journeyType';
+import { UserDto } from '@/api/backend/types';
+import { getParticipation } from '@/api/backend/participations/participationApi';
+import { getUser } from '@/api/backend/user/userApi';
 import { useUserStore } from '@/lib/storage/useUserStorage';
 
 interface BatteryDisplayProps {

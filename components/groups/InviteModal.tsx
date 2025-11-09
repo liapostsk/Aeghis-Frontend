@@ -14,7 +14,7 @@ import * as Clipboard from 'expo-clipboard';
 import QRCode from 'react-native-qrcode-svg';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
-import { createInvitation } from '@/api/group/invitationApi';
+import { createInvitation } from '@/api/backend/group/invitationApi';
 
 interface InviteModalProps {
   visible: boolean;

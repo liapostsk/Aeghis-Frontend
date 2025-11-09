@@ -1,4 +1,4 @@
-import { getCurrentUser } from "@/api/user/userApi";
+import { getCurrentUser } from "@/api/backend/user/userApi";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";

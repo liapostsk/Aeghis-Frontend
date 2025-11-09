@@ -9,14 +9,14 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import SafeLocationModal from '@/components/safeLocations/SafeLocationModal';
-import { SafeLocation } from '@/api/locations/locationType';
-import { getJourney, updateJourney } from '@/api/journeys/journeyApi';
-import { createParticipation } from '@/api/participations/participationApi';
-import { createLocation } from '@/api/locations/locationsApi';
-import { ParticipationDto } from '@/api/participations/participationType';
-import { Location } from '@/api/locations/locationType';
+import { SafeLocation } from '@/api/backend/locations/locationType';
+import { getJourney, updateJourney } from '@/api/backend/journeys/journeyApi';
+import { createParticipation } from '@/api/backend/participations/participationApi';
+import { createLocation } from '@/api/backend/locations/locationsApi';
+import { ParticipationDto } from '@/api/backend/participations/participationType';
+import { Location } from '@/api/backend/locations/locationType';
 import { useAuth } from '@clerk/clerk-expo';
-import { getCurrentUser } from '@/api/user/userApi';
+import { getCurrentUser } from '@/api/backend/user/userApi';
 import * as ExpoLocation from 'expo-location';
 
 interface JourneyRequestMessageProps {

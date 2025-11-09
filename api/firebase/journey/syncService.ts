@@ -1,6 +1,6 @@
 import { auth } from '@/firebaseconfig';
-import { JourneyDto } from '@/api/journeys/journeyType';
-import { ParticipationDto } from '@/api/participations/participationType';
+import { JourneyDto } from '@/api/backend/journeys/journeyType';
+import { ParticipationDto } from '@/api/backend/participations/participationType';
 import { createJourneyInChat } from './journeyService';
 import { joinJourneyParticipation } from './participationsService';
 import { addUserPosition } from './positionsService';

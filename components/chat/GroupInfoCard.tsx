@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Group } from '@/api/group/groupType';
+import { Group } from '@/api/backend/group/groupType';
 
 interface GroupInfoCardProps {
   group: Group;

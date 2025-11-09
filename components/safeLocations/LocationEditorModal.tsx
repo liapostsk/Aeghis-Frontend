@@ -9,7 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { SafeLocation } from '@/api/locations/locationType';
+import { SafeLocation } from '@/api/backend/locations/locationType';
 
 type Props = {
   visible: boolean;

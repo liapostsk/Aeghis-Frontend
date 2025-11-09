@@ -4,8 +4,8 @@ import { View, Text, TextInput, Modal, StyleSheet, Alert, Pressable, ScrollView 
 import { useTokenStore } from "@/lib/auth/tokenStore";
 import { useUserStore } from "@/lib/storage/useUserStorage";
 import { useAuth } from '@clerk/clerk-expo';
-import { createGroup } from '@/api/group/groupApi';
-import { Group } from '@/api/group/groupType';
+import { createGroup } from '@/api/backend/group/groupApi';
+import { Group } from '@/api/backend/group/groupType';
 import { createGroupFirebase } from '@/api/firebase/chat/chatService';
 
 

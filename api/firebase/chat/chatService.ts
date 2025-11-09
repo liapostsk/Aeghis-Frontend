@@ -20,7 +20,7 @@ import {
   arrayRemove,
 } from 'firebase/firestore';
 import type { ChatDoc, GroupTileInfo, MessageDoc } from '../types';
-import { Group } from '../../group/groupType';
+import { Group } from '../../backend/group/groupType';
 
 /**
  * Asegura que hay sesión de Firebase y devuelve el uid.

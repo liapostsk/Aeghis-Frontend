@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Group } from '@/api/group/groupType';
-import { UserDto } from '@/api/types';
+import { Group } from '@/api/backend/group/groupType';
+import { UserDto } from '@/api/backend/types';
 
 interface GroupBannerProps {
   group: Group | null;

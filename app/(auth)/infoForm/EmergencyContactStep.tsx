@@ -10,11 +10,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useUserStore } from '@/lib/storage/useUserStorage';
-import { Contact, EmergencyContact, ExternalContact } from '@/api/types';
+import { Contact, EmergencyContact, ExternalContact } from '@/api/backend/types';
 import EmergencyContactAddModal from '@/components/emergencyContact/EmergencyContactAddModal';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
-import { checkIfUserExists } from '@/api/user/userApi';
+import { checkIfUserExists } from '@/api/backend/user/userApi';
 
 export default function EmergencyContactStep({
   onNext,
