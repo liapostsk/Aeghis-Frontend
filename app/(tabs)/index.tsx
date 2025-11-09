@@ -12,7 +12,8 @@ import { updateJourney } from '@/api/journeys/journeyApi';
 import { updateJourneyState } from '@/api/firebase/journey/journeyService';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
-import * as Notifications from 'expo-notifications';
+import { useUserStore } from '@/lib/storage/useUserStorage';
+import { useNotificationSender } from '@/components/notifications/useNotificationSender';
 
 interface GroupWithJourney {
   group: Group;
@@ -24,39 +25,19 @@ export default function MapScreen() {
   // Estado real conectado entre componentes
   const [selectedGroupJourney, setSelectedGroupJourney] = useState<GroupWithJourney | null>(null);
 
-
   const { getToken } = useAuth();
   const setToken = useTokenStore((state) => state.setToken);
+  const user = useUserStore((state) => state.user);
+  
+  // ✅ Hook para enviar notificaciones fácilmente
+  const { sendWelcomeNotification } = useNotificationSender();
 
-  // ✅ Notificación de prueba al entrar al mapa
+  // ✅ Enviar notificación de bienvenida al entrar al mapa
   useEffect(() => {
-    const sendWelcomeNotification = async () => {
-      try {
-        console.log('🔔 [MapScreen] Enviando notificación de bienvenida...');
-        
-        await Notifications.scheduleNotificationAsync({
-          content: {
-            title: "Bienvenido al Mapa 🗺️",
-            body: "¡Aegis está listo para protegerte! Tus notificaciones funcionan correctamente.",
-            data: { 
-              type: 'welcome',
-              screen: 'map',
-              timestamp: Date.now() 
-            },
-          },
-          trigger: { 
-            type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-            seconds: 2, // 2 segundos después de entrar
-          },
-        });
-        
-        console.log('✅ [MapScreen] Notificación de prueba programada');
-      } catch (error) {
-        console.error('❌ [MapScreen] Error enviando notificación:', error);
-      }
-    };
-
-    sendWelcomeNotification();
+    if (user?.id) {
+      console.log('🔔 [MapScreen] Enviando notificación de bienvenida...');
+      sendWelcomeNotification(user.id);
+    }
   }, []); // Solo se ejecuta al montar el componente
 
   const handleStartJourney = async () => {

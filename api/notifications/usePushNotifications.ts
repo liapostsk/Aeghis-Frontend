@@ -1,3 +1,4 @@
+// insfraestructura de gestión de notificaciones push
 import { useEffect, useRef, useState, useCallback } from 'react';
 import * as Notifications from 'expo-notifications';
 import { registerDeviceForPush } from './index';

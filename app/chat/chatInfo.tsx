@@ -25,7 +25,6 @@ import {
     removeMember 
 } from '@/api/group/groupApi';
 import { getUser, getCurrentUser } from '@/api/user/userApi';
-// Importaciones de Firebase - funciones restauradas
 import { 
     removeMemberFromGroupFirebase, 
     makeMemberAdminFirebase, 
@@ -36,6 +35,13 @@ import { getUserProfileFB } from '@/api/firebase/users/userService';
 import AlertModal from '@/components/common/AlertModal';
 import InviteModal from '@/components/groups/InviteModal';
 import EditGroupModal from '@/components/groups/EditGroupModal';
+import { 
+    MemberCard, 
+    GroupInfoCard, 
+    InviteMemberCard, 
+    GroupActions,
+    ExitGroupButton 
+} from '@/components/chat';
 
 export default function GroupInfoScreen() {
     const { groupId } = useLocalSearchParams<{ groupId: string }>();
@@ -52,17 +58,12 @@ export default function GroupInfoScreen() {
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [currentUserId, setCurrentUserId] = useState<number | null>(null);
     
-    // Estados para modales de confirmación
+    // Estados para modales
     const [showRemoveModal, setShowRemoveModal] = useState(false);
     const [showPromoteModal, setShowPromoteModal] = useState(false);
     const [showExitGroupModal, setShowExitGroupModal] = useState(false);
     const [showEditGroupModal, setShowEditGroupModal] = useState(false);
     const [selectedMember, setSelectedMember] = useState<UserDto | null>(null);
-
-    // Helper functions
-    const getMemberRole = (userId: number) => memberRoles[userId] || 'member';
-    const isCurrentUser = (userId: number) => userId === currentUserId;
-    const getFirebaseStatus = (clerkId: string) => memberFirebaseStatus[clerkId] || { isOnline: false };
 
     // Función para cargar datos de Firebase de los miembros
     const loadMembersFirebaseData = async (members: UserDto[]) => {
@@ -115,28 +116,16 @@ export default function GroupInfoScreen() {
                 const currentUser = await getCurrentUser();
                 setCurrentUserId(currentUser.id);
                 
-                // Cargar todos los miembros usando UserDto
                 const memberPromises = groupData.membersIds.map(async (memberId) => {
                     try {
                         return await getUser(memberId);
                     } catch (error) {
                         console.error(`Error loading user ${memberId}:`, error);
-                        // Fallback básico si no se puede cargar el usuario
-                        return {
-                            id: memberId,
-                            name: 'Usuario desconocido',
-                            email: 'unknown@example.com',
-                            phone: '',
-                            image: '',
-                            verify: false,
-                            dateOfBirth: new Date(),
-                            acceptedPrivacyPolicy: false,
-                            safeLocations: [],
-                        } as UserDto;
+                        return null;
                     }
                 });
                 
-                const loadedMembers = await Promise.all(memberPromises);
+                const loadedMembers = (await Promise.all(memberPromises)).filter(Boolean) as UserDto[];
                 setMembers(loadedMembers);
                 
                 // Crear mapeo de roles basado en los arrays del grupo
@@ -186,17 +175,13 @@ export default function GroupInfoScreen() {
                     console.log('✅ Miembro removido de Firebase');
                 }
                 
-                // 3. Actualizar estado local directamente (más eficiente que recargar)
+                // 3. Actualizar estado local
                 setMembers(prev => prev.filter(m => m.id !== selectedMember.id));
-                
-                // 4. Actualizar roles (eliminar el rol del miembro removido)
                 setMemberRoles(prev => {
                     const updated = { ...prev };
                     delete updated[selectedMember.id];
                     return updated;
                 });
-                
-                // 5. Actualizar el grupo (quitar de membersIds y adminsIds)
                 setGroup({
                     ...group,
                     membersIds: group.membersIds.filter(id => id !== selectedMember.id),
@@ -207,28 +192,7 @@ export default function GroupInfoScreen() {
                 
             } catch (error) {
                 console.error('💥 Error eliminando miembro:', error);
-                Alert.alert('Error', 'No se pudo eliminar el miembro. Verifica que tienes permisos de administrador.');
-                
-                // Recargar datos en caso de error
-                try {
-                    const groupData = await getGroupById(group.id);
-                    setGroup(groupData);
-                    
-                    const loadedMembers = await Promise.all(
-                        groupData.membersIds.map(id => getUser(id))
-                    );
-                    setMembers(loadedMembers);
-                    
-                    // Actualizar roles basados en el grupo recargado
-                    const roles: Record<number, 'admin' | 'member'> = {};
-                    groupData.membersIds.forEach(memberId => {
-                        roles[memberId] = groupData.adminsIds.includes(memberId) ? 'admin' : 'member';
-                    });
-                    setMemberRoles(roles);
-                    
-                } catch (reloadError) {
-                    console.error('Error recargando datos:', reloadError);
-                }
+                Alert.alert('Error', 'No se pudo eliminar el miembro');
             }
         }
         setShowRemoveModal(false);
@@ -266,10 +230,7 @@ export default function GroupInfoScreen() {
                 
             } catch (error) {
                 console.error('💥 Error promoviendo miembro:', error);
-                Alert.alert('Error', 'No se pudo promover el miembro. Verifica que tienes permisos de administrador.');
-                
-                // Revertir cambio local si falló
-                setMemberRoles(prev => ({ ...prev, [selectedMember.id]: 'member' }));
+                Alert.alert('Error', 'No se pudo promover el miembro');
             }
         }
         setShowPromoteModal(false);
@@ -314,144 +275,59 @@ export default function GroupInfoScreen() {
         if (!group || !currentUserId) return;
 
         try {
-            const isLastMember = members.length <= 1;
-            
-            if (isLastMember) {
-                // Si eres el último miembro, eliminar el grupo
-                console.log('🗑️ Eres el último miembro, eliminando grupo...');
-                
-                // 1. Eliminar de Firebase primero
+            const token = await getToken();
+            setToken(token);
+
+            if (members.length <= 1) {
+                // Eliminar grupo
                 await deleteGroupFirebase(group.id.toString());
-                console.log('✅ Grupo eliminado de Firebase');
-                
-                // 2. Eliminar del backend
                 await deleteGroup(group.id);
-                console.log('✅ Grupo eliminado del backend');
                 
                 Alert.alert('Grupo eliminado', 'El grupo ha sido eliminado exitosamente');
                 router.replace('/groups');
-                
             } else {
-                // Salir del grupo normalmente
-                console.log('🚪 Saliendo del grupo...');
-                
-                // 1. Salir del backend
+                // Salir del grupo
                 await exitGroup(group.id, currentUserId);
-                console.log('✅ Usuario removido del grupo en backend');
                 
-                // 2. Actualizar Firebase si tengo clerkId
                 const currentUser = await getCurrentUser();
                 if (currentUser.clerkId) {
                     await removeMemberFromGroupFirebase(group.id.toString(), currentUser.clerkId);
-                    console.log('✅ Usuario removido de Firebase');
                 }
                 
                 Alert.alert('Has salido del grupo', 'Has abandonado el grupo exitosamente');
-                // 
                 router.replace('/chat');
             }
-            
         } catch (error: any) {
             console.error('💥 Error al salir/eliminar grupo:', error);
-            console.error('📋 Error details:', {
-                message: error?.message,
-                status: error?.response?.status,
-                data: error?.response?.data
-            });
-            
-            // Mensaje de error más específico
-            if (members.length <= 1) {
-                Alert.alert(
-                    'Error al eliminar grupo', 
-                    error?.response?.data?.message || 'No se pudo eliminar el grupo. Verifica que tienes permisos de administrador.'
-                );
-            } else {
-                Alert.alert(
-                    'Error', 
-                    error?.response?.data?.message || 'No se pudo salir del grupo'
-                );
-            }
+            Alert.alert('Error', 'No se pudo completar la operación');
         }
         
         setShowExitGroupModal(false);
     };
 
-    // Componente para renderizar cada miembro
+    // Renderizar miembro con componente
     const renderMember = (user: UserDto) => {
-        const initials = user.name
-            .split(' ')
-            .map(n => n[0])
-            .join('')
-            .toUpperCase();
-
-        const isOwn = isCurrentUser(user.id);
-        const role = getMemberRole(user.id);
-        const displayName = isOwn ? 'Tú' : user.name;
-        const isCurrentUserAdmin = getMemberRole(currentUserId || 0) === 'admin';
-        
-        // Obtener estado de Firebase
-        const firebaseStatus = getFirebaseStatus(user.clerkId || '');
-        const isOnline = firebaseStatus.isOnline;
-        const lastSeen = firebaseStatus.lastSeen;
+        const role = memberRoles[user.id] || 'member';
+        const firebaseStatus = memberFirebaseStatus[user.clerkId || ''] || { isOnline: false };
+        const isCurrentUserAdmin = (memberRoles[currentUserId || 0] || 'member') === 'admin';
 
         return (
-            <View key={user.id} style={styles.memberCard}>
-                {/* Avatar */}
-                <View style={styles.memberAvatar}>
-                    <Text style={styles.memberAvatarText}>{initials}</Text>
-                    <View style={[
-                        styles.statusIndicator, 
-                        isOnline ? styles.onlineIndicator : styles.offlineIndicator
-                    ]} />
-                </View>
-
-                {/* Info */}
-                <View style={styles.memberInfo}>
-                    <Text style={styles.memberName}>{displayName}</Text>
-                    <Text style={styles.memberPhone}>{user.phone}</Text>
-                    <View style={styles.memberMeta}>
-                        <View style={styles.roleBadge}>
-                            <Text style={styles.roleBadgeText}>
-                                {role === 'admin' ? 'Administrador' : 'Miembro'}
-                            </Text>
-                        </View>
-                        <Text style={[styles.memberDate, !isOnline && styles.offlineText]}>
-                            {isOnline ? 'En línea' : lastSeen ? `Visto ${lastSeen.toLocaleDateString()}` : 'Desconectado'}
-                        </Text>
-                    </View>
-                </View>
-
-                {/* Admin Actions - Solo si el usuario actual es admin y no es el mismo usuario */}
-                {isCurrentUserAdmin && !isOwn && (
-                    <View style={styles.adminActions}>
-                        {role === 'member' ? (
-                            <Pressable
-                                onPress={() => handlePromoteToAdmin(user)}
-                                style={styles.adminButton}
-                            >
-                                <Ionicons name="shield" size={16} color="#7A33CC" />
-                            </Pressable>
-                        ) : (
-                            <Pressable
-                                onPress={() => handleDemoteToMember(user)}
-                                style={[styles.adminButton, styles.warningButton]}
-                            >
-                                <Ionicons name="shield-outline" size={16} color="#F59E0B" />
-                            </Pressable>
-                        )}
-                        <Pressable
-                            onPress={() => handleRemoveMember(user)}
-                            style={[styles.adminButton, styles.dangerButton]}
-                        >
-                            <Ionicons name="trash" size={16} color="#EF4444" />
-                        </Pressable>
-                    </View>
-                )}
-            </View>
+            <MemberCard
+                key={user.id}
+                user={user}
+                isCurrentUser={user.id === currentUserId}
+                role={role}
+                isOnline={firebaseStatus.isOnline}
+                lastSeen={firebaseStatus.lastSeen}
+                isCurrentUserAdmin={isCurrentUserAdmin}
+                onPromote={() => handlePromoteToAdmin(user)}
+                onDemote={() => handleDemoteToMember(user)}
+                onRemove={() => handleRemoveMember(user)}
+            />
         );
     };
 
-        if (loading) {
+    if (loading) {
         return (
             <View style={styles.center}>
             <ActivityIndicator size="large" color="#7A33CC" />
@@ -482,7 +358,6 @@ export default function GroupInfoScreen() {
                 </View>
             </SafeAreaView>
 
-            {/* Contenido principal con fondo blanco */}
             <View style={styles.body}>
                 <ScrollView
                 contentContainerStyle={styles.listContent}
@@ -490,79 +365,29 @@ export default function GroupInfoScreen() {
                 bounces
                 >
                     {/* Información del grupo */}
-                    <View style={styles.groupCard}>
-                        <View style={styles.groupHeader}>
-                            <View style={styles.groupIcon}>
-                                <Ionicons name="people" size={40} color="#7A33CC" />
-                            </View>
-                            <View style={styles.groupDetails}>
-                                <Text style={styles.groupName}>{group.name}</Text>
-                                <Text style={styles.groupType}>
-                                {group.type?.charAt(0).toUpperCase() + group.type?.slice(1).toLowerCase()}
-                                </Text>
-                                <Text style={styles.groupMembers}>
-                                {members.length} miembro{members.length !== 1 ? 's' : ''}
-                                </Text>
-                            </View>
-                            <Pressable 
-                                style={styles.editButton}
-                                onPress={() => setShowEditGroupModal(true)}
-                            >
-                                <Text style={styles.editButtonText}>Editar</Text>
-                            </Pressable>
-                        </View>
-
-                        {group.description && (
-                        <Text style={styles.groupDescription}>{group.description}</Text>
-                        )}
-
-                        <View style={styles.groupStats}>
-                            <View style={styles.stat}>
-                                <Text style={styles.statValue}>{members.length}</Text>
-                                <Text style={styles.statLabel}>Participantes</Text>
-                            </View>
-                            <View style={[styles.stat, styles.statBorder]}>
-                                <Text style={styles.statValue}>
-                                {Object.values(memberFirebaseStatus).filter(status => status.isOnline).length}
-                                </Text>
-                                <Text style={styles.statLabel}>En línea</Text>
-                            </View>
-                            <View style={styles.stat}>
-                                <Text style={styles.statValue}>
-                                {Object.values(memberRoles).filter(role => role === 'admin').length}
-                                </Text>
-                                <Text style={styles.statLabel}>Administradores</Text>
-                            </View>
-                        </View>
-                    </View>
+                    <GroupInfoCard
+                        group={group}
+                        membersCount={members.length}
+                        onlineCount={Object.values(memberFirebaseStatus).filter(s => s.isOnline).length}
+                        adminsCount={Object.values(memberRoles).filter(r => r === 'admin').length}
+                        onEdit={() => setShowEditGroupModal(true)}
+                    />
 
                     {/* Acciones */}
-                    <View style={styles.actionsContainer}>
-                        <Pressable 
-                            style={styles.actionButton} 
-                            onPress={() => router.push(`/chat/journey?groupId=${groupId}`)}
-                        >
-                            <Ionicons name="location-outline" size={20} color="#7A33CC" />
-                            <Text style={styles.actionButtonText}>Empezar trayecto</Text>
-                        </Pressable>
-                    </View>
+                    <GroupActions
+                        groupId={group.id}
+                        onStartJourney={() => router.push(`/chat/journey?groupId=${groupId}`)}
+                    />
 
                     {/* Lista de miembros */}
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>Miembros</Text>
                     </View>
-                    {/* Invitar miembros como primer elemento */}
-                    <Pressable 
-                        style={styles.inviteMemberCard}
-                        onPress={() => setShowInviteModal(true)}
-                    >
-                        <View style={styles.inviteMemberAvatar}>
-                            <Ionicons name="share-outline" size={20} color="#7A33CC" />
-                        </View>
-                        <View style={styles.inviteMemberInfo}>
-                            <Text style={styles.inviteMemberText}>Invitar miembros</Text>
-                        </View>
-                    </Pressable>
+                    
+                    {/* Invitar miembros */}
+                    <InviteMemberCard onPress={() => setShowInviteModal(true)} />
+                    
+                    {/* Miembros */}
                     {members.map(member => renderMember(member))}
                 </ScrollView>
 
@@ -604,21 +429,10 @@ export default function GroupInfoScreen() {
                 />
 
                 {/* Botón de salir/eliminar grupo */}
-                <View style={styles.exitButtonContainer}>
-                    <Pressable
-                        style={styles.exitButton}
-                        onPress={handleExitGroup}
-                    >
-                        <Ionicons 
-                            name={members.length <= 1 ? "trash-outline" : "exit-outline"} 
-                            size={20} 
-                            color="#FFFFFF" 
-                        />
-                        <Text style={styles.exitButtonText}>
-                            {members.length <= 1 ? "Eliminar grupo" : "Salir del grupo"}
-                        </Text>
-                    </Pressable>
-                </View>
+                <ExitGroupButton
+                    isLastMember={members.length <= 1}
+                    onPress={handleExitGroup}
+                />
 
                 {/* Modal de confirmación para salir/eliminar grupo */}
                 <AlertModal
@@ -679,229 +493,11 @@ const styles = StyleSheet.create({
   // List
   listContent: { paddingBottom: 20 },
 
-  // Group Card
-  groupCard: {
-    margin: 16,
-    padding: 16,
-    backgroundColor: '#F9FAFB',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  groupHeader: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    marginBottom: 16,
-    position: 'relative',
-  },
-  groupIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#F3E8FF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  groupDetails: { flex: 1 },
-  groupName: { fontSize: 18, fontWeight: '700', color: '#1F2937' },
-  groupType: { fontSize: 14, color: '#7A33CC', fontWeight: '500', marginTop: 2 },
-  groupMembers: { fontSize: 12, color: '#6B7280', marginTop: 4 },
-  groupDescription: {
-    fontSize: 14,
-    color: '#6B7280',
-    lineHeight: 20,
-    marginBottom: 16,
-  },
-
-  // Stats
-  groupStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-  },
-  stat: { alignItems: 'center', flex: 1 },
-  statBorder: { borderLeftWidth: 1, borderRightWidth: 1, borderColor: '#E5E7EB' },
-  statValue: { fontSize: 20, fontWeight: '700', color: '#7A33CC' },
-  statLabel: { fontSize: 12, color: '#6B7280', marginTop: 4 },
-
-  // Actions
-  actionsContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    gap: 12,
-    marginBottom: 20,
-  },
-  actionButton: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    backgroundColor: '#F3E8FF',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  actionButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#7A33CC',
-  },
-
   // Section
   sectionHeader: { paddingHorizontal: 16, marginBottom: 12 },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '700',
     color: '#1F2937',
-  },
-
-  // Member Card
-  memberCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginHorizontal: 8,
-    marginBottom: 8,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  memberAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#7A33CC',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-    position: 'relative',
-  },
-  memberAvatarText: { color: 'white', fontWeight: '700', fontSize: 12 },
-  statusIndicator: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    borderWidth: 2,
-    borderColor: 'white',
-  },
-  onlineIndicator: {
-    backgroundColor: '#22C55E',
-  },
-  offlineIndicator: {
-    backgroundColor: '#EF4444',
-  },
-  memberInfo: { flex: 1 },
-  memberName: { fontSize: 14, fontWeight: '600', color: '#1F2937' },
-  memberPhone: { fontSize: 12, color: '#6B7280', marginTop: 2 },
-  memberMeta: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6 },
-  roleBadge: {
-    backgroundColor: '#F3E8FF',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-  },
-  roleBadgeText: { fontSize: 11, fontWeight: '600', color: '#7A33CC' },
-  memberDate: { fontSize: 11, color: '#9CA3AF' },
-  offlineText: { color: '#EF4444' },
-
-  // Admin Actions
-  adminActions: {
-    flexDirection: 'row',
-    gap: 8,
-    marginLeft: 8,
-  },
-  adminButton: {
-    padding: 8,
-    borderRadius: 6,
-    backgroundColor: '#F3E8FF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dangerButton: {
-    backgroundColor: '#FEF2F2',
-  },
-  warningButton: {
-    backgroundColor: '#FFFBEB',
-  },
-
-  // Exit Button
-  exitButtonContainer: {
-    padding: 16,
-    marginBottom: "10%",
-  },
-  exitButton: {
-    backgroundColor: '#EF4444',
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-  },
-  exitButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  // Invite Member Card
-  inviteMemberCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginHorizontal: 8,
-    marginBottom: 8,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  inviteMemberAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#F3E8FF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-    borderWidth: 2,
-    borderColor: '#7A33CC',
-  },
-  inviteMemberInfo: {
-    flex: 1,
-  },
-  inviteMemberText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#7A33CC',
-  },
-  groupNameRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
-  },
-  editButton: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    backgroundColor: 'transparent',
-  },
-  editButtonText: {
-    fontSize: 14,
-    color: '#7A33CC',
-    fontWeight: '600',
   },
 });

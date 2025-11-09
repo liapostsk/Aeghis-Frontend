@@ -1,6 +1,9 @@
 import { JourneyType } from './JourneyTypeSelector';
 import { SafeLocation } from '@/api/locations/locationType';
 
+// Re-exportar JourneyType para conveniencia
+export type { JourneyType } from './JourneyTypeSelector';
+
 export interface JourneyFormData {
   journeyType: JourneyType | null;
   journeyName: string;
