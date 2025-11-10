@@ -306,6 +306,8 @@ export default function ChatScreen() {
 
     return (
       <View style={styles.chatContainer}>
+        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+
         {renderJourneyBanner()}
 
         <FlatList

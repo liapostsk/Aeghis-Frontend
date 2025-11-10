@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { StyleSheet, Alert } from 'react-native';
+import { StyleSheet, Alert, Pressable, Text, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MapHeader from '@/components/map/MapHeader';
 import PeopleOnMap from '@/components/map/PeopleOnMap';
@@ -14,6 +14,8 @@ import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 import { useUserStore } from '@/lib/storage/useUserStorage';
 import { useNotificationSender } from '@/components/notifications/useNotificationSender';
+import { unlinkFirebaseSession } from '@/api/firebase/auth/firebase';
+import { signOut } from 'firebase/auth';
 
 interface GroupWithJourney {
   group: Group;
@@ -25,7 +27,7 @@ export default function MapScreen() {
   // Estado real conectado entre componentes
   const [selectedGroupJourney, setSelectedGroupJourney] = useState<GroupWithJourney | null>(null);
 
-  const { getToken } = useAuth();
+  const { getToken, signOut } = useAuth();
   const setToken = useTokenStore((state) => state.setToken);
   const user = useUserStore((state) => state.user);
   
@@ -174,9 +176,25 @@ export default function MapScreen() {
     );
   };
 
+  const { clearUser } = useUserStore();
+
+  const handleLogout = async () => {
+      await unlinkFirebaseSession();
+      await signOut();
+      clearUser();
+      console.log("🔒 Sesión cerrada");
+      router.replace("/(auth)");
+    };
+
   return (
     <SafeAreaView style={styles.container}>
-      
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <Pressable 
+        style={styles.debugLogoutButton} 
+        onPress={handleLogout}
+      >
+        <Text>🔒 Cerrar sesión</Text>
+      </Pressable>
       <MapHeader 
         activeGroupJourney={selectedGroupJourney}
         onGroupJourneySelect={setSelectedGroupJourney}
@@ -199,7 +217,7 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     margin: 20,
-    padding: 12,
+    padding: 10,
     backgroundColor: '#FF4D4D',
     borderRadius: 10,
     alignItems: 'center',
@@ -208,6 +226,20 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  debugLogoutButton: {
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    padding: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.3)",
+    // moverlo mas abajo sin position
+    marginTop: 20,
+  },
+  debugLogoutText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "bold",
   },
 
 });

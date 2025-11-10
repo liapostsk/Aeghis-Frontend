@@ -24,7 +24,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/aegis.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "noelialopez.aeghis"
     },
     "web": {
       "bundler": "metro",
