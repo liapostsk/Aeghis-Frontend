@@ -2,7 +2,6 @@ import { Tabs } from "expo-router";
 import { useAuth } from "@clerk/clerk-expo";
 import { Ionicons } from '@expo/vector-icons';
 import React from "react";
-import { PushNotificationsInitializer } from "@/api/notifications/notificationComponent";
 
 export default function HomeLayout() {
   const { isLoaded } = useAuth();
@@ -12,9 +11,6 @@ export default function HomeLayout() {
 
   return (
     <>
-      {/* Inicializar notificaciones push */}
-      <PushNotificationsInitializer />
-      
       {/* Configuración de Tabs */}
       <Tabs
         screenOptions={{

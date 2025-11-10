@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Pressable, StyleSheet, Animated, Dimensions, Alert } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Animated, Dimensions, Alert, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { useUserStore } from '@/lib/storage/useUserStorage';
@@ -8,7 +8,7 @@ import { mapUserToDto } from '@/api/backend/user/mapper';
 import { createUser, getCurrentUser } from '@/api/backend/user/userApi';
 import { linkFirebaseSession } from '@/api/firebase/auth/firebase';
 import { ensureCurrentUserProfile } from '@/api/firebase/users/userService';
-import { registerDeviceForPush } from '@/api/notifications';
+import { registerToken, useNotification } from '@/api/notifications';
 
 const { height } = Dimensions.get('window');
 
@@ -19,6 +19,7 @@ export default function SummaryStep({ onBack }: { onBack: () => void }) {
   const setToken = useTokenStore((state) => state.setToken);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
+  const { expoPushToken } = useNotification();
 
   // Animaciones
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -81,21 +82,24 @@ export default function SummaryStep({ onBack }: { onBack: () => void }) {
       });
 
       // 5. REGISTRAR NOTIFICACIONES PUSH (ahora que tenemos userId válido)
-      try {
-        setLoadingMessage('Configurando notificaciones...');
-        console.log("🔔 Registrando dispositivo para notificaciones push...");
-        
-        const pushToken = await registerDeviceForPush(userId);
-        
-        if (pushToken) {
-          console.log("✅ Dispositivo registrado exitosamente para notificaciones");
-        } else {
-          console.warn("⚠️ No se pudo obtener el token de notificaciones (continuando...)");
+      if (expoPushToken) {
+        try {
+          setLoadingMessage('Configurando notificaciones...');
+          console.log("🔔 Registrando token de notificaciones en backend...");
+          
+          await registerToken(userId, {
+            token: expoPushToken,
+            platform: Platform.OS === 'ios' ? 'IOS' : 'ANDROID',
+          });
+          
+          console.log("✅ Token de notificaciones registrado exitosamente");
+        } catch (pushError) {
+          console.error("❌ Error registrando token de notificaciones:", pushError);
+          // No bloquear el registro - las notificaciones son opcionales
+          console.warn("⚠️ Continuando sin notificaciones push");
         }
-      } catch (pushError) {
-        console.error("❌ Error configurando notificaciones:", pushError);
-        // No bloquear el acceso - las notificaciones son opcionales
-        console.warn("⚠️ Continuando sin notificaciones push");
+      } else {
+        console.warn("⚠️ No hay token de notificaciones disponible (dispositivo virtual o permisos denegados)");
       }
 
       // 6. VINCULAR CON FIREBASE
