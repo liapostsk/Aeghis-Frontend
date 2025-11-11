@@ -184,7 +184,7 @@ export default function ChatScreen() {
             });
 
             if (unreadMembers.length > 0) {
-              console.log(`📬 Enviando notificaciones a ${unreadMembers.length} usuarios`);
+              console.log(`📬 Enviando notificaciones a ${unreadMembers} usuarios`);
               
               unreadMembers.forEach(member => {
                 sendChatNotification(

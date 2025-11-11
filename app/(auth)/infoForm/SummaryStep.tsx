@@ -8,7 +8,8 @@ import { mapUserToDto } from '@/api/backend/user/mapper';
 import { createUser, getCurrentUser } from '@/api/backend/user/userApi';
 import { linkFirebaseSession } from '@/api/firebase/auth/firebase';
 import { ensureCurrentUserProfile } from '@/api/firebase/users/userService';
-import { registerToken, useNotification } from '@/api/notifications';
+import { registerToken } from '@/api/notifications/notificationsApi';
+import { useNotification } from '@/api/notifications/NotificationContext';
 
 const { height } = Dimensions.get('window');
 

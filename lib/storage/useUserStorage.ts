@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { EmergencyContact, ExternalContact } from '@/api/backend/types';
 import { SafeLocation } from '@/api/backend/locations/locationType';
 import { getCurrentUser } from '../../api/backend/user/userApi';
+import { Group } from '@/api/backend/group/groupType';
 
 
 export type User = {
@@ -21,6 +22,7 @@ export type User = {
   emergencyContacts?: EmergencyContact[];
   externalContacts?: ExternalContact[];
   safeLocations?: SafeLocation[];
+  groups?: Group[];
   idClerk?: string; // ID de usuario en Clerk
   role?: "USER" | "ADMIN";
 };

@@ -46,3 +46,13 @@ export async function registerForPushNotificationsAsync() {
     console.warn("⚠️ Debe usar un dispositivo físico para push notifications");
   }
 }
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowBanner: true,
+    shouldShowAlert: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
+});

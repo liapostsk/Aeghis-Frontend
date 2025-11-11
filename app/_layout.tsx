@@ -1,4 +1,3 @@
-// app/layout.tsx o app/_layout.tsx
 import { ClerkLoaded, ClerkProvider } from '@clerk/clerk-expo';
 import { tokenCache } from '@clerk/clerk-expo/token-cache';
 import { Slot } from 'expo-router';

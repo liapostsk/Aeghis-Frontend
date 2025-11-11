@@ -1,13 +1,24 @@
 import { Tabs } from "expo-router";
 import { useAuth } from "@clerk/clerk-expo";
 import { Ionicons } from '@expo/vector-icons';
-import React from "react";
+import React, { useEffect } from "react";
+import { useUserStore } from "@/lib/storage/useUserStorage";
+import { useChatNotifications } from "@/lib/hooks/useChatNotifications";
 
 export default function HomeLayout() {
   const { isLoaded } = useAuth();
 
   // Esperamos a que Clerk cargue
   if (!isLoaded) return null;
+
+  useChatNotifications();
+
+  const refreshUser = useUserStore((state) => state.refreshUserFromBackend);
+  
+  useEffect(() => {
+    // ✅ Cargar grupos al entrar a tabs
+    refreshUser();
+  }, []);
 
   return (
     <>

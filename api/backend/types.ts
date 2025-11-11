@@ -1,3 +1,4 @@
+import { Group } from "./group/groupType";
 import { SafeLocation } from "./locations/locationType";
 
 export type UserDto = {
@@ -12,6 +13,7 @@ export type UserDto = {
   safeLocations: SafeLocation[];
   emergencyContacts?: EmergencyContact[];
   externalContacts?: ExternalContact[];
+  groups?: Group[];
   clerkId?: string;
   role: "USER" | "ADMIN";
 };

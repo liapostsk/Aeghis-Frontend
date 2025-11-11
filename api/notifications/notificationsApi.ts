@@ -1,7 +1,3 @@
-/**
- * api/notifications/notificationsApi.ts
- */
-
 import api from "../client";
 import { RegisterTokenDto, SendPushToUserRequest } from './types';
 
@@ -23,8 +19,7 @@ export async function revokeToken(userId: number, token: string): Promise<void> 
 }
 
 /**
- * Opcional: si tienes el endpoint /api/push/sendToUser en backend
- * (el que construimos antes con ExpoPushService)
+ * Envía una notificación push a un usuario
  */
 export async function sendPushToUser(req: SendPushToUserRequest) {
   const payload = {
@@ -35,5 +30,7 @@ export async function sendPushToUser(req: SendPushToUserRequest) {
     channelId: req.channelId ?? 'default',
   };
   const { data } = await api.post('/api/push/sendToUser', payload);
+  console.log(" information about sent notification: ", data);
+  console.log("payload: ", data.payload);
   return data; // tickets, tokens, etc. según tu backend
 }

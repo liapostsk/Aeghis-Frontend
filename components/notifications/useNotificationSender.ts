@@ -86,6 +86,10 @@ export function useNotificationSender() {
     senderName: string,
     message: string
   ) => {
+    console.log('🔔 [useNotificationSender] Preparando notificación de chat para usuario:', userId);
+    console.log('    Grupo ID:', groupId);
+    console.log('    Remitente:', senderName);
+    console.log('    Mensaje:', message);
     return sendNotification({
       userId,
       title: `💬 ${senderName}`,
