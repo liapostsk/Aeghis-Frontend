@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { auth } from '@/firebaseconfig';
-import { useUserStore } from '@/lib/storage/useUserStorage';
+import { useUserGroups } from '@/lib/hooks/useUserGroups';
 import { listenGroupMessages } from '@/api/firebase/chat/chatService';
 import { sendPushToUser } from '@/api/notifications/notificationsApi';
 import { getUser } from '@/api/backend/user/userApi';
@@ -13,13 +13,18 @@ import { UserDto } from '@/api/backend/types';
  * Debe montarse en app/_layout.tsx para funcionar globalmente.
  */
 export function useChatNotifications() {
-  const user = useUserStore((state) => state.user);
-  const groups = user?.groups || []; // ✅ Obtener grupos desde Zustand
-  const groupMembersCache = useRef(new Map<string, UserDto[]>());
+  const { groups, loading: groupsLoading } = useUserGroups(); // ✅ Usar hook existente
+  const groupMembersCache = useRef(new Map<number, UserDto[]>());
   const processedMessages = useRef(new Set<string>()); // ✅ Evitar duplicados
 
   useEffect(() => {
-    if (!user?.groups || user.groups.length === 0) {
+    // ✅ Esperar a que termine de cargar
+    if (groupsLoading) {
+      console.log('⏳ [ChatNotifications] Cargando grupos...');
+      return;
+    }
+
+    if (!groups || groups.length === 0) {
       console.log('⚠️ [ChatNotifications] Usuario sin grupos');
       return;
     }
@@ -30,19 +35,23 @@ export function useChatNotifications() {
       return;
     }
 
-    console.log(`👂 [ChatNotifications] Escuchando ${user.groups.length} grupos...`);
+    console.log(`👂 [ChatNotifications] Escuchando ${groups.length} grupos...`);
+    groups.forEach(g => console.log(`   - ${g.name} (ID: ${g.id})`));
     
     const unsubscribers: Array<() => void> = [];
 
     // ✅ Escuchar mensajes de TODOS los grupos
-    user.groups.forEach((group) => {
+    groups.forEach((group) => {
+      const groupId = group.id; // Mantener el tipo number
+      const groupIdString = String(groupId); // Para Firebase
+      
       const unsub = listenGroupMessages(
-        String(group.id),
+        groupIdString,
         async (messages) => {
           if (messages.length === 0) return;
 
           const latestMessage = messages[messages.length - 1];
-          const messageKey = `${group.id}-${latestMessage.id}`;
+          const messageKey = `${groupId}-${latestMessage.id}`;
           
           // ✅ Evitar procesar el mismo mensaje múltiples veces
           if (processedMessages.current.has(messageKey)) {
@@ -61,12 +70,12 @@ export function useChatNotifications() {
             return;
           }
 
-          console.log(`📬 [ChatNotifications] Nuevo mensaje en grupo ${group.id}`);
+          console.log(`📬 [ChatNotifications] Nuevo mensaje en grupo ${groupId}`);
           console.log(`   De: ${latestMessage.senderName}`);
           console.log(`   Mensaje: ${latestMessage.content.substring(0, 50)}...`);
 
           // ✅ Cargar miembros del grupo (con caché)
-          let groupMembers = groupMembersCache.current.get(String(group.id));
+          let groupMembers = groupMembersCache.current.get(groupId);
           
           if (!groupMembers) {
             console.log(`📥 [ChatNotifications] Cargando miembros del grupo ${group.name}...`);
@@ -74,7 +83,7 @@ export function useChatNotifications() {
             try {
               const memberPromises = group.membersIds.map(id => getUser(id));
               groupMembers = await Promise.all(memberPromises);
-              groupMembersCache.current.set(String(group.id), groupMembers);
+              groupMembersCache.current.set(groupId, groupMembers);
               
               console.log(`✅ [ChatNotifications] ${groupMembers.length} miembros cargados`);
             } catch (error) {
@@ -105,8 +114,8 @@ export function useChatNotifications() {
                     : latestMessage.content,
                   data: {
                     type: 'chat_message',
-                    groupId: String(group.id),
-                    screen: `/chat?groupId=${group.id}`,
+                    groupId: groupIdString,
+                    screen: `/chat?groupId=${groupId}`,
                   },
                   channelId: 'chat',
                 });
@@ -124,7 +133,7 @@ export function useChatNotifications() {
           processedMessages.current.add(messageKey);
         },
         (error) => {
-          console.error(`❌ [ChatNotifications] Error en grupo ${group.id}:`, error);
+          console.error(`❌ [ChatNotifications] Error en grupo ${groupId}:`, error);
         }
       );
 
@@ -138,5 +147,5 @@ export function useChatNotifications() {
       groupMembersCache.current.clear();
       processedMessages.current.clear();
     };
-  }, [user?.groups]);
+  }, [groups, groupsLoading]);
 }

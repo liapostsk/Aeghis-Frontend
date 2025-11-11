@@ -25,7 +25,6 @@ import { ParticipationDto } from '@/api/backend/participations/participationType
 import { getCurrentUser } from '@/api/backend/user/userApi';
 import { SafeLocation, Location } from '@/api/backend/locations/locationType';
 import SafeLocationModal from '@/components/safeLocations/SafeLocationModal';
-import { useNotificationSender } from '@/components/notifications/useNotificationSender';
 import { 
   MessageBubble, 
   ChatHeader, 
@@ -68,7 +67,7 @@ export default function ChatScreen() {
 
   const { getToken } = useAuth();
   const setToken = useTokenStore((state) => state.setToken);
-  const { sendChatNotification } = useNotificationSender(); // ✅ Hook de notificaciones
+  // ✅ Ya NO usamos useNotificationSender - lo maneja useChatNotifications globalmente
 
   // Función para verificar si el usuario está participando en el trayecto
   const checkUserParticipation = async (journey: JourneyDto, userId: number): Promise<ParticipationDto | null> => {
@@ -171,34 +170,8 @@ export default function ChatScreen() {
           );
         }
 
-        // ✅ Enviar notificaciones a usuarios que no han leído el último mensaje
-        if (ui.length > 0 && groupMembers.length > 0) {
-          const latestMessage = ui[ui.length - 1];
-          
-          // Solo enviar si es de otro usuario (no del actual)
-          if (latestMessage.senderId !== uid) {
-            const unreadMembers = groupMembers.filter(member => {
-              const hasRead = latestMessage.readBy?.includes(member.clerkId);
-              const isSender = member.clerkId === latestMessage.senderId;
-              return !hasRead && !isSender;
-            });
-
-            if (unreadMembers.length > 0) {
-              console.log(`📬 Enviando notificaciones a ${unreadMembers} usuarios`);
-              
-              unreadMembers.forEach(member => {
-                sendChatNotification(
-                  member.id,
-                  String(groupId),
-                  latestMessage.senderName,
-                  latestMessage.content.length > 100 
-                    ? latestMessage.content.substring(0, 100) + '...' 
-                    : latestMessage.content
-                ).catch(err => console.warn('Error enviando notificación:', err));
-              });
-            }
-          }
-        }
+        // ✅ Ya NO enviamos notificaciones desde aquí
+        // El hook useChatNotifications (en _layout.tsx) se encarga globalmente
       },
       (err) => console.warn('Error leyendo mensajes:', err)
     );
