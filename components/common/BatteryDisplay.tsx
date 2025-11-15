@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { 
@@ -13,16 +13,17 @@ import { UserDto } from '@/api/backend/types';
 import { getParticipation } from '@/api/backend/participations/participationApi';
 import { getUser } from '@/api/backend/user/userApi';
 import { useUserStore } from '@/lib/storage/useUserStorage';
+import { useTokenStore } from '@/lib/auth/tokenStore';
+import { useAuth } from '@clerk/clerk-expo';
+import { getGroupById } from '@/api/backend/group/groupApi';
 
 interface BatteryDisplayProps {
-  userId?: number | string;
   showControls?: boolean;
   autoRefresh?: boolean;
   refreshInterval?: number;
 }
 
-export default function BatteryDisplay({ 
-  userId, 
+export default function BatteryDisplay({
   showControls = true, 
   autoRefresh = false,
   refreshInterval = 60000 // 1 minuto
@@ -39,7 +40,7 @@ export default function BatteryDisplay({
     updateInterval: autoRefresh ? refreshInterval : 0,
     autoSync: autoRefresh
   });
-
+  
   // Actualizar batería con el nivel real del dispositivo
   const updateBatteryFromDevice = async () => {
     try {
@@ -163,6 +164,38 @@ export default function BatteryDisplay({
   );
 }
 
+// ✅ UTILIDAD: Funciones helper compartidas
+const getBatteryIcon = (level: number | null, charging: boolean | null = false) => {
+  if (level === null) return 'battery-dead-outline';
+  if (charging) return 'battery-charging';
+  if (level <= 20) return 'battery-dead';
+  if (level <= 40) return 'battery-half';
+  if (level <= 80) return 'battery-half';
+  return 'battery-full';
+};
+
+const getBatteryColor = (level: number | null) => {
+  if (level === null) return '#9CA3AF';
+  if (level <= 20) return '#EF4444';
+  if (level <= 40) return '#F59E0B';
+  if (level <= 80) return '#10B981';
+  return '#22C55E';
+};
+
+const formatLastUpdated = (date: Date | null) => {
+  if (!date) return 'Nunca';
+  const now = new Date();
+  const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / 60000);
+  
+  if (diffInMinutes < 1) return 'Hace un momento';
+  if (diffInMinutes < 60) return `Hace ${diffInMinutes} min`;
+  
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) return `Hace ${diffInHours}h`;
+  
+  return date.toLocaleDateString();
+};
+
 // Lista simplificada de participantes usando los tipos existentes
 export function ParticipantsList({ 
   journey,
@@ -184,36 +217,94 @@ export function ParticipantsList({
   // Obtener el usuario actual del store
   const { user: currentUser } = useUserStore();
 
+  const setToken = useTokenStore((state) => state.setToken);
+  const { getToken } = useAuth();
+  
+  // ✅ NUEVO: Caché de usuarios para evitar re-fetch
+  const userCache = useRef(new Map<number, UserDto>());
+  
+  // ✅ NUEVO: Ref para evitar llamadas duplicadas
+  const isFetchingRef = useRef(false);
+
   const fetchParticipantsData = async () => {
+    // ✅ Evitar llamadas duplicadas simultáneas
+    if (isFetchingRef.current) {
+      console.log('⏭️ Fetch ya en progreso, saltando...');
+      return;
+    }
+
     try {
+      isFetchingRef.current = true;
       setIsLoading(true);
       console.log('📊 Cargando datos de participantes para journey:', journey.id);
       
-      if (!journey.participantsIds || journey.participantsIds.length === 0) {
-        console.log('⚠️ No hay participantes en este journey');
-        setParticipantsData([]);
-        return;
+      let participantUsers: UserDto[] = [];
+
+      const token = await getToken();
+      if (token) {
+        setToken(token);
       }
 
-      // 1. Obtener información de participantes del backend
-      const participantUsers: UserDto[] = [];
-      
-      for (const participationId of journey.participantsIds) {
-        try {
-          // Obtener la participación para conseguir el userId
-          const participation = await getParticipation(participationId);
-          console.log('🔍 Participación obtenida:', participation);
-          
-          // Obtener los datos del usuario
-          const user = await getUser(participation.userId);
-          console.log('👤 Usuario obtenido:', user);
-          
-          // Excluir al usuario actual de la lista
-          if (currentUser && user.id !== currentUser.id) {
-            participantUsers.push(user);
+      // Estrategia 1: Intentar obtener desde participantsIds
+      if (journey.participantsIds && journey.participantsIds.length > 0) {
+        console.log(`📋 Obteniendo ${journey.participantsIds.length} participantes desde journey...`);
+        
+        for (const participationId of journey.participantsIds) {
+          try {
+            const participation = await getParticipation(participationId);
+            console.log('🔍 Participación obtenida:', participation);
+            
+            // ✅ Verificar caché antes de hacer GET /user
+            let user = userCache.current.get(participation.userId);
+            if (!user) {
+              user = await getUser(participation.userId);
+              userCache.current.set(participation.userId, user);
+              console.log('👤 Usuario obtenido y cacheado:', user.id);
+            } else {
+              console.log('💾 Usuario recuperado de caché:', user.id);
+            }
+            
+            if (currentUser && user.id !== currentUser.id) {
+              participantUsers.push(user);
+            }
+          } catch (error) {
+            console.warn('⚠️ Error obteniendo participante:', participationId, error);
           }
-        } catch (error) {
-          console.warn('⚠️ Error obteniendo participante:', participationId, error);
+        }
+      }
+      
+      // ✅ Estrategia 2: FALLBACK - Si no hay participantes, usar miembros del grupo
+      if (participantUsers.length === 0 && journey.groupId) {
+        console.log('� No hay participantes en journey, obteniendo desde grupo:', journey.groupId);
+        
+        try {
+          const group = await getGroupById(journey.groupId);
+          console.log('� Grupo obtenido:', group.name, 'Miembros:', group.membersIds.length);
+          
+          for (const memberId of group.membersIds) {
+            try {
+              // ✅ Verificar caché también en fallback
+              let user = userCache.current.get(memberId);
+              if (!user) {
+                user = await getUser(memberId);
+                userCache.current.set(memberId, user);
+                console.log(`  👤 Miembro obtenido y cacheado: ${user.name} (${user.id})`);
+              } else {
+                console.log(`  💾 Miembro recuperado de caché: ${user.name} (${user.id})`);
+              }
+              
+              if (currentUser && user.id !== currentUser.id) {
+                participantUsers.push(user);
+                console.log(`  ✅ Miembro agregado: ${user.name}`);
+              }
+            } catch (error) {
+              console.warn(`  ⚠️ Error obteniendo miembro ${memberId}:`, error);
+            }
+          }
+          
+          console.log(`✅ ${participantUsers.length} miembros del grupo cargados como participantes`);
+        } catch (groupError) {
+          console.error('❌ Error obteniendo grupo:', groupError);
         }
       }
 
@@ -257,6 +348,7 @@ export function ParticipantsList({
       setParticipantsData([]);
     } finally {
       setIsLoading(false);
+      isFetchingRef.current = false; // ✅ Liberar el lock
     }
   };
 
@@ -267,39 +359,19 @@ export function ParticipantsList({
     if (autoRefresh) {
       console.log(`⏰ Configurando auto-refresh cada ${refreshInterval}ms`);
       const interval = setInterval(fetchParticipantsData, refreshInterval);
-      return () => clearInterval(interval);
+      return () => {
+        clearInterval(interval);
+        userCache.current.clear(); // ✅ Limpiar caché al desmontar
+      };
     }
+    
+    // ✅ Cleanup de caché si no hay autoRefresh
+    return () => {
+      userCache.current.clear();
+    };
   }, [journey.participantsIds, autoRefresh, refreshInterval, currentUser?.id]);
 
-  const getBatteryIcon = (level: number | null) => {
-    if (level === null) return 'battery-dead-outline';
-    if (level <= 15) return 'battery-dead';
-    if (level <= 25) return 'battery-half';
-    if (level <= 75) return 'battery-charging';
-    return 'battery-full';
-  };
-
-  const getBatteryColor = (level: number | null) => {
-    if (level === null) return '#9CA3AF';
-    if (level <= 15) return '#EF4444';
-    if (level <= 25) return '#F59E0B';
-    if (level <= 50) return '#FF9800';
-    return '#4CAF50';
-  };
-
-  const formatLastSeen = (date: Date) => {
-    const now = new Date();
-    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / 60000);
-    
-    if (diffInMinutes < 1) return 'Hace un momento';
-    if (diffInMinutes < 60) return `Hace ${diffInMinutes} min`;
-    
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    if (diffInHours < 24) return `Hace ${diffInHours}h`;
-    
-    return date.toLocaleDateString();
-  };
-
+  // ✅ Usar funciones helper compartidas en lugar de duplicar
   if (isLoading && participantsData.length === 0) {
     return (
       <View style={styles.participantsLoadingContainer}>
@@ -362,7 +434,7 @@ export function ParticipantsList({
                 {participant.user.phone}
               </Text>
               <Text style={styles.participantLastSeen}>
-                {formatLastSeen(participant.lastSeen)}
+                {formatLastUpdated(participant.lastSeen)}
               </Text>
             </View>
           </View>
@@ -399,134 +471,6 @@ export function ParticipantsList({
           </View>
         </View>
       ))}
-    </View>
-  );
-}
-
-// Componente detallado para casos donde necesites más información
-export function DetailedBatteryDisplay({ 
-  userId, 
-  showControls = true, 
-  autoRefresh = false,
-  refreshInterval = 30000 
-}: BatteryDisplayProps) {
-  const {
-    level: batteryLevel,
-    isCharging,
-    isLoading,
-    error,
-    lastUpdated,
-    refreshBatteryLevel
-  } = useBatteryLevel({
-    updateInterval: autoRefresh ? refreshInterval : 0,
-    autoSync: autoRefresh
-  });
-
-  const updateBatteryFromDevice = async () => {
-    try {
-      const level = await refreshBatteryLevel();
-      
-      if (level !== null) {
-        await updateUserBatteryLevel(level);
-        Alert.alert('Éxito', `Nivel de batería actualizado a ${level}%`);
-      } else if (batteryLevel !== null) {
-        await updateUserBatteryLevel(batteryLevel);
-        Alert.alert('Advertencia', `Usando último nivel conocido: ${batteryLevel}%`);
-      } else {
-        Alert.alert('Error', 'No se pudo obtener el nivel de batería');
-      }
-    } catch (error) {
-      console.error('Error updating battery level:', error);
-      Alert.alert('Error', 'No se pudo actualizar el nivel de batería');
-    }
-  };
-
-  const getBatteryIcon = (level: number | null) => {
-    if (level === null) return 'battery-dead-outline';
-    if (level <= 20) return 'battery-dead';
-    if (level <= 40) return 'battery-half';
-    if (level <= 80) return 'battery-charging';
-    return 'battery-full';
-  };
-
-  const getBatteryColor = (level: number | null) => {
-    if (level === null) return '#9CA3AF';
-    if (level <= 20) return '#EF4444';
-    if (level <= 40) return '#F59E0B';
-    if (level <= 80) return '#10B981';
-    return '#22C55E';
-  };
-
-  const formatLastUpdated = (date: Date | null) => {
-    if (!date) return 'Nunca';
-    const now = new Date();
-    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / 60000);
-    
-    if (diffInMinutes < 1) return 'Hace un momento';
-    if (diffInMinutes < 60) return `Hace ${diffInMinutes} min`;
-    
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    if (diffInHours < 24) return `Hace ${diffInHours}h`;
-    
-    return date.toLocaleDateString();
-  };
-
-  return (
-    <View style={styles.detailedContainer}>
-      <View style={styles.batteryInfo}>
-        <Ionicons 
-          name={getBatteryIcon(batteryLevel)} 
-          size={32} 
-          color={getBatteryColor(batteryLevel)} 
-        />
-        <View style={styles.textContainer}>
-          <Text style={styles.batteryLevel}>
-            {batteryLevel !== null ? `${batteryLevel}%` : 'Sin datos'}
-            {isCharging && batteryLevel !== null ? ' ⚡' : ''}
-          </Text>
-          <Text style={styles.lastUpdated}>
-            Actualizado: {formatLastUpdated(lastUpdated)}
-          </Text>
-        </View>
-      </View>
-
-      {showControls && (
-        <View style={styles.controls}>
-          <Pressable 
-            style={[styles.button, styles.refreshButton]} 
-            onPress={refreshBatteryLevel}
-            disabled={isLoading}
-          >
-            <Ionicons name="refresh" size={20} color="#3B82F6" />
-            <Text style={styles.refreshButtonText}>
-              {isLoading ? 'Cargando...' : 'Refrescar'}
-            </Text>
-          </Pressable>
-
-          <Pressable 
-            style={[styles.button, styles.simulateButton]} 
-            onPress={updateBatteryFromDevice}
-            disabled={isLoading}
-          >
-            <Ionicons name="cloud-upload" size={20} color="#10B981" />
-            <Text style={styles.simulateButtonText}>
-              {isLoading ? 'Guardando...' : 'Guardar en Firebase'}
-            </Text>
-          </Pressable>
-        </View>
-      )}
-
-      {error && (
-        <Text style={[styles.lastUpdated, { color: '#EF4444', marginTop: 8 }]}>
-          Error: {error}
-        </Text>
-      )}
-
-      {isLoading && (
-        <View style={styles.loadingOverlay}>
-          <Text style={styles.loadingText}>Cargando...</Text>
-        </View>
-      )}
     </View>
   );
 }
@@ -608,36 +552,6 @@ const styles = StyleSheet.create({
   loadingText: {
     color: '#6B7280',
     fontWeight: '500',
-  },
-  compactContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8F9FA',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    minWidth: 60,
-    justifyContent: 'center',
-    gap: 4,
-  },
-  compactText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  compactRefreshButton: {
-    padding: 2,
-    marginLeft: 4,
-  },
-  detailedContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    marginVertical: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
   participantsContainer: {
     flex: 1,

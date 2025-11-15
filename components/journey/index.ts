@@ -8,6 +8,11 @@ export { default as CreateJourneyButton } from './CreateJourneyButton';
 export { default as JourneyCreationHeader } from './JourneyCreationHeader';
 export { default as LoadingJourneyScreen } from './LoadingJourneyScreen';
 
+// Componentes de UI del overlay/sheet
+export { default as JourneyCollapsedTab } from './JourneyCollapsedTab';
+export { default as JourneySimpleInterface } from './JourneySimpleInterface';
+export { default as GroupOptionsSheet } from './GroupOptionsSheet';
+
 // Hooks
 export { useJourneyCreation } from './useJourneyCreation';
 export { useJourneyForm } from './useJourneyForm';

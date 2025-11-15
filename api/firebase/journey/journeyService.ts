@@ -72,10 +72,51 @@ export function onJourneysSnapshot(
  */
 export async function updateJourneyState(chatId: string, journeyId: string, state: JourneyState) {
   const ref = doc(db, `chats/${chatId}/journeys/${journeyId}`);
-  await updateDoc(ref, {
+  
+  const updates: any = {
     state,
-    endedAt: state === "COMPLETED" ? serverTimestamp() : null,
-  });
+    updatedAt: serverTimestamp(),
+  };
+  
+  if (state === 'IN_PROGRESS') {
+    updates.startedAt = serverTimestamp();
+  } else if (state === 'COMPLETED') {
+    updates.endedAt = serverTimestamp();
+  }
+  
+  await updateDoc(ref, updates);
+  console.log(`✅ Journey ${journeyId} actualizado a estado: ${state}`);
+}
+
+/**
+ * Escucha cambios en el estado de un journey específico en tiempo real
+ */
+export function listenJourneyState(
+  chatId: string,
+  journeyId: string,
+  onStateChange: (state: string, data: any) => void,
+  onError?: (error: Error) => void
+): () => void {
+  const journeyRef = doc(db, `chats/${chatId}/journeys/${journeyId}`);
+
+  const unsubscribe = onSnapshot(
+    journeyRef,
+    (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        console.log('🔔 [Firebase] Estado del journey cambió:', data.state);
+        onStateChange(data.state, data);
+      } else {
+        console.warn('⚠️ [Firebase] Journey no encontrado:', journeyId);
+      }
+    },
+    (error) => {
+      console.error('❌ [Firebase] Error escuchando estado del journey:', error);
+      onError?.(error);
+    }
+  );
+
+  return unsubscribe;
 }
 
 /**

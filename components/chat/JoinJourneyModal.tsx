@@ -15,7 +15,7 @@ import { UserDto } from '@/api/backend/types';
 import { SafeLocation, Location } from '@/api/backend/locations/locationType';
 import { createParticipation } from '@/api/backend/participations/participationApi';
 import { createLocation } from '@/api/backend/locations/locationsApi';
-import { updateJourney } from '@/api/backend/journeys/journeyApi';
+import { addParticipationToJourney, updateJourney } from '@/api/backend/journeys/journeyApi';
 import * as ExpoLocation from 'expo-location';
 import SafeLocationModal from '@/components/safeLocations/SafeLocationModal';
 import { useAuth } from '@clerk/clerk-expo';
@@ -156,14 +156,10 @@ export default function JoinJourneyModal({
       const participationId = await createParticipation(participationData as ParticipationDto);
       console.log('Participación creada con ID:', participationId);
 
-      // 5. Actualizar journey con la nueva participación
-      const updatedJourney = {
-        ...journey,
-        participantsIds: [...(journey.participantsIds || []), participationId]
-      };
+      // 5. Agregar participación al journey en el backend
+      await addParticipationToJourney(journey.id, participationId);
+      console.log('✅ Participación agregada al journey en el backend');
 
-      await updateJourney(updatedJourney);
-      console.log('Journey actualizado con nueva participación');
 
       // 5.5. Sincronizar con Firebase
       try {

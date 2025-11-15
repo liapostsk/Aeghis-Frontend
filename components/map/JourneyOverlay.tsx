@@ -5,19 +5,24 @@ import BottomSheet, { BottomSheetScrollView, BottomSheetView } from '@gorhom/bot
 
 // Importar APIs y tipos
 import { JourneyDto, JourneyStates } from '@/api/backend/journeys/journeyType';
-import { UserDto } from '@/api/backend/types';
 import { Group, GROUP_TYPES } from '@/api/backend/group/groupType';
 import { User, useUserStore } from "../../lib/storage/useUserStorage";
-import { useUserGroups } from '@/lib/hooks/useUserGroups'; // ✅ Usar hook con caché
+import { useUserGroups } from '@/lib/hooks/useUserGroups';
 
-// Importar componentes y hooks de batería
+// Importar componentes
 import BatteryDisplay, { ParticipantsList } from '@/components/common/BatteryDisplay';
+import JoinJourneyModal from '@/components/chat/JoinJourneyModal';
+import JourneyCollapsedTab from '@/components/journey/JourneyCollapsedTab';
+import JourneySimpleInterface from '@/components/journey/JourneySimpleInterface';
+import GroupOptionsSheet from '@/components/journey/GroupOptionsSheet';
 
-// Importar modales existentes
-import CreateGroupModal from '@/components/groups/CreateGroupModal';
-import JoinGroupModal from '@/components/groups/JoinGroupModal';
+// Importar hooks y utilidades
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
+import { getParticipation } from '@/api/backend/participations/participationApi';
+import { ParticipationDto } from '@/api/backend/participations/participationType';
+import { listenJourneyState } from '@/api/firebase/journey/journeyService';
+import { mapUserToDto } from '@/api/backend/user/mapper';
 
 interface GroupWithJourney {
   group: Group;
@@ -32,10 +37,7 @@ interface Props {
 
 const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStartJourney, onCompleteJourney }: Props) {
   // Estados principales
-  const [activeJourney, setActiveJourney] = useState<JourneyDto | null>(null);
-  
-  const [currentUser, setCurrentUser] = useState<UserDto | null>(null);
-  const [loading, setLoading] = useState(false); // ✅ El hook maneja el loading
+  const [loading, setLoading] = useState(false);
 
   // Estados de modales y UI
   const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
@@ -44,6 +46,10 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
   const [showJourneyOptions, setShowJourneyOptions] = useState(false);
   const [showGroupTypeSelector, setShowGroupTypeSelector] = useState(false);
   const [selectedGroupType, setSelectedGroupType] = useState<'CONFIANZA' | 'TEMPORAL' | null>(null);
+  const [showJoinJourneyModal, setShowJoinJourneyModal] = useState(false); // ✅ NUEVO
+  const [isUserParticipant, setIsUserParticipant] = useState(false); // ✅ NUEVO
+  const [checkingParticipation, setCheckingParticipation] = useState(true); // ✅ NUEVO
+  const [journeyState, setJourneyState] = useState<string>(groupJourney?.activeJourney.state || 'PENDING'); // ✅ NUEVO
 
   const {user} = useUserStore();
 
@@ -51,6 +57,87 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
   const { getToken } = useAuth();
   const setToken = useTokenStore((state) => state.setToken);
   const { groups: userGroups, loading: groupsLoading } = useUserGroups(); // ✅ Usar hook con caché
+
+  // ✅ NUEVO: Verificar si el usuario es participante cuando cambia el journey
+  useEffect(() => {
+    const checkIfUserIsParticipant = async () => {
+      if (!groupJourney || !user) {
+        setIsUserParticipant(false);
+        setCheckingParticipation(false);
+        return;
+      }
+
+      setCheckingParticipation(true);
+
+      try {
+        const participantsIds = groupJourney.activeJourney.participantsIds || [];
+        
+        if (participantsIds.length === 0) {
+          console.log('🔍 No hay participantes en el journey');
+          setIsUserParticipant(false);
+          return;
+        }
+
+        // Verificar si alguna participación pertenece al usuario actual
+        const participationChecks = await Promise.all(
+          participantsIds.map(async (participationId) => {
+            try {
+              const participation = await getParticipation(participationId);
+              return participation.userId === user.id;
+            } catch (error) {
+              console.warn('⚠️ Error verificando participación:', participationId, error);
+              return false;
+            }
+          })
+        );
+
+        const isParticipant = participationChecks.some(result => result === true);
+        setIsUserParticipant(isParticipant);
+        
+        console.log('🔍 Usuario es participante:', isParticipant);
+      } catch (error) {
+        console.error('❌ Error verificando participaciones:', error);
+        setIsUserParticipant(false);
+      } finally {
+        setCheckingParticipation(false);
+      }
+    };
+
+    checkIfUserIsParticipant();
+  }, [groupJourney, user]);
+
+  // ✅ NUEVO: Escuchar cambios de estado del journey en Firebase
+  useEffect(() => {
+    if (!groupJourney) {
+      setJourneyState('PENDING');
+      return;
+    }
+
+    const chatId = groupJourney.group.id.toString();
+    const journeyId = groupJourney.activeJourney.id.toString();
+
+    // Inicializar con el estado actual
+    setJourneyState(groupJourney.activeJourney.state);
+
+    console.log('👂 [JourneyOverlay] Escuchando estado del journey:', journeyId);
+
+    const unsubscribe = listenJourneyState(
+      chatId,
+      journeyId,
+      (newState, data) => {
+        console.log('🔄 [JourneyOverlay] Estado del journey actualizado:', newState);
+        setJourneyState(newState);
+      },
+      (error) => {
+        console.error('❌ Error escuchando estado del journey:', error);
+      }
+    );
+
+    return () => {
+      console.log('🧹 [JourneyOverlay] Deteniendo listener de estado');
+      unsubscribe();
+    };
+  }, [groupJourney]);
 
   // Referencias y configuración del Bottom Sheet
   const bottomSheetRef = useRef<BottomSheet>(null);
@@ -166,10 +253,6 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
     onStartJourney();
   };
 
-  const handleShowGroupSelection = () => {
-    setShowGroupSelection(true);
-  };
-
   const handleGroupCreated = () => {
     setShowCreateGroupModal(false);
     // ✅ Invalidar caché para que todos los componentes recarguen
@@ -179,6 +262,21 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
     
     // Navegar a la pantalla de journey del nuevo grupo
     onStartJourney();
+  };
+
+  // ✅ NUEVO: Función para manejar cuando el usuario se une exitosamente
+  const handleJoinSuccess = (participation: ParticipationDto) => {
+    console.log('✅ Usuario unido al trayecto exitosamente:', participation);
+    setShowJoinJourneyModal(false);
+    setIsUserParticipant(true); // Actualizar el estado inmediatamente
+    
+    // Opcional: Forzar recarga verificando participaciones de nuevo
+    if (groupJourney && user) {
+      setTimeout(() => {
+        // Re-verificar después de un pequeño delay
+        setCheckingParticipation(true);
+      }, 500);
+    }
   };
 
   // Renderizar el tab colapsado (estado mínimo)
@@ -240,14 +338,41 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
     if (groupJourney) {
       return renderActiveJourneyFromGroupForSheet(groupJourney);
     } else if (showJourneyOptions) {
-      return renderGroupOptionsForSheet();
+      return (
+        <GroupOptionsSheet
+          userGroups={userGroups}
+          showCreateGroupModal={showCreateGroupModal}
+          showJoinGroupModal={showJoinGroupModal}
+          showGroupTypeSelector={showGroupTypeSelector}
+          selectedGroupType={selectedGroupType}
+          onClose={() => setShowJourneyOptions(false)}
+          onGroupSelected={handleGroupSelected}
+          onCreateGroup={handleCreateGroup}
+          onJoinGroup={handleJoinGroup}
+          onCreateGroupWithType={handleCreateGroupWithType}
+          onGroupCreated={handleGroupCreated}
+          setShowCreateGroupModal={setShowCreateGroupModal}
+          setShowJoinGroupModal={setShowJoinGroupModal}
+          setShowGroupTypeSelector={setShowGroupTypeSelector}
+          setSelectedGroupType={setSelectedGroupType}
+          onLayout={handleContentLayout}
+        />
+      );
     } else {
-      return renderSimpleInterfaceForSheet();
+      return (
+        <JourneySimpleInterface
+          onStartJourney={() => setShowJourneyOptions(true)}
+          onLayout={handleContentLayout}
+        />
+      );
     }
   };
 
   // Versión adaptada para bottom sheet del journey activo
   const renderActiveJourneyFromGroupForSheet = (selectedGroupJourney: GroupWithJourney) => {
+    // ✅ Usar el estado para determinar si puede controlar el trayecto
+    const canControlJourney = isUserParticipant;
+    const currentState = journeyState || selectedGroupJourney.activeJourney.state; // ✅ Usar estado local
 
     return (
       <BottomSheetView 
@@ -263,8 +388,7 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
           <View style={styles.headerRight}>
             {/* Batería del usuario actual usando BatteryDisplay */}
             <View style={styles.currentUserBattery}>
-              <BatteryDisplay 
-                userId={user.id} // TODO: Obtener el ID del usuario actual
+              <BatteryDisplay
                 showControls={false}
                 autoRefresh={true}
                 refreshInterval={60000} // 1 minuto
@@ -296,22 +420,56 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
 
         <View style={styles.journeyInfo}>
           <Text style={styles.journeyStatus}>
-            Estado: {selectedGroupJourney.activeJourney.state === 'IN_PROGRESS' ? 'En progreso' : 'Pendiente'}
+            Estado: {currentState === 'IN_PROGRESS' ? 'En progreso' : currentState === 'COMPLETED' ? 'Completado' : 'Pendiente'}
           </Text>
           
-          {selectedGroupJourney.activeJourney.state === 'PENDING' && (
-            <Pressable style={styles.startButton} onPress={onStartJourney}>
-              <Ionicons name="play" size={20} color="#fff" />
-              <Text style={styles.startButtonText}>Iniciar Trayecto</Text>
-            </Pressable>
+          {/* ✅ NUEVO: Mostrar botón de unirse si NO es participante */}
+          {!checkingParticipation && !canControlJourney && currentState !== 'COMPLETED' && (
+            <View style={styles.notParticipantContainer}>
+              <Text style={styles.notParticipantText}>
+                📋 No estás participando en este trayecto
+              </Text>
+              <Pressable 
+                style={styles.joinJourneyButton} 
+                onPress={() => setShowJoinJourneyModal(true)}
+              >
+                <Ionicons name="person-add" size={20} color="#fff" />
+                <Text style={styles.joinJourneyButtonText}>Unirme al Trayecto</Text>
+              </Pressable>
+            </View>
+          )}
+
+          {/* ✅ Solo mostrar controles si ES participante */}
+          {canControlJourney && (
+            <>
+              {currentState === 'PENDING' && (
+                <Pressable style={styles.startButton} onPress={onStartJourney}>
+                  <Ionicons name="play" size={20} color="#fff" />
+                  <Text style={styles.startButtonText}>Iniciar Trayecto</Text>
+                </Pressable>
+              )}
+              
+              {currentState === 'IN_PROGRESS' && (
+                <View style={styles.actionButtonsContainer}>
+                  <Text style={styles.inProgressText}>
+                    🟢 Trayecto en curso • Ubicación compartida
+                  </Text>
+                </View>
+              )}
+
+              {currentState === 'COMPLETED' && (
+                <Text style={styles.completedText}>
+                  ✅ Trayecto completado
+                </Text>
+              )}
+            </>
           )}
           
-          {selectedGroupJourney.activeJourney.state === 'IN_PROGRESS' && (
-            <View style={styles.actionButtonsContainer}>
-              <Text style={styles.inProgressText}>
-                🟢 Trayecto en curso • Ubicación compartida
-              </Text>
-            </View>
+          {/* Mostrar indicador de carga mientras se verifica */}
+          {checkingParticipation && (
+            <Text style={styles.checkingText}>
+              ⏳ Verificando participación...
+            </Text>
           )}
         </View>
 
@@ -328,7 +486,8 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
           />
         </BottomSheetScrollView>
 
-        {selectedGroupJourney.activeJourney.state === 'IN_PROGRESS' && onCompleteJourney && (
+        {/* ✅ Solo mostrar botón de finalizar si ES participante y está IN_PROGRESS */}
+        {canControlJourney && currentState === 'IN_PROGRESS' && onCompleteJourney && (
           <View style={styles.sheetFooter}>
             <Pressable style={styles.endButton} onPress={onCompleteJourney}>
               <Ionicons name="stop-circle" size={20} color="#FFFFFF" />
@@ -336,203 +495,18 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
             </Pressable>
           </View>
         )}
+
+        <JoinJourneyModal
+          visible={showJoinJourneyModal}
+          onClose={() => setShowJoinJourneyModal(false)}
+          journey={selectedGroupJourney.activeJourney}
+          currentUser={mapUserToDto(user)}
+          onJoinSuccess={handleJoinSuccess}
+          chatId={selectedGroupJourney.group.id.toString()}
+        />
       </BottomSheetView>
     );
   };
-
-  // Versión adaptada para bottom sheet de opciones simples
-  const renderSimpleInterfaceForSheet = () => (
-    <BottomSheetView 
-      style={styles.sheetContent}
-      onLayout={handleContentLayout}
-    >
-      
-      <Text style={styles.simpleText}>
-        You're currently not on a trip. Activate one if you'd like someone to keep an eye on you 😊
-      </Text>
-      
-      <Pressable style={styles.simpleButton} onPress={() => setShowJourneyOptions(true)}>
-        <Text style={styles.simpleButtonText}>Start a journey</Text>
-      </Pressable>
-    </BottomSheetView>
-  );
-
-  // Versión adaptada para bottom sheet de opciones de grupo
-  const renderGroupOptionsForSheet = () => {
-    const hasGroups = userGroups.length > 0;
-
-    return (
-      <BottomSheetView 
-        style={styles.sheetContent}
-        onLayout={handleContentLayout}
-      >
-        <View style={styles.sheetHeader}>
-          <View style={styles.headerLeft}>
-            <Ionicons name="location" size={24} color="#7A33CC" />
-            <Text style={styles.sheetTitle}>
-              {hasGroups ? 'Iniciar Trayecto' : 'Crear tu Primer Trayecto'}
-            </Text>
-          </View>
-          <Pressable onPress={() => setShowJourneyOptions(false)} style={styles.collapseButton}>
-            <Ionicons name="close" size={20} color="#6B7280" />
-          </Pressable>
-        </View>
-
-        <Text style={styles.subtitle}>
-          {hasGroups 
-            ? `Tienes ${userGroups.length} grupo${userGroups.length > 1 ? 's' : ''} disponible${userGroups.length > 1 ? 's' : ''}. ¿Con cuál quieres empezar?`
-            : 'Para iniciar un trayecto necesitas un grupo. ¿Qué te gustaría hacer?'
-          }
-        </Text>
-
-        <BottomSheetScrollView 
-          contentContainerStyle={styles.optionsContainer}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Si tiene grupos, mostrar lista de grupos existentes */}
-          {hasGroups && (
-            <>
-              <Text style={styles.sectionTitle}>Tus grupos:</Text>
-              {userGroups.map((group) => (
-                <Pressable 
-                  key={group.id} 
-                  style={styles.groupCard} 
-                  onPress={() => handleGroupSelected(group)}
-                >
-                  <View style={styles.groupIcon}>
-                    <Ionicons 
-                      name={group.type === 'CONFIANZA' ? 'shield' : group.type === 'TEMPORAL' ? 'time' : 'people'} 
-                      size={24} 
-                      color="#7A33CC" 
-                    />
-                  </View>
-                  <View style={styles.groupInfo}>
-                    <Text style={styles.groupName}>{group.name}</Text>
-                    <Text style={styles.groupType}>
-                      {group.type} • {group.membersIds.length} miembro{group.membersIds.length > 1 ? 's' : ''}
-                    </Text>
-                    {group.description && (
-                      <Text style={styles.groupDescription}>{group.description}</Text>
-                    )}
-                  </View>
-                  <View style={styles.startJourneyButton}>
-                    <Ionicons name="play-circle" size={32} color="#4CAF50" />
-                  </View>
-                </Pressable>
-              ))}
-              
-              <View style={styles.divider} />
-              <Text style={styles.sectionTitle}>Más opciones:</Text>
-            </>
-          )}
-
-          {/* Crear nuevo grupo */}
-          <Pressable style={styles.optionCard} onPress={handleCreateGroup}>
-            <View style={styles.optionIcon}>
-              <Ionicons name="add-circle" size={32} color="#4CAF50" />
-            </View>
-            <View style={styles.optionContent}>
-              <Text style={styles.optionTitle}>
-                {hasGroups ? 'Crear Otro Grupo' : 'Crear Grupo'}
-              </Text>
-              <Text style={styles.optionDescription}>
-                {hasGroups 
-                  ? 'Crea un nuevo grupo temporal o de confianza'
-                  : 'Crea un grupo de confianza o temporal'
-                }
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#ccc" />
-          </Pressable>
-
-          {/* Unirse a grupo */}
-          <Pressable style={styles.optionCard} onPress={handleJoinGroup}>
-            <View style={styles.optionIcon}>
-              <Ionicons name="person-add" size={32} color="#FF9800" />
-            </View>
-            <View style={styles.optionContent}>
-              <Text style={styles.optionTitle}>Unirse a Grupo</Text>
-              <Text style={styles.optionDescription}>
-                Únete a un grupo existente con código de invitación
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#ccc" />
-          </Pressable>
-        </BottomSheetScrollView>
-
-        {/* Modales */}
-        {renderModals()}
-      </BottomSheetView>
-    );
-  };
-
-  // Función separada para renderizar modales
-  const renderModals = () => (
-    <>
-      {/* Modal selector de tipo de grupo */}
-      {showGroupTypeSelector && (
-        <View style={styles.modalOverlay}>
-          <View style={styles.groupTypeModal}>
-            <Text style={styles.groupTypeTitle}>¿Qué tipo de grupo quieres crear?</Text>
-            
-            <Pressable 
-              style={styles.groupTypeOption} 
-              onPress={() => handleCreateGroupWithType('CONFIANZA')}
-            >
-              <View style={styles.typeIcon}>
-                <Ionicons name="shield" size={32} color="#7A33CC" />
-              </View>
-              <View style={styles.typeInfo}>
-                <Text style={styles.typeName}>Grupo de Confianza</Text>
-                <Text style={styles.typeDescription}>
-                  Para familia y amigos cercanos. Permanente y con más funciones de seguridad.
-                </Text>
-              </View>
-            </Pressable>
-
-            <Pressable 
-              style={styles.groupTypeOption} 
-              onPress={() => handleCreateGroupWithType('TEMPORAL')}
-            >
-              <View style={styles.typeIcon}>
-                <Ionicons name="time" size={32} color="#FF9800" />
-              </View>
-              <View style={styles.typeInfo}>
-                <Text style={styles.typeName}>Grupo Temporal</Text>
-                <Text style={styles.typeDescription}>
-                  Para ocasiones específicas. Se puede configurar para expirar automáticamente.
-                </Text>
-              </View>
-            </Pressable>
-
-            <Pressable 
-              style={styles.cancelButton} 
-              onPress={() => setShowGroupTypeSelector(false)}
-            >
-              <Text style={styles.cancelButtonText}>Cancelar</Text>
-            </Pressable>
-          </View>
-        </View>
-      )}
-
-      {/* Modal de crear grupo con tipo */}
-      <CreateGroupModal
-        visible={showCreateGroupModal}
-        onClose={() => {
-          setShowCreateGroupModal(false);
-          setSelectedGroupType(null);
-        }}
-        onSuccess={handleGroupCreated}
-        type={selectedGroupType || 'TEMPORAL'}
-      />
-
-      {/* Modal de unirse a grupo */}
-      <JoinGroupModal
-        visible={showJoinGroupModal}
-        onClose={() => setShowJoinGroupModal(false)}
-      />
-    </>
-  );
 
   if (loading) {
     return (
@@ -554,7 +528,12 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
 
   // Función que renderiza el contenido según el estado del sheet
   const renderSheetContent = () => {
-    // Siempre mostrar el contenido expandido ya que el BottomSheet maneja el colapso automáticamente
+    // Si está colapsado, mostrar el tab
+    if (isCollapsed) {
+      return <JourneyCollapsedTab groupJourney={groupJourney} onExpand={expandSheet} />;
+    }
+    
+    // Si está expandido, mostrar el contenido completo
     return renderExpandedContent();
   };
 
@@ -953,6 +932,56 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   inProgressText: {
+    fontSize: 14,
+    color: '#10B981',
+    fontWeight: '600',
+    textAlign: 'center',
+    paddingVertical: 8,
+  },
+
+  // ✅ NUEVOS estilos para el contenedor de no participante
+  notParticipantContainer: {
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: '#FFF9E6',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FFD700',
+  },
+
+  notParticipantText: {
+    fontSize: 14,
+    color: '#856404',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+
+  joinJourneyButton: {
+    backgroundColor: '#FF9800',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    gap: 8,
+  },
+
+  joinJourneyButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
+  checkingText: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+    paddingVertical: 8,
+    fontStyle: 'italic',
+  },
+
+  completedText: {
     fontSize: 14,
     color: '#10B981',
     fontWeight: '600',

@@ -52,3 +52,15 @@ export const updateJourney = async (journeyDto: JourneyDto): Promise<void> => {
 export const deleteJourney = async (id: number): Promise<void> => {
   await api.delete(`/journey/${id}`);
 };
+
+/**
+ * Agrega una participación a un journey
+ * POST /journey/{journeyId}/addParticipation/{participationId}
+ */
+export const addParticipationToJourney = async (
+  journeyId: number,
+  participationId: number
+): Promise<void> => {
+  await api.post(`/journey/${journeyId}/addParticipation/${participationId}`);
+  console.log(`✅ Participación ${participationId} agregada al journey ${journeyId}`);
+};
