@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, Pressable, 
 import { useUserStore } from '@/lib/storage/useUserStorage';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 import { updateUser } from '@/api/backend/user/userApi';
 import { mapUserToDto } from '@/api/backend/user/mapper';
@@ -17,9 +16,6 @@ interface profileHeaderProps {
 
 export default function AccountSettingsScreen({onDelete}: profileHeaderProps) {
   const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-  const { sessionId } = useAuth();
-
-  const router = useRouter();
 
   const { user: clerkUser } = useUser(); // Clerk user actual
 

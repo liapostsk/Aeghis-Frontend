@@ -12,15 +12,18 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useUserStore } from '@/lib/storage/useUserStorage';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface ProfileVerificationScreenProps {
   onVerificationComplete: () => void;
   onSkip?: () => void;
+  onBack?: () => void; // ✅ NUEVO: Callback para volver atrás
 }
 
 export default function ProfileVerificationScreen({
   onVerificationComplete,
   onSkip,
+  onBack,
 }: ProfileVerificationScreenProps) {
   const { user } = useUserStore();
   
@@ -144,9 +147,21 @@ export default function ProfileVerificationScreen({
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Header */}
-      <View style={styles.header}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        {/* Header con botón de volver */}
+        {onBack && (
+          <View style={styles.headerBar}>
+            <Pressable style={styles.backButton} onPress={onBack}>
+              <Ionicons name="arrow-back" size={24} color="#1F2937" />
+            </Pressable>
+            <Text style={styles.headerBarTitle}>Verificación</Text>
+            <View style={styles.headerBarSpacer} />
+          </View>
+        )}
+
+        {/* Header */}
+        <View style={styles.header}>
         <Ionicons name="shield-checkmark" size={64} color="#7A33CC" />
         <Text style={styles.title}>Verificación de Perfil</Text>
         <Text style={styles.subtitle}>
@@ -285,10 +300,37 @@ export default function ProfileVerificationScreen({
         🔒 Tus fotos se utilizan únicamente para verificación de identidad y se procesan de forma segura
       </Text>
     </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#F9FAFB',
+  },
+  headerBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  backButton: {
+    padding: 8,
+    borderRadius: 8,
+  },
+  headerBarTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  headerBarSpacer: {
+    width: 40, // Mismo ancho que el botón para centrar el título
+  },
   container: {
     flex: 1,
     backgroundColor: '#F9FAFB',

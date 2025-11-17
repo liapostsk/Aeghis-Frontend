@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 
 interface ChatHeaderProps {
   groupName: string;
   groupId: string;
+  groupImage?: string;
   totalMembers: number;
   activeMembersCount?: number;
   onBack?: () => void;
@@ -14,6 +15,7 @@ interface ChatHeaderProps {
 export default function ChatHeader({
   groupName,
   groupId,
+  groupImage,
   totalMembers,
   activeMembersCount = 0,
   onBack,

@@ -1,45 +1,190 @@
-// File: components/profile/ProfileHeader.tsx
-import React, { useState } from 'react';
 import {
   View,
   Text,
   Image,
-  Pressable,
   StyleSheet,
   Platform,
-  Modal,
+  Pressable,
+  ActionSheetIOS,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
-import { Ionicons, MaterialIcons, Feather } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { User } from '@/lib/storage/useUserStorage';
+import { uploadUserPhotoAsync, deleteUserPhoto } from '@/api/firebase/storage/photoService';
+import { useState } from 'react';
 
 interface profileHeaderProps {
   user: User;
   onToggleMenu: () => void;
   onEdit: () => void;
+  onUpdateProfileImage: (imageUrl: string | null) => void;
 }
 
 export default function ProfileHeader({
   user,
   onEdit,
+  onUpdateProfileImage,
 }: profileHeaderProps) {
 
-  const [showUserInfo, setShowUserInfo] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const showImageOptions = () => {
+    const options = user.image 
+      ? ['Change Photo', 'Delete Photo', 'Cancel']
+      : ['Select Photo', 'Cancel'];
+    
+    const destructiveButtonIndex = user.image ? 1 : undefined;
+    const cancelButtonIndex = user.image ? 2 : 1;
+
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options,
+          cancelButtonIndex,
+          destructiveButtonIndex,
+        },
+        async (buttonIndex) => {
+          if (buttonIndex === 0) {
+            // Change or Select Photo
+            await handleChangePhoto();
+          } else if (buttonIndex === 1 && user.image) {
+            // Delete Photo
+            await handleDeletePhoto();
+          }
+        }
+      );
+    } else {
+      // Android: Show Alert
+      if (user.image) {
+        Alert.alert(
+          'Profile Photo',
+          'What would you like to do?',
+          [
+            { text: 'Change Photo', onPress: handleChangePhoto },
+            { 
+              text: 'Delete Photo', 
+              onPress: handleDeletePhoto,
+              style: 'destructive'
+            },
+            { text: 'Cancel', style: 'cancel' },
+          ]
+        );
+      } else {
+        handleChangePhoto();
+      }
+    }
+  };
+
+  const handleChangePhoto = async () => {
+    try {
+      // Request permissions
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'We need access to your photos to change your profile picture.');
+        return;
+      }
+
+      // Launch image picker
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets?.[0]) {
+        setIsUploading(true);
+
+        // Delete old photo if exists
+        if (user.image) {
+          try {
+            await deleteUserPhoto(user.image);
+            console.log('🗑️ Foto anterior eliminada');
+          } catch (error) {
+            console.warn('⚠️ No se pudo eliminar la foto anterior:', error);
+            // Continue anyway
+          }
+        }
+
+        // Upload new photo
+        const downloadURL = await uploadUserPhotoAsync(
+          result.assets[0].uri,
+          user.idClerk!,
+          'profile'
+        );
+
+        console.log('✅ Nueva foto de perfil subida:', downloadURL);
+        onUpdateProfileImage(downloadURL);
+      }
+    } catch (error) {
+      console.error('❌ Error al cambiar foto de perfil:', error);
+      Alert.alert('Error', 'Could not update profile photo. Please try again.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleDeletePhoto = async () => {
+    Alert.alert(
+      'Delete Photo',
+      'Are you sure you want to delete your profile photo?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setIsUploading(true);
+
+              if (user.image) {
+                await deleteUserPhoto(user.image);
+                console.log('🗑️ Foto de perfil eliminada');
+              }
+
+              onUpdateProfileImage(null);
+            } catch (error) {
+              console.error('❌ Error al eliminar foto:', error);
+              Alert.alert('Error', 'Could not delete photo. Please try again.');
+            } finally {
+              setIsUploading(false);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   return (
     <View>
       
       <View style={styles.profileCard}>
-        <View style={styles.profileImageContainer}>
+        <Pressable 
+          style={styles.profileImageContainer}
+          onPress={showImageOptions}
+          disabled={isUploading}
+        >
           <Image
             source={user.image ? { uri: user.image } : require('@/assets/images/aegis.png')}
             style={styles.profileImage}
           />
+          {isUploading && (
+            <View style={styles.loadingOverlay}>
+              <ActivityIndicator size="large" color="#7A33CC" />
+            </View>
+          )}
           {user.verify && (
             <View style={styles.verifiedBadge}>
               <MaterialIcons name="verified" size={24} color="#3232C3" />
             </View>
           )}
-        </View>
+          {/* Camera icon overlay */}
+          <View style={styles.cameraIconOverlay}>
+            <MaterialIcons name="camera-alt" size={20} color="#FFFFFF" />
+          </View>
+        </Pressable>
 
         <Text style={styles.userName}>{user.name}</Text>
         <View style={styles.verifiedTextContainer}>
@@ -131,5 +276,26 @@ const styles = StyleSheet.create({
     marginLeft: 5,
     color: '#3232C3',
     fontSize: 14,
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cameraIconOverlay: {
+    position: 'absolute',
+    bottom: 5,
+    left: 5,
+    backgroundColor: '#7A33CC',
+    borderRadius: 15,
+    padding: 5,
+    borderWidth: 2,
+    borderColor: 'white',
   },
 });

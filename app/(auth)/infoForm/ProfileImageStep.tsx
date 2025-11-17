@@ -1,8 +1,9 @@
-import React, { useEffect } from 'react';
-import { View, Text, Button, StyleSheet, Dimensions, Image, Pressable } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Dimensions, Image, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { useUserStore } from '@/lib/storage/useUserStorage';
+import { uploadUserPhotoAsync } from '@/api/firebase/storage/photoService';
 
 export default function ProfileImageStep({
   onNext,
@@ -13,6 +14,8 @@ export default function ProfileImageStep({
 }){
 
   const { user, setUser } = useUserStore();
+  const [selectedImageUri, setSelectedImageUri] = useState<string>('');
+  const [isUploading, setIsUploading] = useState(false);
 
   // Limpiar el campo image al montar el componente
   useEffect(() => {
@@ -32,19 +35,54 @@ export default function ProfileImageStep({
   }, []);
 
   const pickImageAsync = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      quality: 1,
-    });
-    
-    setUser({ ...user, image: result.assets?.[0]?.uri || '' });
+    try {
+      // Request media library permissions
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Sorry, we need photo library permissions to select an image!');
+        return;
+      }
 
-    if (!result.canceled) {
-      console.log(result);
-    } else {
-      alert('You did not select any image.');
-      setUser({ ...user, image: '' });
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        quality: 0.8,
+        aspect: [1, 1],
+      });
+
+      if (!result.canceled && result.assets?.[0]) {
+        const localUri = result.assets[0].uri;
+        setSelectedImageUri(localUri);
+        
+        // Upload to Firebase Storage
+        console.log('📤 Iniciando subida de imagen de perfil a Firebase...');
+        setIsUploading(true);
+
+        try {
+          const downloadURL = await uploadUserPhotoAsync(
+            localUri,
+            user.idClerk!,
+            'profile'
+          );
+
+          console.log('✅ Foto de perfil subida exitosamente');
+          console.log('🔗 URL de descarga:', downloadURL);
+
+          // Save the Firebase URL instead of local URI
+          setUser({ ...user, image: downloadURL });
+        } catch (uploadError) {
+          console.error('❌ Error al subir la foto:', uploadError);
+          Alert.alert('Error', 'No se pudo subir la foto. Por favor, intenta de nuevo.');
+          setSelectedImageUri('');
+        } finally {
+          setIsUploading(false);
+        }
+      } else {
+        console.log('Usuario canceló la selección de imagen');
+      }
+    } catch (error) {
+      console.error('Error al seleccionar imagen:', error);
+      Alert.alert('Error', 'Hubo un problema al seleccionar la imagen. Por favor, intenta de nuevo.');
     }
   };
 
@@ -56,18 +94,31 @@ export default function ProfileImageStep({
       </View>
 
       <View style={styles.imageContainer}>
-        <Image
-          source={require("@/assets/images/addPicture.png")}
-          style={styles.image}
-        />
+        {selectedImageUri ? (
+          <Image
+            source={{ uri: selectedImageUri }}
+            style={styles.image}
+          />
+        ) : (
+          <Image
+            source={require("@/assets/images/addPicture.png")}
+            style={styles.image}
+          />
+        )}
 
         <Pressable
           onPress={pickImageAsync}
           style={styles.addPictureButton}
+          disabled={isUploading}
         >
-          <Text style={styles.addPictureText}>Add your photo</Text>
+          {isUploading ? (
+            <ActivityIndicator color="#7A33CC" size="small" />
+          ) : (
+            <Text style={styles.addPictureText}>
+              {selectedImageUri ? 'Change photo' : 'Add your photo'}
+            </Text>
+          )}
         </Pressable>
-
       </View>
 
       {/* Bottom Navigation */}

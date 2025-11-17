@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Group } from '@/api/backend/group/groupType';
 
@@ -21,9 +21,17 @@ export default function GroupInfoCard({
   return (
     <View style={styles.groupCard}>
       <View style={styles.groupHeader}>
-        <View style={styles.groupIcon}>
-          <Ionicons name="people" size={40} color="#7A33CC" />
-        </View>
+        {/* Imagen del grupo */}
+        {group.image ? (
+          <Image 
+            source={{ uri: group.image }} 
+            style={styles.groupImage}
+          />
+        ) : (
+          <View style={styles.groupIcon}>
+            <Ionicons name="people" size={40} color="#7A33CC" />
+          </View>
+        )}
         <View style={styles.groupDetails}>
           <Text style={styles.groupName}>{group.name}</Text>
           <Text style={styles.groupType}>
@@ -83,6 +91,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
+  },
+  groupImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    marginRight: 12,
+    borderWidth: 2,
+    borderColor: '#7A33CC',
   },
   groupDetails: { flex: 1 },
   groupName: { fontSize: 18, fontWeight: '700', color: '#1F2937' },

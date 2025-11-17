@@ -9,13 +9,17 @@ import {
   Image,
   Alert,
   ActivityIndicator,
+  ActionSheetIOS,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as ImagePicker from 'expo-image-picker';
 import { editGroup } from '@/api/backend/group/groupApi';
 import { Group } from '@/api/backend/group/groupType';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
+import { uploadGroupPhotoAsync, deleteGroupPhoto } from '@/api/firebase/storage/photoService';
 
 interface EditGroupModalProps {
     visible: boolean;
@@ -67,6 +71,7 @@ export default function EditGroupModal({
             const updateData: Partial<Group> = {
                 name: name.trim(),
                 description: description.trim() || undefined,
+                image: imageUri,
                 lastModified: new Date()
             };
 
@@ -90,6 +95,133 @@ export default function EditGroupModal({
         } finally {
             setSaving(false);
         }
+    };
+
+    const showImageOptions = () => {
+        const options = imageUri 
+            ? ['Change Photo', 'Delete Photo', 'Cancel']
+            : ['Select Photo', 'Cancel'];
+        
+        const destructiveButtonIndex = imageUri ? 1 : undefined;
+        const cancelButtonIndex = imageUri ? 2 : 1;
+
+        if (Platform.OS === 'ios') {
+            ActionSheetIOS.showActionSheetWithOptions(
+                {
+                    options,
+                    cancelButtonIndex,
+                    destructiveButtonIndex,
+                },
+                async (buttonIndex) => {
+                    if (buttonIndex === 0) {
+                        await handleChangePhoto();
+                    } else if (buttonIndex === 1 && imageUri) {
+                        await handleDeletePhoto();
+                    }
+                }
+            );
+        } else {
+            // Android
+            if (imageUri) {
+                Alert.alert(
+                    'Group Photo',
+                    'What would you like to do?',
+                    [
+                        { text: 'Change Photo', onPress: handleChangePhoto },
+                        { 
+                            text: 'Delete Photo', 
+                            onPress: handleDeletePhoto,
+                            style: 'destructive'
+                        },
+                        { text: 'Cancel', style: 'cancel' },
+                    ]
+                );
+            } else {
+                handleChangePhoto();
+            }
+        }
+    };
+
+    const handleChangePhoto = async () => {
+        try {
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert('Permission Required', 'We need access to your photos to select a group image.');
+                return;
+            }
+
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ['images'],
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 0.8,
+            });
+
+            if (!result.canceled && result.assets?.[0]) {
+                setImageLoading(true);
+
+                try {
+                    // Delete old photo if exists
+                    if (imageUri) {
+                        try {
+                            await deleteGroupPhoto(imageUri);
+                            console.log('🗑️ Foto anterior del grupo eliminada');
+                        } catch (error) {
+                            console.warn('⚠️ No se pudo eliminar la foto anterior:', error);
+                        }
+                    }
+
+                    // Upload new photo
+                    const downloadURL = await uploadGroupPhotoAsync(
+                        result.assets[0].uri,
+                        group.id
+                    );
+
+                    console.log('✅ Nueva foto de grupo subida:', downloadURL);
+                    setImageUri(downloadURL);
+                } catch (uploadError) {
+                    console.error('❌ Error al cambiar foto de grupo:', uploadError);
+                    Alert.alert('Error', 'Could not update group photo. Please try again.');
+                } finally {
+                    setImageLoading(false);
+                }
+            }
+        } catch (error) {
+            console.error('❌ Error selecting image:', error);
+            Alert.alert('Error', 'Could not select image. Please try again.');
+            setImageLoading(false);
+        }
+    };
+
+    const handleDeletePhoto = async () => {
+        Alert.alert(
+            'Delete Photo',
+            'Are you sure you want to delete the group photo?',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            setImageLoading(true);
+
+                            if (imageUri) {
+                                await deleteGroupPhoto(imageUri);
+                                console.log('🗑️ Foto de grupo eliminada');
+                            }
+
+                            setImageUri(undefined);
+                        } catch (error) {
+                            console.error('❌ Error al eliminar foto:', error);
+                            Alert.alert('Error', 'Could not delete photo. Please try again.');
+                        } finally {
+                            setImageLoading(false);
+                        }
+                    },
+                },
+            ]
+        );
     };
 
 
@@ -122,7 +254,7 @@ export default function EditGroupModal({
                     {/* Imagen del grupo */}
                     <Pressable 
                         style={styles.imageContainer} 
-                        onPress={() => console.log('Pick image pressed')}
+                        onPress={showImageOptions}
                         disabled={imageLoading}
                     >
                         {imageLoading ? (
@@ -130,10 +262,18 @@ export default function EditGroupModal({
                                 <ActivityIndicator size="large" color="#7A33CC" />
                             </View>
                         ) : imageUri ? (
-                            <Image source={{ uri: imageUri }} style={styles.groupImage} />
+                            <View style={styles.imageWrapper}>
+                                <Image source={{ uri: imageUri }} style={styles.groupImage} />
+                                <View style={styles.cameraIconOverlay}>
+                                    <Ionicons name="camera" size={18} color="#FFFFFF" />
+                                </View>
+                            </View>
                         ) : (
                             <View style={styles.placeholderImage}>
                                 <Ionicons name="people" size={60} color="#9CA3AF" />
+                                <View style={styles.cameraIconOverlay}>
+                                    <Ionicons name="camera" size={18} color="#FFFFFF" />
+                                </View>
                             </View>
                         )}
                         <Text style={styles.imageText}>
@@ -269,5 +409,21 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     backgroundColor: '#FFFFFF',
     textAlignVertical: 'top',
+  },
+  imageWrapper: {
+    position: 'relative',
+    width: 120,
+    height: 120,
+    marginBottom: 12,
+  },
+  cameraIconOverlay: {
+    position: 'absolute',
+    bottom: 5,
+    right: 5,
+    backgroundColor: '#7A33CC',
+    borderRadius: 12,
+    padding: 4,
+    borderWidth: 2,
+    borderColor: 'white',
   },
 });

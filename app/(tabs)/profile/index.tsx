@@ -15,7 +15,7 @@ import { unlinkFirebaseSession } from '@/api/firebase/auth/firebase';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user, clearUser } = useUserStore();
+  const { user, clearUser, setUser } = useUserStore();
   const { signOut } = useAuth();
   const [showMenu, setShowMenu] = useState(false);
   const [editable, setEditable] = useState(false);
@@ -24,6 +24,14 @@ export default function ProfileScreen() {
   const toggleMenu = () => setShowMenu(!showMenu);
   const handleEditProfile = () => {
     setEditable(editable => !editable);
+  };
+
+  const handleUpdateProfileImage = (imageUrl: string | null) => {
+    setUser({ ...user, image: imageUrl || '' });
+    console.log('✅ Imagen de perfil actualizada en el store:', imageUrl);
+    
+    // TODO: Aquí deberías también actualizar en el backend
+    // await updateUserProfile({ image: imageUrl });
   };
 
   const handleDeleteAccount = () => {
@@ -102,6 +110,7 @@ export default function ProfileScreen() {
             user={user}
             onToggleMenu={toggleMenu}
             onEdit={handleEditProfile}
+            onUpdateProfileImage={handleUpdateProfileImage}
           />
           
           <VerificationBanner onPress={handleOpenVerification} />
@@ -127,6 +136,7 @@ export default function ProfileScreen() {
         <ProfileVerificationScreen
           onVerificationComplete={handleCloseVerification}
           onSkip={handleCloseVerification}
+          onBack={handleCloseVerification}
         />
       </Modal>
     </SafeAreaView>

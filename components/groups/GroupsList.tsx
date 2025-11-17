@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, RefreshControl, Pressable } from 'react-native';
+import { View, Text, StyleSheet, FlatList, RefreshControl, Pressable, Image } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
@@ -9,6 +9,7 @@ import { GroupTileInfo } from '@/api/firebase/types';
 import { auth } from '@/firebaseconfig';
 import { Group } from '@/api/backend/group/groupType';
 import { useGroupSeach } from '@/app/(tabs)/groups/_layout';
+import { Ionicons } from '@expo/vector-icons';
 
 // Helpers
 const getInitials = (name?: string) => {
@@ -154,9 +155,17 @@ export default function GroupsList({ groupType, emptyTitle, emptySubtitle, noteT
                 style={styles.card} 
                 onPress={() => navigateToChat(item)}
               >
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>{initials}</Text>
-                </View>
+                {/* Avatar/Imagen del grupo */}
+                {item.image ? (
+                  <Image 
+                    source={{ uri: item.image }} 
+                    style={styles.groupImage}
+                  />
+                ) : (
+                  <View style={styles.avatar}>
+                    <Ionicons name="people" size={24} color="#7A33CC" />
+                  </View>
+                )}
                 <View style={styles.info}>
                   <View style={styles.topRow}>
                     <Text style={styles.groupName}>{item.name}</Text>
@@ -225,6 +234,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
+  },
+  groupImage: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    marginRight: 12,
+    borderWidth: 1.5,
+    borderColor: '#7A33CC',
   },
   avatarText: {
     color: '#7A33CC',
