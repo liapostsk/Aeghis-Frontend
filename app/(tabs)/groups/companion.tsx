@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,11 @@ import {
   FlatList,
   TouchableOpacity,
 } from 'react-native';
+import { useUserStore } from '@/lib/storage/useUserStorage';
+import ProfileVerificationScreen from '@/components/profile/ProfileVerificationScreen';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const VERIFICATION_SKIPPED_KEY = 'companion_verification_skipped';
 
 const companionGroups = [
   {
@@ -31,6 +36,67 @@ const companionGroups = [
 ];
 
 export default function CompanionsGroups() {
+  const { user } = useUserStore();
+  const [showVerification, setShowVerification] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    checkVerificationStatus();
+  }, []);
+
+  const checkVerificationStatus = async () => {
+    try {
+      // Verificar si el usuario ya está verificado
+      const isVerified = user?.verify || false;
+      
+      // Verificar si el usuario saltó la verificación anteriormente
+      const hasSkipped = await AsyncStorage.getItem(VERIFICATION_SKIPPED_KEY);
+      
+      // Mostrar verificación si:
+      // 1. No está verificado Y
+      // 2. No ha saltado la verificación anteriormente
+      setShowVerification(!isVerified && !hasSkipped);
+    } catch (error) {
+      console.error('Error checking verification status:', error);
+      setShowVerification(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerificationComplete = () => {
+    setShowVerification(false);
+    // Aquí podrías actualizar el estado del usuario en el backend
+  };
+
+  const handleSkipVerification = async () => {
+    try {
+      // Guardar que el usuario saltó la verificación
+      await AsyncStorage.setItem(VERIFICATION_SKIPPED_KEY, 'true');
+      setShowVerification(false);
+    } catch (error) {
+      console.error('Error saving skip status:', error);
+    }
+  };
+
+  // Mostrar pantalla de verificación si es necesario
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.loadingText}>Cargando...</Text>
+      </View>
+    );
+  }
+
+  if (showVerification) {
+    return (
+      <ProfileVerificationScreen
+        onVerificationComplete={handleVerificationComplete}
+        onSkip={handleSkipVerification}
+      />
+    );
+  }
+
   console.log('Rendering CompanionGroups');
   return (
     <View style={styles.container}>
@@ -115,5 +181,11 @@ const styles = StyleSheet.create({
     color: '#888',
     fontSize: 14,
     marginTop: 30,
+  },
+  loadingText: {
+    textAlign: 'center',
+    color: '#888',
+    fontSize: 16,
+    marginTop: 50,
   },
 });

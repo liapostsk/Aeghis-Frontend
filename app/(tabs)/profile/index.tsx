@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, ScrollView, StatusBar } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, StatusBar, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useUserStore } from '@/lib/storage/useUserStorage';
@@ -8,6 +8,8 @@ import ProfileHeader from '@/components/profile/ProfileHeader';
 import SettingsSection from '@/components/profile/SettingsSection';
 import EmergencyContactsSection from '@/components/profile/EmergencyContactsSection';
 import SafeLocationsSection from '@/components/profile/SafeLocationsSection';
+import VerificationBanner from '@/components/profile/VerificationBanner';
+import ProfileVerificationScreen from '@/components/profile/ProfileVerificationScreen';
 import { updateUserProfileOnLogout } from '@/api/firebase/users/userService';
 import { unlinkFirebaseSession } from '@/api/firebase/auth/firebase';
 
@@ -16,7 +18,8 @@ export default function ProfileScreen() {
   const { user, clearUser } = useUserStore();
   const { signOut } = useAuth();
   const [showMenu, setShowMenu] = useState(false);
-  const [ editable, setEditable ] = useState(false);
+  const [editable, setEditable] = useState(false);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
 
   const toggleMenu = () => setShowMenu(!showMenu);
   const handleEditProfile = () => {
@@ -79,6 +82,14 @@ export default function ProfileScreen() {
     { name: 'Casa', address: 'Calle Principal 123', type: 'Hogar', latitude: 40.4168, longitude: -3.7038 },
   ];
 
+  const handleOpenVerification = () => {
+    setShowVerificationModal(true);
+  };
+
+  const handleCloseVerification = () => {
+    setShowVerificationModal(false);
+  };
+
 
   return (
     
@@ -92,6 +103,9 @@ export default function ProfileScreen() {
             onToggleMenu={toggleMenu}
             onEdit={handleEditProfile}
           />
+          
+          <VerificationBanner onPress={handleOpenVerification} />
+          
           <EmergencyContactsSection/>
           
           <SafeLocationsSection 
@@ -103,6 +117,18 @@ export default function ProfileScreen() {
           />
           <View style={{ height: 30 }} />
       </ScrollView>
+
+      {/* Modal de verificación */}
+      <Modal
+        visible={showVerificationModal}
+        animationType="slide"
+        presentationStyle="fullScreen"
+      >
+        <ProfileVerificationScreen
+          onVerificationComplete={handleCloseVerification}
+          onSkip={handleCloseVerification}
+        />
+      </Modal>
     </SafeAreaView>
   );
 }
