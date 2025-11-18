@@ -3,7 +3,7 @@ export interface Group {
   id: number;
   name: string;
   description?: string;
-  image?: string;
+  imageUrl?: string;
   type: typeof GROUP_TYPES[number];
   state: string;
   membersIds: number[]; // IDs de usuarios

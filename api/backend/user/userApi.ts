@@ -30,3 +30,11 @@ export const checkIfUserExists = async (phone: string): Promise<number | null> =
   const response = await api.get(`/user/exists/${encodeURIComponent(phone)}`);
   return response.data;
 };
+
+export const addPhotoToUser = async (id: number, photoUrl: string): Promise<void> => {
+  await api.post(`/user/${id}/photo`, photoUrl, {
+    headers: {
+      'Content-Type': 'text/plain',
+    },
+  });
+};

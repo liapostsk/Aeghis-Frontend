@@ -15,7 +15,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
-import { editGroup } from '@/api/backend/group/groupApi';
+import { editGroup, addPhotoToGroup } from '@/api/backend/group/groupApi';
 import { Group } from '@/api/backend/group/groupType';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
@@ -36,30 +36,28 @@ export default function EditGroupModal({
 }: EditGroupModalProps) {
     const [name, setName] = useState(group.name);
     const [description, setDescription] = useState(group.description || '');
-    const [imageUri, setImageUri] = useState<string | undefined>(group.image);
+    const [imageUri, setImageUri] = useState<string | undefined>(group.imageUrl);
     const [imageLoading, setImageLoading] = useState(false);
     const [saving, setSaving] = useState(false);
 
     const { getToken } = useAuth();
     const setToken = useTokenStore((state) => state.setToken);
 
-    // Actualizar estados cuando cambie el grupo
     useEffect(() => {
         setName(group.name);
         setDescription(group.description || '');
-        setImageUri(group.image);
+        setImageUri(group.imageUrl);
     }, [group]);
 
     const handleClose = () => {
-        // Resetear a valores originales
         setName(group.name);
         setDescription(group.description || '');
-        setImageUri(group.image);
+        setImageUri(group.imageUrl);
         onClose();
     };
 
     const handleSave = async () => {
-        if (name.trim() === '') {
+        if (!name.trim()) {
             Alert.alert('Error', 'El nombre del grupo no puede estar vacío');
             return;
         }
@@ -67,31 +65,23 @@ export default function EditGroupModal({
         setSaving(true);
         
         try {
-            // Preparar datos para actualizar (solo name, description y lastModified)
             const updateData: Partial<Group> = {
                 name: name.trim(),
                 description: description.trim() || undefined,
-                image: imageUri,
                 lastModified: new Date()
             };
 
             const token = await getToken();
             setToken(token);
             
-            // Llamar a la API para actualizar el grupo
             const updatedGroup = await editGroup(group.id, updateData);
-            
-            // Notificar al componente padre que el grupo se actualizó
-            onGroupUpdated(updatedGroup);
-            
-            // Cerrar modal
+            onGroupUpdated({ ...updatedGroup, imageUrl: imageUri });
             onClose();
             
-            Alert.alert('Éxito', 'Grupo actualizado correctamente');
-            
+            Alert.alert('Éxito', 'Grupo actualizado');
         } catch (error) {
-            console.error('Error updating group:', error);
-            Alert.alert('Error', 'No se pudo actualizar el grupo. Inténtalo de nuevo.');
+            console.error('Error:', error);
+            Alert.alert('Error', 'No se pudo actualizar el grupo');
         } finally {
             setSaving(false);
         }
@@ -107,35 +97,19 @@ export default function EditGroupModal({
 
         if (Platform.OS === 'ios') {
             ActionSheetIOS.showActionSheetWithOptions(
-                {
-                    options,
-                    cancelButtonIndex,
-                    destructiveButtonIndex,
-                },
+                { options, cancelButtonIndex, destructiveButtonIndex },
                 async (buttonIndex) => {
-                    if (buttonIndex === 0) {
-                        await handleChangePhoto();
-                    } else if (buttonIndex === 1 && imageUri) {
-                        await handleDeletePhoto();
-                    }
+                    if (buttonIndex === 0) await handleChangePhoto();
+                    else if (buttonIndex === 1 && imageUri) await handleDeletePhoto();
                 }
             );
         } else {
-            // Android
             if (imageUri) {
-                Alert.alert(
-                    'Group Photo',
-                    'What would you like to do?',
-                    [
-                        { text: 'Change Photo', onPress: handleChangePhoto },
-                        { 
-                            text: 'Delete Photo', 
-                            onPress: handleDeletePhoto,
-                            style: 'destructive'
-                        },
-                        { text: 'Cancel', style: 'cancel' },
-                    ]
-                );
+                Alert.alert('Group Photo', 'What would you like to do?', [
+                    { text: 'Change Photo', onPress: handleChangePhoto },
+                    { text: 'Delete Photo', onPress: handleDeletePhoto, style: 'destructive' },
+                    { text: 'Cancel', style: 'cancel' },
+                ]);
             } else {
                 handleChangePhoto();
             }
@@ -146,7 +120,7 @@ export default function EditGroupModal({
         try {
             const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
             if (status !== 'granted') {
-                Alert.alert('Permission Required', 'We need access to your photos to select a group image.');
+                Alert.alert('Permission Required', 'We need access to your photos');
                 return;
             }
 
@@ -161,102 +135,85 @@ export default function EditGroupModal({
                 setImageLoading(true);
 
                 try {
-                    // Delete old photo if exists
-                    if (imageUri) {
-                        try {
-                            await deleteGroupPhoto(imageUri);
-                            console.log('🗑️ Foto anterior del grupo eliminada');
-                        } catch (error) {
-                            console.warn('⚠️ No se pudo eliminar la foto anterior:', error);
-                        }
-                    }
+                    if (imageUri) await deleteGroupPhoto(imageUri);
 
-                    // Upload new photo
                     const downloadURL = await uploadGroupPhotoAsync(
                         result.assets[0].uri,
                         group.id
                     );
 
-                    console.log('✅ Nueva foto de grupo subida:', downloadURL);
+                    const token = await getToken();
+                    setToken(token);
+                    await addPhotoToGroup(group.id, downloadURL);
+
                     setImageUri(downloadURL);
-                } catch (uploadError) {
-                    console.error('❌ Error al cambiar foto de grupo:', uploadError);
-                    Alert.alert('Error', 'Could not update group photo. Please try again.');
+                    onGroupUpdated({ ...group, imageUrl: downloadURL });
+                    
+                    Alert.alert('Éxito', 'Foto actualizada');
+                } catch (error) {
+                    console.error('Error:', error);
+                    Alert.alert('Error', 'No se pudo actualizar la foto');
                 } finally {
                     setImageLoading(false);
                 }
             }
         } catch (error) {
-            console.error('❌ Error selecting image:', error);
-            Alert.alert('Error', 'Could not select image. Please try again.');
-            setImageLoading(false);
+            console.error('Error:', error);
+            Alert.alert('Error', 'No se pudo seleccionar la imagen');
         }
     };
 
     const handleDeletePhoto = async () => {
-        Alert.alert(
-            'Delete Photo',
-            'Are you sure you want to delete the group photo?',
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Delete',
-                    style: 'destructive',
-                    onPress: async () => {
-                        try {
-                            setImageLoading(true);
+        Alert.alert('Delete Photo', 'Are you sure?', [
+            { text: 'Cancel', style: 'cancel' },
+            {
+                text: 'Delete',
+                style: 'destructive',
+                onPress: async () => {
+                    try {
+                        setImageLoading(true);
 
-                            if (imageUri) {
-                                await deleteGroupPhoto(imageUri);
-                                console.log('🗑️ Foto de grupo eliminada');
-                            }
+                        if (imageUri) await deleteGroupPhoto(imageUri);
 
-                            setImageUri(undefined);
-                        } catch (error) {
-                            console.error('❌ Error al eliminar foto:', error);
-                            Alert.alert('Error', 'Could not delete photo. Please try again.');
-                        } finally {
-                            setImageLoading(false);
-                        }
-                    },
+                        const token = await getToken();
+                        setToken(token);
+                        await addPhotoToGroup(group.id, '');
+
+                        setImageUri(undefined);
+                        onGroupUpdated({ ...group, imageUrl: undefined });
+                        
+                        Alert.alert('Éxito', 'Foto eliminada');
+                    } catch (error) {
+                        console.error('Error:', error);
+                        Alert.alert('Error', 'No se pudo eliminar la foto');
+                    } finally {
+                        setImageLoading(false);
+                    }
                 },
-            ]
-        );
+            },
+        ]);
     };
 
-
-
     return (
-        <Modal
-            visible={visible}
-            animationType="slide"
-            transparent={true}
-        >
+        <Modal visible={visible} animationType="slide" transparent={true}>
             <View style={styles.modalOverlay}>
             <SafeAreaView style={styles.modalContainer}>
-                {/* Header */}
                 <View style={styles.modalHeader}>
-                <Pressable onPress={handleClose}>
-                    <Text style={styles.cancelText}>Cancelar</Text>
-                </Pressable>
-                <Text style={styles.modalTitle}>Editar grupo</Text>
-                <Pressable onPress={handleSave} disabled={saving || imageLoading}>
-                    {saving ? (
-                        <ActivityIndicator size="small" color="#007AFF" />
-                    ) : (
-                        <Text style={styles.saveText}>OK</Text>
-                    )}
-                </Pressable>
+                    <Pressable onPress={handleClose}>
+                        <Text style={styles.cancelText}>Cancelar</Text>
+                    </Pressable>
+                    <Text style={styles.modalTitle}>Editar grupo</Text>
+                    <Pressable onPress={handleSave} disabled={saving || imageLoading}>
+                        {saving ? (
+                            <ActivityIndicator size="small" color="#007AFF" />
+                        ) : (
+                            <Text style={styles.saveText}>OK</Text>
+                        )}
+                    </Pressable>
                 </View>
 
-                {/* Content */}
                 <View style={styles.modalContent}>
-                    {/* Imagen del grupo */}
-                    <Pressable 
-                        style={styles.imageContainer} 
-                        onPress={showImageOptions}
-                        disabled={imageLoading}
-                    >
+                    <Pressable style={styles.imageContainer} onPress={showImageOptions} disabled={imageLoading}>
                         {imageLoading ? (
                             <View style={styles.groupImage}>
                                 <ActivityIndicator size="large" color="#7A33CC" />
@@ -281,7 +238,6 @@ export default function EditGroupModal({
                         </Text>
                     </Pressable>
 
-                    {/* Campo de título */}
                     <View style={styles.inputContainer}>
                         <Text style={styles.inputLabel}>Nombre del grupo</Text>
                         <TextInput
@@ -291,11 +247,9 @@ export default function EditGroupModal({
                             placeholder="Ingresa el nombre del grupo"
                             maxLength={50}
                             autoCapitalize="words"
-                            returnKeyType="next"
                         />
                     </View>
                     
-                    {/* Campo de descripción */}
                     <View style={styles.inputContainer}>
                         <Text style={styles.inputLabel}>Descripción del grupo</Text>
                         <TextInput
@@ -305,9 +259,8 @@ export default function EditGroupModal({
                             placeholder="Ingresa una descripción (opcional)"
                             maxLength={100}
                             autoCapitalize="sentences"
-                            returnKeyType="done"
                             onSubmitEditing={handleSave}
-                            multiline={true}
+                            multiline
                             numberOfLines={3}
                         />
                     </View>

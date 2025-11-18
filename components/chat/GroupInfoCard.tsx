@@ -22,9 +22,9 @@ export default function GroupInfoCard({
     <View style={styles.groupCard}>
       <View style={styles.groupHeader}>
         {/* Imagen del grupo */}
-        {group.image ? (
+        {group.imageUrl ? (
           <Image 
-            source={{ uri: group.image }} 
+            source={{ uri: group.imageUrl }} 
             style={styles.groupImage}
           />
         ) : (

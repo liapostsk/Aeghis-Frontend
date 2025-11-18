@@ -56,7 +56,7 @@ export default function CreateGroupModal({ visible, onClose, onSuccess, type }: 
     const groupData: Partial<Group> = {
       name: groupName.trim(),
       description: description?.trim() || getModalDescription(),
-      image: '',
+      imageUrl: '',
       type: type || 'CONFIANZA',  // Usar el prop type o por defecto 'CONFIANZA'
       ownerId: user?.id
     };

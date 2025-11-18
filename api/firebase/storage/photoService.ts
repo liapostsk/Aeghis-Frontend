@@ -1,5 +1,6 @@
 import { storage } from '@/firebaseconfig';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { useUserStore } from '@/lib/storage/useUserStorage';
 
 /**
  * Sube una foto de usuario a Firebase Storage
@@ -13,71 +14,69 @@ export async function uploadUserPhotoAsync(
   firebaseUid: string,
   photoType: 'profile' | 'verification_live' | 'verification_gallery' = 'profile'
 ): Promise<string> {
-  try {
-    console.log('📤 Iniciando subida de foto...');
-    console.log('📍 URI local:', localUri);
-    console.log('👤 Firebase UID:', firebaseUid);
-    console.log('📸 Tipo de foto:', photoType);
 
-    // Leer el archivo como blob
-    const blob = await fetch(localUri).then(res => res.blob());
+    const { user } = useUserStore();
 
-    // Crear referencia en Firebase Storage
-    const timestamp = Date.now();
-    const fileName = `${photoType}_${timestamp}.jpg`;
-    const storagePath = `users/${firebaseUid}/${fileName}`;
-    
-    console.log('📂 Ruta de almacenamiento:', storagePath);
-    
-    const fileRef = ref(storage, storagePath);
+    if (user.idClerk != null) firebaseUid = user.idClerk;
 
-    // Subir con metadata
-    const metadata = {
-      contentType: 'image/jpeg',
-      customMetadata: {
-        uploadedAt: new Date().toISOString(),
-        photoType: photoType,
-        userId: firebaseUid,
-      }
-    };
+    try {
+        console.log('📤 Iniciando subida de foto...');
+        console.log('📍 URI local:', localUri);
+        console.log('👤 Firebase UID:', firebaseUid);
+        console.log('📸 Tipo de foto:', photoType);
 
-    console.log('⬆️ Subiendo archivo...');
-    const snapshot = await uploadBytes(fileRef, blob, metadata);
-    console.log('✅ Archivo subido exitosamente:', snapshot.metadata.fullPath);
+        // Leer el archivo como blob
+        const blob = await fetch(localUri).then(res => res.blob());
 
-    // Obtener URL de descarga
-    const downloadUrl = await getDownloadURL(fileRef);
-    console.log('🔗 URL de descarga generada:', downloadUrl);
+        // Crear referencia en Firebase Storage
+        const timestamp = Date.now();
+        const fileName = `${photoType}_${timestamp}.jpg`;
+        const storagePath = `users/${firebaseUid}/${fileName}`;
+        
+        console.log('📂 Ruta de almacenamiento:', storagePath);
+        
+        const fileRef = ref(storage, storagePath);
 
-    return downloadUrl;
+        // Subir con metadata
+        const metadata = {
+            contentType: 'image/jpeg',
+            customMetadata: {
+                uploadedAt: new Date().toISOString(),
+                photoType: photoType,
+                userId: firebaseUid,
+            }
+        };
 
-  } catch (error) {
-    console.error('❌ Error subiendo foto a Firebase Storage:', error);
-    
-    // Errores específicos
-    if (error instanceof Error) {
-      if (error.message.includes('storage/unauthorized')) {
-        throw new Error('No tienes permisos para subir archivos. Verifica las reglas de Firebase Storage.');
-      }
-      if (error.message.includes('storage/quota-exceeded')) {
-        throw new Error('Cuota de almacenamiento excedida.');
-      }
-      if (error.message.includes('storage/unauthenticated')) {
-        throw new Error('Usuario no autenticado. Inicia sesión primero.');
-      }
+        console.log('⬆️ Subiendo archivo...');
+        const snapshot = await uploadBytes(fileRef, blob, metadata);
+        console.log('✅ Archivo subido exitosamente:', snapshot.metadata.fullPath);
+
+        // Obtener URL de descarga
+        const downloadUrl = await getDownloadURL(fileRef);
+        console.log('🔗 URL de descarga generada:', downloadUrl);
+
+        return downloadUrl;
+
+    } catch (error) {
+        console.error('❌ Error subiendo foto a Firebase Storage:', error);
+        
+        // Errores específicos
+        if (error instanceof Error) {
+            if (error.message.includes('storage/unauthorized')) {
+                throw new Error('No tienes permisos para subir archivos. Verifica las reglas de Firebase Storage.');
+            }
+            if (error.message.includes('storage/quota-exceeded')) {
+                throw new Error('Cuota de almacenamiento excedida.');
+            }
+            if (error.message.includes('storage/unauthenticated')) {
+                throw new Error('Usuario no autenticado. Inicia sesión primero.');
+            }
+        }
+        
+        throw error;
     }
-    
-    throw error;
-  }
 }
 
-/**
- * Sube las fotos de verificación de perfil
- * @param profileImageUri - URI de la foto de perfil/galería
- * @param livePhotoUri - URI de la selfie en vivo
- * @param firebaseUid - UID del usuario
- * @returns URLs de ambas imágenes
- */
 export async function uploadVerificationPhotos(
   profileImageUri: string,
   livePhotoUri: string,

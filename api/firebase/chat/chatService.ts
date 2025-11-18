@@ -50,7 +50,7 @@ export async function createGroupFirebase(group: Partial<Group>): Promise<string
       admins: ownerUid ? [ownerUid] : [],
       members: ownerUid ? [ownerUid] : [],
       ownerId: ownerUid || '',
-      image: group.image || '',
+      image: group.imageUrl || '',
       lastMessage: null as unknown as MessageDoc,
       lastMessageAt: "",
     };

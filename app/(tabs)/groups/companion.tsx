@@ -5,33 +5,43 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  TextInput,
+  ScrollView,
+  Pressable,
+  Alert,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useUserStore } from '@/lib/storage/useUserStorage';
 import ProfileVerificationScreen from '@/components/profile/ProfileVerificationScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const VERIFICATION_SKIPPED_KEY = 'companion_verification_skipped';
 
-const companionGroups = [
+// Mock data para las solicitudes
+const mockCompanionRequests = [
   {
     id: '1',
-    initials: 'CR',
-    name: 'Car ride to airport',
-    date: 'Today 18:30',
-    origin: 'Barcelona',
-    destination: 'El Prat',
+    userId: 5,
+    userName: 'Carlos Rivera',
+    userImage: null,
+    origin: 'Plaza Catalunya',
+    destination: 'Aeropuerto El Prat',
+    date: '2025-11-20',
+    time: '18:30',
     seats: 2,
-    verified: true,
+    description: 'Viaje al aeropuerto, puedo llevar 2 personas más',
   },
   {
     id: '2',
-    initials: 'MV',
-    name: 'Morning walk group',
-    date: 'Tomorrow 07:00',
+    userId: 8,
+    userName: 'María Vidal',
+    userImage: null,
     origin: 'Diagonal',
     destination: 'Parc de la Ciutadella',
+    date: '2025-11-19',
+    time: '07:00',
     seats: 3,
-    verified: true,
+    description: 'Paseo matutino, buscamos compañía para caminar',
   },
 ];
 
@@ -39,6 +49,19 @@ export default function CompanionsGroups() {
   const { user } = useUserStore();
   const [showVerification, setShowVerification] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'create' | 'search'>('search');
+  
+  // Estados del formulario de creación
+  const [origin, setOrigin] = useState('');
+  const [destination, setDestination] = useState('');
+  const [date, setDate] = useState('');
+  const [time, setTime] = useState('');
+  const [seats, setSeats] = useState('1');
+  const [description, setDescription] = useState('');
+  
+  // Estados de búsqueda y filtros
+  const [searchQuery, setSearchQuery] = useState('');
+  const [requests, setRequests] = useState(mockCompanionRequests);
 
   useEffect(() => {
     checkVerificationStatus();
@@ -46,15 +69,8 @@ export default function CompanionsGroups() {
 
   const checkVerificationStatus = async () => {
     try {
-      // Verificar si el usuario ya está verificado
       const isVerified = user?.verify || false;
-      
-      // Verificar si el usuario saltó la verificación anteriormente
       const hasSkipped = await AsyncStorage.getItem(VERIFICATION_SKIPPED_KEY);
-      
-      // Mostrar verificación si:
-      // 1. No está verificado Y
-      // 2. No ha saltado la verificación anteriormente
       setShowVerification(!isVerified && !hasSkipped);
     } catch (error) {
       console.error('Error checking verification status:', error);
@@ -66,12 +82,10 @@ export default function CompanionsGroups() {
 
   const handleVerificationComplete = () => {
     setShowVerification(false);
-    // Aquí podrías actualizar el estado del usuario en el backend
   };
 
   const handleSkipVerification = async () => {
     try {
-      // Guardar que el usuario saltó la verificación
       await AsyncStorage.setItem(VERIFICATION_SKIPPED_KEY, 'true');
       setShowVerification(false);
     } catch (error) {
@@ -79,10 +93,51 @@ export default function CompanionsGroups() {
     }
   };
 
-  // Mostrar pantalla de verificación si es necesario
+  const handleCreateRequest = () => {
+    if (!origin || !destination || !date || !time) {
+      Alert.alert('Error', 'Por favor completa todos los campos obligatorios');
+      return;
+    }
+
+    const newRequest = {
+      id: Date.now().toString(),
+      userId: user?.id || 0,
+      userName: user?.name || 'Usuario',
+      userImage: user?.image || null,
+      origin,
+      destination,
+      date,
+      time,
+      seats: parseInt(seats),
+      description,
+    };
+
+    setRequests([newRequest, ...requests]);
+    
+    // Limpiar formulario
+    setOrigin('');
+    setDestination('');
+    setDate('');
+    setTime('');
+    setSeats('1');
+    setDescription('');
+    
+    Alert.alert('Éxito', 'Solicitud de acompañamiento creada');
+    setActiveTab('search');
+  };
+
+  const filteredRequests = requests.filter(req => {
+    const matchesSearch = 
+      req.origin.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      req.destination.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      req.userName.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    return matchesSearch;
+  });
+
   if (isLoading) {
     return (
-      <View style={styles.container}>
+      <View style={styles.loadingContainer}>
         <Text style={styles.loadingText}>Cargando...</Text>
       </View>
     );
@@ -97,95 +152,431 @@ export default function CompanionsGroups() {
     );
   }
 
-  console.log('Rendering CompanionGroups');
   return (
     <View style={styles.container}>
-      <FlatList
-        data={companionGroups}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <TouchableOpacity style={styles.card}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{item.initials}</Text>
-            </View>
-            <View style={styles.info}>
-              <Text style={styles.groupName}>{item.name}</Text>
-              <Text style={styles.meta}>
-                {item.date} · {item.origin} ➜ {item.destination}
-              </Text>
-              <Text style={styles.seats}>Available seats: {item.seats}</Text>
-            </View>
-            <Text style={styles.verifiedBadge}>🔒</Text>
-          </TouchableOpacity>
-        )}
-        ListEmptyComponent={
-          <Text style={styles.emptyText}>
-            Only verified users can create or join these groups.
+      {/* Tabs */}
+      <View style={styles.tabsContainer}>
+        <Pressable
+          style={[styles.tab, activeTab === 'search' && styles.tabActive]}
+          onPress={() => setActiveTab('search')}
+        >
+          <Ionicons 
+            name="search" 
+            size={20} 
+            color={activeTab === 'search' ? '#7A33CC' : '#6B7280'} 
+          />
+          <Text style={[styles.tabText, activeTab === 'search' && styles.tabTextActive]}>
+            Buscar
           </Text>
-        }
-      />
+        </Pressable>
+        
+        <Pressable
+          style={[styles.tab, activeTab === 'create' && styles.tabActive]}
+          onPress={() => setActiveTab('create')}
+        >
+          <Ionicons 
+            name="add-circle" 
+            size={20} 
+            color={activeTab === 'create' ? '#7A33CC' : '#6B7280'} 
+          />
+          <Text style={[styles.tabText, activeTab === 'create' && styles.tabTextActive]}>
+            Crear solicitud
+          </Text>
+        </Pressable>
+      </View>
+
+      {/* Contenido según el tab activo */}
+      {activeTab === 'create' ? (
+        <ScrollView style={styles.formContainer} showsVerticalScrollIndicator={false}>
+          <Text style={styles.formTitle}>Nueva solicitud de acompañamiento</Text>
+          
+          {/* Origen */}
+          <Text style={styles.label}>Origen *</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Ej: Plaza Catalunya, Barcelona"
+            value={origin}
+            onChangeText={setOrigin}
+          />
+
+          {/* Destino */}
+          <Text style={styles.label}>Destino *</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Ej: Aeropuerto El Prat"
+            value={destination}
+            onChangeText={setDestination}
+          />
+
+          {/* Fecha y Hora */}
+          <View style={styles.row}>
+            <View style={styles.halfInput}>
+              <Text style={styles.label}>Fecha *</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="DD/MM/YYYY"
+                value={date}
+                onChangeText={setDate}
+              />
+            </View>
+            
+            <View style={styles.halfInput}>
+              <Text style={styles.label}>Hora *</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="HH:MM"
+                value={time}
+                onChangeText={setTime}
+              />
+            </View>
+          </View>
+
+          {/* Plazas disponibles */}
+          <Text style={styles.label}>Plazas disponibles</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="1"
+            keyboardType="numeric"
+            value={seats}
+            onChangeText={setSeats}
+          />
+
+          {/* Descripción */}
+          <Text style={styles.label}>Descripción (opcional)</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            placeholder="Añade detalles sobre el trayecto..."
+            multiline
+            numberOfLines={4}
+            value={description}
+            onChangeText={setDescription}
+          />
+
+          {/* Botón crear */}
+          <Pressable style={styles.createButton} onPress={handleCreateRequest}>
+            <Ionicons name="checkmark-circle" size={20} color="#FFF" />
+            <Text style={styles.createButtonText}>Crear solicitud</Text>
+          </Pressable>
+        </ScrollView>
+      ) : (
+        <View style={styles.searchContainer}>
+          {/* Barra de búsqueda */}
+          <View style={styles.searchBar}>
+            <Ionicons name="search" size={20} color="#9CA3AF" />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Buscar por origen, destino o usuario..."
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+          </View>
+
+          {/* Lista de solicitudes */}
+          <FlatList
+            data={filteredRequests}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <Pressable style={styles.requestCard}>
+                <View style={styles.requestHeader}>
+                  <View style={styles.userInfo}>
+                    <View style={styles.avatar}>
+                      <Ionicons name="person" size={20} color="#7A33CC" />
+                    </View>
+                    <View>
+                      <Text style={styles.userName}>{item.userName}</Text>
+                      <Text style={styles.requestDate}>
+                        {item.date} · {item.time}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+
+                <View style={styles.routeInfo}>
+                  <View style={styles.routePoint}>
+                    <Ionicons name="location" size={16} color="#10B981" />
+                    <Text style={styles.routeText}>{item.origin}</Text>
+                  </View>
+                  
+                  <Ionicons name="arrow-forward" size={16} color="#9CA3AF" style={styles.routeArrow} />
+                  
+                  <View style={styles.routePoint}>
+                    <Ionicons name="location" size={16} color="#EF4444" />
+                    <Text style={styles.routeText}>{item.destination}</Text>
+                  </View>
+                </View>
+
+                {item.description && (
+                  <Text style={styles.requestDescription} numberOfLines={2}>
+                    {item.description}
+                  </Text>
+                )}
+
+                <View style={styles.requestFooter}>
+                  <View style={styles.seatsInfo}>
+                    <Ionicons name="people" size={16} color="#6B7280" />
+                    <Text style={styles.seatsText}>{item.seats} plazas disponibles</Text>
+                  </View>
+                  
+                  <Pressable style={styles.joinButton}>
+                    <Text style={styles.joinButtonText}>Solicitar</Text>
+                  </Pressable>
+                </View>
+              </Pressable>
+            )}
+            ListEmptyComponent={
+              <View style={styles.emptyState}>
+                <Ionicons name="search-outline" size={48} color="#D1D5DB" />
+                <Text style={styles.emptyText}>
+                  No se encontraron solicitudes
+                </Text>
+                <Text style={styles.emptySubtext}>
+                  Intenta ajustar los filtros o crea una nueva solicitud
+                </Text>
+              </View>
+            }
+            showsVerticalScrollIndicator={false}
+          />
+        </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    backgroundColor: '#F9FAFB',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: '#6B7280',
+    fontSize: 16,
+  },
+  
+  // Tabs
+  tabsContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#FFF',
     paddingHorizontal: 16,
     paddingTop: 12,
+    gap: 12,
   },
-  card: {
-    backgroundColor: '#fff',
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  tabActive: {
+    borderBottomColor: '#7A33CC',
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  tabTextActive: {
+    color: '#7A33CC',
+  },
+  
+  // Formulario de creación
+  formContainer: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+  },
+  formTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 8,
+    marginTop: 12,
+  },
+  input: {
+    backgroundColor: '#FFF',
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: '#1F2937',
+  },
+  textArea: {
+    height: 100,
+    textAlignVertical: 'top',
+  },
+  row: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  halfInput: {
+    flex: 1,
+  },
+  createButton: {
+    backgroundColor: '#7A33CC',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
     borderRadius: 10,
-    padding: 12,
+    marginVertical: 24,
+  },
+  createButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  
+  // Búsqueda
+  searchContainer: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 8,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: '#1F2937',
+  },
+  
+  // Tarjetas de solicitudes
+  requestCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  requestHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  userInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F3E8FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  userName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  requestDate: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 2,
+  },
+  routeInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
-    elevation: 1,
+    gap: 8,
   },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#e2d4f7',
-    justifyContent: 'center',
+  routePoint: {
+    flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 12,
+    gap: 6,
   },
-  avatarText: {
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  info: {
+  routeText: {
+    fontSize: 13,
+    color: '#374151',
+    fontWeight: '500',
     flex: 1,
   },
-  groupName: {
-    fontSize: 16,
-    fontWeight: 'bold',
+  routeArrow: {
+    marginHorizontal: 4,
   },
-  meta: {
+  requestDescription: {
     fontSize: 13,
-    color: '#666',
+    color: '#6B7280',
+    lineHeight: 18,
+    marginBottom: 12,
   },
-  seats: {
+  requestFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+  },
+  seatsInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  seatsText: {
     fontSize: 13,
-    color: '#333',
-    marginTop: 2,
+    color: '#6B7280',
   },
-  verifiedBadge: {
-    fontSize: 18,
-    color: '#7A33CC',
-    marginLeft: 8,
+  joinButton: {
+    backgroundColor: '#7A33CC',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  joinButtonText: {
+    color: '#FFF',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  
+  // Empty state
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
   },
   emptyText: {
-    textAlign: 'center',
-    color: '#888',
-    fontSize: 14,
-    marginTop: 30,
-  },
-  loadingText: {
-    textAlign: 'center',
-    color: '#888',
     fontSize: 16,
-    marginTop: 50,
+    fontWeight: '600',
+    color: '#6B7280',
+    marginTop: 16,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    marginTop: 4,
+    textAlign: 'center',
   },
 });

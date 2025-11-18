@@ -156,9 +156,9 @@ export default function GroupsList({ groupType, emptyTitle, emptySubtitle, noteT
                 onPress={() => navigateToChat(item)}
               >
                 {/* Avatar/Imagen del grupo */}
-                {item.image ? (
+                {item.imageUrl ? (
                   <Image 
-                    source={{ uri: item.image }} 
+                    source={{ uri: item.imageUrl }} 
                     style={styles.groupImage}
                   />
                 ) : (

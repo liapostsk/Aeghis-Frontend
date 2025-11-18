@@ -116,22 +116,20 @@ export default function ProfileVerificationScreen({
     setIsSubmitting(true);
 
     try {
-      // TODO: Aquí enviarías las imágenes al backend para verificación
-      // Por ahora, simulamos el proceso
-      
-      // Simular llamada API
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // 🧪 MOCKEO: Simular verificación exitosa
+      console.log('🧪 [MOCK] Verificando fotos...');
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
-      // Actualizar estado del usuario como verificado
-      // TODO: Actualizar en el backend
+      console.log('✅ [MOCK] Verificación exitosa - Permitir acceso a Companion');
       
+      // ✅ MOCKEO: Siempre aprobar la verificación
       Alert.alert(
-        '✅ Verificación enviada',
-        'Tu solicitud de verificación ha sido enviada. Te notificaremos cuando se complete.',
+        '✅ Verificación exitosa',
+        'Tu identidad ha sido verificada correctamente. Ahora puedes acceder a grupos de acompañamiento.',
         [
           {
             text: 'Continuar',
-            onPress: onVerificationComplete,
+            onPress: onVerificationComplete, // ← Llama al callback que lleva a Companion
           },
         ]
       );

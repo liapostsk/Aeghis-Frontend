@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, ScrollView, StatusBar, Modal } from 'react-native';
+import { StyleSheet, View, ScrollView, StatusBar, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useUserStore } from '@/lib/storage/useUserStorage';
@@ -12,6 +12,7 @@ import VerificationBanner from '@/components/profile/VerificationBanner';
 import ProfileVerificationScreen from '@/components/profile/ProfileVerificationScreen';
 import { updateUserProfileOnLogout } from '@/api/firebase/users/userService';
 import { unlinkFirebaseSession } from '@/api/firebase/auth/firebase';
+import { addPhotoToUser } from '@/api/backend/user/userApi';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -26,12 +27,14 @@ export default function ProfileScreen() {
     setEditable(editable => !editable);
   };
 
-  const handleUpdateProfileImage = (imageUrl: string | null) => {
-    setUser({ ...user, image: imageUrl || '' });
-    console.log('✅ Imagen de perfil actualizada en el store:', imageUrl);
-    
-    // TODO: Aquí deberías también actualizar en el backend
-    // await updateUserProfile({ image: imageUrl });
+  const handleUpdateProfileImage = async (imageUrl: string | null) => {
+    try {
+      await addPhotoToUser(user.id, imageUrl);
+      setUser({ ...user, image: imageUrl || '' });
+      console.log('✅ Imagen de perfil actualizada en el store:', imageUrl);
+    } catch (error) {
+      console.error('❌ Error actualizando foto:', error);
+    }
   };
 
   const handleDeleteAccount = () => {

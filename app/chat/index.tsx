@@ -355,7 +355,7 @@ export default function ChatScreen() {
       <ChatHeader
         groupName={group.name}
         groupId={group.id.toString()}
-        groupImage={group.image}
+        groupImage={group.imageUrl}
         totalMembers={totalMembers}
         activeMembersCount={activeMembersCount}
       />

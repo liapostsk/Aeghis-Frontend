@@ -51,17 +51,19 @@ export default function GroupsLayout() {
           ))}
         </View>
 
-        {/* Search */}
-        <SafeAreaView style={styles.searchBar}>
-          <Ionicons name="search" size={20} color="#7A33CC" style={styles.searchIcon} />
-          <TextInput
-            placeholder="Search"
-            placeholderTextColor="#999"
-            style={styles.searchInput}
-            value={search}
-            onChangeText={setSearch}
-          />
-        </SafeAreaView>
+        {/* Search - Solo mostrar en Confianza y Temporal */}
+        {active !== 'companion' && (
+          <SafeAreaView style={styles.searchBar}>
+            <Ionicons name="search" size={20} color="#7A33CC" style={styles.searchIcon} />
+            <TextInput
+              placeholder="Search"
+              placeholderTextColor="#999"
+              style={styles.searchInput}
+              value={search}
+              onChangeText={setSearch}
+            />
+          </SafeAreaView>
+        )}
         {/* Aquí se montan las sub‑pantallas: trusted/temporal/companion */}
         <View style={{ flex: 1, paddingHorizontal: 16 }}>
           <Slot />
@@ -112,8 +114,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F1EAFD',
-    margin: 16,
-    paddingHorizontal: 12,
+    marginHorizontal: 40, // Márgenes laterales más grandes
+    marginVertical: 16,
+    paddingHorizontal: 5,
     borderRadius: 10,
   },
   searchInput: {

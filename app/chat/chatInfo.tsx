@@ -351,7 +351,7 @@ export default function GroupInfoScreen() {
                 {/* Header */}
                 <View style={styles.header}>
                     <Pressable onPress={() => router.back()} style={styles.backButton}>
-                    <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+                        <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
                     </Pressable>
                     <Text style={styles.headerTitle}>Información del grupo</Text>
                 </View>

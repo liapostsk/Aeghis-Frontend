@@ -69,3 +69,11 @@ export const demoteToMember = async (groupId: number, userId: number): Promise<G
 export const removeMember = async (groupId: number, userId: number): Promise<void> => {
   await api.delete(`/group/${groupId}/remove-member/${userId}`);
 };
+
+export const addPhotoToGroup = async (groupId: number, photoUrl: string): Promise<void> => {
+  await api.post(`/group/${groupId}/photo`, photoUrl, {
+    headers: {
+      'Content-Type': 'text/plain',
+    },
+  });
+};
