@@ -1,10 +1,76 @@
 import { ClerkLoaded, ClerkProvider } from '@clerk/clerk-expo';
 import { tokenCache } from '@clerk/clerk-expo/token-cache';
-import { Slot } from 'expo-router';
+import { Slot, useRouter, useSegments } from 'expo-router';
 import TokenProvider from '@/lib/auth/tokenProvider';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { NotificationProvider } from '@/api/notifications/NotificationContext';
+import { useSessionState } from '@/lib/hooks/useSessionState';
+import { useEffect } from 'react';
+import LoadingScreen from '@/components/common/LoadingScreen';
+
+function RootNavigator() {
+  const { state } = useSessionState();
+  const segments = useSegments();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (state === 'checking') return; // Wait for validation to complete
+
+    const inAuthGroup = segments[0] === '(auth)';
+    const inTabsGroup = segments[0] === '(tabs)';
+    const inAdminGroup = segments[0] === '(admin)';
+
+    console.log('[RootNavigator] State:', state, 'Segments:', segments);
+
+    switch (state) {
+      case 'noSession':
+        if (!inAuthGroup) {
+          console.log('[RootNavigator] Redirecting to auth (no session)');
+          router.replace('/(auth)');
+        }
+        break;
+
+      case 'needsProfile':
+        // Allow navigation within auth group for infoForm
+        if (!inAuthGroup) {
+          console.log('[RootNavigator] Redirecting to onboarding (needs profile)');
+          router.replace('/(auth)/infoForm');
+        }
+        break;
+
+      case 'admin':
+        // ✅ Usuario ADMIN → Redirigir a panel de admin
+        if (!inAdminGroup) {
+          console.log('[RootNavigator] Redirecting to admin panel (admin role)');
+          router.replace('/(admin)');
+        }
+        break;
+
+      case 'ready':
+        // Usuario normal → Redirigir a tabs
+        if (!inTabsGroup) {
+          console.log('[RootNavigator] Redirecting to tabs (ready)');
+          router.replace('/(tabs)');
+        }
+        break;
+
+      case 'inconsistent':
+        if (!inAuthGroup) {
+          console.log('[RootNavigator] Redirecting to auth (inconsistent state)');
+          router.replace('/(auth)');
+        }
+        break;
+    }
+  }, [state, segments]);
+
+  // Show loading screen while checking session
+  if (state === 'checking') {
+    return <LoadingScreen />;
+  }
+
+  return <Slot />;
+}
 
 export default function RootLayout() {
   return (
@@ -14,7 +80,7 @@ export default function RootLayout() {
           <TokenProvider>
             <ClerkLoaded>
               <NotificationProvider>
-                <Slot />
+                <RootNavigator />
               </NotificationProvider>
             </ClerkLoaded>
           </TokenProvider>

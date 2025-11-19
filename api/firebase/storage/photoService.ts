@@ -1,6 +1,5 @@
 import { storage } from '@/firebaseconfig';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { useUserStore } from '@/lib/storage/useUserStorage';
 
 /**
  * Sube una foto de usuario a Firebase Storage
@@ -14,11 +13,6 @@ export async function uploadUserPhotoAsync(
   firebaseUid: string,
   photoType: 'profile' | 'verification_live' | 'verification_gallery' = 'profile'
 ): Promise<string> {
-
-    const { user } = useUserStore();
-
-    if (user.idClerk != null) firebaseUid = user.idClerk;
-
     try {
         console.log('📤 Iniciando subida de foto...');
         console.log('📍 URI local:', localUri);

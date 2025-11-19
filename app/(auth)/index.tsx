@@ -1,167 +1,41 @@
-import { getCurrentUser } from "@/api/backend/user/userApi";
-import { useAuth, useUser } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
-import { Text, View, StyleSheet, Pressable, Image, TouchableOpacity } from "react-native"; 
+import { Text, View, StyleSheet, Pressable, Image } from "react-native"; 
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useTokenStore } from "@/lib/auth/tokenStore";
+import { useAuth } from "@clerk/clerk-expo";
+import { unlinkFirebaseSession } from "@/api/firebase/auth/firebase";
 import { useUserStore } from "@/lib/storage/useUserStorage";
-import { linkFirebaseSession, unlinkFirebaseSession } from "@/api/firebase/auth/firebase";
-import { ensureCurrentUserProfile } from "@/api/firebase/users/userService";
-
 
 export default function Index() {
-  const { isSignedIn, userId, signOut, getToken, isLoaded } = useAuth(); // ✅ Agregar isLoaded
-  const { user: clerkUser } = useUser();
   const router = useRouter();
-  const [isValidating, setIsValidating] = useState(false);
-  const setToken = useTokenStore((state) => state.setToken);
-  const { user, clearUser } = useUserStore();
+  const { signOut } = useAuth();
+  const { clearUser } = useUserStore();
 
+  // Debug logout handler (opcional - solo para desarrollo)
   const handleLogout = async () => {
-    await unlinkFirebaseSession();
-    await signOut();
-    clearUser();
-    console.log("🔒 Sesión cerrada");
-    router.replace("/(auth)");
-  };
-
-  // Redirigir a la pantalla de tabs si existe una sesion activa en clerk o en el backend
-  useEffect(() => {
-    // ✅ Esperar a que Clerk termine de cargar
-    if (!isLoaded) {
-      console.log("⏳ Esperando a que Clerk cargue...");
-      return;
-    }
-
-    const validateSession = async () => {
-      console.log("🔍 Validando sesión... isSignedIn:", isSignedIn, "userId:", userId);
-      
-      // Si no hay sesión en Clerk, mostrar pantalla de bienvenida
-      if (!isSignedIn || !userId) {
-        console.log("No hay sesión en Clerk");
-        await unlinkFirebaseSession().catch(() => {});
-        setIsValidating(false);
-        return;
-      }
-
-      setIsValidating(true);
-      
-      try {
-        // Primero obtener el token de Clerk
-        const token = await getToken();
-        if (!token) {
-          console.log("No se pudo obtener token de Clerk");
-          // Si no hay token, cerrar sesión para reautenticar
-          await unlinkFirebaseSession().catch(() => {});
-          await signOut();
-          router.replace("/(auth)");
-          return;
-        }
-        
-        // Guardar el token para usar en las peticiones
-        setToken(token);
-        console.log("Token obtenido y guardado");
-
-        // Verificar si el usuario existe en el backend
-        const currentUser = await getCurrentUser();
-        
-        if (currentUser) {
-          console.log("Usuario existe en ambos lugares (Clerk + Backend)");
-          
-          try {
-            console.log("Vinculando sesión de Firebase...");
-            await linkFirebaseSession();
-
-            await ensureCurrentUserProfile({
-              displayName: user?.name || undefined,
-              photoURL: clerkUser?.imageUrl || undefined,
-              phone: clerkUser?.phoneNumbers[0].phoneNumber || undefined,
-            });
-            
-            console.log("Sesión de Firebase vinculada");
-          } catch (firebaseError) {
-            console.error("Error vinculando sesión de Firebase:", firebaseError);
-            // No bloquear el acceso a la app si falla Firebase
-          }
-          router.replace("/(tabs)");
-        } else {
-          console.log("Usuario existe en Clerk pero NO en backend - Borrar para mantener consistencia");
-          // Borrar usuario de Clerk para mantener consistencia
-          await borradoClerk();
-        }        
-      } catch (error: any) {
-        console.error("Error verificando usuario en backend:", error);
-        
-        // Clasificar el tipo de error
-        if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
-          console.log("Error de conectividad - Permitir acceso offline");
-          // En caso de problemas de conexión, permitir acceso a la app
-          try { await linkFirebaseSession(); } catch {}
-
-          router.replace("/(tabs)");
-        } else if (error.response?.status === 404) {
-          console.log("Usuario no encontrado en backend - Borrar de Clerk para consistencia");
-          // Usuario existe en Clerk pero no en backend, borrar para mantener consistencia
-          await borradoClerk();
-        } else if (error.response?.status === 401) {
-          console.log("Token inválido - Volver a autenticar");
-          // Token inválido, cerrar sesión para reautenticar
-          await unlinkFirebaseSession().catch(() => {});
-          await signOut();
-          router.replace("/(auth)");
-        } else {
-          console.log("Error desconocido");
-        }
-      } finally {
-        setIsValidating(false);
-      }
-    };
-
-    validateSession();
-  }, [isLoaded, isSignedIn, userId]); // ✅ Agregar isLoaded a dependencias
-
-  const borradoClerk = async () => {
     try {
-      console.log("Borrando usuario de Clerk por inconsistencia...");
-      await unlinkFirebaseSession().catch(() => {});
-
-      if (clerkUser) {
-        await clerkUser.delete();
-        console.log("Usuario borrado de Clerk");
-      }
-
+      await unlinkFirebaseSession();
       await signOut();
-      console.log("Sesión cerrada de Clerk");
-
+      clearUser();
+      console.log("🔒 Sesión cerrada manualmente");
       router.replace("/(auth)");
-
     } catch (error) {
-      console.error("Error al borrar usuario de Clerk:", error);
-      // En caso de error, al menos cerrar sesión
-      try {
-        await unlinkFirebaseSession().catch(() => {});
-        await signOut();
-        console.log("Sesión cerrada como fallback");
-        router.replace("/(auth)");
-      } catch (signOutError) {
-        console.error("Error cerrando sesión:", signOutError);
-        router.replace("/(auth)");
-      }
+      console.error("Error cerrando sesión:", error);
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Botón de cerrar sesión (solo para debug) */}
-      <Pressable 
-        style={styles.debugLogoutButton} 
-        onPress={handleLogout}
-      >
-        <Text style={styles.debugLogoutText}>🔒 Cerrar sesión</Text>
-      </Pressable>
+      {/* Botón de cerrar sesión (solo para debug - opcional en producción) */}
+      {__DEV__ && (
+        <Pressable 
+          style={styles.debugLogoutButton} 
+          onPress={handleLogout}
+        >
+          <Text style={styles.debugLogoutText}>🔒 Cerrar sesión</Text>
+        </Pressable>
+      )}
       
-      <Text style={styles.textTitle}>Welcome to Aeghis!</Text>
+      <Text style={styles.textTitle}>Welcome to Aegis!</Text>
       <Image
         source={require("../../assets/images/welcomePage.png")}
         style={styles.image}

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Dimensions, Image, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
+import { useUser } from '@clerk/clerk-expo';
 import { useUserStore } from '@/lib/storage/useUserStorage';
 import { uploadUserPhotoAsync } from '@/api/firebase/storage/photoService';
 
@@ -13,6 +14,7 @@ export default function ProfileImageStep({
   onBack: () => void;
 }){
 
+  const { user: clerkUser } = useUser(); // ✅ Hook en nivel de componente
   const { user, setUser } = useUserStore();
   const [selectedImageUri, setSelectedImageUri] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
@@ -59,9 +61,15 @@ export default function ProfileImageStep({
         setIsUploading(true);
 
         try {
+          // ✅ Verificar que tenemos el UID de Clerk
+          if (!clerkUser?.id) {
+            throw new Error('No se pudo obtener el ID del usuario de Clerk');
+          }
+
+          // ✅ Subir usando el UID de Clerk
           const downloadURL = await uploadUserPhotoAsync(
             localUri,
-            user.idClerk!,
+            clerkUser.id,
             'profile'
           );
 

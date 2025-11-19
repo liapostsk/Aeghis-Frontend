@@ -12,6 +12,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAuth } from '@clerk/clerk-expo';
+import { router } from 'expo-router';
 
 // Mock data de solicitudes de verificación pendientes
 const mockVerificationRequests: VerificationRequest[] = [
@@ -71,10 +73,34 @@ interface VerificationRequest {
 }
 
 export default function AdminVerificationScreen() {
+  const { signOut } = useAuth();
   const [requests, setRequests] = useState<VerificationRequest[]>(mockVerificationRequests);
   const [selectedRequest, setSelectedRequest] = useState<VerificationRequest | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
+
+  const handleSignOut = async () => {
+    Alert.alert(
+      'Cerrar sesión',
+      '¿Estás seguro de que quieres cerrar sesión?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Cerrar sesión',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await signOut();
+              router.replace('/(auth)');
+            } catch (error) {
+              console.error('Error al cerrar sesión:', error);
+              Alert.alert('Error', 'No se pudo cerrar sesión. Inténtalo de nuevo.');
+            }
+          },
+        },
+      ]
+    );
+  };
 
   const handleViewDetails = (request: VerificationRequest) => {
     setSelectedRequest(request);
@@ -176,8 +202,13 @@ export default function AdminVerificationScreen() {
           <Text style={styles.headerTitle}>Panel de Administración</Text>
           <Text style={styles.headerSubtitle}>Verificación de perfiles</Text>
         </View>
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>{pendingCount}</Text>
+        <View style={styles.headerActions}>
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>{pendingCount}</Text>
+          </View>
+          <Pressable style={styles.logoutButton} onPress={handleSignOut}>
+            <Ionicons name="log-out-outline" size={24} color="#EF4444" />
+          </Pressable>
         </View>
       </View>
 
@@ -435,6 +466,11 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginTop: 2,
   },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   badge: {
     backgroundColor: '#7A33CC',
     borderRadius: 12,
@@ -447,6 +483,14 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 14,
     fontWeight: '700',
+  },
+  logoutButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FEE2E2',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   
   // Stats

@@ -10,14 +10,16 @@ import { linkFirebaseSession } from '@/api/firebase/auth/firebase';
 import { ensureCurrentUserProfile } from '@/api/firebase/users/userService';
 import { registerToken } from '@/api/notifications/notificationsApi';
 import { useNotification } from '@/api/notifications/NotificationContext';
+import { useSessionState } from '@/lib/hooks/useSessionState';
 
 const { height } = Dimensions.get('window');
 
 export default function SummaryStep({ onBack }: { onBack: () => void }) {
-  const { user, setUser } = useUserStore();
+  const { user, setUser, clearUser } = useUserStore();
   const { getToken } = useAuth();
   const { user: clerkUser } = useUser();
   const setToken = useTokenStore((state) => state.setToken);
+  const { cleanupClerkUser } = useSessionState();
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
   const { expoPushToken } = useNotification();
@@ -64,22 +66,33 @@ export default function SummaryStep({ onBack }: { onBack: () => void }) {
       const token = await getToken();
       setToken(token);
       
-      // 2. Crear usuario en el backend
+      // 2. Crear usuario en el backend CON las ubicaciones y contactos del formulario
       setLoadingMessage('Configurando tu perfil...');
-      const dto = mapUserToDto(user);
-      const userId = await createUser(dto);
       
-      // 3. Obtener datos actualizados del backend
+      // ✅ Crear DTO con datos del formulario
+      const baseDto = mapUserToDto(user);
+      
+      // ✅ Preparar datos para el backend (el DTO base ya incluye todo)
+      // El backend se encargará de crear los IDs de ubicaciones y contactos
+      console.log("📤 Creando usuario en backend...");
+      console.log("📍 Ubicaciones del usuario:", user.safeLocations?.length || 0);
+      console.log("👥 Contactos de emergencia:", user.emergencyContacts?.length || 0);
+      console.log("📞 Contactos externos:", user.externalContacts?.length || 0);
+      
+      const userId = await createUser(baseDto as any); // ✅ Cast a any para evitar conflicto de tipos
+      console.log("✅ Usuario creado con ID:", userId);
+      
+      // 3. Obtener datos actualizados del backend (ahora con IDs asignados)
       setLoadingMessage('Sincronizando datos...');
       const userData = await getCurrentUser();
       
-      // 4. Actualizar estado local
+      // 4. Actualizar estado local con todos los datos del backend
       setUser({
         ...user,
         id: userId,
-        emergencyContacts: userData.emergencyContacts,
-        externalContacts: userData.externalContacts,
-        safeLocations: userData.safeLocations,
+        safeLocations: userData.safeLocations || [],
+        emergencyContacts: userData.emergencyContacts || [],
+        externalContacts: userData.externalContacts || [],
       });
 
       // 5. REGISTRAR NOTIFICACIONES PUSH (ahora que tenemos userId válido)
@@ -124,29 +137,94 @@ export default function SummaryStep({ onBack }: { onBack: () => void }) {
         console.warn("⚠️ Continuando sin Firebase - Funcionalidades de chat limitadas");
       }
 
-      // 7. Navegación final
+      // 7. Actualizar estado local con datos completos (incluyendo el rol del backend)
+      setUser({
+        ...user,
+        id: userId,
+        role: userData.role, // ✅ Incluir el rol asignado por el backend
+        safeLocations: userData.safeLocations || [],
+        emergencyContacts: userData.emergencyContacts || [],
+        externalContacts: userData.externalContacts || [],
+      });
+
+      console.log("✅ Usuario creado exitosamente");
+      console.log("👤 Rol asignado por backend:", userData.role);
+
+      // 8. Navegación final
       setLoadingMessage('¡Bienvenido a Aegis!');
       
-      // Pequeña pausa para mostrar mensaje final
-      setTimeout(() => {
+      // ✅ Esperar más tiempo para que useSessionState detecte el cambio de rol
+      await new Promise(resolve => setTimeout(resolve, 1200));
+      
+      // ✅ Redirigir según el rol
+      if (userData.role === 'ADMIN') {
+        console.log("👑 Redirigiendo a (admin)");
+        router.replace("/(admin)");
+      } else {
+        console.log("� Redirigiendo a (tabs)");
         router.replace("/(tabs)");
-      }, 1000);
-      
-    } catch (error) {
-      console.error("❌ Error creando usuario:", error);
-      
-      // Mensajes de error más específicos
-      let errorMessage = "No se pudo crear el usuario. Intenta de nuevo.";
-      
-      if (error?.response?.status === 409) {
-        errorMessage = "Ya existe una cuenta con estos datos.";
-      } else if (error?.message?.includes('network')) {
-        errorMessage = "Error de conexión. Verifica tu internet.";
-      } else if (error?.response?.status >= 500) {
-        errorMessage = "Error del servidor. Intenta más tarde.";
       }
       
-      Alert.alert("Error", errorMessage);
+    } catch (error) {
+      console.error("❌ Error creando usuario en backend:", error);
+      
+      // ROLLBACK: Borrar usuario de Clerk para permitir reintentar
+      let errorMessage = "No se pudo crear el usuario.";
+      let shouldRollback = true;
+      
+      if (error?.response?.status === 409) {
+        errorMessage = "Ya existe una cuenta con estos datos. Por favor, intenta iniciar sesión.";
+        shouldRollback = true; // Borrar Clerk para liberar credenciales
+      } else if (error?.response?.status === 401) {
+        errorMessage = "Sesión inválida. Por favor, intenta registrarte nuevamente.";
+        shouldRollback = true;
+      } else if (error?.message?.includes('network') || error?.code === 'ECONNABORTED') {
+        errorMessage = "Error de conexión. Verifica tu internet e intenta nuevamente.";
+        shouldRollback = true;
+      } else if (error?.response?.status >= 500) {
+        errorMessage = "Error del servidor. Intenta más tarde.";
+        shouldRollback = false; // No borrar Clerk por error del servidor
+      }
+
+      if (shouldRollback) {
+        try {
+          setLoadingMessage('Limpiando datos...');
+          
+          // Ejecutar rollback completo
+          await cleanupClerkUser(`Error en backend: ${error?.response?.status || error?.message}`);
+          
+          // Limpiar estado local
+          clearUser();
+          setToken(null);
+          
+          Alert.alert(
+            "Error de Registro",
+            `${errorMessage}\n\nTus credenciales han sido liberadas. Puedes intentar registrarte nuevamente.`,
+            [
+              {
+                text: "Volver al Registro",
+                onPress: () => router.replace("/(auth)/register"),
+              },
+            ]
+          );
+          
+        } catch (rollbackError) {
+          console.error("❌ Error durante rollback:", rollbackError);
+          Alert.alert(
+            "Error Crítico",
+            "No se pudo revertir el registro. Por favor, contacta soporte.",
+            [
+              {
+                text: "Ir a Login",
+                onPress: () => router.replace("/(auth)/login"),
+              },
+            ]
+          );
+        }
+      } else {
+        // Error temporal - mostrar mensaje sin rollback
+        Alert.alert("Error Temporal", `${errorMessage}\n\nPor favor, intenta nuevamente en unos minutos.`);
+      }
       
     } finally {
       setIsLoading(false);

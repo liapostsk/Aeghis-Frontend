@@ -180,15 +180,18 @@ export default function SafeLocationsSection({ locations, onAddLocation }: Props
         }}
       />
 
-      <LocationEditorModal
-        visible={modalEditorVisible}
-        location={selectedLocation || locations[0]}
-        onClose={() => {
-          setModalEditorVisible(false);
-          setSelectedLocation(null);
-        }}
-        onSave={handleEditLocation}
-      />
+      {/* ✅ Solo mostrar modal si hay ubicación seleccionada */}
+      {selectedLocation && (
+        <LocationEditorModal
+          visible={modalEditorVisible}
+          location={selectedLocation}
+          onClose={() => {
+            setModalEditorVisible(false);
+            setSelectedLocation(null);
+          }}
+          onSave={handleEditLocation}
+        />
+      )}
     </View>
   );
 }
