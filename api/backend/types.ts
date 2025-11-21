@@ -1,13 +1,19 @@
 import { Group } from "./group/groupType";
 import { SafeLocation } from "./locations/locationType";
 
+export enum ValidationStatus {
+  PENDING = 'PENDING',
+  VERIFIED = 'VERIFIED',
+  REJECTED = 'REJECTED'
+}
+
 export type UserDto = {
   id: number;
   name: string;
   email: string;
   phone: string;
   image: string;
-  verify: boolean;
+  verify: ValidationStatus;
   dateOfBirth: Date;
   acceptedPrivacyPolicy: boolean;
   safeLocations: SafeLocation[];

@@ -20,6 +20,7 @@ function RootNavigator() {
     const inAuthGroup = segments[0] === '(auth)';
     const inTabsGroup = segments[0] === '(tabs)';
     const inAdminGroup = segments[0] === '(admin)';
+    const inChatGroup = segments[0] === 'chat';
 
     console.log('[RootNavigator] State:', state, 'Segments:', segments);
 
@@ -48,8 +49,8 @@ function RootNavigator() {
         break;
 
       case 'ready':
-        // Usuario normal → Redirigir a tabs
-        if (!inTabsGroup) {
+        // Usuario normal → Redirigir a tabs solo si NO está en tabs o chat
+        if (!inTabsGroup && !inChatGroup) {
           console.log('[RootNavigator] Redirecting to tabs (ready)');
           router.replace('/(tabs)');
         }
@@ -64,7 +65,6 @@ function RootNavigator() {
     }
   }, [state, segments]);
 
-  // Show loading screen while checking session
   if (state === 'checking') {
     return <LoadingScreen />;
   }

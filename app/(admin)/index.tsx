@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,92 +9,107 @@ import {
   Alert,
   ScrollView,
   Modal,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
 import { router } from 'expo-router';
+import { getUsersPendingVerification, updateUserVerificationStatus } from '@/api/backend/verification/verificationApi';
+import { getVerificationPhotos } from '@/api/firebase/storage/photoService';
+import { UserDto } from '@/api/backend/types';
+import { ValidationStatus } from '@/lib/storage/useUserStorage';
 
-// Mock data de solicitudes de verificación pendientes
-const mockVerificationRequests: VerificationRequest[] = [
-  {
-    id: '1',
-    userId: 101,
-    userName: 'Ana García',
-    email: 'ana.garcia@example.com',
-    profileImage: null,
-    livePhoto: null,
-    requestDate: '2025-11-18T10:30:00',
-    status: 'pending',
-  },
-  {
-    id: '2',
-    userId: 102,
-    userName: 'Carlos Martínez',
-    email: 'carlos.m@example.com',
-    profileImage: null,
-    livePhoto: null,
-    requestDate: '2025-11-18T14:20:00',
-    status: 'pending',
-  },
-  {
-    id: '3',
-    userId: 103,
-    userName: 'María López',
-    email: 'maria.lopez@example.com',
-    profileImage: null,
-    livePhoto: null,
-    requestDate: '2025-11-19T09:15:00',
-    status: 'pending',
-  },
-  {
-    id: '4',
-    userId: 104,
-    userName: 'Pedro Sánchez',
-    email: 'pedro.s@example.com',
-    profileImage: null,
-    livePhoto: null,
-    requestDate: '2025-11-19T11:45:00',
-    status: 'pending',
-  },
-];
-
-type VerificationStatus = 'pending' | 'approved' | 'rejected';
-
-interface VerificationRequest {
-  id: string;
-  userId: number;
-  userName: string;
-  email: string;
-  profileImage: string | null;
-  livePhoto: string | null;
-  requestDate: string;
-  status: VerificationStatus;
+interface UserWithPhotos extends UserDto {
+  selfieUrl?: string;
+  documentUrl?: string;
+  photosLoaded?: boolean;
 }
 
 export default function AdminVerificationScreen() {
   const { signOut } = useAuth();
-  const [requests, setRequests] = useState<VerificationRequest[]>(mockVerificationRequests);
-  const [selectedRequest, setSelectedRequest] = useState<VerificationRequest | null>(null);
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
+  const [users, setUsers] = useState<UserWithPhotos[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedUser, setSelectedUser] = useState<UserWithPhotos | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [processing, setProcessing] = useState(false);
 
-  const handleSignOut = async () => {
+  useEffect(() => {
+    loadPendingUsers();
+  }, []);
+
+  const loadPendingUsers = async () => {
+    try {
+      setLoading(true);
+      
+      const pendingUsers = await getUsersPendingVerification();
+      console.log(`📋 ${pendingUsers.length} usuarios pendientes de verificación`);
+
+      const usersWithPhotos = await Promise.all(
+        pendingUsers.map(async (user) => {
+          try {
+            if (!user.clerkId) {
+              console.warn(`⚠️ Usuario ${user.name} no tiene clerkId`);
+              return { ...user, photosLoaded: false };
+            }
+
+            const photos = await getVerificationPhotos(user.clerkId);
+            
+            if (photos) {
+              return {
+                ...user,
+                selfieUrl: photos.selfieUrl,
+                documentUrl: photos.documentUrl,
+                photosLoaded: true,
+              };
+            } else {
+              console.warn(`⚠️ Usuario ${user.name} no tiene fotos de verificación`);
+              return {
+                ...user,
+                photosLoaded: false,
+              };
+            }
+          } catch (error) {
+            console.error(`❌ Error cargando fotos de ${user.name}:`, error);
+            return {
+              ...user,
+              photosLoaded: false,
+            };
+          }
+        })
+      );
+
+      const usersWithBothPhotos = usersWithPhotos.filter(u => u.photosLoaded);
+      console.log(`✅ ${usersWithBothPhotos.length} usuarios con fotos completas`);
+
+      setUsers(usersWithBothPhotos);
+    } catch (error) {
+      console.error('❌ Error cargando usuarios:', error);
+      Alert.alert('Error', 'No se pudieron cargar los usuarios pendientes');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApprove = async (user: UserWithPhotos) => {
     Alert.alert(
-      'Cerrar sesión',
-      '¿Estás seguro de que quieres cerrar sesión?',
+      'Aprobar Verificación',
+      `¿Estás seguro de que quieres aprobar a ${user.name}?`,
       [
         { text: 'Cancelar', style: 'cancel' },
         {
-          text: 'Cerrar sesión',
-          style: 'destructive',
+          text: 'Aprobar',
           onPress: async () => {
+            setProcessing(true);
             try {
-              await signOut();
-              router.replace('/(auth)');
+              await updateUserVerificationStatus(user.id, ValidationStatus.VERIFIED);
+              Alert.alert('✅ Aprobado', `${user.name} ha sido verificado correctamente`);
+              loadPendingUsers();
+              setModalVisible(false);
             } catch (error) {
-              console.error('Error al cerrar sesión:', error);
-              Alert.alert('Error', 'No se pudo cerrar sesión. Inténtalo de nuevo.');
+              Alert.alert('Error', 'No se pudo aprobar la verificación');
+            } finally {
+              setProcessing(false);
             }
           },
         },
@@ -102,341 +117,220 @@ export default function AdminVerificationScreen() {
     );
   };
 
-  const handleViewDetails = (request: VerificationRequest) => {
-    setSelectedRequest(request);
-    setShowDetailModal(true);
-  };
-
-  const handleApprove = (requestId: string) => {
+  const handleReject = async (user: UserWithPhotos) => {
     Alert.alert(
-      'Aprobar verificación',
-      '¿Estás seguro de que quieres aprobar esta verificación?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Aprobar',
-          style: 'default',
-          onPress: () => {
-            setRequests(prev =>
-              prev.map(req =>
-                req.id === requestId ? { ...req, status: 'approved' as VerificationStatus } : req
-              )
-            );
-            setShowDetailModal(false);
-            Alert.alert('✅ Aprobado', 'La verificación ha sido aprobada exitosamente');
-          },
-        },
-      ]
-    );
-  };
-
-  const handleReject = (requestId: string) => {
-    Alert.alert(
-      'Rechazar verificación',
-      '¿Estás seguro de que quieres rechazar esta verificación?',
+      'Rechazar Verificación',
+      `¿Estás seguro de que quieres rechazar a ${user.name}?`,
       [
         { text: 'Cancelar', style: 'cancel' },
         {
           text: 'Rechazar',
           style: 'destructive',
-          onPress: () => {
-            setRequests(prev =>
-              prev.map(req =>
-                req.id === requestId ? { ...req, status: 'rejected' as VerificationStatus } : req
-              )
-            );
-            setShowDetailModal(false);
-            Alert.alert('❌ Rechazado', 'La verificación ha sido rechazada');
+          onPress: async () => {
+            setProcessing(true);
+            try {
+              await updateUserVerificationStatus(user.id, ValidationStatus.REJECTED);
+              Alert.alert('❌ Rechazado', `La verificación de ${user.name} ha sido rechazada`);
+              loadPendingUsers();
+              setModalVisible(false);
+            } catch (error) {
+              Alert.alert('Error', 'No se pudo rechazar la verificación');
+            } finally {
+              setProcessing(false);
+            }
           },
         },
       ]
     );
   };
 
-  const filteredRequests = requests.filter(req => {
-    if (filter === 'all') return true;
-    return req.status === filter;
-  });
-
-  const getStatusColor = (status: VerificationStatus) => {
-    switch (status) {
-      case 'approved':
-        return '#10B981';
-      case 'rejected':
-        return '#EF4444';
-      default:
-        return '#F59E0B';
-    }
+  const handleSignOut = async () => {
+    Alert.alert(
+      'Cerrar Sesión',
+      '¿Estás seguro de que quieres cerrar sesión?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Salir',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await signOut();
+              router.replace('/(auth)');
+            } catch (error) {
+              Alert.alert('Error', 'No se pudo cerrar sesión');
+            }
+          },
+        },
+      ]
+    );
   };
 
-  const getStatusText = (status: VerificationStatus) => {
-    switch (status) {
-      case 'approved':
-        return 'Aprobado';
-      case 'rejected':
-        return 'Rechazado';
-      default:
-        return 'Pendiente';
-    }
-  };
+  const renderUser = ({ item }: { item: UserWithPhotos }) => (
+    <Pressable
+      style={styles.card}
+      onPress={() => {
+        setSelectedUser(item);
+        setModalVisible(true);
+      }}
+    >
+      <View style={styles.cardHeader}>
+        <View style={styles.userInfo}>
+          <Image 
+            source={{ uri: item.image || 'https://via.placeholder.com/50' }} 
+            style={styles.avatar}
+          />
+          <View>
+            <Text style={styles.userName}>{item.name}</Text>
+            <Text style={styles.userEmail}>{item.email}</Text>
+          </View>
+        </View>
+        <View style={styles.badge}>
+          <Ionicons name="time" size={16} color="#F59E0B" />
+          <Text style={styles.badgeText}>PENDIENTE</Text>
+        </View>
+      </View>
+    </Pressable>
+  );
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: 'short',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  const pendingCount = requests.filter(r => r.status === 'pending').length;
-  const approvedCount = requests.filter(r => r.status === 'approved').length;
-  const rejectedCount = requests.filter(r => r.status === 'rejected').length;
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.loadingContainer} edges={['top']}>
+        <ActivityIndicator size="large" color="#3B82F6" />
+        <Text style={styles.loadingText}>Cargando verificaciones...</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Header */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.headerTitle}>Panel de Administración</Text>
-          <Text style={styles.headerSubtitle}>Verificación de perfiles</Text>
+          <Text style={styles.title}>Panel de Administrador</Text>
+          <Text style={styles.subtitle}>Verificaciones Pendientes</Text>
         </View>
         <View style={styles.headerActions}>
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>{pendingCount}</Text>
+          <View style={styles.pendingBadge}>
+            <Text style={styles.pendingCount}>{users.length}</Text>
           </View>
           <Pressable style={styles.logoutButton} onPress={handleSignOut}>
-            <Ionicons name="log-out-outline" size={24} color="#EF4444" />
+            <Ionicons name="log-out-outline" size={20} color="#EF4444" />
           </Pressable>
         </View>
       </View>
 
-      {/* Stats */}
-      <View style={styles.statsContainer}>
-        <View style={styles.statCard}>
-          <Ionicons name="time-outline" size={24} color="#F59E0B" />
-          <Text style={styles.statNumber}>{pendingCount}</Text>
-          <Text style={styles.statLabel}>Pendientes</Text>
+      {users.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Ionicons name="checkmark-circle-outline" size={64} color="#D1D5DB" />
+          <Text style={styles.emptyText}>No hay verificaciones pendientes</Text>
         </View>
-        
-        <View style={styles.statCard}>
-          <Ionicons name="checkmark-circle-outline" size={24} color="#10B981" />
-          <Text style={styles.statNumber}>{approvedCount}</Text>
-          <Text style={styles.statLabel}>Aprobadas</Text>
-        </View>
-        
-        <View style={styles.statCard}>
-          <Ionicons name="close-circle-outline" size={24} color="#EF4444" />
-          <Text style={styles.statNumber}>{rejectedCount}</Text>
-          <Text style={styles.statLabel}>Rechazadas</Text>
-        </View>
-      </View>
-
-      {/* Filters */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtersContainer}>
-        <Pressable
-          style={[styles.filterBtn, filter === 'all' && styles.filterBtnActive]}
-          onPress={() => setFilter('all')}
-        >
-          <Text style={[styles.filterText, filter === 'all' && styles.filterTextActive]}>
-            Todas ({requests.length})
-          </Text>
-        </Pressable>
-        
-        <Pressable
-          style={[styles.filterBtn, filter === 'pending' && styles.filterBtnActive]}
-          onPress={() => setFilter('pending')}
-        >
-          <Text style={[styles.filterText, filter === 'pending' && styles.filterTextActive]}>
-            Pendientes ({pendingCount})
-          </Text>
-        </Pressable>
-        
-        <Pressable
-          style={[styles.filterBtn, filter === 'approved' && styles.filterBtnActive]}
-          onPress={() => setFilter('approved')}
-        >
-          <Text style={[styles.filterText, filter === 'approved' && styles.filterTextActive]}>
-            Aprobadas ({approvedCount})
-          </Text>
-        </Pressable>
-        
-        <Pressable
-          style={[styles.filterBtn, filter === 'rejected' && styles.filterBtnActive]}
-          onPress={() => setFilter('rejected')}
-        >
-          <Text style={[styles.filterText, filter === 'rejected' && styles.filterTextActive]}>
-            Rechazadas ({rejectedCount})
-          </Text>
-        </Pressable>
-      </ScrollView>
-
-      {/* Lista de solicitudes */}
-      <FlatList
-        data={filteredRequests}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContainer}
-        renderItem={({ item }) => (
-          <Pressable
-            style={styles.requestCard}
-            onPress={() => handleViewDetails(item)}
-          >
-            <View style={styles.requestHeader}>
-              <View style={styles.userSection}>
-                <View style={styles.avatar}>
-                  <Ionicons name="person" size={24} color="#7A33CC" />
-                </View>
-                <View style={styles.userInfo}>
-                  <Text style={styles.userName}>{item.userName}</Text>
-                  <Text style={styles.userEmail}>{item.email}</Text>
-                </View>
-              </View>
-              
-              <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + '20' }]}>
-                <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
-                  {getStatusText(item.status)}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.requestFooter}>
-              <View style={styles.dateInfo}>
-                <Ionicons name="calendar-outline" size={14} color="#6B7280" />
-                <Text style={styles.dateText}>{formatDate(item.requestDate)}</Text>
-              </View>
-              
-              {item.status === 'pending' && (
-                <View style={styles.actionButtons}>
-                  <Pressable
-                    style={styles.rejectBtn}
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      handleReject(item.id);
-                    }}
-                  >
-                    <Ionicons name="close" size={16} color="#EF4444" />
-                  </Pressable>
-                  
-                  <Pressable
-                    style={styles.approveBtn}
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      handleApprove(item.id);
-                    }}
-                  >
-                    <Ionicons name="checkmark" size={16} color="#10B981" />
-                  </Pressable>
-                </View>
-              )}
-            </View>
-          </Pressable>
-        )}
-        ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Ionicons name="document-outline" size={48} color="#D1D5DB" />
-            <Text style={styles.emptyText}>
-              No hay solicitudes {filter !== 'all' && filter !== undefined ? getStatusText(filter).toLowerCase() : ''}
-            </Text>
-          </View>
-        }
-      />
-
-      {/* Modal de detalles */}
-      {selectedRequest && (
-        <Modal
-          visible={showDetailModal}
-          animationType="slide"
-          presentationStyle="pageSheet"
-          onRequestClose={() => setShowDetailModal(false)}
-        >
-          <SafeAreaView style={styles.modalContainer} edges={['top']}>
-            <View style={styles.modalHeader}>
-              <Pressable onPress={() => setShowDetailModal(false)}>
-                <Ionicons name="close" size={28} color="#1F2937" />
-              </Pressable>
-              <Text style={styles.modalTitle}>Detalles de verificación</Text>
-              <View style={{ width: 28 }} />
-            </View>
-
-            <ScrollView style={styles.modalContent}>
-              {/* Info del usuario */}
-              <View style={styles.detailSection}>
-                <Text style={styles.sectionTitle}>Información del usuario</Text>
-                <View style={styles.detailCard}>
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Nombre:</Text>
-                    <Text style={styles.detailValue}>{selectedRequest.userName}</Text>
-                  </View>
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Email:</Text>
-                    <Text style={styles.detailValue}>{selectedRequest.email}</Text>
-                  </View>
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>ID Usuario:</Text>
-                    <Text style={styles.detailValue}>{selectedRequest.userId}</Text>
-                  </View>
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Fecha solicitud:</Text>
-                    <Text style={styles.detailValue}>{formatDate(selectedRequest.requestDate)}</Text>
-                  </View>
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Estado:</Text>
-                    <View style={[styles.statusBadge, { backgroundColor: getStatusColor(selectedRequest.status) + '20' }]}>
-                      <Text style={[styles.statusText, { color: getStatusColor(selectedRequest.status) }]}>
-                        {getStatusText(selectedRequest.status)}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-              </View>
-
-              {/* Fotos de verificación */}
-              <View style={styles.detailSection}>
-                <Text style={styles.sectionTitle}>Fotos de verificación</Text>
-                <View style={styles.photosContainer}>
-                  <View style={styles.photoBox}>
-                    <Text style={styles.photoLabel}>Foto de perfil</Text>
-                    <View style={styles.photoPlaceholder}>
-                      <Ionicons name="image" size={48} color="#9CA3AF" />
-                      <Text style={styles.photoPlaceholderText}>Mock: Foto de perfil</Text>
-                    </View>
-                  </View>
-                  
-                  <View style={styles.photoBox}>
-                    <Text style={styles.photoLabel}>Selfie en vivo</Text>
-                    <View style={styles.photoPlaceholder}>
-                      <Ionicons name="camera" size={48} color="#9CA3AF" />
-                      <Text style={styles.photoPlaceholderText}>Mock: Selfie</Text>
-                    </View>
-                  </View>
-                </View>
-              </View>
-
-              {/* Acciones */}
-              {selectedRequest.status === 'pending' && (
-                <View style={styles.actionsSection}>
-                  <Pressable
-                    style={styles.approveButton}
-                    onPress={() => handleApprove(selectedRequest.id)}
-                  >
-                    <Ionicons name="checkmark-circle" size={20} color="#FFF" />
-                    <Text style={styles.approveButtonText}>Aprobar verificación</Text>
-                  </Pressable>
-                  
-                  <Pressable
-                    style={styles.rejectButton}
-                    onPress={() => handleReject(selectedRequest.id)}
-                  >
-                    <Ionicons name="close-circle" size={20} color="#EF4444" />
-                    <Text style={styles.rejectButtonText}>Rechazar verificación</Text>
-                  </Pressable>
-                </View>
-              )}
-            </ScrollView>
-          </SafeAreaView>
-        </Modal>
+      ) : (
+        <FlatList
+          data={users}
+          renderItem={renderUser}
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={styles.list}
+        />
       )}
+
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <ScrollView contentContainerStyle={styles.modalScrollContent}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Revisar Verificación</Text>
+                <Pressable onPress={() => setModalVisible(false)}>
+                  <Ionicons name="close" size={24} color="#6B7280" />
+                </Pressable>
+              </View>
+
+              {selectedUser && (
+                <>
+                  <View style={styles.modalUserInfo}>
+                    <Image 
+                      source={{ uri: selectedUser.image || 'https://via.placeholder.com/60' }} 
+                      style={styles.modalAvatar}
+                    />
+                    <View>
+                      <Text style={styles.modalUserName}>{selectedUser.name}</Text>
+                      <Text style={styles.modalUserEmail}>{selectedUser.email}</Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.photoSection}>
+                    <Text style={styles.photoLabel}>📸 Selfie</Text>
+                    {selectedUser.selfieUrl ? (
+                      <Image 
+                        source={{ uri: selectedUser.selfieUrl }} 
+                        style={styles.modalPhoto} 
+                        resizeMode="contain"
+                      />
+                    ) : (
+                      <View style={styles.noPhoto}>
+                        <Ionicons name="image-outline" size={40} color="#D1D5DB" />
+                        <Text style={styles.noPhotoText}>No disponible</Text>
+                      </View>
+                    )}
+                  </View>
+
+                  <View style={styles.photoSection}>
+                    <Text style={styles.photoLabel}>🪪 Documento</Text>
+                    {selectedUser.documentUrl ? (
+                      <Image 
+                        source={{ uri: selectedUser.documentUrl }} 
+                        style={styles.modalPhoto} 
+                        resizeMode="contain"
+                      />
+                    ) : (
+                      <View style={styles.noPhoto}>
+                        <Ionicons name="image-outline" size={40} color="#D1D5DB" />
+                        <Text style={styles.noPhotoText}>No disponible</Text>
+                      </View>
+                    )}
+                  </View>
+
+                  <View style={styles.modalActions}>
+                    <Pressable
+                      style={[styles.actionButton, styles.rejectButton]}
+                      onPress={() => handleReject(selectedUser)}
+                      disabled={processing}
+                    >
+                      {processing ? (
+                        <ActivityIndicator color="#FFF" />
+                      ) : (
+                        <>
+                          <Ionicons name="close-circle" size={20} color="#FFF" />
+                          <Text style={styles.actionButtonText}>Rechazar</Text>
+                        </>
+                      )}
+                    </Pressable>
+
+                    <Pressable
+                      style={[styles.actionButton, styles.approveButton]}
+                      onPress={() => handleApprove(selectedUser)}
+                      disabled={processing}
+                    >
+                      {processing ? (
+                        <ActivityIndicator color="#FFF" />
+                      ) : (
+                        <>
+                          <Ionicons name="checkmark-circle" size={20} color="#FFF" />
+                          <Text style={styles.actionButtonText}>Aprobar</Text>
+                        </>
+                      )}
+                    </Pressable>
+                  </View>
+                </>
+              )}
+            </View>
+          </ScrollView>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -450,139 +344,71 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    padding: 20,
     backgroundColor: '#FFF',
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
   },
-  headerTitle: {
+  title: {
     fontSize: 24,
-    fontWeight: '700',
+    fontWeight: 'bold',
     color: '#1F2937',
   },
-  headerSubtitle: {
+  subtitle: {
     fontSize: 14,
     color: '#6B7280',
-    marginTop: 2,
+    marginTop: 4,
   },
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
-  badge: {
-    backgroundColor: '#7A33CC',
-    borderRadius: 12,
-    width: 32,
-    height: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  badgeText: {
-    color: '#FFF',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  logoutButton: {
-    width: 40,
-    height: 40,
+  pendingBadge: {
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 20,
-    backgroundColor: '#FEE2E2',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
-  
-  // Stats
-  statsContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    gap: 12,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: '#FFF',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1F2937',
-    marginTop: 8,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginTop: 4,
-  },
-  
-  // Filters
-  filtersContainer: {
-    paddingHorizontal: 16,
-    marginBottom: 12,
-  },
-  filterBtn: {
-    backgroundColor: '#FFF',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginRight: 8,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  filterBtnActive: {
-    backgroundColor: '#7A33CC',
-    borderColor: '#7A33CC',
-  },
-  filterText: {
+  pendingCount: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#6B7280',
+    color: '#D97706',
   },
-  filterTextActive: {
-    color: '#FFF',
+  logoutButton: {
+    backgroundColor: '#FEE2E2',
+    padding: 10,
+    borderRadius: 20,
   },
-  
-  // Lista
-  listContainer: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+  list: {
+    padding: 20,
   },
-  requestCard: {
+  card: {
     backgroundColor: '#FFF',
-    borderRadius: 12,
     padding: 16,
+    borderRadius: 12,
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
   },
-  requestHeader: {
+  cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
-  },
-  userSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#F3E8FF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
   },
   userInfo: {
-    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#E5E7EB',
   },
   userName: {
     fontSize: 16,
@@ -594,178 +420,144 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginTop: 2,
   },
-  statusBadge: {
-    paddingHorizontal: 12,
+  badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 12,
+    gap: 4,
   },
-  statusText: {
+  badgeText: {
     fontSize: 12,
     fontWeight: '600',
+    color: '#F59E0B',
   },
-  requestFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#F9FAFB',
   },
-  dateInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  dateText: {
-    fontSize: 13,
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
     color: '#6B7280',
   },
-  actionButtons: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  approveBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#10B98120',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  rejectBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#EF444420',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  
-  // Empty state
   emptyState: {
-    alignItems: 'center',
+    flex: 1,
     justifyContent: 'center',
-    paddingVertical: 60,
+    alignItems: 'center',
+    paddingBottom: 100,
   },
   emptyText: {
+    marginTop: 16,
     fontSize: 16,
-    color: '#6B7280',
-    marginTop: 12,
+    color: '#9CA3AF',
   },
-  
-  // Modal
-  modalContainer: {
+  modalOverlay: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalScrollContent: {
+    flexGrow: 1,
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#FFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    minHeight: '90%',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    backgroundColor: '#FFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    marginBottom: 20,
   },
   modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1F2937',
+  },
+  modalUserInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 20,
+    padding: 12,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+  },
+  modalAvatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#E5E7EB',
+  },
+  modalUserName: {
     fontSize: 18,
     fontWeight: '600',
     color: '#1F2937',
   },
-  modalContent: {
-    flex: 1,
-    padding: 16,
-  },
-  detailSection: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
-    marginBottom: 12,
-  },
-  detailCard: {
-    backgroundColor: '#FFF',
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
-  },
-  detailLabel: {
+  modalUserEmail: {
     fontSize: 14,
     color: '#6B7280',
+    marginTop: 2,
   },
-  detailValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1F2937',
-  },
-  photosContainer: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  photoBox: {
-    flex: 1,
+  photoSection: {
+    marginBottom: 20,
   },
   photoLabel: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
     color: '#374151',
     marginBottom: 8,
   },
-  photoPlaceholder: {
-    aspectRatio: 1,
-    backgroundColor: '#F3F4F6',
+  modalPhoto: {
+    width: '100%',
+    height: 250,
     borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#E5E7EB',
-    borderStyle: 'dashed',
+    backgroundColor: '#F3F4F6',
+  },
+  noPhoto: {
+    width: '100%',
+    height: 250,
+    borderRadius: 12,
+    backgroundColor: '#F3F4F6',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
   },
-  photoPlaceholderText: {
-    fontSize: 12,
+  noPhotoText: {
+    marginTop: 8,
+    fontSize: 14,
     color: '#9CA3AF',
   },
-  actionsSection: {
+  modalActions: {
+    flexDirection: 'row',
     gap: 12,
-    marginBottom: 24,
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: 12,
+    gap: 8,
   },
   approveButton: {
     backgroundColor: '#10B981',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 16,
-    borderRadius: 12,
-  },
-  approveButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: '600',
   },
   rejectButton: {
-    backgroundColor: '#FFF',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#EF4444',
+    backgroundColor: '#EF4444',
   },
-  rejectButtonText: {
-    color: '#EF4444',
+  actionButtonText: {
+    color: '#FFF',
     fontSize: 16,
     fontWeight: '600',
   },

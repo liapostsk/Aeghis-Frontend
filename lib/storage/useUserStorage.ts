@@ -6,6 +6,11 @@ import { SafeLocation } from '@/api/backend/locations/locationType';
 import { getCurrentUser } from '../../api/backend/user/userApi';
 import { Group } from '@/api/backend/group/groupType';
 
+export enum ValidationStatus {
+  PENDING = 'PENDING',
+  VERIFIED = 'VERIFIED',
+  REJECTED = 'REJECTED'
+}
 
 export type User = {
   id?: number;
@@ -13,7 +18,7 @@ export type User = {
   email?: string;
   dateOfBirth?: Date;
   phone?: string;
-  verify?: boolean;
+  verify?: ValidationStatus;
   image?: string;
   gender?: string;
   valid?: boolean;

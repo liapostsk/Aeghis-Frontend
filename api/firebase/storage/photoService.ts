@@ -179,3 +179,180 @@ export async function deleteGroupPhoto(photoUrl: string): Promise<void> {
     throw error;
   }
 }
+
+/**
+ * Sube una foto de SELFIE para verificación
+ */
+export const uploadVerificationSelfie = async (
+  localUri: string,
+  firebaseUid: string
+): Promise<string> => {
+  try {
+    console.log('📸 Subiendo selfie de verificación...');
+    
+    const response = await fetch(localUri);
+    const blob = await response.blob();
+
+    const timestamp = Date.now();
+    const filename = `selfie_${timestamp}.jpg`;
+    const storageRef = ref(storage, `verification/${firebaseUid}/${filename}`);
+
+    console.log(`📁 Subiendo selfie a: verification/${firebaseUid}/${filename}`);
+
+    await uploadBytes(storageRef, blob);
+    const downloadURL = await getDownloadURL(storageRef);
+
+    console.log('✅ Selfie de verificación subido:', downloadURL);
+    return downloadURL;
+  } catch (error) {
+    console.error('❌ Error al subir selfie:', error);
+    throw error;
+  }
+};
+
+/**
+ * Sube una foto de DOCUMENTO (DNI/ID) para verificación
+ */
+export const uploadVerificationDocument = async (
+  localUri: string,
+  firebaseUid: string
+): Promise<string> => {
+  try {
+    console.log('🪪 Subiendo documento de verificación...');
+    
+    const response = await fetch(localUri);
+    const blob = await response.blob();
+
+    const timestamp = Date.now();
+    const filename = `document_${timestamp}.jpg`;
+    const storageRef = ref(storage, `verification/${firebaseUid}/${filename}`);
+
+    console.log(`📁 Subiendo documento a: verification/${firebaseUid}/${filename}`);
+
+    await uploadBytes(storageRef, blob);
+    const downloadURL = await getDownloadURL(storageRef);
+
+    console.log('✅ Documento de verificación subido:', downloadURL);
+    return downloadURL;
+  } catch (error) {
+    console.error('❌ Error al subir documento:', error);
+    throw error;
+  }
+};
+
+/**
+ * Obtener la URL de la selfie de verificación de un usuario
+ */
+export const getVerificationSelfieUrl = async (firebaseUid: string): Promise<string | null> => {
+  try {
+    const { listAll } = await import('firebase/storage');
+    const folderRef = ref(storage, `verification/${firebaseUid}`);
+    const filesList = await listAll(folderRef);
+    
+    const selfieFile = filesList.items.find(item => item.name.startsWith('selfie_'));
+    
+    if (!selfieFile) {
+      console.log(`⚠️ No se encontró selfie para usuario ${firebaseUid}`);
+      return null;
+    }
+
+    const url = await getDownloadURL(selfieFile);
+    console.log(`✅ Selfie encontrado: ${selfieFile.name}`);
+    return url;
+  } catch (error) {
+    console.error('❌ Error obteniendo selfie:', error);
+    return null;
+  }
+};
+
+/**
+ * Obtener la URL del documento de verificación de un usuario
+ */
+export const getVerificationDocumentUrl = async (firebaseUid: string): Promise<string | null> => {
+  try {
+    const { listAll } = await import('firebase/storage');
+    const folderRef = ref(storage, `verification/${firebaseUid}`);
+    const filesList = await listAll(folderRef);
+    
+    const documentFile = filesList.items.find(item => item.name.startsWith('document_'));
+    
+    if (!documentFile) {
+      console.log(`⚠️ No se encontró documento para usuario ${firebaseUid}`);
+      return null;
+    }
+
+    const url = await getDownloadURL(documentFile);
+    console.log(`✅ Documento encontrado: ${documentFile.name}`);
+    return url;
+  } catch (error) {
+    console.error('❌ Error obteniendo documento:', error);
+    return null;
+  }
+};
+
+/**
+ * Obtener ambas fotos de verificación de un usuario
+ */
+export const getVerificationPhotos = async (
+  firebaseUid: string
+): Promise<{ selfieUrl: string; documentUrl: string } | null> => {
+  try {
+    console.log(`📸 Obteniendo fotos de verificación para ${firebaseUid}...`);
+    
+    const [selfieUrl, documentUrl] = await Promise.all([
+      getVerificationSelfieUrl(firebaseUid),
+      getVerificationDocumentUrl(firebaseUid)
+    ]);
+
+    if (!selfieUrl || !documentUrl) {
+      console.log(`⚠️ Fotos incompletas para usuario ${firebaseUid}`);
+      return null;
+    }
+
+    console.log(`✅ Ambas fotos encontradas para ${firebaseUid}`);
+    return { selfieUrl, documentUrl };
+  } catch (error) {
+    console.error('❌ Error obteniendo fotos de verificación:', error);
+    return null;
+  }
+};
+
+/**
+ * Verificar si un usuario tiene fotos de verificación pendientes
+ */
+export const hasVerificationPhotos = async (firebaseUid: string): Promise<boolean> => {
+  try {
+    const { listAll } = await import('firebase/storage');
+    const folderRef = ref(storage, `verification/${firebaseUid}`);
+    const filesList = await listAll(folderRef);
+    
+    const hasSelfie = filesList.items.some(item => item.name.startsWith('selfie_'));
+    const hasDocument = filesList.items.some(item => item.name.startsWith('document_'));
+    
+    return hasSelfie && hasDocument;
+  } catch (error) {
+    return false;
+  }
+};
+
+/**
+ * Elimina fotos de verificación de un usuario
+ */
+export const deleteVerificationPhotos = async (firebaseUid: string): Promise<void> => {
+  try {
+    console.log(`🗑️ Eliminando fotos de verificación de ${firebaseUid}...`);
+    
+    const { listAll } = await import('firebase/storage');
+    const folderRef = ref(storage, `verification/${firebaseUid}`);
+    const filesList = await listAll(folderRef);
+    
+    await Promise.all(
+      filesList.items.map(item => deleteObject(item))
+    );
+    
+    console.log('✅ Fotos de verificación eliminadas');
+  } catch (error) {
+    console.error('❌ Error eliminando fotos:', error);
+    throw error;
+  }
+};
