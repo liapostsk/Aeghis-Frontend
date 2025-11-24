@@ -86,55 +86,20 @@ export async function joinGroupChatFirebase(groupId: string) {
   }
 }
 
-//Update group chat participants when members are added/removed in backend
-/*
-export async function updateGroupFirebase(group: Group) {
-  console.log('🔄 updateGroupFirebase - Actualizando grupo:', group.id, group.name);
-  
-  try {
-    const chatRef = doc(db, 'chats', String(group.id));
-
-    console.log('💾 Actualizando información del grupo en Firebase...');
-    await setDoc(chatRef, {
-      admins: group.adminsIds || [],
-      members: group.membersIds || [],
-      updatedAt: serverTimestamp(),
-    }, { merge: true });
-    console.log('✅ Grupo actualizado exitosamente en Firebase');
-  } catch (error) {
-    console.error('💥 Error actualizando grupo en Firebase:', error);
-    console.error('📋 UpdateGroup error details:', { 
-      code: error.code, 
-      message: error.message, 
-      groupId: group.id 
-    });
-    throw error;
-  }
-}
-*/
-
 // FUNCIONES DE MENSAJERÍA
 
-/**
- * Enviar mensaje a un grupo
- * ✅ ACTUALIZADO: Inicializa readBy como array vacío
- */
 export async function sendMessageFirebase(
   groupId: string, 
   text: string,
   type: 'text' | 'status' | 'arrival' | 'journey_request' = 'text'
 ) {
-  console.log('💬 sendMessageFirebase - Enviando mensaje al grupo:', groupId);
   
   try {
     const uid = requireUid();
     const trimmed = text.trim();
     if (!trimmed) {
-      console.log('⚠️ Mensaje vacío, cancelando envío');
       return;
     }
-
-    console.log('👤 Obteniendo información del usuario...');
     const userSnap = await getDoc(doc(db, 'users', uid));
     const senderName =
       (userSnap.exists() && (userSnap.data() as any).displayName) ||
@@ -144,15 +109,13 @@ export async function sendMessageFirebase(
     const chatRef = doc(db, 'chats', groupId);
     const messagesRef = collection(db, 'chats', groupId, 'messages');
     const newMsgRef = doc(messagesRef);
-
-    console.log('📝 Creando mensaje con batch...');
     const batch = writeBatch(db);
     batch.set(newMsgRef, {
       senderId: uid,
       senderName: senderName,
       type: type,
       content: trimmed,
-      readBy: [uid],  // ✅ El remitente automáticamente "leyó" su propio mensaje
+      readBy: [uid],
       timestamp: serverTimestamp(),
     });
     batch.set(
@@ -168,38 +131,22 @@ export async function sendMessageFirebase(
     );
 
     await batch.commit();
-    console.log('✅ Mensaje enviado exitosamente:', newMsgRef.id);
     return newMsgRef.id;
   } catch (error) {
-    console.error('💥 Error enviando mensaje:', error);
-    console.error('📋 SendMessage error details:', { 
-      code: error.code, 
-      message: error.message, 
-      groupId 
-    });
     throw error;
   }
 }
 
-/**
- * Marcar todos los mensajes como leídos por el usuario actual
- * ✅ ACTUALIZADO: Usa readBy en lugar de read
- */
 export async function markAllMessagesAsRead(groupId: string): Promise<void> {
-  console.log("🔍 markAllMessagesAsRead para groupId:", groupId);
   
   try {
     const uid = requireUid();
-    console.log("🔍 UID obtenido:", uid);
     
-    // ✅ Obtener todos los mensajes recientes
     const messagesRef = collection(db, 'chats', String(groupId), 'messages');
     const allMessagesSnapshot = await getDocs(
       query(messagesRef, orderBy('timestamp', 'desc'), limit(100))
     );
     
-    // ✅ Filtrar mensajes donde el usuario NO está en readBy
-    // Ya no excluimos al remitente porque se auto-agrega al crear el mensaje
     const unreadMessages = allMessagesSnapshot.docs.filter(doc => {
       const data = doc.data();
       const readBy = data.readBy || [];
@@ -208,26 +155,21 @@ export async function markAllMessagesAsRead(groupId: string): Promise<void> {
     });
     
     if (unreadMessages.length === 0) {
-      console.log("ℹ️ No hay mensajes para marcar como leídos");
       return;
     }
     
-    console.log(`📝 Marcando ${unreadMessages.length} mensajes como leídos...`);
     const batch = writeBatch(db);
     
     unreadMessages.forEach(docSnap => {
-      // ✅ Agregar userId al array readBy
       batch.update(docSnap.ref, {
         readBy: arrayUnion(uid),
       });
     });
     
     await batch.commit();
-    console.log(`✅ ${unreadMessages.length} mensajes marcados como leídos`);
     
   } catch (error) {
-    console.error("❌ Error en markAllMessagesAsRead:", error);
-    console.error("❌ Error details:", error.code, error.message);
+    console.error("Error details:", error.code, error.message);
   }
 }
 
@@ -333,14 +275,12 @@ export async function markChatSeen(groupId: string) {
   }
 }
 
-//Escucha los mensajes de un grupo en tiempo real
 export function listenGroupMessages(
   groupId: string,
   onChange: (docs: Array<{ id: string } & MessageDoc>) => void,
   onError?: (err: any) => void,
   max = 200
 ): Unsubscribe {
-  console.log('👂 listenGroupMessages - Configurando listener para grupo:', groupId);
   
   try {
     const q = query(
@@ -350,29 +290,16 @@ export function listenGroupMessages(
     );
     
     return onSnapshot(q, snap => {
-      console.log('📡 Mensajes recibidos en snapshot:', snap.docs.length);
       const items = snap.docs.map(d => ({ id: d.id, ...(d.data() as MessageDoc) }));
       onChange(items);
     }, (error) => {
-      // Si es error de permisos (grupo eliminado o sin acceso), manejarlo silenciosamente
       if (error?.code === 'permission-denied') {
-        console.warn('⚠️ No se pudieron leer mensajes:', error.message);
-        // Limpiar mensajes para reflejar que el chat ya no está disponible
         onChange([]);
-        return; // No propagar el error
+        return;
       }
-      
-      // Para otros errores, sí registrarlos y propagarlos
-      console.error('💥 Error en listener de mensajes:', error);
-      console.error('📋 Listener error details:', { 
-        code: error?.code, 
-        message: error?.message, 
-        groupId 
-      });
       if (onError) onError(error);
     });
   } catch (error) {
-    console.error('💥 Error configurando listener de mensajes:', error);
     throw error;
   }
 }

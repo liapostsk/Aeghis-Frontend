@@ -13,6 +13,8 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useUserStore } from '@/lib/storage/useUserStorage';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { uploadVerificationSelfie, uploadVerificationDocument } from '@/api/firebase/storage/photoService';
+import { useAuth } from '@clerk/clerk-expo';
 
 interface ProfileVerificationScreenProps {
   onVerificationComplete: () => void;
@@ -26,6 +28,7 @@ export default function ProfileVerificationScreen({
   onBack,
 }: ProfileVerificationScreenProps) {
   const { user } = useUserStore();
+  const { userId } = useAuth();
   
   // Estados para las imágenes
   const [profileImage, setProfileImage] = useState<string | null>(user?.image || null);
@@ -65,7 +68,7 @@ export default function ProfileVerificationScreen({
 
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.8,
@@ -87,7 +90,7 @@ export default function ProfileVerificationScreen({
 
     try {
       const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.8,
@@ -113,31 +116,41 @@ export default function ProfileVerificationScreen({
       return;
     }
 
+    if (!userId) {
+      Alert.alert('Error', 'No se pudo identificar al usuario');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      // 🧪 MOCKEO: Simular verificación exitosa
-      console.log('🧪 [MOCK] Verificando fotos...');
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      console.log('✅ [MOCK] Verificación exitosa - Permitir acceso a Companion');
+      console.log('📤 Subiendo fotos de verificación a Firebase Storage...');
       
-      // ✅ MOCKEO: Siempre aprobar la verificación
+      // Subir ambas fotos a Firebase Storage
+      const [documentUrl, selfieUrl] = await Promise.all([
+        uploadVerificationDocument(profileImage, userId),
+        uploadVerificationSelfie(livePhoto, userId),
+      ]);
+
+      console.log('✅ Fotos subidas exitosamente:');
+      console.log('📄 Documento:', documentUrl);
+      console.log('🤳 Selfie:', selfieUrl);
+
       Alert.alert(
-        '✅ Verificación exitosa',
-        'Tu identidad ha sido verificada correctamente. Ahora puedes acceder a grupos de acompañamiento.',
+        '✅ Fotos enviadas',
+        'Tus fotos han sido enviadas correctamente. Un administrador las revisará pronto.',
         [
           {
-            text: 'Continuar',
-            onPress: onVerificationComplete, // ← Llama al callback que lleva a Companion
+            text: 'Entendido',
+            onPress: onVerificationComplete,
           },
         ]
       );
     } catch (error) {
-      console.error('Error submitting verification:', error);
+      console.error('❌ Error subiendo fotos de verificación:', error);
       Alert.alert(
         'Error',
-        'No se pudo enviar la verificación. Por favor, intenta de nuevo.'
+        'No se pudieron subir las fotos. Por favor, intenta de nuevo.'
       );
     } finally {
       setIsSubmitting(false);

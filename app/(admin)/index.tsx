@@ -11,14 +11,15 @@ import {
   Modal,
   ActivityIndicator,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@clerk/clerk-expo';
 import { router } from 'expo-router';
-import { getUsersPendingVerification, updateUserVerificationStatus } from '@/api/backend/verification/verificationApi';
+import { getUsersPendingVerification, updateUserVerificationStatus } from '@/api/backend/user/userApi';
 import { getVerificationPhotos } from '@/api/firebase/storage/photoService';
 import { UserDto } from '@/api/backend/types';
 import { ValidationStatus } from '@/lib/storage/useUserStorage';
+import { useTokenStore } from '@/lib/auth/tokenStore';
 
 interface UserWithPhotos extends UserDto {
   selfieUrl?: string;
@@ -33,26 +34,35 @@ export default function AdminVerificationScreen() {
   const [selectedUser, setSelectedUser] = useState<UserWithPhotos | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const { getToken } = useAuth();
+  const setToken = useTokenStore((state) => state.setToken);
 
   useEffect(() => {
     loadPendingUsers();
   }, []);
 
-  const loadPendingUsers = async () => {
+  const loadPendingUsers = async (isRefreshing = false) => {
     try {
-      setLoading(true);
-      
-      const pendingUsers = await getUsersPendingVerification();
-      console.log(`📋 ${pendingUsers.length} usuarios pendientes de verificación`);
+      if (isRefreshing) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+        const token = await getToken();
+        setToken(token);
+        const pendingUsers = await getUsersPendingVerification();
+        console.log(`📋 ${pendingUsers.length} usuarios pendientesr de verificación`);
 
-      const usersWithPhotos = await Promise.all(
+        const usersWithPhotos = await Promise.all(
         pendingUsers.map(async (user) => {
           try {
             if (!user.clerkId) {
               console.warn(`⚠️ Usuario ${user.name} no tiene clerkId`);
               return { ...user, photosLoaded: false };
             }
-
+            const token = await getToken();
+            setToken(token);
             const photos = await getVerificationPhotos(user.clerkId);
             
             if (photos) {
@@ -88,7 +98,12 @@ export default function AdminVerificationScreen() {
       Alert.alert('Error', 'No se pudieron cargar los usuarios pendientes');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  };
+
+  const handleRefresh = () => {
+    loadPendingUsers(true);
   };
 
   const handleApprove = async (user: UserWithPhotos) => {
@@ -102,12 +117,14 @@ export default function AdminVerificationScreen() {
           onPress: async () => {
             setProcessing(true);
             try {
-              await updateUserVerificationStatus(user.id, ValidationStatus.VERIFIED);
-              Alert.alert('✅ Aprobado', `${user.name} ha sido verificado correctamente`);
-              loadPendingUsers();
-              setModalVisible(false);
+                const token = await getToken();
+                setToken(token);
+                await updateUserVerificationStatus(user.id, ValidationStatus.VERIFIED);
+                Alert.alert('✅ Aprobado', `${user.name} ha sido verificado correctamente`);
+                loadPendingUsers();
+                setModalVisible(false);
             } catch (error) {
-              Alert.alert('Error', 'No se pudo aprobar la verificación');
+                Alert.alert('Error', 'No se pudo aprobar la verificación');
             } finally {
               setProcessing(false);
             }
@@ -129,6 +146,8 @@ export default function AdminVerificationScreen() {
           onPress: async () => {
             setProcessing(true);
             try {
+                const token = await getToken();
+                setToken(token);
               await updateUserVerificationStatus(user.id, ValidationStatus.REJECTED);
               Alert.alert('❌ Rechazado', `La verificación de ${user.name} ha sido rechazada`);
               loadPendingUsers();
@@ -155,6 +174,8 @@ export default function AdminVerificationScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
+                const token = await getToken();
+                setToken(token);
               await signOut();
               router.replace('/(auth)');
             } catch (error) {
@@ -166,32 +187,69 @@ export default function AdminVerificationScreen() {
     );
   };
 
-  const renderUser = ({ item }: { item: UserWithPhotos }) => (
-    <Pressable
-      style={styles.card}
-      onPress={() => {
-        setSelectedUser(item);
-        setModalVisible(true);
-      }}
-    >
-      <View style={styles.cardHeader}>
-        <View style={styles.userInfo}>
-          <Image 
-            source={{ uri: item.image || 'https://via.placeholder.com/50' }} 
-            style={styles.avatar}
-          />
-          <View>
-            <Text style={styles.userName}>{item.name}</Text>
-            <Text style={styles.userEmail}>{item.email}</Text>
+  const renderUser = ({ item }: { item: UserWithPhotos }) => {
+    // Determinar el estado de verificación
+    const getVerificationStatus = () => {
+      switch (item.verify) {
+        case ValidationStatus.VERIFIED:
+          return {
+            text: 'Verificado',
+            color: '#10B981',
+            icon: 'checkmark-circle' as const,
+          };
+        case ValidationStatus.REJECTED:
+          return {
+            text: 'Rechazado',
+            color: '#EF4444',
+            icon: 'close-circle' as const,
+          };
+        case ValidationStatus.PENDING:
+        default:
+          return {
+            text: 'Pendiente de revisión',
+            color: '#F59E0B',
+            icon: 'time' as const,
+          };
+      }
+    };
+
+    const status = getVerificationStatus();
+
+    return (
+      <Pressable
+        style={[
+          styles.card,
+          { borderLeftColor: status.color }
+        ]}
+        onPress={() => {
+          setSelectedUser(item);
+          setModalVisible(true);
+        }}
+      >
+        <View style={styles.cardHeader}>
+          <View style={styles.userInfo}>
+            <Image 
+              source={{ uri: item.image || 'https://via.placeholder.com/50' }} 
+              style={styles.avatar}
+            />
+            <View>
+              <Text style={styles.userName}>{item.name}</Text>
+              <Text style={styles.userEmail}>{item.email}</Text>
+            </View>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+        </View>
+        <View style={styles.statusContainer}>
+          <View style={styles.statusBadge}>
+            <Ionicons name={status.icon} size={16} color={status.color} />
+            <Text style={[styles.statusText, { color: status.color }]}>
+              {status.text}
+            </Text>
           </View>
         </View>
-        <View style={styles.badge}>
-          <Ionicons name="time" size={16} color="#F59E0B" />
-          <Text style={styles.badgeText}>PENDIENTE</Text>
-        </View>
-      </View>
-    </Pressable>
-  );
+      </Pressable>
+    );
+  };
 
   if (loading) {
     return (
@@ -205,17 +263,33 @@ export default function AdminVerificationScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <View>
-          <Text style={styles.title}>Panel de Administrador</Text>
+        <View style={styles.headerLeft}>
+          <Text style={styles.title}>Panel Admin</Text>
           <Text style={styles.subtitle}>Verificaciones Pendientes</Text>
         </View>
         <View style={styles.headerActions}>
-          <View style={styles.pendingBadge}>
-            <Text style={styles.pendingCount}>{users.length}</Text>
-          </View>
+          <Pressable 
+            style={[styles.refreshButton, refreshing && styles.refreshButtonActive]} 
+            onPress={handleRefresh}
+            disabled={refreshing}
+          >
+            <Ionicons 
+              name="refresh" 
+              size={20} 
+              color={refreshing ? "#9CA3AF" : "#3B82F6"} 
+            />
+          </Pressable>
           <Pressable style={styles.logoutButton} onPress={handleSignOut}>
             <Ionicons name="log-out-outline" size={20} color="#EF4444" />
           </Pressable>
+        </View>
+      </View>
+      
+      <View style={styles.statsBar}>
+        <View style={styles.statItem}>
+          <Ionicons name="time-outline" size={18} color="#F59E0B" />
+          <Text style={styles.statLabel}>Pendientes:</Text>
+          <Text style={styles.statValue}>{users.length}</Text>
         </View>
       </View>
 
@@ -240,8 +314,9 @@ export default function AdminVerificationScreen() {
         onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <ScrollView contentContainerStyle={styles.modalScrollContent}>
-            <View style={styles.modalContent}>
+          <SafeAreaView style={styles.modalSafeArea} edges={['top', 'bottom']}>
+            <ScrollView contentContainerStyle={styles.modalScrollContent}>
+              <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Revisar Verificación</Text>
                 <Pressable onPress={() => setModalVisible(false)}>
@@ -329,6 +404,7 @@ export default function AdminVerificationScreen() {
               )}
             </View>
           </ScrollView>
+        </SafeAreaView>
         </View>
       </Modal>
     </SafeAreaView>
@@ -344,36 +420,59 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     backgroundColor: '#FFF',
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
   },
+  headerLeft: {
+    flex: 1,
+  },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#1F2937',
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#6B7280',
-    marginTop: 4,
+    marginTop: 2,
   },
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 8,
   },
-  pendingBadge: {
-    backgroundColor: '#FEF3C7',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+  statsBar: {
+    backgroundColor: '#FFF',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  statLabel: {
+    fontSize: 14,
+    color: '#6B7280',
+    fontWeight: '500',
+  },
+  statValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#F59E0B',
+  },
+  refreshButton: {
+    backgroundColor: '#DBEAFE',
+    padding: 10,
     borderRadius: 20,
   },
-  pendingCount: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#D97706',
+  refreshButtonActive: {
+    backgroundColor: '#F3F4F6',
   },
   logoutButton: {
     backgroundColor: '#FEE2E2',
@@ -393,11 +492,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 2,
+    borderLeftWidth: 4,
+    borderLeftColor: '#F59E0B',
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 12,
   },
   userInfo: {
     flexDirection: 'row',
@@ -420,19 +522,17 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginTop: 2,
   },
-  badge: {
+  statusContainer: {
+    marginTop: 4,
+  },
+  statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FEF3C7',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 12,
-    gap: 4,
+    gap: 6,
   },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#F59E0B',
+  statusText: {
+    fontSize: 13,
+    fontWeight: '500',
   },
   loadingContainer: {
     flex: 1,
@@ -459,17 +559,20 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalSafeArea: {
+    maxHeight: '95%',
   },
   modalScrollContent: {
     flexGrow: 1,
-    justifyContent: 'flex-end',
   },
   modalContent: {
     backgroundColor: '#FFF',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
-    minHeight: '90%',
+    paddingBottom: 10,
   },
   modalHeader: {
     flexDirection: 'row',

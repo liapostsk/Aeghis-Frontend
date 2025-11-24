@@ -4,18 +4,14 @@ import { View, Text, Pressable, TextInput, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// Define el contexto para pasar el estado de búsqueda
 type context = {
   search: String;
   setSearch: (search: string) => void;
 };
 
-// Creamos el contexto y el hook para usarlo
-// El contexto se usará para compartir el estado de búsqueda entre pantallas
 const SearchContext = createContext<context | null>(null);
 export const useGroupSeach = () => useContext(SearchContext)!;
 
-// Define las pestañas disponibles, slug es el identificador, label es el texto visible y href es la ruta
 const tabs: Array<{id: string; label: string; href: Href; }> = [
   { id: 'confianza', label: 'Confianza', href: '/(tabs)/groups' },
   { id: 'temporal', label: 'Temporal', href: '/(tabs)/groups/temporal' },
@@ -28,7 +24,7 @@ export default function GroupsLayout() {
   const pathname = usePathname();
   const active = tabs.find(tab => pathname.endsWith('/' + tab.id))?.id ?? 'confianza';
 
-  const context = useMemo(() => ({ search, setSearch }), [search]); // Memoriza el contexto para evitar renders innecesarios
+  const context = useMemo(() => ({ search, setSearch }), [search]);
 
   return (
     <SearchContext.Provider value={context}>
@@ -64,7 +60,7 @@ export default function GroupsLayout() {
             />
           </SafeAreaView>
         )}
-        {/* Aquí se montan las sub‑pantallas: trusted/temporal/companion */}
+        {/* sub‑pantallas: trusted/temporal/companion */}
         <View style={{ flex: 1, paddingHorizontal: 16 }}>
           <Slot />
         </View>
@@ -114,7 +110,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F1EAFD',
-    marginHorizontal: 40, // Márgenes laterales más grandes
+    marginHorizontal: 40,
     marginVertical: 16,
     paddingHorizontal: 5,
     borderRadius: 10,

@@ -43,7 +43,7 @@ interface Message {
   time: string;
   isUser?: boolean;
   isRead?: boolean;
-  readBy?: string[]; // ✅ Array de UIDs que leyeron el mensaje
+  readBy?: string[]; // Array de UIDs que leyeron el mensaje
   type?: 'message' | 'status' | 'arrival';
 }
 
@@ -63,11 +63,11 @@ export default function ChatScreen() {
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [showDestinationModal, setShowDestinationModal] = useState(false);
   const [selectedDestination, setSelectedDestination] = useState<SafeLocation | null>(null);
-  const [groupMembers, setGroupMembers] = useState<UserDto[]>([]); // ✅ Miembros del grupo
+  const [groupMembers, setGroupMembers] = useState<UserDto[]>([]); // Miembros del grupo
 
   const { getToken } = useAuth();
   const setToken = useTokenStore((state) => state.setToken);
-  // ✅ Ya NO usamos useNotificationSender - lo maneja useChatNotifications globalmente
+  // Las notificaciones las maneja useChatNotifications globalmente
 
   // Función para verificar si el usuario está participando en el trayecto
   const checkUserParticipation = async (journey: JourneyDto, userId: number): Promise<ParticipationDto | null> => {
@@ -137,7 +137,7 @@ export default function ChatScreen() {
     }
   }, [groupId]);
 
-  // ✅ Listener de mensajes con marcado automático y envío de notificaciones
+  // Listener de mensajes con marcado automático y envío de notificaciones
   useEffect(() => {
     if (!groupId) return;
     const uid = auth.currentUser?.uid;
@@ -158,7 +158,7 @@ export default function ChatScreen() {
         }));
         setMessages(ui);
 
-        // ✅ Marcar mensajes como leídos automáticamente si hay mensajes no leídos
+        // Marcar mensajes como leídos automáticamente si hay mensajes no leídos
         const hasUnreadMessages = ui.some(msg => 
           !msg.readBy?.includes(uid || '') && msg.senderId !== uid
         );
@@ -170,7 +170,6 @@ export default function ChatScreen() {
           );
         }
 
-        // ✅ Ya NO enviamos notificaciones desde aquí
         // El hook useChatNotifications (en _layout.tsx) se encarga globalmente
       },
       (err) => console.warn('Error leyendo mensajes:', err)
@@ -206,7 +205,7 @@ export default function ChatScreen() {
           setCurrentUserId(userData?.id || null);
           setCurrentUserData(userData);
           
-          // ✅ Cargar información completa de los miembros del grupo
+          // Cargar información completa de los miembros del grupo
           if (groupData.membersIds && groupData.membersIds.length > 0) {
             const memberPromises = groupData.membersIds.map(memberId => 
               getUser(memberId).catch(() => null)
@@ -214,7 +213,7 @@ export default function ChatScreen() {
             const loadedMembers = await Promise.all(memberPromises);
             const validMembers = loadedMembers.filter((m): m is UserDto => m !== null);
             setGroupMembers(validMembers);
-            console.log(`✅ ${validMembers.length} miembros cargados para notificaciones`);
+            console.log(`${validMembers.length} miembros cargados para notificaciones`);
           }
           
           setError(null);

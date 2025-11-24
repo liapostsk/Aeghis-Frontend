@@ -248,6 +248,3 @@ export async function getUserProfileFB(clerkId: string): Promise<FirebaseUserPro
     throw error;
   }
 }
-
-// ===== FUNCIONES ELIMINADAS - NO SE USAN =====
-// - updateBatteryLevelSilent() - No se usa en ningún lugar

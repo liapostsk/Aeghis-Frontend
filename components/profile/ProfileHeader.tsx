@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { User } from '@/lib/storage/useUserStorage';
+import { User, ValidationStatus } from '@/lib/storage/useUserStorage';
 import { uploadUserPhotoAsync, deleteUserPhoto } from '@/api/firebase/storage/photoService';
 import { useState } from 'react';
 
@@ -29,6 +29,16 @@ export default function ProfileHeader({
 }: profileHeaderProps) {
 
   const [isUploading, setIsUploading] = useState(false);
+
+  // ✅ Log para ver la info del usuario
+  console.log('👤 ProfileHeader - Usuario:', {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    verify: user.verify,
+    verifyType: typeof user.verify,
+    image: user.image ? 'Tiene imagen' : 'Sin imagen',
+  });
 
   const showImageOptions = () => {
     const options = user.image 
@@ -101,10 +111,8 @@ export default function ProfileHeader({
         if (user.image) {
           try {
             await deleteUserPhoto(user.image);
-            console.log('🗑️ Foto anterior eliminada');
           } catch (error) {
             console.warn('⚠️ No se pudo eliminar la foto anterior:', error);
-            // Continue anyway
           }
         }
 
@@ -115,11 +123,9 @@ export default function ProfileHeader({
           'profile'
         );
 
-        console.log('✅ Nueva foto de perfil subida:', downloadURL);
         onUpdateProfileImage(downloadURL);
       }
     } catch (error) {
-      console.error('❌ Error al cambiar foto de perfil:', error);
       Alert.alert('Error', 'Could not update profile photo. Please try again.');
     } finally {
       setIsUploading(false);
@@ -175,9 +181,9 @@ export default function ProfileHeader({
               <ActivityIndicator size="large" color="#7A33CC" />
             </View>
           )}
-          {user.verify && (
+          {user.verify === ValidationStatus.VERIFIED && (
             <View style={styles.verifiedBadge}>
-              <MaterialIcons name="verified" size={24} color="#3232C3" />
+              <MaterialIcons name="verified" size={24} color="#10B981" />
             </View>
           )}
           {/* Camera icon overlay */}
@@ -188,15 +194,20 @@ export default function ProfileHeader({
 
         <Text style={styles.userName}>{user.name}</Text>
         <View style={styles.verifiedTextContainer}>
-          {user.verify ? (
+          {user.verify === ValidationStatus.VERIFIED ? (
             <>
-              <MaterialIcons name="verified-user" size={18} color="#3232C3" />
-              <Text style={styles.verifiedText}>Cuenta verificada</Text>
+              <MaterialIcons name="verified-user" size={18} color="#10B981" />
+              <Text style={[styles.verifiedText, { color: '#10B981' }]}>Cuenta verificada</Text>
+            </>
+          ) : user.verify === ValidationStatus.REJECTED ? (
+            <>
+              <MaterialIcons name="cancel" size={18} color="#EF4444" />
+              <Text style={[styles.verifiedText, { color: '#EF4444' }]}>Verificación rechazada</Text>
             </>
           ) : (
             <>
-              <MaterialIcons name="error" size={18} color="#FF9500" />
-              <Text style={[styles.verifiedText, { color: '#FF9500' }]}>Cuenta sin verificar</Text>
+              <MaterialIcons name="access-time" size={18} color="#F59E0B" />
+              <Text style={[styles.verifiedText, { color: '#F59E0B' }]}>Pendiente de verificación</Text>
             </>
           )}
         </View>

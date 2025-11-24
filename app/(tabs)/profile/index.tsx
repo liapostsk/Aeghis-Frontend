@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { StyleSheet, View, ScrollView, StatusBar, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { useUserStore } from '@/lib/storage/useUserStorage';
 import { useAuth } from '@clerk/clerk-expo';
 import ProfileHeader from '@/components/profile/ProfileHeader';
@@ -13,14 +14,36 @@ import ProfileVerificationScreen from '@/components/profile/ProfileVerificationS
 import { updateUserProfileOnLogout } from '@/api/firebase/users/userService';
 import { unlinkFirebaseSession } from '@/api/firebase/auth/firebase';
 import { addPhotoToUser } from '@/api/backend/user/userApi';
+import { useTokenStore } from '@/lib/auth/tokenStore';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user, clearUser, setUser } = useUserStore();
+  const { user, clearUser, setUser, refreshUserFromBackend } = useUserStore();
   const { signOut } = useAuth();
   const [showMenu, setShowMenu] = useState(false);
   const [editable, setEditable] = useState(false);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const { getToken } = useAuth();
+  const setToken = useTokenStore((state) => state.setToken);
+
+  // ✅ Refrescar usuario cada vez que se enfoca la pantalla
+  useFocusEffect(
+    useCallback(() => {
+      const refreshUser = async () => {
+        try {
+          console.log('🔄 Refrescando estado del usuario desde backend...');
+          const token = await getToken();
+          setToken(token);
+          await refreshUserFromBackend();
+          console.log('✅ Usuario actualizado desde backend');
+        } catch (error) {
+          console.warn('⚠️ No se pudo actualizar el usuario:', error);
+        }
+      };
+
+      refreshUser();
+    }, [refreshUserFromBackend])
+  );
 
   const toggleMenu = () => setShowMenu(!showMenu);
   const handleEditProfile = () => {

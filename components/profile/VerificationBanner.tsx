@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useUserStore } from '@/lib/storage/useUserStorage';
+import { useUserStore, ValidationStatus } from '@/lib/storage/useUserStorage';
 
 interface VerificationBannerProps {
   onPress: () => void;
@@ -10,12 +10,12 @@ interface VerificationBannerProps {
 export default function VerificationBanner({ onPress }: VerificationBannerProps) {
   const { user } = useUserStore();
 
-  // No mostrar si ya está verificado
-  if (user?.verify) {
+  // ✅ Mostrar banner de verificado si está VERIFIED
+  if (user?.verify === ValidationStatus.VERIFIED) {
     return (
       <View style={styles.verifiedContainer}>
         <View style={styles.verifiedBadge}>
-          <Ionicons name="shield-checkmark" size={20} color="#4CAF50" />
+          <Ionicons name="shield-checkmark" size={20} color="#10B981" />
           <Text style={styles.verifiedText}>Perfil Verificado</Text>
         </View>
         <Text style={styles.verifiedSubtext}>
@@ -25,6 +25,22 @@ export default function VerificationBanner({ onPress }: VerificationBannerProps)
     );
   }
 
+  // ✅ Mostrar banner de rechazado si está REJECTED
+  if (user?.verify === ValidationStatus.REJECTED) {
+    return (
+      <View style={styles.rejectedContainer}>
+        <View style={styles.rejectedBadge}>
+          <Ionicons name="close-circle" size={20} color="#EF4444" />
+          <Text style={styles.rejectedText}>Verificación Rechazada</Text>
+        </View>
+        <Text style={styles.rejectedSubtext}>
+          Tu solicitud de verificación fue rechazada. Por favor, contacta con soporte.
+        </Text>
+      </View>
+    );
+  }
+
+  // ✅ Mostrar banner de pendiente o no verificado (PENDING o null)
   return (
     <Pressable style={styles.container} onPress={onPress}>
       <View style={styles.iconContainer}>
@@ -32,9 +48,15 @@ export default function VerificationBanner({ onPress }: VerificationBannerProps)
       </View>
       
       <View style={styles.content}>
-        <Text style={styles.title}>Verifica tu perfil</Text>
+        <Text style={styles.title}>
+          {user?.verify === ValidationStatus.PENDING 
+            ? 'Verificación en proceso' 
+            : 'Verifica tu perfil'}
+        </Text>
         <Text style={styles.description}>
-          Completa la verificación para acceder a grupos de acompañamiento y más funciones
+          {user?.verify === ValidationStatus.PENDING
+            ? 'Tu solicitud está siendo revisada. Te notificaremos cuando esté lista.'
+            : 'Completa la verificación para acceder a grupos de acompañamiento y más funciones'}
         </Text>
       </View>
 
@@ -101,6 +123,31 @@ const styles = StyleSheet.create({
   verifiedSubtext: {
     fontSize: 13,
     color: '#16A34A',
+    lineHeight: 18,
+  },
+  rejectedContainer: {
+    backgroundColor: '#FEF2F2',
+    borderRadius: 12,
+    padding: 16,
+    marginHorizontal: 16,
+    marginVertical: 12,
+    borderWidth: 1,
+    borderColor: '#FECACA',
+  },
+  rejectedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  rejectedText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#991B1B',
+  },
+  rejectedSubtext: {
+    fontSize: 13,
+    color: '#DC2626',
     lineHeight: 18,
   },
 });
