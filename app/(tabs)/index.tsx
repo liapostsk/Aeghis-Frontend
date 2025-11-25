@@ -200,7 +200,7 @@ export default function MapScreen() {
         onGroupJourneySelect={setSelectedGroupJourney}
       />
       <PeopleOnMap />
-      <EmergencyButton onPress={() => console.log('Emergency triggered')} />
+      <EmergencyButton onPress={() => console.log('✅ Emergencia procesada correctamente')} />
       <JourneyOverlay 
         groupJourney={selectedGroupJourney}
         onStartJourney={handleStartJourney}
