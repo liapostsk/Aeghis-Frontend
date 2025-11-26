@@ -38,16 +38,13 @@ export default function SafeLocationStep({
     );
     
     if (exists) {
-      console.log("⚠️ Ubicación duplicada encontrada:", exists.name);
       Alert.alert("Ubicación duplicada", "Esta ubicación ya ha sido añadida.");
       return;
     }
 
     const updated = [...currentLocations, location];
     setUser({ ...user, safeLocations: updated });
-    console.log("✅ Ubicación añadida exitosamente:", location);
-    console.log("location id asignado:", location.id);
-    console.log("📍 Total ubicaciones ahora:", updated.length);
+    console.log("Ubicación añadida exitosamente:", location);
     setModalVisible(false);
   };
 
@@ -57,7 +54,6 @@ export default function SafeLocationStep({
     const currentLocations = user.safeLocations || [];
     console.log("🗑️ Intentando eliminar ubicación:", locationToRemove.name);
     
-    // Filtrar por externalId principalmente, y como fallback por id
     const updated = currentLocations.filter((loc) => {
       if (locationToRemove.externalId && loc.externalId) {
         return loc.externalId !== locationToRemove.externalId;
@@ -65,14 +61,13 @@ export default function SafeLocationStep({
       if (locationToRemove.id && loc.id) {
         return loc.id !== locationToRemove.id;
       }
-      // Si no hay IDs, comparar por nombre y coordenadas como último recurso
       return !(loc.name === locationToRemove.name && 
                loc.latitude === locationToRemove.latitude && 
                loc.longitude === locationToRemove.longitude);
     });
     
     setUser({ ...user, safeLocations: updated });
-    console.log("✅ Ubicación eliminada:", locationToRemove.name);
+    console.log("Ubicación eliminada:", locationToRemove.name);
     console.log("📍 Total ubicaciones ahora:", updated.length);
   };
 
@@ -82,8 +77,6 @@ export default function SafeLocationStep({
       Alert.alert("Atención", "Selecciona al menos una ubicación segura para continuar.");
       return;
     }
-
-    console.log("SafeLocations seleccionadas:", currentLocations);
     onNext();
   };
 

@@ -8,7 +8,6 @@ import { useChatNotifications } from "@/lib/hooks/useChatNotifications";
 export default function HomeLayout() {
   const { isLoaded } = useAuth();
 
-  // Esperamos a que Clerk cargue
   if (!isLoaded) return null;
 
   useChatNotifications();
@@ -16,25 +15,24 @@ export default function HomeLayout() {
   const refreshUser = useUserStore((state) => state.refreshUserFromBackend);
   
   useEffect(() => {
-    // ✅ Cargar grupos al entrar a tabs
+    // Cargar grupos al entrar a tabs
     refreshUser();
   }, []);
 
   return (
     <>
-      {/* Configuración de Tabs */}
       <Tabs
         screenOptions={{
-          tabBarActiveTintColor: '#7A33CC', // Color para el texto e icono del tab activo
-          tabBarInactiveTintColor: '#666', // Color para el texto e icono del tab inactivo
+          tabBarActiveTintColor: '#7A33CC',
+          tabBarInactiveTintColor: '#666',
           tabBarStyle: { 
             backgroundColor: '#fff',
             borderTopWidth: 1,
             borderTopColor: '#eee',
-            position: 'absolute', // Hace que el tab bar se coloque sobre el contenido
-            bottom: 0, // Lo coloca en la parte inferior
+            position: 'absolute',
+            bottom: 0,
             elevation: 0, // Para Android
-            shadowOpacity: 0, // Para iOS - elimina la sombra
+            shadowOpacity: 0, // Para iOS
           },
           tabBarLabelStyle: {
             fontSize: 12,
