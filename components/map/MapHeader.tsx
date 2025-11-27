@@ -34,8 +34,6 @@ export default function MapHeader({ activeGroupJourney, onGroupJourneySelect }: 
 
     try {
       setLoading(true);
-      const token = await getToken();
-      setToken(token);
       
       console.log('🔍 [MapHeader] Verificando journeys activos para', userGroups.length, 'grupos');
       

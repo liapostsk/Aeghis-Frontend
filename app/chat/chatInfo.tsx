@@ -42,11 +42,15 @@ import {
     GroupActions,
     ExitGroupButton 
 } from '@/components/chat';
+import { fetchActiveJourneyForGroup } from '@/api/backend/journeys/fetchActiveJourneyForGroup';
 
 export default function GroupInfoScreen() {
     const { groupId } = useLocalSearchParams<{ groupId: string }>();
     const { getToken } = useAuth();
     const setToken = useTokenStore((state) => state.setToken);
+    // Estado para journey activo
+    const [hasActiveJourney, setHasActiveJourney] = useState(false);
+
 
     // Estados usando tipos existentes
     const [group, setGroup] = useState<Group | null>(null);
@@ -92,7 +96,7 @@ export default function GroupInfoScreen() {
         return statusMap;
     };
 
-    // Cargar datos del grupo
+    // Cargar datos del grupo y journey activo
     useEffect(() => {
         let mounted = true;
 
@@ -107,15 +111,19 @@ export default function GroupInfoScreen() {
                     throw new Error('Invalid group id');
                 }
 
+                // Consultar journey activo
+                const activeJourney = await fetchActiveJourneyForGroup(id);
+                if (!mounted) return;
+                setHasActiveJourney(!!activeJourney);
+
                 const groupData = await getGroupById(id);
                 if (!mounted) return;
-                
                 setGroup(groupData);
-                
+
                 // Obtener usuario actual
                 const currentUser = await getCurrentUser();
                 setCurrentUserId(currentUser.id);
-                
+
                 const memberPromises = groupData.membersIds.map(async (memberId) => {
                     try {
                         return await getUser(memberId);
@@ -124,21 +132,21 @@ export default function GroupInfoScreen() {
                         return null;
                     }
                 });
-                
+
                 const loadedMembers = (await Promise.all(memberPromises)).filter(Boolean) as UserDto[];
                 setMembers(loadedMembers);
-                
+
                 // Crear mapeo de roles basado en los arrays del grupo
                 const roles: Record<number, 'admin' | 'member'> = {};
                 groupData.membersIds.forEach(memberId => {
                     roles[memberId] = groupData.adminsIds.includes(memberId) ? 'admin' : 'member';
                 });
                 setMemberRoles(roles);
-                
+
                 // Cargar datos reales de Firebase
                 const firebaseStatus = await loadMembersFirebaseData(loadedMembers);
                 setMemberFirebaseStatus(firebaseStatus);
-                
+
                 setError(null);
             } catch (e: any) {
                 if (mounted) setError(e?.message ?? 'Unable to load group');
@@ -376,6 +384,7 @@ export default function GroupInfoScreen() {
                     <GroupActions
                         groupId={group.id}
                         onStartJourney={() => router.push(`/chat/journey?groupId=${groupId}`)}
+                        hasActiveJourney={hasActiveJourney}
                     />
 
                     {/* Lista de miembros */}

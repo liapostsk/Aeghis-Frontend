@@ -2,15 +2,21 @@ import React from 'react';
 import { View, StyleSheet, Pressable, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
+
 interface GroupActionsProps {
   groupId: number;
   onStartJourney: () => void;
+  hasActiveJourney: boolean;
 }
 
-export default function GroupActions({ groupId, onStartJourney }: GroupActionsProps) {
+export default function GroupActions({ groupId, onStartJourney, hasActiveJourney }: GroupActionsProps) {
   return (
     <View style={styles.actionsContainer}>
-      <Pressable style={styles.actionButton} onPress={onStartJourney}>
+      <Pressable
+        style={[styles.actionButton, hasActiveJourney && { opacity: 0.5 }]}
+        onPress={onStartJourney}
+        disabled={hasActiveJourney}
+      >
         <Ionicons name="location-outline" size={20} color="#7A33CC" />
         <Text style={styles.actionButtonText}>Empezar trayecto</Text>
       </Pressable>

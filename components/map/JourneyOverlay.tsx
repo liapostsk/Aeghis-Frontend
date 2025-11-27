@@ -249,28 +249,12 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
   const renderExpandedContent = () => {
     if (groupJourney) {
       return renderActiveJourneyFromGroupForSheet(groupJourney);
-    } else if (showJourneyOptions) {
-      return (
-        <GroupOptionsSheet
-          userGroups={userGroups}
-          showCreateGroupModal={showCreateGroupModal}
-          showJoinGroupModal={showJoinGroupModal}
-          showGroupTypeSelector={showGroupTypeSelector}
-          selectedGroupType={selectedGroupType}
-          onClose={() => setShowJourneyOptions(false)}
-          onGroupSelected={handleGroupSelected}
-          onCreateGroup={handleCreateGroup}
-          onJoinGroup={handleJoinGroup}
-          onCreateGroupWithType={handleCreateGroupWithType}
-          onGroupCreated={handleGroupCreated}
-          setShowCreateGroupModal={setShowCreateGroupModal}
-          setShowJoinGroupModal={setShowJoinGroupModal}
-          setShowGroupTypeSelector={setShowGroupTypeSelector}
-          setSelectedGroupType={setSelectedGroupType}
-          onLayout={handleContentLayout}
-        />
-      );
-    } else {
+    } 
+    // Mostrar interfaz por defecto si NO hay journey activo o pendiente
+    if (
+      !groupJourney ||
+      !['IN_PROGRESS', 'PENDING'].includes(journeyState)
+    ) {
       return (
         <JourneySimpleInterface
           onStartJourney={() => setShowJourneyOptions(true)}
@@ -278,6 +262,9 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
         />
       );
     }
+
+    // Si hay journey activo o pendiente, mostrar la info del trayecto
+    return renderActiveJourneyFromGroupForSheet(groupJourney);
   };
 
   const renderActiveJourneyFromGroupForSheet = (selectedGroupJourney: GroupWithJourney) => {
@@ -319,8 +306,8 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
             Estado: {currentState === 'IN_PROGRESS' ? 'En progreso' : currentState === 'COMPLETED' ? 'Completado' : 'Pendiente'}
           </Text>
           
-          {/* NUEVO: Mostrar botón de unirse si NO es participante */}
-          {!checkingParticipation && !canControlJourney && currentState !== 'COMPLETED' && (
+          {/* Mostrar botón de unirse solo si NO es individual */}
+          {!checkingParticipation && !canControlJourney && currentState !== 'COMPLETED' && selectedGroupJourney.activeJourney.journeyType !== 'INDIVIDUAL' && (
             <View style={styles.notParticipantContainer}>
               <Text style={styles.notParticipantText}>
                 📋 No estás participando en este trayecto

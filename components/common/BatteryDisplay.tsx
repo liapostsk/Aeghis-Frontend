@@ -368,6 +368,10 @@ export function ParticipantsList({
   }
 
   if (participantsData.length === 0) {
+    // Si el trayecto es individual, no mostrar mensaje vacío
+    if (journey.journeyType === 'INDIVIDUAL') {
+      return null;
+    }
     return (
       <View style={styles.participantsEmptyContainer}>
         <Text style={styles.participantsEmptyText}>No hay participantes en este trayecto</Text>
