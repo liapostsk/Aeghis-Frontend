@@ -16,7 +16,6 @@ import BatteryDisplay, { ParticipantsList } from '@/components/common/BatteryDis
 import JoinJourneyModal from '@/components/chat/JoinJourneyModal';
 import JourneyCollapsedTab from '@/components/journey/JourneyCollapsedTab';
 import JourneySimpleInterface from '@/components/journey/JourneySimpleInterface';
-import GroupOptionsSheet from '@/components/journey/GroupOptionsSheet';
 
 // Importar hooks y utilidades
 import { useAuth } from '@clerk/clerk-expo';
@@ -24,6 +23,7 @@ import { useTokenStore } from '@/lib/auth/tokenStore';
 import { ParticipationDto } from '@/api/backend/participations/participationType';
 import { listenJourneyState } from '@/api/firebase/journey/journeyService';
 import { mapUserToDto } from '@/api/backend/user/mapper';
+import { usePositionTracking } from '@/lib/hooks/usePositions';
 
 interface GroupWithJourney {
   group: Group;
@@ -54,6 +54,18 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
   const { getToken } = useAuth();
   const setToken = useTokenStore((state) => state.setToken);
   const { groups: userGroups, loading: groupsLoading } = useUserGroups();
+
+  // Enviar posición a Firebase solo si el usuario es participante y el journey está IN_PROGRESS
+  // (Evita bucles: los valores usados en el hook son estables y no cambian en cada render)
+  const chatId = groupJourney?.group.id?.toString();
+  const journeyId = groupJourney?.activeJourney?.id?.toString();
+  const userId = user?.id.toString();
+  const enabled = !!chatId && !!journeyId && !!userId && isUserParticipant && journeyState === 'IN_PROGRESS';
+
+  // Importa el hook correctamente
+  // con esto se estamos guardando la posicion del usuario en firebase en cada minuto
+  usePositionTracking(chatId, journeyId, userId, { enabled, intervalMs: 60000 });
+
 
   // ✅ Verificar si el usuario es participante usando endpoint optimizado
   useEffect(() => {
@@ -101,7 +113,7 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
     // Estado inicial del backend
     setJourneyState(groupJourney.activeJourney.state);
 
-    console.log('👂 [JourneyOverlay] Escuchando cambios en Firebase para journey:', journeyId);
+    console.log('[JourneyOverlay] Escuchando cambios en Firebase para journey:', journeyId);
 
     // listenJourneyState ahora sincroniza automáticamente con el backend
     const unsubscribe = listenJourneyState(
@@ -109,11 +121,11 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
       journeyId,
       (backendState, data) => {
         // backendState ya viene verificado y sincronizado desde journeyService.ts
-        console.log('✅ [JourneyOverlay] Estado actualizado desde backend:', backendState);
+        console.log('[JourneyOverlay] Estado actualizado desde backend:', backendState);
         setJourneyState(backendState);
       },
       (error) => {
-        console.error('❌ [JourneyOverlay] Error en listener:', error);
+        console.error('[JourneyOverlay] Error en listener:', error);
       }
     );
 

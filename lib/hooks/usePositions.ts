@@ -3,30 +3,24 @@ import { Unsubscribe } from 'firebase/firestore';
 import { Position } from '../../api/firebase/types';
 import {
   addUserPosition,
-  getLatestUserPosition,
-  getUserPositionHistory,
   subscribeToUserPositions,
   subscribeToAllParticipantsPositions,
-  hasRecentPosition,
   calculateDistance
 } from '@/api/firebase/journey/positionsService';
 
 /**
- * Hook para gestionar las posiciones de un participante específico
+ * Hook simplificado para obtener la última posición de un usuario participante
  */
-export const useUserPositions = (
+export const useUserLatestPosition = (
   chatId: string,
   journeyId: string,
-  userId: string,
-  limitCount: number = 10
+  userId: string
 ) => {
-  const [positions, setPositions] = useState<Position[]>([]);
   const [latestPosition, setLatestPosition] = useState<Position | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const unsubscribeRef = useRef<Unsubscribe | null>(null);
 
-  // Suscribirse a posiciones en tiempo real
   useEffect(() => {
     if (!chatId || !journeyId || !userId) return;
 
@@ -38,11 +32,10 @@ export const useUserPositions = (
       journeyId,
       userId,
       (newPositions) => {
-        setPositions(newPositions);
         setLatestPosition(newPositions[0] || null);
         setLoading(false);
       },
-      limitCount
+      1 // Solo queremos la última posición
     );
 
     unsubscribeRef.current = unsubscribe;
@@ -53,50 +46,12 @@ export const useUserPositions = (
         unsubscribeRef.current = null;
       }
     };
-  }, [chatId, journeyId, userId, limitCount]);
-
-  // Función para añadir una nueva posición
-  const addPosition = async (latitude: number, longitude: number) => {
-    try {
-      setError(null);
-      await addUserPosition(chatId, journeyId, userId, latitude, longitude);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error añadiendo posición');
-      throw err;
-    }
-  };
-
-  // Función para obtener historial completo
-  const getHistory = async (limit: number = 50) => {
-    try {
-      setError(null);
-      const history = await getUserPositionHistory(chatId, journeyId, userId, limit);
-      return history;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error obteniendo historial');
-      throw err;
-    }
-  };
-
-  // Verificar si tiene posición reciente
-  const checkRecentPosition = async (minutesThreshold: number = 5) => {
-    try {
-      setError(null);
-      return await hasRecentPosition(chatId, journeyId, userId, minutesThreshold);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error verificando posición reciente');
-      return false;
-    }
-  };
+  }, [chatId, journeyId, userId]);
 
   return {
-    positions,
     latestPosition,
     loading,
-    error,
-    addPosition,
-    getHistory,
-    checkRecentPosition
+    error
   };
 };
 
