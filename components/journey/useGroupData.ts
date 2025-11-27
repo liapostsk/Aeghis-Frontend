@@ -24,40 +24,92 @@ export const useGroupData = ({ groupId, getToken, setToken }: UseGroupDataProps)
     const loadGroupData = async () => {
       try {
         setLoading(true);
+        
+        console.log('🔍 [useGroupData] Cargando grupo con ID:', groupId);
+        
+        // Obtener token
         const token = await getToken();
         setToken(token);
 
+        // Validar groupId
         const id = Number(groupId);
-        if (!id || Number.isNaN(id)) {
-          throw new Error('Invalid group id');
+        if (!groupId || groupId === 'undefined' || groupId === 'null' || Number.isNaN(id)) {
+          console.error('❌ [useGroupData] ID de grupo inválido:', groupId);
+          throw new Error(`ID de grupo inválido: ${groupId}`);
         }
 
+        console.log('📥 [useGroupData] Obteniendo datos del grupo:', id);
+
+        // Cargar grupo y usuario actual en paralelo
         const [groupData, userData] = await Promise.all([
           getGroupById(id),
           getCurrentUser()
         ]);
 
-        if (!mounted) return;
+        if (!mounted) {
+          console.log('⚠️ [useGroupData] Componente desmontado, cancelando actualización');
+          return;
+        }
+
+        console.log('✅ [useGroupData] Grupo obtenido:', groupData.name);
+        console.log('✅ [useGroupData] Usuario actual:', userData.name);
 
         setGroup(groupData);
         setCurrentUser(userData);
 
-        const memberPromises = groupData.membersIds.map(memberId => getUser(memberId));
-        const loadedMembers = await Promise.all(memberPromises);
-        setMembers(loadedMembers);
+        // Cargar miembros del grupo
+        if (groupData.membersIds && groupData.membersIds.length > 0) {
+          console.log(`👥 [useGroupData] Cargando ${groupData.membersIds.length} miembros...`);
+          
+          const memberPromises = groupData.membersIds.map(async (memberId) => {
+            try {
+              return await getUser(memberId);
+            } catch (error) {
+              console.warn(`⚠️ [useGroupData] Error cargando miembro ${memberId}:`, error);
+              return null;
+            }
+          });
+          
+          const loadedMembers = await Promise.all(memberPromises);
+          const validMembers = loadedMembers.filter((m): m is UserDto => m !== null);
+          
+          if (mounted) {
+            setMembers(validMembers);
+            console.log(`✅ [useGroupData] ${validMembers.length} miembros cargados`);
+          }
+        } else {
+          console.log('⚠️ [useGroupData] No hay miembros en el grupo');
+          setMembers([]);
+        }
 
-      } catch (error) {
-        console.error('Error loading group:', error);
-        Alert.alert('Error', 'No se pudo cargar la información del grupo');
-        router.back();
+      } catch (error: any) {
+        console.error('❌ [useGroupData] Error cargando grupo:', error);
+        
+        if (mounted) {
+          // Mensajes de error específicos
+          let errorMessage = 'No se pudo cargar la información del grupo';
+          
+          if (error?.response?.status === 404) {
+            errorMessage = 'Grupo no encontrado';
+          } else if (error?.response?.status === 401) {
+            errorMessage = 'No tienes permisos para ver este grupo';
+          } else if (error?.message?.includes('Invalid group id') || error?.message?.includes('inválido')) {
+            errorMessage = `ID de grupo inválido: ${groupId}`;
+          }
+          
+          Alert.alert('Error', errorMessage);
+          router.back();
+        }
       } finally {
-        if (mounted) setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
     loadGroupData();
     return () => { mounted = false; };
-  }, [groupId]);
+  }, [groupId]); // ✅ Solo groupId como dependencia
 
   return {
     group,

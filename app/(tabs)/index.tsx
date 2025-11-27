@@ -1,200 +1,157 @@
 import { router } from 'expo-router';
-import { StyleSheet, Alert, Pressable, Text, StatusBar } from 'react-native';
+import { StyleSheet, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MapHeader from '@/components/map/MapHeader';
 import PeopleOnMap from '@/components/map/PeopleOnMap';
 import JourneyOverlay from '@/components/map/JourneyOverlay';
 import EmergencyButton from '@/components/map/EmergencyButton';
-import { useState, useEffect } from 'react';
+import AlertModal from '@/components/common/AlertModal';
+import { useState } from 'react';
 import { Group } from '@/api/backend/group/groupType';
 import { JourneyDto, JourneyStates } from '@/api/backend/journeys/journeyType';
-import { updateJourney } from '@/api/backend/journeys/journeyApi';
+import { changeJourneyStatus } from '@/api/backend/journeys/journeyApi';
 import { updateJourneyState } from '@/api/firebase/journey/journeyService';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
-import { useUserStore } from '@/lib/storage/useUserStorage';
-import { useNotificationSender } from '@/components/notifications/useNotificationSender';
-import { unlinkFirebaseSession } from '@/api/firebase/auth/firebase';
-import { signOut } from 'firebase/auth';
 
 interface GroupWithJourney {
   group: Group;
   activeJourney: JourneyDto;
 }
 
+// Tipos de modales
+type ModalType = 
+  | 'journeyActive' 
+  | 'journeyStarted' 
+  | 'journeyError' 
+  | 'confirmComplete' 
+  | 'journeyCompleted' 
+  | 'completeError'
+  | null;
+
+interface ModalState {
+  type: ModalType;
+  message?: string;
+}
+
 export default function MapScreen() {
-
-  // Estado real conectado entre componentes
   const [selectedGroupJourney, setSelectedGroupJourney] = useState<GroupWithJourney | null>(null);
-
-  const { getToken, signOut } = useAuth();
+  const [modalState, setModalState] = useState<ModalState>({ type: null });
+  const { getToken } = useAuth();
   const setToken = useTokenStore((state) => state.setToken);
-  const user = useUserStore((state) => state.user);
-  
-  // ✅ Hook para enviar notificaciones fácilmente
-  const { sendWelcomeNotification } = useNotificationSender();
 
-  // ✅ Enviar notificación de bienvenida al entrar al mapa
+  /*
+  Enviar notificación de bienvenida al entrar al mapa
   useEffect(() => {
     if (user?.id) {
       console.log('🔔 [MapScreen] Enviando notificación de bienvenida...');
       sendWelcomeNotification(user.id);
     }
   }, []); // Solo se ejecuta al montar el componente
+  */
 
   const handleStartJourney = async () => {
-    console.log('🚀 handleStartJourney - Iniciando proceso...');
-    
-    // Si no hay journey seleccionado, navegar a crear uno nuevo
     if (!selectedGroupJourney?.activeJourney) {
-      console.log('📝 No hay journey activo, navegando a crear uno nuevo');
       router.push('/chat/journey');
       return;
     }
 
-    const journey = selectedGroupJourney.activeJourney;
-    const chatId = selectedGroupJourney.group.id.toString();
+    const { activeJourney: journey, group } = selectedGroupJourney;
     
-    console.log('🎯 Journey a iniciar:', {
-      journeyId: journey.id,
-      currentState: journey.state,
-      chatId: chatId,
-      groupName: selectedGroupJourney.group.name
-    });
-
-    // Si el journey ya está activo, mostrar mensaje
     if (journey.state === JourneyStates.IN_PROGRESS) {
-      console.log('✅ Journey ya está activo');
-      Alert.alert('Journey Activo', 'El journey ya está en progreso');
+      setModalState({ type: 'journeyActive' });
       return;
     }
 
     try {
-      console.log('🔄 Actualizando estado del journey a IN_PROGRESS...');
-      
-      // Obtener token de autenticación
       const token = await getToken();
       setToken(token);
       
-      // 1. Actualizar en el backend
       const updatedJourneyData = {
         ...journey,
         state: JourneyStates.IN_PROGRESS,
-        iniDate: new Date().toISOString(), // Actualizar fecha de inicio
+        iniDate: new Date().toISOString(),
       };
+
+      await changeJourneyStatus(journey.id, 'IN_PROGRESS');
+      console.log('✅ Journey iniciado en backend');
       
-      console.log('💾 Actualizando journey en backend...');
-      await updateJourney(updatedJourneyData);
-      console.log('✅ Journey actualizado en backend');
+      await updateJourneyState(group.id.toString(), journey.id.toString(), 'IN_PROGRESS');
 
-      // 2. Actualizar en Firebase
-      console.log('🔥 Actualizando journey en Firebase...');
-      await updateJourneyState(chatId, journey.id.toString(), 'IN_PROGRESS');
-      console.log('✅ Journey actualizado en Firebase');
-
-      // 3. Actualizar el estado local con los datos actualizados
       setSelectedGroupJourney({
         ...selectedGroupJourney,
         activeJourney: updatedJourneyData
       });
 
-      console.log('🎉 Journey iniciado exitosamente');
-      Alert.alert(
-        'Journey Iniciado', 
-        `El journey "${journey.journeyType === 'INDIVIDUAL' ? 'individual' : 'grupal'}" ha comenzado. ${journey.journeyType !== 'INDIVIDUAL' ? 'Todos los participantes pueden ver las ubicaciones en tiempo real.' : 'Tu ubicación se está compartiendo.'}`,
-        [{ text: 'OK' }]
-      );
+      const message = journey.journeyType === 'INDIVIDUAL' 
+        ? 'Tu ubicación se está compartiendo.'
+        : 'Todos los participantes pueden ver las ubicaciones en tiempo real.';
+      
+      setModalState({ type: 'journeyStarted', message });
 
     } catch (error) {
-      console.error('💥 Error iniciando journey:', error);
-      Alert.alert(
-        'Error al Iniciar Journey', 
-        'No se pudo iniciar el journey. ¿Qué deseas hacer?',
-        [
-          { text: 'Crear Nuevo', onPress: () => router.push('/chat/journey') },
-          { text: 'Reintentar', onPress: () => handleStartJourney() },
-          { text: 'Cancelar', style: 'cancel' }
-        ]
-      );
+      console.error('Error iniciando journey:', error);
+      setModalState({ type: 'journeyError' });
     }
   };
 
   const handleCompleteJourney = async () => {
     if (!selectedGroupJourney?.activeJourney) return;
-
-    const journey = selectedGroupJourney.activeJourney;
-    const chatId = selectedGroupJourney.group.id.toString();
-    
-    console.log('🏁 handleCompleteJourney - Finalizando journey:', journey.id);
-
-    // Confirmar con el usuario
-    Alert.alert(
-      '¿Finalizar Journey?',
-      '¿Estás seguro de que quieres finalizar este journey?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { 
-          text: 'Finalizar', 
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              console.log('🔄 Finalizando journey...');
-              
-              // Obtener token de autenticación
-              const token = await getToken();
-              setToken(token);
-
-              // 1. Actualizar en el backend
-              const updatedJourneyData = {
-                ...journey,
-                state: JourneyStates.COMPLETED,
-                endDate: new Date().toISOString(),
-              };
-
-              console.log('💾 Actualizando journey en backend...');
-              await updateJourney(updatedJourneyData);
-              console.log('✅ Journey completado en backend');
-
-              // 2. Actualizar en Firebase
-              console.log('🔥 Actualizando journey en Firebase...');
-              await updateJourneyState(chatId, journey.id.toString(), 'COMPLETED');
-              console.log('✅ Journey completado en Firebase');
-
-              // 3. Limpiar el estado local
-              setSelectedGroupJourney(null);
-
-              console.log('🎉 Journey completado exitosamente');
-              Alert.alert('Journey Completado', 'El journey ha finalizado correctamente.');
-
-            } catch (error) {
-              console.error('💥 Error completando journey:', error);
-              Alert.alert('Error', 'No se pudo completar el journey. Intenta de nuevo.');
-            }
-          }
-        }
-      ]
-    );
+    setModalState({ type: 'confirmComplete' });
   };
 
-  const { clearUser } = useUserStore();
+  const confirmCompleteJourney = async () => {
+    if (!selectedGroupJourney?.activeJourney) return;
 
+    const { activeJourney: journey, group } = selectedGroupJourney;
+
+    try {
+      const token = await getToken();
+      setToken(token);
+
+      const updatedJourneyData = {
+        ...journey,
+        state: JourneyStates.COMPLETED,
+        endDate: new Date().toISOString(),
+      };
+
+      await changeJourneyStatus(journey.id, 'COMPLETED');
+      await updateJourneyState(group.id.toString(), journey.id.toString(), 'COMPLETED');
+
+      setSelectedGroupJourney(null);
+      setModalState({ type: 'journeyCompleted' });
+
+    } catch (error) {
+      console.error('Error completando journey:', error);
+      setModalState({ type: 'completeError' });
+    }
+  };
+  
+  const closeModal = () => {
+    setModalState({ type: null });
+  };
+  
+
+  /*
   const handleLogout = async () => {
-      await unlinkFirebaseSession();
-      await signOut();
-      clearUser();
-      console.log("🔒 Sesión cerrada");
-      router.replace("/(auth)");
-    };
+    await unlinkFirebaseSession();
+    await signOut();
+    clearUser();
+    console.log("🔒 Sesión cerrada");
+    router.replace("/(auth)");
+  };
+
+  <Pressable 
+    style={styles.debugLogoutButton} 
+    onPress={handleLogout}
+  >
+    <Text>🔒 Cerrar sesión</Text>
+  </Pressable>
+  */
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      <Pressable 
-        style={styles.debugLogoutButton} 
-        onPress={handleLogout}
-      >
-        <Text>🔒 Cerrar sesión</Text>
-      </Pressable>
       <MapHeader 
         activeGroupJourney={selectedGroupJourney}
         onGroupJourneySelect={setSelectedGroupJourney}
@@ -206,6 +163,85 @@ export default function MapScreen() {
         onStartJourney={handleStartJourney}
         onCompleteJourney={handleCompleteJourney}
       />
+
+      {/* Modal: Journey ya está activo */}
+      <AlertModal
+        visible={modalState.type === 'journeyActive'}
+        type="warning"
+        title="Journey Activo"
+        message="El journey ya está en progreso"
+        confirmText="Entendido"
+        showCancelButton={false}
+        onConfirm={closeModal}
+      />
+
+      {/* Modal: Journey iniciado con éxito */}
+      <AlertModal
+        visible={modalState.type === 'journeyStarted'}
+        type="success"
+        title="Journey Iniciado"
+        message={`El journey ha comenzado. ${modalState.message || ''}`}
+        confirmText="Continuar"
+        showCancelButton={false}
+        onConfirm={closeModal}
+      />
+
+      {/* Modal: Error al iniciar journey */}
+      <AlertModal
+        visible={modalState.type === 'journeyError'}
+        type="danger"
+        title="Error al Iniciar Journey"
+        message="No se pudo iniciar el journey. ¿Qué deseas hacer?"
+        confirmText="Crear Nuevo"
+        cancelText="Cancelar"
+        onConfirm={() => {
+          closeModal();
+          router.push('/chat/journey');
+        }}
+        onCancel={closeModal}
+      />
+
+      {/* Modal: Confirmar finalizar journey */}
+      <AlertModal
+        visible={modalState.type === 'confirmComplete'}
+        type="warning"
+        title="¿Finalizar Journey?"
+        message="¿Estás seguro de que quieres finalizar este journey?"
+        confirmText="Finalizar"
+        cancelText="Cancelar"
+        confirmButtonColor="#EF4444"
+        onConfirm={() => {
+          closeModal();
+          confirmCompleteJourney();
+        }}
+        onCancel={closeModal}
+      />
+
+      {/* Modal: Journey completado */}
+      <AlertModal
+        visible={modalState.type === 'journeyCompleted'}
+        type="success"
+        title="Journey Completado"
+        message="El journey ha finalizado correctamente."
+        confirmText="Aceptar"
+        showCancelButton={false}
+        onConfirm={closeModal}
+      />
+
+      {/* Modal: Error al completar */}
+      <AlertModal
+        visible={modalState.type === 'completeError'}
+        type="danger"
+        title="Error"
+        message="No se pudo completar el journey. Intenta de nuevo."
+        confirmText="Reintentar"
+        cancelText="Cancelar"
+        onConfirm={() => {
+          closeModal();
+          confirmCompleteJourney();
+        }}
+        onCancel={closeModal}
+      />
     </SafeAreaView>
   );
 }
@@ -215,31 +251,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  logoutButton: {
-    margin: 20,
-    padding: 10,
-    backgroundColor: '#FF4D4D',
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  logoutText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
+  /*
   debugLogoutButton: {
     backgroundColor: "rgba(255, 255, 255, 0.2)",
     padding: 10,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.3)",
-    // moverlo mas abajo sin position
     marginTop: 20,
   },
-  debugLogoutText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "bold",
-  },
-
+  */
 });

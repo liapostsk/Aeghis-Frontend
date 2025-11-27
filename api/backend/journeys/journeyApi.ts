@@ -1,5 +1,5 @@
 import api from "../../client";
-import { Journey, JourneyDto } from "./journeyType";
+import { JourneyDto, JourneyState } from "./journeyType";
 
 /**
  * Obtiene un journey por su ID
@@ -46,6 +46,18 @@ export const updateJourney = async (journeyDto: JourneyDto): Promise<void> => {
 };
 
 /**
+ * Cambia el estado de un journey
+ * POST /journey/{journeyId}/change-status/{status}
+ */
+export const changeJourneyStatus = async (
+  journeyId: number,
+  status: JourneyState
+): Promise<void> => {
+  await api.post(`/journey/${journeyId}/change-status/${status}`);
+  console.log(`Estado del journey ${journeyId} cambiado a: ${status}`);
+};
+
+/**
  * Elimina un journey por su ID
  * DELETE /journey/{id}
  */
@@ -54,13 +66,20 @@ export const deleteJourney = async (id: number): Promise<void> => {
 };
 
 /**
- * Agrega una participación a un journey
- * POST /journey/{journeyId}/addParticipation/{participationId}
+ * Verifica si el usuario actual es participante del journey
+ * GET /journey/{journeyId}/is-participant
  */
-export const addParticipationToJourney = async (
-  journeyId: number,
-  participationId: number
-): Promise<void> => {
-  await api.post(`/journey/${journeyId}/addParticipation/${participationId}`);
-  console.log(`✅ Participación ${participationId} agregada al journey ${journeyId}`);
+export const isUserParticipantInJourney = async (journeyId: number): Promise<boolean> => {
+  const response = await api.get(`/journey/${journeyId}/is-participant`);
+  return response.data;
 };
+
+/**
+ * Obtiene todos los IDs de participantes de un journey
+ * GET /journey/{journeyId}/participants
+ */
+export const getJourneyParticipantIds = async (journeyId: number): Promise<number[]> => {
+  const response = await api.get(`/journey/${journeyId}/participants`);
+  return response.data;
+};
+

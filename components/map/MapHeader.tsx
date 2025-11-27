@@ -1,11 +1,11 @@
 // File: components/map/MapHeader.tsx
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, TouchableWithoutFeedback } from 'react-native';
 import Icon from '@expo/vector-icons/Ionicons';
-import { useUserGroups } from '@/lib/hooks/useUserGroups'; // ✅ Usar hook con caché
+import { useUserGroups } from '@/lib/hooks/useUserGroups';
 import { getCurrentJourneyForGroup } from '@/api/backend/journeys/journeyApi';
 import { Group } from '@/api/backend/group/groupType';
 import { JourneyDto } from '@/api/backend/journeys/journeyType';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 
@@ -24,16 +24,13 @@ export default function MapHeader({ activeGroupJourney, onGroupJourneySelect }: 
   const [groupsWithJourneys, setGroupsWithJourneys] = useState<GroupWithJourney[]>([]);
   const [loading, setLoading] = useState(false);
 
+
   const { getToken } = useAuth();
   const setToken = useTokenStore((state) => state.setToken);
-  const { groups: userGroups } = useUserGroups(); // ✅ Usar hook con caché
-
-  useEffect(() => {
-    loadGroupsWithActiveJourneys();
-  }, [userGroups]); // ✅ Recargar cuando cambien los grupos
+  const { groups: userGroups } = useUserGroups();
 
   const loadGroupsWithActiveJourneys = async () => {
-    if (userGroups.length === 0) return; // ✅ No hacer nada si no hay grupos
+    if (userGroups.length === 0) return;
 
     try {
       setLoading(true);
@@ -42,7 +39,6 @@ export default function MapHeader({ activeGroupJourney, onGroupJourneySelect }: 
       
       console.log('🔍 [MapHeader] Verificando journeys activos para', userGroups.length, 'grupos');
       
-      // 2. Para cada grupo, verificar si tiene journey activo
       const groupJourneyPromises = userGroups.map(async (group) => {
         try {
           const token = await getToken();
@@ -50,16 +46,15 @@ export default function MapHeader({ activeGroupJourney, onGroupJourneySelect }: 
 
           const activeJourney = await getCurrentJourneyForGroup(group.id);
           
-          console.log(`Grupo: ${group.name}, Journey activo:`, activeJourney);
+          console.log(`✅ Grupo: ${group.name}, Journey:`, activeJourney?.id || 'ninguno');
 
-          // Solo incluir si tiene journey IN_PROGRESS o PENDING
           if (activeJourney && 
               (activeJourney.state === 'IN_PROGRESS' || activeJourney.state === 'PENDING')) {
             return { group, activeJourney };
           }
           return null;
         } catch (error) {
-          return null; // No tiene journey activo
+          return null;
         }
       });
 
@@ -68,18 +63,35 @@ export default function MapHeader({ activeGroupJourney, onGroupJourneySelect }: 
       
       setGroupsWithJourneys(validGroupJourneys);
 
-      // Si hay grupos con journeys y no hay ninguno seleccionado, seleccionar el primero
+      // Auto-seleccionar el primero si no hay ninguno seleccionado
       if (validGroupJourneys.length > 0 && !activeGroupJourney) {
+        console.log('🎯 [MapHeader] Auto-seleccionando:', validGroupJourneys[0].activeJourney.id);
         onGroupJourneySelect(validGroupJourneys[0]);
       }
       
+      // Limpiar si el seleccionado ya no existe
+      if (activeGroupJourney) {
+        const stillActive = validGroupJourneys.find(
+          gj => gj.group.id === activeGroupJourney.group.id
+        );
+        if (!stillActive) {
+          console.log('⚠️ [MapHeader] Journey ya no activo, limpiando');
+          onGroupJourneySelect(null);
+        }
+      }
+      
     } catch (error) {
-      console.error('Error loading groups with journeys:', error);
+      console.error('❌ Error loading groups:', error);
       setGroupsWithJourneys([]);
     } finally {
       setLoading(false);
     }
   };
+
+  // Solo recargar cuando cambian los grupos
+  useEffect(() => {
+    loadGroupsWithActiveJourneys();
+  }, [userGroups]);
 
   const handleGroupSelect = (groupJourney: GroupWithJourney) => {
     onGroupJourneySelect(groupJourney);

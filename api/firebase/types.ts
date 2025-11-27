@@ -7,8 +7,8 @@ export interface FirebaseUserProfile {
   displayName: string | null;
   photoURL: string | null;
   phone: string | null;
-  createdAt: any;       // Firebase Timestamp
-  lastSeen: any;        // Firebase Timestamp
+  createdAt: any;
+  lastSeen: any;
   isOnline: boolean;
   batteryLevel: number | null;
 }
@@ -29,13 +29,13 @@ export interface FirebaseUserProfileOptions {
 
 // Tipos específicos para battery level
 export interface BatteryInfo {
-  level: number;        // 0-100
-  timestamp: any;       // Firebase Timestamp
+  level: number;
+  timestamp: any;
 }
 
 export interface UserBatteryUpdate {
   batteryLevel: number;
-  lastSeen: any;        // Firebase Timestamp
+  lastSeen: any;
 }
 
 export interface ChatDoc {
@@ -45,24 +45,23 @@ export interface ChatDoc {
   image?: string;
   ownerId: string;
   lastMessage?: MessageDoc;
-  lastMessageAt: any;   // Firebase Timestamp
+  lastMessageAt: any;
 }
 
-// ✅ ACTUALIZADO: Agregado readBy y expandido tipos
 export interface MessageDoc {
   id: string;
   senderId: string;
   senderName: string;
-  readBy: string[];           // ✅ Array de UIDs que leyeron el mensaje
+  readBy: string[];
   type: 'text' | 'image';
   content: string;
-  timestamp: any;             // Firebase Timestamp
+  timestamp: any;
 }
 
 export type GroupTileInfo = {
   chatId: string;
   lastMessage: string | null;
-  lastMessageAt: any | null;      // Timestamp
+  lastMessageAt: any | null;
   lastSenderId: string | null;
   lastSenderName: string | null;
   unreadCount: number;
@@ -75,24 +74,24 @@ export interface JourneyDoc {
   ownerId: string;
   type: JourneyType;
   state: JourneyState;
-  startedAt: any;       // Firebase Timestamp
-  endedAt?: any;        // Firebase Timestamp
+  startedAt: any;
+  endedAt?: any;
 }
 
 export interface Participation {
   userId: string;
-  journeyId?: string; // Opcional ya que está implícito en la ruta
+  journeyId?: string;
   state: ParticipationState;
   destination?: Position;
   backendParticipationId?: number | string;
-  joinedAt: any;      // Firebase Timestamp
-  updatedAt: any;     // Firebase Timestamp
+  joinedAt: any;
+  updatedAt: any;
 }
 
 export interface Position {
   latitude: number;
   longitude: number;
-  timestamp: any;       // Firebase Timestamp
+  timestamp: any;
 }
 
 // Position Tile Info

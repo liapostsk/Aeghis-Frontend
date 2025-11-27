@@ -25,7 +25,7 @@ export interface ParticipationDto {
     arrivalTime?: Date;
 }
 
-export type ParticipationState = "PENDING" | "ACCEPTED" | "REJECTED" | "CANCELLED" | "COMPLETED";
+export type ParticipationState = "ACCEPTED" | "IN_PROGRESS" | "CANCELLED" | "ARRIVED";
 
 // Mapeo de Participation a ParticipationDto
 export const mapParticipationToDto = (participation: Participation): ParticipationDto => {

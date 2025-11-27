@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, StyleSheet, ScrollView, StatusBar } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, StyleSheet, ScrollView, StatusBar, Alert } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
@@ -8,7 +8,6 @@ import SafeLocationModal from '@/components/safeLocations/SafeLocationModal';
 import {
     DestinationSelector,
     JourneyTypeSelector,
-    ParticipantSelector,
     GroupBanner,
     JourneyNameInput,
     CreateJourneyButton,
@@ -20,12 +19,33 @@ import {
 } from '@/components/journey';
 
 export default function journey() {
-    const { groupId } = useLocalSearchParams<{ groupId: string }>();
+    const params = useLocalSearchParams<{ groupId: string }>();
     const { getToken } = useAuth();
     const setToken = useTokenStore((state) => state.setToken);
 
+    // Validar groupId antes de usarlo
+    const groupId = params.groupId;
+
+    useEffect(() => {
+        if (!groupId || groupId === 'undefined' || groupId === 'null') {
+            console.error('❌ [Journey Screen] GroupId inválido:', groupId);
+            Alert.alert(
+                'Error',
+                'No se especificó un grupo válido',
+                [
+                    {
+                        text: 'Volver',
+                        onPress: () => router.back()
+                    }
+                ]
+            );
+        } else {
+            console.log('✅ [Journey Screen] GroupId válido:', groupId);
+        }
+    }, [groupId]);
+
     const { group, members, currentUser, loading } = useGroupData({
-        groupId,
+        groupId: groupId || '',
         getToken,
         setToken,
     });
@@ -33,13 +53,11 @@ export default function journey() {
     const {
         journeyType,
         journeyName,
-        selectedParticipants,
         selectedDestination,
         showDestinationModal,
         setJourneyName,
         setShowDestinationModal,
         handleSelectJourneyType,
-        toggleParticipant,
         handleSelectDestination,
     } = useJourneyForm({ currentUser });
 
@@ -48,7 +66,7 @@ export default function journey() {
         creationStep,
         createJourneyFlow,
     } = useJourneyCreation({
-        groupId,
+        groupId: groupId || '',
         group,
         currentUser,
         members,
@@ -58,8 +76,14 @@ export default function journey() {
 
     const handleCreateJourney = () => {
         if (!journeyType) return;
-        createJourneyFlow(journeyType, journeyName, selectedParticipants, selectedDestination);
+        // Ya no pasamos selectedParticipants (array vacío)
+        createJourneyFlow(journeyType, journeyName, [], selectedDestination);
     };
+
+    // Si no hay groupId válido, mostrar loading mientras se redirige
+    if (!groupId || groupId === 'undefined' || groupId === 'null') {
+        return <LoadingJourneyScreen />;
+    }
 
     if (loading) {
         return <LoadingJourneyScreen />;
@@ -91,15 +115,7 @@ export default function journey() {
                         onSelectType={handleSelectJourneyType}
                     />
 
-                    <ParticipantSelector
-                        journeyType={journeyType}
-                        members={members}
-                        currentUser={currentUser}
-                        selectedParticipants={selectedParticipants}
-                        onToggleParticipant={toggleParticipant}
-                    />
-
-                    {journeyType && journeyType !== 'individual' && (
+                    {journeyType && (
                         <DestinationSelector
                             selectedDestination={selectedDestination}
                             onPress={() => setShowDestinationModal(true)}
@@ -112,7 +128,7 @@ export default function journey() {
 
                 <CreateJourneyButton
                     onPress={handleCreateJourney}
-                    disabled={!journeyType || creating || (journeyType !== 'individual' && !selectedDestination)}
+                    disabled={!journeyType || !selectedDestination || creating}
                     loading={creating}
                     creationStep={creationStep}
                 />

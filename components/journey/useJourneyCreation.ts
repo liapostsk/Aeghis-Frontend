@@ -7,15 +7,17 @@ import { Group } from '@/api/backend/group/groupType';
 import { Location, SafeLocation } from '@/api/backend/locations/locationType';
 import { JourneyDto, JourneyTypes, JourneyStates } from '@/api/backend/journeys/journeyType';
 import { ParticipationDto } from '@/api/backend/participations/participationType';
-import { createJourney, updateJourney } from '@/api/backend/journeys/journeyApi';
-import { createParticipation } from '@/api/backend/participations/participationApi';
-import { createLocation } from '@/api/backend/locations/locationsApi';
 import { sendMessageFirebase } from '@/api/firebase/chat/chatService';
 import { createJourneyInChat } from '@/api/firebase/journey/journeyService';
 import { joinJourneyParticipation } from '@/api/firebase/journey/participationsService';
 import { addUserPosition } from '@/api/firebase/journey/positionsService';
 import { auth } from '@/firebaseconfig';
 import { JourneyType, validateJourneyForm } from './journeyUtils';
+
+// Endpoints de creación de trayectos, participaciones y ubicaciones
+import { createJourney } from '@/api/backend/journeys/journeyApi';
+import { createParticipation } from '@/api/backend/participations/participationApi';
+import { createLocation } from '@/api/backend/locations/locationsApi';
 
 interface UseJourneyCreationProps {
   groupId: string;
@@ -143,13 +145,13 @@ ID del trayecto: ${journeyId}`;
 
       // 1. Crear Journey primero
       setCreationStep('Creando trayecto...');
+      
       const journeyData: Partial<JourneyDto> = {
         groupId: Number(groupId),
         journeyType: journeyType === 'individual' ? JourneyTypes.INDIVIDUAL : 
               journeyType === 'common_destination' ? JourneyTypes.COMMON_DESTINATION : JourneyTypes.PERSONALIZED,
         state: journeyType === 'individual' ? JourneyStates.IN_PROGRESS : JourneyStates.PENDING,
         iniDate: new Date().toISOString(),
-        participantsIds: []
       };
 
       const token = await getToken();
@@ -226,16 +228,6 @@ ID del trayecto: ${journeyId}`;
         }
       }
 
-      // 3. Actualizar journey con ID de participación
-      setCreationStep('Actualizando trayecto...');
-      const updatedJourneyData = {
-        ...journeyData,
-        id: journeyId,
-        participantsIds: [creatorParticipationId]
-      };
-      
-      await updateJourney(updatedJourneyData as JourneyDto);
-
       // 4. Manejar según tipo
       if (journeyType === 'individual') {
         Alert.alert(
@@ -272,7 +264,6 @@ ID del trayecto: ${journeyId}`;
       }
 
     } catch (error) {
-      console.error('❌ Error creating journey:', error);
       Alert.alert(
         'Error', 
         'No se pudo crear el trayecto. Verifica tu conexión e inténtalo de nuevo.'

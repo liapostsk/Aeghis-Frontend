@@ -10,7 +10,6 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import SafeLocationModal from '@/components/safeLocations/SafeLocationModal';
 import { SafeLocation } from '@/api/backend/locations/locationType';
-import { getJourney, updateJourney } from '@/api/backend/journeys/journeyApi';
 import { createParticipation } from '@/api/backend/participations/participationApi';
 import { createLocation } from '@/api/backend/locations/locationsApi';
 import { ParticipationDto } from '@/api/backend/participations/participationType';
@@ -95,24 +94,14 @@ export default function JourneyRequestMessage({
             const participationData: Partial<ParticipationDto> = {
                 journeyId: journeyId,
                 userId: currentUser.id,
-                sharedLocation: true, // El usuario acepta compartir ubicación
-                state: 'ACCEPTED', // Se une voluntariamente
+                sharedLocation: true,
+                state: 'ACCEPTED',
                 sourceId: originLocationId,
                 destinationId: destinationLocationId
             };
 
             const participationId = await createParticipation(participationData as ParticipationDto);
             console.log('✅ Participación creada con ID:', participationId);
-
-            // 6. Obtener journey actual y actualizar con nueva participación
-            const currentJourney = await getJourney(journeyId);
-            const updatedJourney = {
-                ...currentJourney,
-                participantsIds: [...currentJourney.participantsIds, participationId]
-            };
-            
-            await updateJourney(updatedJourney);
-            console.log('✅ Journey actualizado con nueva participación');
 
             Alert.alert(
                 '¡Te has unido al trayecto!',

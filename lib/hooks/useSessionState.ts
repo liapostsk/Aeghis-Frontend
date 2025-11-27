@@ -66,7 +66,6 @@ export function useSessionState() {
     const validateSession = async () => {
       console.log("🔍 Validando sesión...", { isSignedIn });
 
-      // 1️⃣ No hay sesión en Clerk
       if (!isSignedIn) {
         console.log("❌ No hay sesión en Clerk");
         await unlinkFirebaseSession().catch(() => {});
@@ -74,11 +73,9 @@ export function useSessionState() {
         return;
       }
 
-      // 2️⃣ ✅ Si el usuario ya existe en el store local, asumir que está listo
       if (localUser?.id) {
         console.log("✅ Usuario encontrado en store local (ID:", localUser.id, ")");
         console.log("👤 Rol del usuario:", localUser.role);
-        
         // ✅ Verificar si es admin
         if (localUser.role === 'ADMIN') {
           console.log("👑 Usuario es ADMIN → Estado: admin");
@@ -87,15 +84,7 @@ export function useSessionState() {
           console.log("👤 Usuario normal → Estado: ready");
           setState("ready");
         }
-        
-        // Vincular Firebase si no está vinculado (no crítico)
-        try {
-          await linkFirebaseSession();
-          console.log("✅ Firebase vinculado");
-        } catch (error) {
-          console.warn("⚠️ Error vinculando Firebase (no crítico):", error);
-        }
-        
+        // No vincular Firebase aquí, solo tras validar backend
         return;
       }
 

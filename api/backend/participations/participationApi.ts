@@ -1,5 +1,5 @@
 import api from "../../client";
-import { Participation, ParticipationDto } from "./participationType";
+import { ParticipationDto } from "./participationType";
 
 /**
  * Obtiene una participación por su ID

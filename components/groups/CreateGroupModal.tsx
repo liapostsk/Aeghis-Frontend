@@ -21,7 +21,6 @@ export default function CreateGroupModal({ visible, onClose, onSuccess, type }: 
   const [groupName, setGroupName] = useState('');
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
-  const [invite, setInvite] = useState<{ code: string; deepLink: string } | null>(null);
 
   const { user, setUser } = useUserStore.getState();
   

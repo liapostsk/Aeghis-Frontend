@@ -66,17 +66,13 @@ export default function ProfileScreen() {
 
   const handleLogout = async () => {
     try {
-      console.log('🚪 Iniciando logout...');
-      
-      // 1. Actualizar estado Firebase ANTES de cerrar sesión
       try {
         await updateUserProfileOnLogout();
-        console.log('Usuario marcado como offline en Firebase');
       } catch (firebaseError) {
         console.warn('Error actualizando estado Firebase:', firebaseError);
       }
 
-      // 2. Cerrar sesión de Firebase
+      // Cerrar sesión de Firebase
       try {
         await unlinkFirebaseSession();
         console.log(' Sesión de Firebase cerrada');
@@ -84,17 +80,14 @@ export default function ProfileScreen() {
         console.warn('Error cerrando Firebase:', firebaseError);
       }
 
-      // 3. Cerrar sesión de Clerk
+      // Cerrar sesión de Clerk
       await signOut();
       console.log('Sesión de Clerk cerrada');
 
       // 4. Limpiar datos locales
       clearUser();
       
-      // 5. Redirigir
       router.replace("/(auth)");
-      
-      console.log('Logout completado');
 
     } catch (error) {
       console.error('Error durante logout:', error);

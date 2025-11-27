@@ -41,7 +41,7 @@ function RootNavigator() {
         break;
 
       case 'admin':
-        // ✅ Usuario ADMIN → Redirigir a panel de admin
+        // Usuario ADMIN → Redirigir a panel de admin
         if (!inAdminGroup) {
           console.log('[RootNavigator] Redirecting to admin panel (admin role)');
           router.replace('/(admin)');

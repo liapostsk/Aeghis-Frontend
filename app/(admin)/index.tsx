@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSessionState } from '@/lib/hooks/useSessionState';
 import {
   View,
   Text,
@@ -28,6 +29,11 @@ interface UserWithPhotos extends UserDto {
 }
 
 export default function AdminVerificationScreen() {
+  const { state } = useSessionState();
+  // Solo renderizar si el usuario es admin
+  if (state !== 'admin') {
+    return null;
+  }
   const { signOut } = useAuth();
   const [users, setUsers] = useState<UserWithPhotos[]>([]);
   const [loading, setLoading] = useState(true);

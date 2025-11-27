@@ -15,7 +15,6 @@ import { UserDto } from '@/api/backend/types';
 import { SafeLocation, Location } from '@/api/backend/locations/locationType';
 import { createParticipation } from '@/api/backend/participations/participationApi';
 import { createLocation } from '@/api/backend/locations/locationsApi';
-import { addParticipationToJourney, updateJourney } from '@/api/backend/journeys/journeyApi';
 import * as ExpoLocation from 'expo-location';
 import SafeLocationModal from '@/components/safeLocations/SafeLocationModal';
 import { useAuth } from '@clerk/clerk-expo';
@@ -153,13 +152,9 @@ export default function JoinJourneyModal({
         destinationId: destinationLocationId
       };
 
+      // Al crear la participación, el usuario se une al journey
       const participationId = await createParticipation(participationData as ParticipationDto);
       console.log('Participación creada con ID:', participationId);
-
-      // 5. Agregar participación al journey en el backend
-      await addParticipationToJourney(journey.id, participationId);
-      console.log('✅ Participación agregada al journey en el backend');
-
 
       // 5.5. Sincronizar con Firebase
       try {

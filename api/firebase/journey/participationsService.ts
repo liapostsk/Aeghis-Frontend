@@ -43,7 +43,7 @@ export async function joinJourneyParticipation(
     const base: Participation = {
       userId: uid,
       journeyId: journeyId,
-      state: opts?.initialState ?? 'PENDING',
+      state: opts?.initialState ?? 'ACCEPTED',
       destination: opts?.destination,
       backendParticipationId: opts?.backendParticipationId,
       joinedAt: serverTimestamp() as any,
@@ -56,7 +56,7 @@ export async function joinJourneyParticipation(
       // Si ya existe, solo refrescamos campos mutables
       const existingData = snap.data() as Participation;
       tx.update(pRef, {
-        state: opts?.initialState ?? existingData.state ?? 'PENDING',
+        state: opts?.initialState ?? existingData.state ?? 'ACCEPTED',
         destination: opts?.destination ?? existingData.destination ?? null,
         backendParticipationId: opts?.backendParticipationId ?? existingData.backendParticipationId ?? null,
         updatedAt: serverTimestamp(),
@@ -90,7 +90,7 @@ export async function leaveJourneyParticipation(
 
 /**
  * Cambiar el estado de una participación
- * Estados posibles: PENDING, ACCEPTED, REJECTED, CANCELLED, COMPLETED
+ * Estados posibles: ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
  * - Acepta transacciones para consistencia con operaciones atómicas
  * - Actualiza automáticamente la fecha de modificación
  */
@@ -136,53 +136,4 @@ export function onParticipantsSnapshot(
     const list = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Participation) }));
     cb(list);
   });
-}
-
-/** Obtener participación específica de un usuario */
-export async function getUserParticipation(
-  chatId: string,
-  journeyId: string,
-  userId?: string
-): Promise<(Participation & { id: string }) | null> {
-  const uid = userId ?? auth.currentUser?.uid;
-  if (!uid) throw new Error('No hay usuario especificado ni sesión Firebase');
-
-  const pRef = doc(db, `chats/${chatId}/journeys/${journeyId}/participants/${uid}`);
-  const snap = await getDoc(pRef);
-  
-  if (!snap.exists()) return null;
-  
-  return { id: snap.id, ...(snap.data() as Participation) };
-}
-
-/** Verificar si el usuario actual está participando en el journey */
-export async function isUserParticipating(
-  chatId: string,
-  journeyId: string,
-  userId?: string
-): Promise<boolean> {
-  const participation = await getUserParticipation(chatId, journeyId, userId);
-  return participation !== null && participation.state !== 'CANCELLED' && participation.state !== 'REJECTED';
-}
-
-/** Obtener conteo de participantes por estado */
-export async function getParticipantsCount(
-  chatId: string,
-  journeyId: string
-): Promise<{ [K in ParticipationState]: number }> {
-  const participants = await getParticipants(chatId, journeyId);
-  
-  const counts = {
-    PENDING: 0,
-    ACCEPTED: 0,
-    REJECTED: 0,
-    CANCELLED: 0,
-    COMPLETED: 0,
-  } as { [K in ParticipationState]: number };
-
-  participants.forEach(p => {
-    counts[p.state]++;
-  });
-
-  return counts;
 }

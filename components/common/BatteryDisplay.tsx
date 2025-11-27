@@ -9,13 +9,12 @@ import { useBatteryLevel } from '@/lib/hooks/useBatteryLevel';
 
 // Importar tipos y APIs existentes
 import { JourneyDto } from '@/api/backend/journeys/journeyType';
+import { getJourneyParticipantIds } from '@/api/backend/journeys/journeyApi';
 import { UserDto } from '@/api/backend/types';
-import { getParticipation } from '@/api/backend/participations/participationApi';
 import { getUser } from '@/api/backend/user/userApi';
 import { useUserStore } from '@/lib/storage/useUserStorage';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 import { useAuth } from '@clerk/clerk-expo';
-import { getGroupById } from '@/api/backend/group/groupApi';
 
 interface BatteryDisplayProps {
   showControls?: boolean;
@@ -236,99 +235,75 @@ export function ParticipantsList({
     try {
       isFetchingRef.current = true;
       setIsLoading(true);
-      console.log('📊 Cargando datos de participantes para journey:', journey.id);
+      console.log('📊 Cargando participantes del journey:', journey.id);
       
-      let participantUsers: UserDto[] = [];
-
+      // ✅ 1. Obtener token de autenticación
       const token = await getToken();
       if (token) {
         setToken(token);
       }
 
-      // Estrategia 1: Intentar obtener desde participantsIds
-      if (journey.participantsIds && journey.participantsIds.length > 0) {
-        console.log(`📋 Obteniendo ${journey.participantsIds.length} participantes desde journey...`);
-        
-        for (const participationId of journey.participantsIds) {
-          try {
-            const participation = await getParticipation(participationId);
-            console.log('🔍 Participación obtenida:', participation);
-            
-            // ✅ Verificar caché antes de hacer GET /user
-            let user = userCache.current.get(participation.userId);
-            if (!user) {
-              user = await getUser(participation.userId);
-              userCache.current.set(participation.userId, user);
-              console.log('👤 Usuario obtenido y cacheado:', user.id);
-            } else {
-              console.log('💾 Usuario recuperado de caché:', user.id);
-            }
-            
-            if (currentUser && user.id !== currentUser.id) {
-              participantUsers.push(user);
-            }
-          } catch (error) {
-            console.warn('⚠️ Error obteniendo participante:', participationId, error);
-          }
-        }
-      }
+      // ✅ 2. Obtener IDs de participantes desde el backend (UNA SOLA LLAMADA)
+      const participantIds = await getJourneyParticipantIds(journey.id);
+      console.log(`👥 ${participantIds.length} participantes encontrados:`, participantIds);
       
-      // ✅ Estrategia 2: FALLBACK - Si no hay participantes, usar miembros del grupo
-      if (participantUsers.length === 0 && journey.groupId) {
-        console.log('� No hay participantes en journey, obteniendo desde grupo:', journey.groupId);
+      // ✅ 3. Obtener información de cada usuario (con caché)
+      const participantUsers: UserDto[] = [];
+      
+      for (const userId of participantIds) {
+        // Excluir al usuario actual
+        if (currentUser && userId === currentUser.id) {
+          console.log('⏭️ Saltando usuario actual:', userId);
+          continue;
+        }
         
         try {
-          const group = await getGroupById(journey.groupId);
-          console.log('� Grupo obtenido:', group.name, 'Miembros:', group.membersIds.length);
+          // Verificar caché antes de hacer GET /user
+          let user = userCache.current.get(userId);
           
-          for (const memberId of group.membersIds) {
-            try {
-              // ✅ Verificar caché también en fallback
-              let user = userCache.current.get(memberId);
-              if (!user) {
-                user = await getUser(memberId);
-                userCache.current.set(memberId, user);
-                console.log(`  👤 Miembro obtenido y cacheado: ${user.name} (${user.id})`);
-              } else {
-                console.log(`  💾 Miembro recuperado de caché: ${user.name} (${user.id})`);
-              }
-              
-              if (currentUser && user.id !== currentUser.id) {
-                participantUsers.push(user);
-                console.log(`  ✅ Miembro agregado: ${user.name}`);
-              }
-            } catch (error) {
-              console.warn(`  ⚠️ Error obteniendo miembro ${memberId}:`, error);
-            }
+          if (!user) {
+            user = await getUser(userId);
+            userCache.current.set(userId, user);
+            console.log('  👤 Usuario obtenido y cacheado:', user.name, `(${user.id})`);
+          } else {
+            console.log('  💾 Usuario recuperado de caché:', user.name, `(${user.id})`);
           }
           
-          console.log(`✅ ${participantUsers.length} miembros del grupo cargados como participantes`);
-        } catch (groupError) {
-          console.error('❌ Error obteniendo grupo:', groupError);
+          participantUsers.push(user);
+          
+        } catch (error: any) {
+          if (error?.response?.status === 404) {
+            console.warn(`  ⚠️ Usuario ${userId} no encontrado (eliminado)`);
+          } else if (error?.response?.status === 401) {
+            console.warn(`  ⚠️ Sin permisos para ver usuario ${userId}`);
+          } else {
+            console.warn(`  ⚠️ Error obteniendo usuario ${userId}:`, error.message);
+          }
         }
       }
 
-      console.log('👥 Total participantes cargados (excluyendo usuario actual):', participantUsers.length);
+      console.log(`✅ ${participantUsers.length} participantes cargados (excluyendo usuario actual)`);
 
-      // 2. Obtener información de batería de Firebase (usando Clerk IDs)
+      // ✅ 4. Obtener información de batería de Firebase
       const clerkIds = participantUsers
-        .map(user => user.clerkId || user.id.toString()) // Usar clerkId si existe, sino el ID
+        .map(user => user.clerkId || user.id.toString())
         .filter(Boolean);
         
-      console.log('🔋 Obteniendo batería para IDs:', clerkIds);
+      console.log('🔋 Obteniendo batería para:', clerkIds.length, 'usuarios');
       
       const batteryInfo = clerkIds.length > 0 
         ? await getMultipleUsersBatteryInfo(clerkIds)
         : {};
       
-      console.log('📊 Información de batería obtenida:', batteryInfo);
+      const batteryCount = Object.keys(batteryInfo).length;
+      console.log(`📊 Batería obtenida para ${batteryCount}/${clerkIds.length} usuarios`);
 
-      // 3. Combinar datos
+      // ✅ 5. Combinar datos
       const participantsWithData = participantUsers.map(user => {
         const firebaseId = user.clerkId || user.id.toString();
         const info = batteryInfo[firebaseId];
         
-        return {
+        const result = {
           user,
           batteryLevel: info?.batteryLevel ?? null,
           isConnected: info?.isOnline ?? false,
@@ -336,40 +311,52 @@ export function ParticipantsList({
             ? new Date(info.lastSeen.seconds * 1000)
             : new Date()
         };
+        
+        console.log(`  🔋 ${user.name}: ${result.batteryLevel ?? '?'}% ${result.isConnected ? '🟢' : '⚫'}`);
+        return result;
       });
 
-      console.log('✅ Datos combinados de participantes:', participantsWithData);
+      console.log('✅ Datos completos de participantes listos');
       setParticipantsData(participantsWithData);
       
-    } catch (error) {
-      console.error('💥 Error cargando datos de participantes:', error);
+    } catch (error: any) {
+      console.error('💥 Error cargando participantes:', error);
       
-      // En caso de error, mostrar lista vacía
+      if (error?.response?.status === 404) {
+        console.error('   Journey no encontrado');
+      } else if (error?.response?.status === 401) {
+        console.error('   No tienes permisos para ver este journey');
+      } else if (error?.code === 'ECONNABORTED') {
+        console.error('   Timeout de conexión');
+      }
+      
       setParticipantsData([]);
     } finally {
       setIsLoading(false);
-      isFetchingRef.current = false; // ✅ Liberar el lock
+      isFetchingRef.current = false;
     }
   };
 
-  // Auto-refresh effect
+  // ✅ Cargar al montar y cuando cambie el journey
   useEffect(() => {
     fetchParticipantsData();
-    
-    if (autoRefresh) {
-      console.log(`⏰ Configurando auto-refresh cada ${refreshInterval}ms`);
-      const interval = setInterval(fetchParticipantsData, refreshInterval);
-      return () => {
-        clearInterval(interval);
-        userCache.current.clear(); // ✅ Limpiar caché al desmontar
-      };
-    }
-    
-    // ✅ Cleanup de caché si no hay autoRefresh
+  }, [journey.id]);
+
+  // ✅ Auto-refresh opcional
+  useEffect(() => {
+    if (!autoRefresh) return;
+
+    console.log(`🔄 Auto-refresh activado (cada ${refreshInterval / 1000}s)`);
+    const interval = setInterval(() => {
+      console.log('⏰ Auto-refresh de participantes...');
+      fetchParticipantsData();
+    }, refreshInterval);
+
     return () => {
-      userCache.current.clear();
+      console.log('🧹 Limpiando auto-refresh');
+      clearInterval(interval);
     };
-  }, [journey.participantsIds, autoRefresh, refreshInterval, currentUser?.id]);
+  }, [autoRefresh, refreshInterval, journey.id]);
 
   // ✅ Usar funciones helper compartidas en lugar de duplicar
   if (isLoading && participantsData.length === 0) {

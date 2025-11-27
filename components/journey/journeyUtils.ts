@@ -7,7 +7,6 @@ export type { JourneyType } from './JourneyTypeSelector';
 export interface JourneyFormData {
   journeyType: JourneyType | null;
   journeyName: string;
-  selectedParticipants: number[];
   selectedDestination: SafeLocation | null;
 }
 
@@ -43,14 +42,6 @@ export function validateJourneyForm(formData: JourneyFormData): ValidationResult
     errors.push({
       field: 'journeyName',
       message: 'El nombre debe tener al menos 3 caracteres'
-    });
-  }
-
-  // Validar participantes
-  if (formData.selectedParticipants.length === 0) {
-    errors.push({
-      field: 'selectedParticipants',
-      message: 'Debe haber al menos un participante'
     });
   }
 
