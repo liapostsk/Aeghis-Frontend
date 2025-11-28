@@ -39,11 +39,11 @@ export default function JourneyBanner({
     
     // Si el usuario ya está participando, llevarlo al mapa
     if (userParticipation) {
-      console.log('🗺️ Usuario ya está en el journey, llevando al mapa:', journeyInfo);
+      console.log('Usuario ya está en el journey, llevando al mapa:', journeyInfo);
       // Navegar al mapa (tab principal)
       router.push('/(tabs)');
     } else {
-      console.log('🚗 Usuario quiere unirse al journey:', journeyInfo);
+      console.log('Usuario quiere unirse al journey:', journeyInfo);
       // Abrir modal para unirse al journey
       onJoinJourney();
     }

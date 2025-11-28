@@ -67,8 +67,6 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
   // con esto se estamos guardando la posicion del usuario en firebase en cada minuto
   usePositionTracking(chatId, journeyId, userId, { enabled, intervalMs: 60000 });
 
-
-  // ✅ Verificar si el usuario es participante usando endpoint optimizado
   useEffect(() => {
     const checkIfUserIsParticipant = async () => {
       if (!groupJourney || !user) {

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import * as Location from 'expo-location';
 import { Unsubscribe } from 'firebase/firestore';
 import { Position } from '../../api/firebase/types';
 import {
@@ -7,6 +8,7 @@ import {
   subscribeToAllParticipantsPositions,
   calculateDistance
 } from '@/api/firebase/journey/positionsService';
+import { auth } from '@/firebaseconfig';
 
 /**
  * Hook simplificado para obtener la última posición de un usuario participante
@@ -163,23 +165,20 @@ export const usePositionTracking = (
 
   const { enabled, intervalMs = 30000, highAccuracy = true } = options;
 
-  const getCurrentPosition = (): Promise<GeolocationPosition> => {
-    return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) {
-        reject(new Error('Geolocalización no soportada'));
-        return;
-      }
-
-      navigator.geolocation.getCurrentPosition(
-        resolve,
-        reject,
-        {
-          enableHighAccuracy: highAccuracy,
-          timeout: 10000,
-          maximumAge: 5000
-        }
-      );
+  const getCurrentPosition = async (): Promise<{ coords: { latitude: number; longitude: number } }> => {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      throw new Error('Permiso de ubicación denegado');
+    }
+    const location = await Location.getCurrentPositionAsync({
+      accuracy: highAccuracy ? Location.Accuracy.High : Location.Accuracy.Balanced,
     });
+    return {
+      coords: {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      },
+    };
   };
 
   const sendPosition = async () => {
@@ -187,15 +186,15 @@ export const usePositionTracking = (
       const position = await getCurrentPosition();
       const { latitude, longitude } = position.coords;
       
-      await addUserPosition(chatId, journeyId, userId, latitude, longitude);
-      
-      setLastSentPosition({
+      await addUserPosition(
+        chatId,
+        journeyId,
+        auth.currentUser.uid,
         latitude,
-        longitude,
-        timestamp: new Date()
-      });
+        longitude
+      );
+    
       
-      setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error enviando posición');
       console.error('Error sending position:', err);

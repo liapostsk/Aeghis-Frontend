@@ -137,8 +137,7 @@ export default function JoinJourneyModal({
         }
         destinationLocationId = destId;
       } else {
-        // Para common_destination: usar la misma ubicación que el origen por ahora
-        // TODO: Implementar lógica para obtener el destino común del journey
+        // Para common_destination o individual, usar la ubicación de origen
         destinationLocationId = originLocationId;
       }
 
@@ -169,7 +168,7 @@ export default function JoinJourneyModal({
           backendParticipationId: participationId,
           initialState: 'ACCEPTED'
         });
-
+        console.log('Participación sincronizada con Firebaseeeeeeee');
         // Añadir posición inicial
         if (deviceLocation && auth.currentUser?.uid) {
           await addUserPosition(

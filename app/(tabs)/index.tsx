@@ -1,3 +1,4 @@
+
 import { router } from 'expo-router';
 import { StyleSheet, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -6,13 +7,15 @@ import PeopleOnMap from '@/components/map/PeopleOnMap';
 import JourneyOverlay from '@/components/map/JourneyOverlay';
 import EmergencyButton from '@/components/map/EmergencyButton';
 import AlertModal from '@/components/common/AlertModal';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { getParticipants } from '@/api/firebase/journey/participationsService';
 import { Group } from '@/api/backend/group/groupType';
 import { JourneyDto, JourneyStates } from '@/api/backend/journeys/journeyType';
 import { changeJourneyStatus } from '@/api/backend/journeys/journeyApi';
 import { updateJourneyState } from '@/api/firebase/journey/journeyService';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
+
 
 interface GroupWithJourney {
   group: Group;
@@ -39,6 +42,20 @@ export default function MapScreen() {
   const [modalState, setModalState] = useState<ModalState>({ type: null });
   const { getToken } = useAuth();
   const setToken = useTokenStore((state) => state.setToken);
+
+  // --- PARTICIPANTS LOGIC ---
+  const chatId = selectedGroupJourney?.group.id ? selectedGroupJourney.group.id.toString() : undefined;
+  const journeyId = selectedGroupJourney?.activeJourney?.id ? selectedGroupJourney.activeJourney.id.toString() : undefined;
+  const journeyState = selectedGroupJourney?.activeJourney?.state;
+  const [participants, setParticipants] = useState([]);
+
+  useEffect(() => {
+    if (chatId && journeyId) {
+      getParticipants(chatId, journeyId).then(setParticipants);
+    } else {
+      setParticipants([]);
+    }
+  }, [chatId, journeyId]);
 
   /*
   Enviar notificación de bienvenida al entrar al mapa
@@ -156,7 +173,12 @@ export default function MapScreen() {
         activeGroupJourney={selectedGroupJourney}
         onGroupJourneySelect={setSelectedGroupJourney}
       />
-      <PeopleOnMap />
+      <PeopleOnMap 
+        chatId={chatId}
+        journeyId={journeyId}
+        journeyState={journeyState}
+        participants={participants}
+      />
       <EmergencyButton onPress={() => console.log('✅ Emergencia procesada correctamente')} />
       <JourneyOverlay 
         groupJourney={selectedGroupJourney}

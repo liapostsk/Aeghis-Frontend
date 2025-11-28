@@ -1,11 +1,8 @@
 import { 
   collection, 
   doc, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  getDocs, 
-  getDoc,
+  addDoc,
+  getDocs,
   query, 
   orderBy, 
   limit,

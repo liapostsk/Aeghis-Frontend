@@ -4,28 +4,26 @@ import { StyleSheet, View, Alert, Image } from 'react-native';
 import MapView, { Marker, Region } from 'react-native-maps';
 import * as Location from 'expo-location';
 import MapStyleButton, { MapType } from './MapStyleButton';
+import { useAllParticipantsPositions } from '@/lib/hooks/usePositions';
 
-const mockMembers = [
-  {
-    id: 1,
-    name: 'Alex',
-    latitude: 41.387,
-    longitude: 2.1683,
-    avatar: require('../../assets/images/aegis.png'), // Asegúrate que exista
-  },
-  {
-    id: 2,
-    name: 'Maria',
-    latitude: 41.3825,
-    longitude: 2.1765,
-    avatar: require('../../assets/images/aegis.png'), // Asegúrate que exista
-  },
-];
+// Recibe props o usa contexto para chatId, journeyId, journeyState, participants
+// participants: [{ id, name, avatarUrl }]
+export default function PeopleOnMap({ chatId, journeyId, journeyState, participants }) {
 
-export default function GroupMap() {
   const [region, setRegion] = useState<Region | null>(null);
   const [mapType, setMapType] = useState<MapType>('standard');
 
+  // 1. Escuchar posiciones solo si el journey está IN_PROGRESS
+  const enabled = journeyState === 'IN_PROGRESS';
+  const participantUserIds = participants.map(p => p.id);
+  const { positionsMap } = useAllParticipantsPositions(
+    enabled ? chatId : undefined,
+    enabled ? journeyId : undefined,
+    enabled ? participantUserIds : [],
+    1 // Solo la última posición
+  );
+
+  // 2. Centrar el mapa en la ubicación del usuario
   useEffect(() => {
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -33,7 +31,6 @@ export default function GroupMap() {
         Alert.alert("Permission denied", "Location access is required.");
         return;
       }
-
       const location = await Location.getCurrentPositionAsync({});
       setRegion({
         latitude: location.coords.latitude,
@@ -66,20 +63,28 @@ export default function GroupMap() {
         zoomEnabled={true}
         scrollEnabled={true}
       >
-        {mockMembers.map(member => (
-          <Marker
-            key={member.id}
-            coordinate={{
-              latitude: member.latitude,
-              longitude: member.longitude,
-            }}
-            title={member.name}
-          >
-            <View style={styles.marker}>
-              <Image source={member.avatar} style={styles.avatar} />
-            </View>
-          </Marker>
-        ))}
+        {/* Renderizar marcadores de participantes */}
+        {[...positionsMap.entries()].map(([userId, positions]) => {
+          const pos = positions[0];
+          if (!pos) return null;
+          const user = participants.find(u => u.id === userId);
+          return (
+            <Marker
+              key={userId}
+              coordinate={{
+                latitude: pos.latitude,
+                longitude: pos.longitude,
+              }}
+              title={user?.name}
+            >
+              <View style={styles.marker}>
+                {user?.avatarUrl ? (
+                  <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
+                ) : null}
+              </View>
+            </Marker>
+          );
+        })}
       </MapView>
 
       {/* Botón de estilo del mapa */}

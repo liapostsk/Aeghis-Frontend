@@ -11,6 +11,8 @@ import { Ionicons } from '@expo/vector-icons';
 import SafeLocationModal from '@/components/safeLocations/SafeLocationModal';
 import { SafeLocation } from '@/api/backend/locations/locationType';
 import { createParticipation } from '@/api/backend/participations/participationApi';
+import { joinJourneyParticipation } from '@/api/firebase/journey/participationsService';
+import { getJourney } from '@/api/backend/journeys/journeyApi';
 import { createLocation } from '@/api/backend/locations/locationsApi';
 import { ParticipationDto } from '@/api/backend/participations/participationType';
 import { Location } from '@/api/backend/locations/locationType';
@@ -41,7 +43,6 @@ export default function JourneyRequestMessage({
     const [showDestinationModal, setShowDestinationModal] = useState(false);
     const { getToken } = useAuth();
 
-    // Función para obtener ubicación actual del dispositivo
     const getCurrentLocation = async (): Promise<ExpoLocation.LocationObject | null> => {
         try {
             const { status } = await ExpoLocation.requestForegroundPermissionsAsync();
@@ -90,7 +91,8 @@ export default function JourneyRequestMessage({
             };
             const destinationLocationId = await createLocation(destLocation as Location);
 
-            // 5. Crear participación
+
+            // 5. Crear participación en backend
             const participationData: Partial<ParticipationDto> = {
                 journeyId: journeyId,
                 userId: currentUser.id,
@@ -103,6 +105,23 @@ export default function JourneyRequestMessage({
             const participationId = await createParticipation(participationData as ParticipationDto);
             console.log('✅ Participación creada con ID:', participationId);
 
+            // 6. Registrar participación en Firebase (requiere chatId)
+            // journeyId es number, necesitamos groupId para chatId
+            const journey = await getJourney(journeyId);
+            const chatId = journey.groupId.toString();
+            const destinationPosition = selectedDestination ? {
+                latitude: selectedDestination.latitude,
+                longitude: selectedDestination.longitude,
+                timestamp: new Date()
+            } : undefined;
+
+        await joinJourneyParticipation(chatId, journeyId.toString(), {
+            destination: destinationPosition,
+            backendParticipationId: participationId,
+            initialState: 'ACCEPTED'
+        });
+        console.log('Participación sincronizada con Firebaseeeeeeee');
+
             Alert.alert(
                 '¡Te has unido al trayecto!',
                 `Te has unido exitosamente al trayecto "${journeyName}". ` +
@@ -113,7 +132,6 @@ export default function JourneyRequestMessage({
             onJoinSuccess?.(journeyId);
 
         } catch (error) {
-            console.error('❌ Error joining journey:', error);
             Alert.alert('Error', 'No se pudo unir al trayecto. Inténtalo de nuevo.');
         } finally {
             setJoining(false);
