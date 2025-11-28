@@ -24,6 +24,7 @@ import { ParticipationDto } from '@/api/backend/participations/participationType
 import { listenJourneyState } from '@/api/firebase/journey/journeyService';
 import { mapUserToDto } from '@/api/backend/user/mapper';
 import { usePositionTracking } from '@/lib/hooks/usePositions';
+import GroupOptionsSheet from '../journey/GroupOptionsSheet';
 
 interface GroupWithJourney {
   group: Group;
@@ -234,9 +235,8 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
     onStartJourney();
   };
 
-  // ✅ MEJORADO: Re-verificar participación después de unirse exitosamente
   const handleJoinSuccess = async (participation: ParticipationDto) => {
-    console.log('✅ Usuario unido al trayecto:', participation);
+    console.log('Usuario unido al trayecto:', participation);
     setShowJoinJourneyModal(false);
     
     // Actualizar inmediatamente
@@ -249,24 +249,43 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
           const token = await getToken();
           setToken(token);
           const isParticipant = await isUserParticipantInJourney(groupJourney.activeJourney.id);
-          console.log('🔄 Re-verificación: Usuario es participante:', isParticipant);
+          console.log('Re-verificación: Usuario es participante:', isParticipant);
           setIsUserParticipant(isParticipant);
         } catch (err) {
-          console.warn('⚠️ Error re-verificando participación:', err);
+          console.warn('Error re-verificando participación:', err);
         }
       }, 500);
     }
   };
 
   const renderExpandedContent = () => {
-    if (groupJourney) {
+    if (groupJourney && ['IN_PROGRESS', 'PENDING'].includes(journeyState)) {
+      // Si hay journey activo o pendiente, mostrar la info del trayecto
       return renderActiveJourneyFromGroupForSheet(groupJourney);
-    } 
-    // Mostrar interfaz por defecto si NO hay journey activo o pendiente
-    if (
-      !groupJourney ||
-      !['IN_PROGRESS', 'PENDING'].includes(journeyState)
-    ) {
+    } else if (showJourneyOptions) {
+      // Si se han pedido opciones, mostrar el selector de grupo y creación
+      return (
+        <GroupOptionsSheet
+          userGroups={userGroups}
+          showCreateGroupModal={showCreateGroupModal}
+          showJoinGroupModal={showJoinGroupModal}
+          showGroupTypeSelector={showGroupTypeSelector}
+          selectedGroupType={selectedGroupType}
+          onClose={() => setShowJourneyOptions(false)}
+          onGroupSelected={handleGroupSelected}
+          onCreateGroup={handleCreateGroup}
+          onJoinGroup={handleJoinGroup}
+          onCreateGroupWithType={handleCreateGroupWithType}
+          onGroupCreated={handleGroupCreated}
+          setShowCreateGroupModal={setShowCreateGroupModal}
+          setShowJoinGroupModal={setShowJoinGroupModal}
+          setShowGroupTypeSelector={setShowGroupTypeSelector}
+          setSelectedGroupType={setSelectedGroupType}
+          onLayout={handleContentLayout}
+        />
+      );
+    } else {
+      // Mostrar interfaz simple por defecto
       return (
         <JourneySimpleInterface
           onStartJourney={() => setShowJourneyOptions(true)}
@@ -274,9 +293,6 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
         />
       );
     }
-
-    // Si hay journey activo o pendiente, mostrar la info del trayecto
-    return renderActiveJourneyFromGroupForSheet(groupJourney);
   };
 
   const renderActiveJourneyFromGroupForSheet = (selectedGroupJourney: GroupWithJourney) => {

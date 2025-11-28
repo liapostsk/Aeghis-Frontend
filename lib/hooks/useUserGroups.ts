@@ -65,7 +65,7 @@ export function useUserGroups() {
       
       return userGroups;
     } catch (err) {
-      console.error('❌ [useUserGroups] Error cargando grupos:', err);
+      console.log('[useUserGroups] Error cargando grupos:', err);
       setError(err as Error);
       return [];
     } finally {

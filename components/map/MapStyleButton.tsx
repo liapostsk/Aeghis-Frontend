@@ -19,7 +19,7 @@ export default function MapStyleButton({ mapType, onMapTypeChange }: MapStyleBut
 
   const handleMapTypeSelect = (type: MapType) => {
     onMapTypeChange(type);
-    setShowControls(false); // Cerrar el panel después de seleccionar
+    setShowControls(false);
   };
 
   return (
@@ -76,8 +76,7 @@ const styles = StyleSheet.create({
   container: {
     position: 'absolute',
     top: 17,
-    right: 20,
-    zIndex: 1000,
+    right: 20
   },
   controlsToggle: {
     backgroundColor: '#6200ee',

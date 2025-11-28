@@ -65,7 +65,7 @@ export const useGroupData = ({ groupId, getToken, setToken }: UseGroupDataProps)
             try {
               return await getUser(memberId);
             } catch (error) {
-              console.warn(`⚠️ [useGroupData] Error cargando miembro ${memberId}:`, error);
+              console.warn(`[useGroupData] Error cargando miembro ${memberId}:`, error);
               return null;
             }
           });
@@ -75,15 +75,15 @@ export const useGroupData = ({ groupId, getToken, setToken }: UseGroupDataProps)
           
           if (mounted) {
             setMembers(validMembers);
-            console.log(`✅ [useGroupData] ${validMembers.length} miembros cargados`);
+            console.log(`[useGroupData] ${validMembers.length} miembros cargados`);
           }
         } else {
-          console.log('⚠️ [useGroupData] No hay miembros en el grupo');
+          console.log('useGroupData] No hay miembros en el grupo');
           setMembers([]);
         }
 
       } catch (error: any) {
-        console.error('❌ [useGroupData] Error cargando grupo:', error);
+        console.error('[useGroupData] Error cargando grupo:', error);
         
         if (mounted) {
           // Mensajes de error específicos

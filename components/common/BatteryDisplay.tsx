@@ -316,11 +316,11 @@ export function ParticipantsList({
         return result;
       });
 
-      console.log('✅ Datos completos de participantes listos');
+      console.log('Datos completos de participantes listos');
       setParticipantsData(participantsWithData);
       
     } catch (error: any) {
-      console.error('💥 Error cargando participantes:', error);
+      console.error('Error cargando participantes:', error);
       
       if (error?.response?.status === 404) {
         console.error('   Journey no encontrado');

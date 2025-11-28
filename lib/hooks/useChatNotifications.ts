@@ -87,7 +87,7 @@ export function useChatNotifications() {
               
               console.log(`✅ [ChatNotifications] ${groupMembers.length} miembros cargados`);
             } catch (error) {
-              console.error(`❌ Error cargando miembros del grupo ${group.name}:`, error);
+              console.log(`Error cargando miembros del grupo ${group.name}:`, error);
               return;
             }
           }

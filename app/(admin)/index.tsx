@@ -86,7 +86,7 @@ export default function AdminVerificationScreen() {
               };
             }
           } catch (error) {
-            console.error(`❌ Error cargando fotos de ${user.name}:`, error);
+            console.log(`Error cargando fotos de ${user.name}:`, error);
             return {
               ...user,
               photosLoaded: false,
@@ -100,7 +100,7 @@ export default function AdminVerificationScreen() {
 
       setUsers(usersWithBothPhotos);
     } catch (error) {
-      console.error('❌ Error cargando usuarios:', error);
+      console.log('Error cargando usuarios:', error);
       Alert.alert('Error', 'No se pudieron cargar los usuarios pendientes');
     } finally {
       setLoading(false);
