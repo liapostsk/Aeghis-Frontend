@@ -15,8 +15,6 @@ import { useUserStore } from '@/lib/storage/useUserStorage';
 import ProfileVerificationScreen from '@/components/profile/ProfileVerificationScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const VERIFICATION_SKIPPED_KEY = 'companion_verification_skipped';
-
 // Mock data para las solicitudes
 const mockCompanionRequests = [
   {
@@ -63,34 +61,19 @@ export default function CompanionsGroups() {
   const [searchQuery, setSearchQuery] = useState('');
   const [requests, setRequests] = useState(mockCompanionRequests);
 
-  useEffect(() => {
-    checkVerificationStatus();
-  }, []);
 
-  const checkVerificationStatus = async () => {
-    try {
-      const isVerified = user?.verify || false;
-      const hasSkipped = await AsyncStorage.getItem(VERIFICATION_SKIPPED_KEY);
-      setShowVerification(!isVerified && !hasSkipped);
-    } catch (error) {
-      console.error('Error checking verification status:', error);
+  useEffect(() => {
+    // Solo mostrar la pantalla de verificación si el usuario no está verificado
+    if (user?.verify !== 'VERIFIED') {
+      setShowVerification(true);
+    } else {
       setShowVerification(false);
-    } finally {
-      setIsLoading(false);
     }
-  };
+    setIsLoading(false);
+  }, [user?.verify]);
 
   const handleVerificationComplete = () => {
     setShowVerification(false);
-  };
-
-  const handleSkipVerification = async () => {
-    try {
-      await AsyncStorage.setItem(VERIFICATION_SKIPPED_KEY, 'true');
-      setShowVerification(false);
-    } catch (error) {
-      console.error('Error saving skip status:', error);
-    }
   };
 
   const handleCreateRequest = () => {
@@ -147,7 +130,6 @@ export default function CompanionsGroups() {
     return (
       <ProfileVerificationScreen
         onVerificationComplete={handleVerificationComplete}
-        onSkip={handleSkipVerification}
       />
     );
   }

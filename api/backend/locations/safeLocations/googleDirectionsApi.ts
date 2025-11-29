@@ -36,7 +36,7 @@ export const getRouteBetweenPoints = async (
     });
 
     const data = response.data;
-    console.log("🧭 Respuesta directions:", JSON.stringify(data, null, 2));
+    console.log("Respuesta directions:", JSON.stringify(data, null, 2));
 
     if (!data.routes || data.routes.length === 0) {
       console.warn("No se encontró ruta");
@@ -47,7 +47,7 @@ export const getRouteBetweenPoints = async (
     const leg = route.legs?.[0];
 
     // 1) Decodificar polyline
-    const points = polyline.decode(route.overview_polyline.points); // [[lat, lng], ...]
+    const points = polyline.decode(route.overview_polyline.points);
     const coordinates: RouteCoordinate[] = points.map(
       ([lat, lng]: [number, number]) => ({
         latitude: lat,

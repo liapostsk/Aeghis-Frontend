@@ -49,7 +49,7 @@ export default function GroupsLayout() {
 
         {/* Search - Solo mostrar en Confianza y Temporal */}
         {active !== 'companion' && (
-          <SafeAreaView style={styles.searchBar}>
+          <View style={styles.searchBar}>
             <Ionicons name="search" size={20} color="#7A33CC" style={styles.searchIcon} />
             <TextInput
               placeholder="Search"
@@ -58,7 +58,7 @@ export default function GroupsLayout() {
               value={search}
               onChangeText={setSearch}
             />
-          </SafeAreaView>
+          </View>
         )}
         {/* sub‑pantallas: trusted/temporal/companion */}
         <View style={{ flex: 1, paddingHorizontal: 16 }}>

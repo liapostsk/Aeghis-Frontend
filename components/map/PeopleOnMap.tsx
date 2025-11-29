@@ -1,13 +1,16 @@
 // File: components/map/GroupMap.tsx
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Alert, Image } from 'react-native';
-import MapView, { Marker, Region } from 'react-native-maps';
+import MapView, { Marker, Polyline, Region } from 'react-native-maps';
 import * as Location from 'expo-location';
 import MapStyleButton, { MapType } from './MapStyleButton';
 import { useAllParticipantsPositions } from '@/lib/hooks/usePositions';
+import { getRouteBetweenPoints } from '@/api/backend/locations/safeLocations/googleDirectionsApi';
 
 // Recibe props o usa contexto para chatId, journeyId, journeyState, participants
 // participants: [{ id, name, avatarUrl }]
+const COLORS = ["#7A33CC", "#FF5733", "#33C1FF", "#4CAF50", "#FFC300", "#FF33A8", "#33FFB5", "#FF8C33"];
+
 export default function PeopleOnMap({ chatId, journeyId, journeyState, participants }) {
 
   const [region, setRegion] = useState<Region | null>(null);
@@ -41,6 +44,45 @@ export default function PeopleOnMap({ chatId, journeyId, journeyState, participa
     })();
   }, []);
 
+
+  // Estado para guardar las rutas de cada participante
+  const [routes, setRoutes] = useState({}); // { [userId]: LatLng[] }
+
+  // Obtener rutas cuando el journey está activo y hay posiciones
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchRoutes() {
+      const newRoutes = {};
+      for (const [idx, participant] of participants.entries()) {
+        const pos = positionsMap.get(participant.id)?.[0];
+        const dest = participant.destination; // { latitude, longitude }
+        if (pos && dest && dest.latitude && dest.longitude) {
+          try {
+            const route = await getRouteBetweenPoints(
+              pos.latitude,
+              pos.longitude,
+              dest.latitude,
+              dest.longitude
+            );
+            if (route && route.coordinates) {
+              newRoutes[participant.id] = route.coordinates;
+            }
+          } catch (e) {
+            // Puedes loguear el error si quieres
+            console.log(`❌ Error obteniendo ruta para participante ${participant.id}:`, e);
+          }
+        }
+      }
+      if (isMounted) setRoutes(newRoutes);
+    }
+    if (enabled && participants.length > 0) {
+      fetchRoutes();
+    } else {
+      setRoutes({});
+    }
+    return () => { isMounted = false; };
+  }, [enabled, participants, positionsMap]);
+
   const handleMapTypeChange = (newMapType: MapType) => {
     setMapType(newMapType);
   };
@@ -63,26 +105,49 @@ export default function PeopleOnMap({ chatId, journeyId, journeyState, participa
         zoomEnabled={true}
         scrollEnabled={true}
       >
-        {/* Renderizar marcadores de participantes */}
-        {[...positionsMap.entries()].map(([userId, positions]) => {
-          const pos = positions[0];
-          if (!pos) return null;
-          const user = participants.find(u => u.id === userId);
+        {/* Renderizar rutas y marcadores de participantes */}
+        {participants.map((participant, idx) => {
+          const pos = positionsMap.get(participant.id)?.[0];
+          const dest = participant.destination;
+          const color = COLORS[idx % COLORS.length];
           return (
-            <Marker
-              key={userId}
-              coordinate={{
-                latitude: pos.latitude,
-                longitude: pos.longitude,
-              }}
-              title={user?.name}
-            >
-              <View style={styles.marker}>
-                {user?.avatarUrl ? (
-                  <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
-                ) : null}
-              </View>
-            </Marker>
+            <React.Fragment key={participant.id}>
+              {/* Ruta */}
+              {routes[participant.id] && Array.isArray(routes[participant.id]) && routes[participant.id].length > 1 && (
+                <Polyline
+                  coordinates={routes[participant.id]}
+                  strokeColor={color}
+                  strokeWidth={4}
+                />
+              )}
+              {/* Marcador de participante */}
+              {pos && (
+                <Marker
+                  coordinate={{
+                    latitude: pos.latitude,
+                    longitude: pos.longitude,
+                  }}
+                  title={participant?.name}
+                >
+                  <View style={styles.marker}>
+                    {participant?.avatarUrl ? (
+                      <Image source={{ uri: participant.avatarUrl }} style={styles.avatar} />
+                    ) : null}
+                  </View>
+                </Marker>
+              )}
+              {/* Marcador de destino */}
+              {dest && dest.latitude && dest.longitude && (
+                <Marker
+                  coordinate={{
+                    latitude: dest.latitude,
+                    longitude: dest.longitude,
+                  }}
+                  pinColor={color}
+                  title="Destino"
+                />
+              )}
+            </React.Fragment>
           );
         })}
       </MapView>

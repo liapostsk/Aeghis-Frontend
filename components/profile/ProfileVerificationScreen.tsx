@@ -19,7 +19,7 @@ import { useAuth } from '@clerk/clerk-expo';
 interface ProfileVerificationScreenProps {
   onVerificationComplete: () => void;
   onSkip?: () => void;
-  onBack?: () => void; // ✅ NUEVO: Callback para volver atrás
+  onBack?: () => void;
 }
 
 export default function ProfileVerificationScreen({
@@ -30,7 +30,6 @@ export default function ProfileVerificationScreen({
   const { user } = useUserStore();
   const { userId } = useAuth();
   
-  // Estados para las imágenes
   const [profileImage, setProfileImage] = useState<string | null>(user?.image || null);
   const [livePhoto, setLivePhoto] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -124,7 +123,7 @@ export default function ProfileVerificationScreen({
     setIsSubmitting(true);
 
     try {
-      console.log('📤 Subiendo fotos de verificación a Firebase Storage...');
+      console.log('Subiendo fotos de verificación a Firebase Storage...');
       
       // Subir ambas fotos a Firebase Storage
       const [documentUrl, selfieUrl] = await Promise.all([
@@ -132,12 +131,12 @@ export default function ProfileVerificationScreen({
         uploadVerificationSelfie(livePhoto, userId),
       ]);
 
-      console.log('✅ Fotos subidas exitosamente:');
-      console.log('📄 Documento:', documentUrl);
-      console.log('🤳 Selfie:', selfieUrl);
+      console.log('Fotos subidas exitosamente:');
+      console.log('Documento:', documentUrl);
+      console.log('Selfie:', selfieUrl);
 
       Alert.alert(
-        '✅ Fotos enviadas',
+        'Fotos enviadas',
         'Tus fotos han sido enviadas correctamente. Un administrador las revisará pronto.',
         [
           {
@@ -147,7 +146,7 @@ export default function ProfileVerificationScreen({
         ]
       );
     } catch (error) {
-      console.error('❌ Error subiendo fotos de verificación:', error);
+      console.error('Error subiendo fotos de verificación:', error);
       Alert.alert(
         'Error',
         'No se pudieron subir las fotos. Por favor, intenta de nuevo.'
@@ -298,15 +297,8 @@ export default function ProfileVerificationScreen({
             </>
           )}
         </Pressable>
-
-        {onSkip && (
-          <Pressable style={styles.skipButton} onPress={onSkip}>
-            <Text style={styles.skipButtonText}>Verificar más tarde</Text>
-          </Pressable>
-        )}
       </View>
 
-      {/* Nota de privacidad */}
       <Text style={styles.privacyNote}>
         🔒 Tus fotos se utilizan únicamente para verificación de identidad y se procesan de forma segura
       </Text>
