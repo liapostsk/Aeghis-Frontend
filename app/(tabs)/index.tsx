@@ -91,7 +91,7 @@ export default function MapScreen() {
       };
 
       await changeJourneyStatus(journey.id, 'IN_PROGRESS');
-      console.log('✅ Journey iniciado en backend');
+      console.log('Journey iniciado en backend');
       
       await updateJourneyState(group.id.toString(), journey.id.toString(), 'IN_PROGRESS');
 

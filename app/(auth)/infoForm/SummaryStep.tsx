@@ -69,18 +69,18 @@ export default function SummaryStep({ onBack }: { onBack: () => void }) {
       // 2. Crear usuario en el backend CON las ubicaciones y contactos del formulario
       setLoadingMessage('Configurando tu perfil...');
       
-      // ✅ Crear DTO con datos del formulario
+      // Crear DTO con datos del formulario
       const baseDto = mapUserToDto(user);
       
-      // ✅ Preparar datos para el backend (el DTO base ya incluye todo)
+      // Preparar datos para el backend (el DTO base ya incluye todo)
       // El backend se encargará de crear los IDs de ubicaciones y contactos
-      console.log("📤 Creando usuario en backend...");
-      console.log("📍 Ubicaciones del usuario:", user.safeLocations?.length || 0);
-      console.log("👥 Contactos de emergencia:", user.emergencyContacts?.length || 0);
-      console.log("📞 Contactos externos:", user.externalContacts?.length || 0);
+      console.log(" Creando usuario en backend...");
+      console.log(" Ubicaciones del usuario:", user.safeLocations?.length || 0);
+      console.log(" Contactos de emergencia:", user.emergencyContacts?.length || 0);
+      console.log(" Contactos externos:", user.externalContacts?.length || 0);
       
-      const userId = await createUser(baseDto as any); // ✅ Cast a any para evitar conflicto de tipos
-      console.log("✅ Usuario creado con ID:", userId);
+      const userId = await createUser(baseDto as any); // Cast a any para evitar conflicto de tipos
+      console.log(" Usuario creado con ID:", userId);
       
       // 3. Obtener datos actualizados del backend (ahora con IDs asignados)
       setLoadingMessage('Sincronizando datos...');
@@ -99,21 +99,21 @@ export default function SummaryStep({ onBack }: { onBack: () => void }) {
       if (expoPushToken) {
         try {
           setLoadingMessage('Configurando notificaciones...');
-          console.log("🔔 Registrando token de notificaciones en backend...");
+          console.log(" Registrando token de notificaciones en backend...");
           
           await registerToken(userId, {
             token: expoPushToken,
             platform: Platform.OS === 'ios' ? 'IOS' : 'ANDROID',
           });
           
-          console.log("✅ Token de notificaciones registrado exitosamente");
+          console.log("Token de notificaciones registrado exitosamente");
         } catch (pushError) {
-          console.error("❌ Error registrando token de notificaciones:", pushError);
+          console.error("Error registrando token de notificaciones:", pushError);
           // No bloquear el registro - las notificaciones son opcionales
-          console.warn("⚠️ Continuando sin notificaciones push");
+          console.warn(" Continuando sin notificaciones push");
         }
       } else {
-        console.warn("⚠️ No hay token de notificaciones disponible (dispositivo virtual o permisos denegados)");
+        console.warn(" No hay token de notificaciones disponible (dispositivo virtual o permisos denegados)");
       }
 
       // 6. VINCULAR CON FIREBASE
@@ -129,44 +129,36 @@ export default function SummaryStep({ onBack }: { onBack: () => void }) {
           phone: clerkUser?.phoneNumbers?.[0]?.phoneNumber || undefined,
         });
         
-        console.log("✅ Sesión de Firebase vinculada exitosamente");
+        console.log("Sesión de Firebase vinculada exitosamente");
         
       } catch (firebaseError) {
-        console.error("❌ Error vinculando sesión de Firebase:", firebaseError);
+        console.error("Error vinculando sesión de Firebase:", firebaseError);
         // No bloquear el acceso - Firebase es opcional para funcionalidades básicas
-        console.warn("⚠️ Continuando sin Firebase - Funcionalidades de chat limitadas");
+        console.warn("Continuando sin Firebase - Funcionalidades de chat limitadas");
       }
 
       // 7. Actualizar estado local con datos completos (incluyendo el rol del backend)
       setUser({
         ...user,
         id: userId,
-        role: userData.role, // ✅ Incluir el rol asignado por el backend
+        role: userData.role, // Incluir el rol asignado por el backend
         safeLocations: userData.safeLocations || [],
         emergencyContacts: userData.emergencyContacts || [],
         externalContacts: userData.externalContacts || [],
       });
 
-      console.log("✅ Usuario creado exitosamente");
+      console.log("Usuario creado exitosamente");
       console.log("👤 Rol asignado por backend:", userData.role);
 
       // 8. Navegación final
       setLoadingMessage('¡Bienvenido a Aegis!');
       
-      // ✅ Esperar más tiempo para que useSessionState detecte el cambio de rol
+      // Esperar más tiempo para que useSessionState detecte el cambio de rol
       await new Promise(resolve => setTimeout(resolve, 1200));
-      
-      // ✅ Redirigir según el rol
-      if (userData.role === 'ADMIN') {
-        console.log("👑 Redirigiendo a (admin)");
-        router.replace("/(admin)");
-      } else {
-        console.log("� Redirigiendo a (tabs)");
-        router.replace("/(tabs)");
-      }
+  
       
     } catch (error) {
-      console.error("❌ Error creando usuario en backend:", error);
+      console.error("Error creando usuario en backend:", error);
       
       // ROLLBACK: Borrar usuario de Clerk para permitir reintentar
       let errorMessage = "No se pudo crear el usuario.";
@@ -209,7 +201,7 @@ export default function SummaryStep({ onBack }: { onBack: () => void }) {
           );
           
         } catch (rollbackError) {
-          console.error("❌ Error durante rollback:", rollbackError);
+          console.error(" Error durante rollback:", rollbackError);
           Alert.alert(
             "Error Crítico",
             "No se pudo revertir el registro. Por favor, contacta soporte.",

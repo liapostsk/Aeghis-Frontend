@@ -62,11 +62,11 @@ export const updateUserVerificationStatus = async (
   status: ValidationStatus
 ): Promise<void> => {
   try {
-    console.log(`🔄 Actualizando verificación del usuario ${userId} a ${status}...`);
+    console.log(`Actualizando verificación del usuario ${userId} a ${status}...`);
     await api.post(`/user/${userId}/verify?verified=${status}`);
-    console.log('✅ Estado de verificación actualizado');
+    console.log('Estado de verificación actualizado');
   } catch (error) {
-    console.error('❌ Error actualizando verificación:', error);
+    console.log('❌ Error actualizando verificación:', error);
     throw error;
   }
 };

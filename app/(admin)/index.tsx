@@ -19,7 +19,7 @@ import { router } from 'expo-router';
 import { getUsersPendingVerification, updateUserVerificationStatus } from '@/api/backend/user/userApi';
 import { getVerificationPhotos } from '@/api/firebase/storage/photoService';
 import { UserDto } from '@/api/backend/types';
-import { ValidationStatus } from '@/lib/storage/useUserStorage';
+import { useUserStore, ValidationStatus } from '@/lib/storage/useUserStorage';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 
 interface UserWithPhotos extends UserDto {
@@ -30,23 +30,15 @@ interface UserWithPhotos extends UserDto {
 
 export default function AdminVerificationScreen() {
   const { state } = useSessionState();
-  // Solo renderizar si el usuario es admin
-  if (state !== 'admin') {
-    return null;
-  }
-  const { signOut } = useAuth();
+  const { signOut, getToken } = useAuth();
   const [users, setUsers] = useState<UserWithPhotos[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<UserWithPhotos | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const { getToken } = useAuth();
+  const { clearUser } = useUserStore();
   const setToken = useTokenStore((state) => state.setToken);
-
-  useEffect(() => {
-    loadPendingUsers();
-  }, []);
 
   const loadPendingUsers = async (isRefreshing = false) => {
     try {
@@ -55,18 +47,19 @@ export default function AdminVerificationScreen() {
       } else {
         setLoading(true);
       }
-        const token = await getToken();
-        setToken(token);
-        const pendingUsers = await getUsersPendingVerification();
-        console.log(`📋 ${pendingUsers.length} usuarios pendientesr de verificación`);
 
-        const usersWithPhotos = await Promise.all(
+      const token = await getToken();
+      setToken(token);
+      const pendingUsers = await getUsersPendingVerification();
+      console.log(`📋 ${pendingUsers.length} usuarios pendientesr de verificación`);
+
+      const usersWithPhotos = await Promise.all(
         pendingUsers.map(async (user) => {
-          try {
-            if (!user.clerkId) {
-              console.warn(`⚠️ Usuario ${user.name} no tiene clerkId`);
-              return { ...user, photosLoaded: false };
-            }
+        try {
+          if (!user.clerkId) {
+            console.warn(`⚠️ Usuario ${user.name} no tiene clerkId`);
+            return { ...user, photosLoaded: false };
+          }
             const token = await getToken();
             setToken(token);
             const photos = await getVerificationPhotos(user.clerkId);
@@ -79,7 +72,7 @@ export default function AdminVerificationScreen() {
                 photosLoaded: true,
               };
             } else {
-              console.warn(`⚠️ Usuario ${user.name} no tiene fotos de verificación`);
+              console.warn(`Usuario ${user.name} no tiene fotos de verificación`);
               return {
                 ...user,
                 photosLoaded: false,
@@ -103,14 +96,36 @@ export default function AdminVerificationScreen() {
       console.log('Error cargando usuarios:', error);
       Alert.alert('Error', 'No se pudieron cargar los usuarios pendientes');
     } finally {
+      if (isRefreshing) {
+        setRefreshing(false);
+      } else {
       setLoading(false);
-      setRefreshing(false);
+      }
     }
   };
+
+  useEffect(() => {
+    if (state === 'admin') {
+      loadPendingUsers();
+    }
+  }, [state]);
 
   const handleRefresh = () => {
     loadPendingUsers(true);
   };
+
+  if (state !== 'admin') {
+    return null;
+  }
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.loadingContainer} edges={['top']}>
+        <ActivityIndicator size="large" color="#3B82F6" />
+        <Text style={styles.loadingText}>Cargando verificaciones...</Text>
+      </SafeAreaView>
+    );
+  }
 
   const handleApprove = async (user: UserWithPhotos) => {
     Alert.alert(
@@ -183,6 +198,8 @@ export default function AdminVerificationScreen() {
                 const token = await getToken();
                 setToken(token);
               await signOut();
+              clearUser();
+              setToken(null);
               router.replace('/(auth)');
             } catch (error) {
               Alert.alert('Error', 'No se pudo cerrar sesión');
@@ -256,15 +273,6 @@ export default function AdminVerificationScreen() {
       </Pressable>
     );
   };
-
-  if (loading) {
-    return (
-      <SafeAreaView style={styles.loadingContainer} edges={['top']}>
-        <ActivityIndicator size="large" color="#3B82F6" />
-        <Text style={styles.loadingText}>Cargando verificaciones...</Text>
-      </SafeAreaView>
-    );
-  }
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>

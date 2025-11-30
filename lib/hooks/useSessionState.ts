@@ -14,7 +14,7 @@ export type SessionState = "checking" | "noSession" | "needsProfile" | "ready" |
 export function useSessionState() {
   const { isLoaded, isSignedIn, getToken, signOut } = useAuth();
   const { user: clerkUser } = useUser();
-  const { user: localUser } = useUserStore(); // ✅ Obtener usuario del store local
+  const { user: localUser, clearUser } = useUserStore(); // ✅ Obtener usuario del store local
   const [state, setState] = useState<SessionState>("checking");
   const setToken = useTokenStore(s => s.setToken);
 
@@ -64,19 +64,32 @@ export function useSessionState() {
     }
 
     const validateSession = async () => {
-      console.log("🔍 Validando sesión...", { isSignedIn });
+      console.log("Validando sesión...", { isSignedIn });
 
       if (!isSignedIn) {
-        console.log("❌ No hay sesión en Clerk");
+        console.log("No hay sesión en Clerk");
         await unlinkFirebaseSession().catch(() => {});
+        clearUser();
         setState("noSession");
         return;
       }
 
-      if (localUser?.id) {
-        console.log("✅ Usuario encontrado en store local (ID:", localUser.id, ")");
-        console.log("👤 Rol del usuario:", localUser.role);
-        // ✅ Verificar si es admin
+      if (localUser && localUser.idClerk && clerkUser && localUser.idClerk !== clerkUser.id) {
+        console.log(
+          "Usuario local pertenece a otra sesión de Clerk. Limpiando store local."
+        );
+        clearUser();
+      }
+
+      const effectiveLocalUser = (localUser && localUser.idClerk === clerkUser?.id)
+        ? localUser
+        : undefined;
+
+      // Si hay usuario local válido (mismo clerkId) → usar su rol
+      if (effectiveLocalUser?.id) {
+        console.log("Usuario encontrado en store local (ID:", localUser.id, ")");
+        console.log("Rol del usuario:", localUser.role);
+
         if (localUser.role === 'ADMIN') {
           console.log("👑 Usuario es ADMIN → Estado: admin");
           setState("admin");
@@ -84,44 +97,42 @@ export function useSessionState() {
           console.log("👤 Usuario normal → Estado: ready");
           setState("ready");
         }
-        // No vincular Firebase aquí, solo tras validar backend
         return;
       }
 
-      // 3️⃣ Obtener token de Clerk
+      // A partir de aquí: hay sesión en Clerk, pero NO usuario local → mirar backend
       try {
         const token = await getToken();
         if (!token) {
-          console.log("❌ No se pudo obtener token");
+          console.log("No se pudo obtener token");
           await cleanupClerkUser("Token inválido");
           return;
         }
 
         setToken(token);
-        console.log("✅ Token obtenido y guardado");
+        console.log("Token obtenido y guardado");
       } catch (tokenError) {
-        console.error("❌ Error obteniendo token:", tokenError);
+        console.error("Error obteniendo token:", tokenError);
         await cleanupClerkUser("Error obteniendo token");
         return;
       }
 
-      // 4️⃣ Verificar si existe en el backend
+      // Verificar si existe en el backend
       try {
         const user = await getCurrentUser();
         
         if (user) {
-          console.log("✅ Usuario existe en Clerk + Backend");
-          console.log("👤 Rol del usuario desde backend:", user.role);
+          console.log("Usuario existe en Clerk + Backend");
+          console.log("Rol del usuario desde backend:", user.role);
           
-          // Vincular Firebase (no crítico)
           try {
             await linkFirebaseSession();
-            console.log("✅ Firebase vinculado");
+            console.log("Firebase vinculado");
           } catch (firebaseError) {
-            console.warn("⚠️ Error vinculando Firebase (no crítico):", firebaseError);
+            console.warn(" Error vinculando Firebase (no crítico):", firebaseError);
           }
           
-          // ✅ Verificar rol y establecer estado
+          // Verificar rol y establecer estado
           if (user.role === 'ADMIN') {
             console.log("👑 Usuario es ADMIN → Estado: admin");
             setState("admin");
@@ -131,46 +142,42 @@ export function useSessionState() {
           }
         } else {
           // Usuario en Clerk pero NO en backend → Inconsistencia
-          console.log("⚠️ Usuario en Clerk pero NO en backend");
+          console.log("Usuario en Clerk pero NO en backend");
           setState("inconsistent");
           
           // Limpiar Clerk automáticamente para permitir re-registro
           await cleanupClerkUser("Usuario no existe en backend");
         }
       } catch (error: any) {
-        console.error("❌ Error verificando backend:", error);
+        console.log("X -> Error verificando backend:", error);
 
         // Clasificar errores
         if (error.response?.status === 404) {
-          // Usuario NO existe en backend
-          console.log("🆕 404: Usuario nuevo → needsProfile");
+          console.log("404: Usuario nuevo → needsProfile");
           setState("needsProfile");
           
         } else if (error.response?.status === 401) {
-          // Token inválido
-          console.log("🔑 401: Token inválido → limpiar sesión");
+          console.log("401: Token inválido → limpiar sesión");
           await cleanupClerkUser("Token inválido (401)");
           
         } else if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
-          // Problema de red → Permitir acceso offline
-          console.log("📡 Timeout: Permitir acceso offline → ready");
+          console.log("Timeout: Permitir acceso offline → ready");
           setState("ready");
           
         } else if (error.response?.status === 409) {
-          // Conflicto (ej: email duplicado en backend)
-          console.log("⚠️ 409: Conflicto en backend → limpiar sesión");
+          console.log("409: Conflicto en backend → limpiar sesión");
           await cleanupClerkUser("Conflicto en backend (409)");
           
         } else {
           // Error desconocido → Por seguridad, limpiar
-          console.log("❓ Error desconocido → limpiar sesión");
+          console.log("Error desconocido → limpiar sesión");
           await cleanupClerkUser("Error desconocido");
         }
       }
     };
 
     validateSession();
-  }, [isLoaded, isSignedIn, localUser?.id, localUser?.role]); // ✅ Agregar localUser?.role como dependencia
+  }, [isLoaded, isSignedIn, clerkUser?.id, localUser?.id, localUser?.role, localUser.idClerk]);
 
   return { state, cleanupClerkUser };
 }
