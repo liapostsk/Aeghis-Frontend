@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  TouchableOpacity,
   TextInput,
   ScrollView,
   Pressable,
@@ -14,9 +13,25 @@ import { Ionicons } from '@expo/vector-icons';
 import { useUserStore } from '@/lib/storage/useUserStorage';
 import ProfileVerificationScreen from '@/components/profile/ProfileVerificationScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import SafeLocationModal from '@/components/safeLocations/SafeLocationModal';
+import { SafeLocation } from '@/api/backend/locations/locationType';
+
+
+type CompanionRequest = {
+  id: string;
+  userId: number;
+  userName: string;
+  userImage: any;
+  origin: string | SafeLocation;
+  destination: string | SafeLocation;
+  date: string;
+  time: string;
+  seats: number;
+  description: string;
+};
 
 // Mock data para las solicitudes
-const mockCompanionRequests = [
+const mockCompanionRequests: CompanionRequest[] = [
   {
     id: '1',
     userId: 5,
@@ -50,8 +65,10 @@ export default function CompanionsGroups() {
   const [activeTab, setActiveTab] = useState<'create' | 'search'>('search');
   
   // Estados del formulario de creación
-  const [origin, setOrigin] = useState('');
-  const [destination, setDestination] = useState('');
+  const [originLocation, setOriginLocation] = useState<SafeLocation | null>(null);
+  const [destinationLocation, setDestinationLocation] = useState<SafeLocation | null>(null);
+  const [showOriginModal, setShowOriginModal] = useState(false);
+  const [showDestinationModal, setShowDestinationModal] = useState(false);
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [seats, setSeats] = useState('1');
@@ -59,62 +76,64 @@ export default function CompanionsGroups() {
   
   // Estados de búsqueda y filtros
   const [searchQuery, setSearchQuery] = useState('');
-  const [requests, setRequests] = useState(mockCompanionRequests);
+  const [requests, setRequests] = useState<CompanionRequest[]>(mockCompanionRequests);
+  const verifyStatus = user?.verify;
 
 
   useEffect(() => {
-    // Solo mostrar la pantalla de verificación si el usuario no está verificado
-    if (user?.verify !== 'VERIFIED') {
-      setShowVerification(true);
-    } else {
+    console.log("Comprobando estado de verificación...", { user, verifyStatus });
+    if (!user) {
+      setIsLoading(true);
+      return;
+    }
+    if (verifyStatus === 'VERIFIED') {
       setShowVerification(false);
+    } else {
+      setShowVerification(true);
     }
     setIsLoading(false);
-  }, [user?.verify]);
+  }, [user, verifyStatus]);
 
   const handleVerificationComplete = () => {
     setShowVerification(false);
   };
 
   const handleCreateRequest = () => {
-    if (!origin || !destination || !date || !time) {
-      Alert.alert('Error', 'Por favor completa todos los campos obligatorios');
+    if (!originLocation || !destinationLocation || !date || !time) {
+      Alert.alert('Error', 'Por favor selecciona origen, destino, fecha y hora');
       return;
     }
-
     const newRequest = {
       id: Date.now().toString(),
       userId: user?.id || 0,
       userName: user?.name || 'Usuario',
       userImage: user?.image || null,
-      origin,
-      destination,
+      origin: originLocation,
+      destination: destinationLocation,
       date,
       time,
       seats: parseInt(seats),
       description,
     };
-
     setRequests([newRequest, ...requests]);
-    
     // Limpiar formulario
-    setOrigin('');
-    setDestination('');
+    setOriginLocation(null);
+    setDestinationLocation(null);
     setDate('');
     setTime('');
     setSeats('1');
     setDescription('');
-    
     Alert.alert('Éxito', 'Solicitud de acompañamiento creada');
     setActiveTab('search');
   };
 
   const filteredRequests = requests.filter(req => {
+    const originName = typeof req.origin === 'string' ? req.origin : req.origin?.name || req.origin?.address || '';
+    const destinationName = typeof req.destination === 'string' ? req.destination : req.destination?.name || req.destination?.address || '';
     const matchesSearch = 
-      req.origin.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      req.destination.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      originName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      destinationName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       req.userName.toLowerCase().includes(searchQuery.toLowerCase());
-    
     return matchesSearch;
   });
 
@@ -126,7 +145,21 @@ export default function CompanionsGroups() {
     );
   }
 
-  if (showVerification) {
+  if (verifyStatus !== 'VERIFIED') {
+    if (verifyStatus === 'PENDING') {
+      return (
+        <View style={styles.pendingContainer}>
+          <Ionicons name="shield-checkmark" size={64} color="#7A33CC" style={{ marginBottom: 24 }} />
+          <Text style={styles.pendingTitle}>Verificación en proceso</Text>
+          <Text style={styles.pendingText}>
+            Tus fotos han sido enviadas correctamente. Un administrador revisará tu identidad en breve.
+          </Text>
+        </View>
+      );
+    }
+  }
+
+  if (verifyStatus !== 'VERIFIED') {
     return (
       <ProfileVerificationScreen
         onVerificationComplete={handleVerificationComplete}
@@ -171,23 +204,41 @@ export default function CompanionsGroups() {
       {activeTab === 'create' ? (
         <ScrollView style={styles.formContainer} showsVerticalScrollIndicator={false}>
           <Text style={styles.formTitle}>Nueva solicitud de acompañamiento</Text>
-          
+
           {/* Origen */}
           <Text style={styles.label}>Origen *</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Ej: Plaza Catalunya, Barcelona"
-            value={origin}
-            onChangeText={setOrigin}
+          <Pressable style={styles.input} onPress={() => setShowOriginModal(true)}>
+            <Text style={{ color: originLocation ? '#1F2937' : '#9CA3AF' }}>
+              {originLocation ? originLocation.name : 'Selecciona el origen'}
+            </Text>
+          </Pressable>
+          <SafeLocationModal
+            visible={showOriginModal}
+            onClose={() => setShowOriginModal(false)}
+            onSelectLocation={(loc) => {
+              setOriginLocation(loc as SafeLocation);
+              setShowOriginModal(false);
+            }}
+            title="Selecciona el origen"
+            acceptLocationTypes="all"
           />
 
           {/* Destino */}
           <Text style={styles.label}>Destino *</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Ej: Aeropuerto El Prat"
-            value={destination}
-            onChangeText={setDestination}
+          <Pressable style={styles.input} onPress={() => setShowDestinationModal(true)}>
+            <Text style={{ color: destinationLocation ? '#1F2937' : '#9CA3AF' }}>
+              {destinationLocation ? destinationLocation.name : 'Selecciona el destino'}
+            </Text>
+          </Pressable>
+          <SafeLocationModal
+            visible={showDestinationModal}
+            onClose={() => setShowDestinationModal(false)}
+            onSelectLocation={(loc) => {
+              setDestinationLocation(loc as SafeLocation);
+              setShowDestinationModal(false);
+            }}
+            title="Selecciona el destino"
+            acceptLocationTypes="all"
           />
 
           {/* Fecha y Hora */}
@@ -201,7 +252,6 @@ export default function CompanionsGroups() {
                 onChangeText={setDate}
               />
             </View>
-            
             <View style={styles.halfInput}>
               <Text style={styles.label}>Hora *</Text>
               <TextInput
@@ -276,14 +326,16 @@ export default function CompanionsGroups() {
                 <View style={styles.routeInfo}>
                   <View style={styles.routePoint}>
                     <Ionicons name="location" size={16} color="#10B981" />
-                    <Text style={styles.routeText}>{item.origin}</Text>
+                    <Text style={styles.routeText}>
+                      {typeof item.origin === 'string' ? item.origin : item.origin?.name}
+                    </Text>
                   </View>
-                  
                   <Ionicons name="arrow-forward" size={16} color="#9CA3AF" style={styles.routeArrow} />
-                  
                   <View style={styles.routePoint}>
                     <Ionicons name="location" size={16} color="#EF4444" />
-                    <Text style={styles.routeText}>{item.destination}</Text>
+                    <Text style={styles.routeText}>
+                      {typeof item.destination === 'string' ? item.destination : item.destination?.name}
+                    </Text>
                   </View>
                 </View>
 
@@ -325,6 +377,33 @@ export default function CompanionsGroups() {
 }
 
 const styles = StyleSheet.create({
+  pendingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+    paddingHorizontal: 32,
+  },
+  pendingTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  pendingText: {
+    fontSize: 16,
+    color: '#6B7280',
+    textAlign: 'center',
+    marginBottom: 8,
+    lineHeight: 22,
+  },
+  pendingSubtext: {
+    fontSize: 13,
+    color: '#9CA3AF',
+    textAlign: 'center',
+    marginTop: 24,
+  },
   container: {
     flex: 1,
     backgroundColor: '#F9FAFB',

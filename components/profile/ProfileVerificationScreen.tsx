@@ -24,7 +24,6 @@ interface ProfileVerificationScreenProps {
 
 export default function ProfileVerificationScreen({
   onVerificationComplete,
-  onSkip,
   onBack,
 }: ProfileVerificationScreenProps) {
   const { user } = useUserStore();
