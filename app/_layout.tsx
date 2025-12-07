@@ -3,7 +3,6 @@ import { tokenCache } from '@clerk/clerk-expo/token-cache';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import TokenProvider from '@/lib/auth/tokenProvider';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { NotificationProvider } from '@/api/notifications/NotificationContext';
 import { useSessionState } from '@/lib/hooks/useSessionState';
 import { useEffect } from 'react';
@@ -74,18 +73,14 @@ function RootNavigator() {
 
 export default function RootLayout() {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <BottomSheetModalProvider>
-        <ClerkProvider tokenCache={tokenCache}>
-          <TokenProvider>
-            <ClerkLoaded>
-              <NotificationProvider>
-                <RootNavigator />
-              </NotificationProvider>
-            </ClerkLoaded>
-          </TokenProvider>
-        </ClerkProvider>
-      </BottomSheetModalProvider>
-    </GestureHandlerRootView>
+    <ClerkProvider tokenCache={tokenCache}>
+      <TokenProvider>
+        <ClerkLoaded>
+          <NotificationProvider>
+            <RootNavigator />
+          </NotificationProvider>
+        </ClerkLoaded>
+      </TokenProvider>
+    </ClerkProvider>
   );
 }

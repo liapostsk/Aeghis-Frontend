@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { JourneyDto } from '@/api/backend/journeys/journeyType';
 import { Group } from '@/api/backend/group/groupType';
 
@@ -18,7 +17,7 @@ interface JourneyCollapsedTabProps {
 export default function JourneyCollapsedTab({ groupJourney, onExpand }: JourneyCollapsedTabProps) {
   if (groupJourney) {
     return (
-      <BottomSheetView style={styles.collapsedContainer}>
+      <View style={styles.collapsedContainer}>
         <Pressable style={styles.collapsedContent} onPress={onExpand}>
           <View style={styles.collapsedHeader}>
             <View style={styles.collapsedIconContainer}>
@@ -40,13 +39,13 @@ export default function JourneyCollapsedTab({ groupJourney, onExpand }: JourneyC
             <Ionicons name="chevron-up" size={20} color="#6B7280" />
           </View>
         </Pressable>
-      </BottomSheetView>
+      </View>
     );
   }
 
   // Si no hay journey, mostrar tab simple
   return (
-    <BottomSheetView style={styles.collapsedContainer}>
+    <View style={styles.collapsedContainer}>
       <Pressable style={styles.collapsedContent} onPress={onExpand}>
         <View style={styles.collapsedHeader}>
           <View style={styles.collapsedIconContainer}>
@@ -59,7 +58,7 @@ export default function JourneyCollapsedTab({ groupJourney, onExpand }: JourneyC
           <Ionicons name="chevron-up" size={20} color="#6B7280" />
         </View>
       </Pressable>
-    </BottomSheetView>
+    </View>
   );
 }
 

@@ -1,7 +1,6 @@
 import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { BottomSheetView, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { Group } from '@/api/backend/group/groupType';
 import CreateGroupModal from '@/components/groups/CreateGroupModal';
 import JoinGroupModal from '@/components/groups/JoinGroupModal';
@@ -47,11 +46,12 @@ export default function GroupOptionsSheet({
   const hasGroups = userGroups.length > 0;
 
   return (
-    <BottomSheetView 
-      style={styles.sheetContent}
-      onLayout={onLayout}
-    >
-      <View style={styles.sheetHeader}>
+    <>
+      <View 
+        style={styles.sheetContent}
+        onLayout={onLayout}
+      >
+        <View style={styles.sheetHeader}>
         <View style={styles.headerLeft}>
           <Ionicons name="location" size={24} color="#7A33CC" />
           <Text style={styles.sheetTitle}>
@@ -70,12 +70,12 @@ export default function GroupOptionsSheet({
         }
       </Text>
 
-      <BottomSheetScrollView 
+      <ScrollView 
+        style={styles.scrollContainer}
         contentContainerStyle={styles.optionsContainer}
         showsVerticalScrollIndicator={false}
       >
-        {/* Si tiene grupos, mostrar lista de grupos existentes */}
-        {hasGroups && (
+        {hasGroups ? (
           <>
             <Text style={styles.sectionTitle}>Tus grupos:</Text>
             {userGroups.map((group) => (
@@ -109,7 +109,7 @@ export default function GroupOptionsSheet({
             <View style={styles.divider} />
             <Text style={styles.sectionTitle}>Más opciones:</Text>
           </>
-        )}
+        ) : null}
 
         {/* Crear nuevo grupo */}
         <Pressable style={styles.optionCard} onPress={onCreateGroup}>
@@ -143,7 +143,8 @@ export default function GroupOptionsSheet({
           </View>
           <Ionicons name="chevron-forward" size={20} color="#ccc" />
         </Pressable>
-      </BottomSheetScrollView>
+      </ScrollView>
+    </View>
 
       {/* Modales */}
       <GroupTypeSelector
@@ -166,7 +167,7 @@ export default function GroupOptionsSheet({
         visible={showJoinGroupModal}
         onClose={() => setShowJoinGroupModal(false)}
       />
-    </BottomSheetView>
+    </>
   );
 }
 
@@ -174,6 +175,10 @@ const styles = StyleSheet.create({
   sheetContent: {
     padding: 20,
     paddingBottom: 40,
+    flex: 1,
+  },
+  scrollContainer: {
+    flex: 1,
   },
   sheetHeader: {
     flexDirection: 'row',

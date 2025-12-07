@@ -1,7 +1,6 @@
-import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import React, { useState, useCallback, useEffect } from 'react';
+import { View, Text, StyleSheet, Pressable, Modal, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import BottomSheet, { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
 import { router } from 'expo-router';
 
 // Importar APIs y tipos
@@ -49,6 +48,7 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
   const [isUserParticipant, setIsUserParticipant] = useState(false);
   const [checkingParticipation, setCheckingParticipation] = useState(true);
   const [journeyState, setJourneyState] = useState<string>(groupJourney?.activeJourney.state || 'PENDING');
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
   const {user} = useUserStore();
   
@@ -60,12 +60,12 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
   // (Evita bucles: los valores usados en el hook son estables y no cambian en cada render)
   const chatId = groupJourney?.group.id?.toString();
   const journeyId = groupJourney?.activeJourney?.id?.toString();
-  const userId = user?.id.toString();
+  const userId = user?.id?.toString();
   const enabled = !!chatId && !!journeyId && !!userId && isUserParticipant && journeyState === 'IN_PROGRESS';
 
   // Importa el hook correctamente
   // con esto se estamos guardando la posicion del usuario en firebase en cada minuto
-  usePositionTracking(chatId, journeyId, userId, { enabled, intervalMs: 60000 });
+  usePositionTracking(chatId || '', journeyId || '', userId || '', { enabled, intervalMs: 60000 });
 
   useEffect(() => {
     const checkIfUserIsParticipant = async () => {
@@ -83,6 +83,7 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
         const token = await getToken();
         setToken(token);
         
+        if (!groupJourney.activeJourney.id) return;
         const isParticipant = await isUserParticipantInJourney(groupJourney.activeJourney.id);
         
         setIsUserParticipant(isParticipant);
@@ -99,10 +100,13 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
     checkIfUserIsParticipant();
   }, [groupJourney?.activeJourney.id, user?.id]);
 
-  // Escuchar Firebase y recibir estado ya sincronizado desde Backend
   useEffect(() => {
     if (!groupJourney) {
       setJourneyState('PENDING');
+      return;
+    }
+
+    if (!groupJourney.group.id || !groupJourney.activeJourney.id) {
       return;
     }
 
@@ -134,70 +138,12 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
     };
   }, [groupJourney]);
 
-  const bottomSheetRef = useRef<BottomSheet>(null);
-  const [contentHeight, setContentHeight] = useState<number>(300);
-
-  const snapPoints = useMemo(() => {
-    const tabHeight = 150;
-    
-    let expandedHeight;
-    let context;
-    
-    if (groupJourney) {
-      expandedHeight = Math.max(contentHeight, 400);
-      context = 'journey activo';
-    } else if (showJourneyOptions) {
-      expandedHeight = Math.max(contentHeight, 500);
-      context = 'opciones de grupo';
-    } else {
-      expandedHeight = Math.max(contentHeight, 250);
-      context = 'interfaz simple';
-    }
-    
-    const points = [tabHeight, expandedHeight];
-    console.log('📐 Snap Points calculados:', { context, contentHeight, points });
-    
-    return points;
-  }, [groupJourney, showJourneyOptions, contentHeight]);
-
-  const [isCollapsed, setIsCollapsed] = useState(true);
-
-  const handleSheetChanges = useCallback((index: number) => {
-    console.log('Bottom sheet cambió a índice:', index);
-    setIsCollapsed(index === 0);
-  }, []);
-
-  const handleContentLayout = useCallback((event: any) => {
-    const { height } = event.nativeEvent.layout;
-    const totalHeight = height + 100;
-    setContentHeight(totalHeight);
-  }, []);
-
-  const expandSheet = useCallback(() => {
-    bottomSheetRef.current?.snapToIndex(1);
-  }, []);
-
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (groupJourney || (!loading && !groupsLoading)) {
-        console.log('🔄 Auto-expandiendo BottomSheet:', { 
-          hasGroupJourney: !!groupJourney, 
-          loading, 
-          groupsLoaded: !groupsLoading,
-          userGroupsCount: userGroups.length 
-        });
-        expandSheet();
-      }
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [groupJourney, loading, groupsLoading, userGroups.length, expandSheet]);
-
-  const collapseToTab = useCallback(() => {
-    bottomSheetRef.current?.snapToIndex(0);
-  }, []);
-
-  const handleCreateGroup = () => {
+    // Abrir modal automáticamente si hay journey o si el usuario quiere iniciar uno
+    if (groupJourney || (!loading && !groupsLoading)) {
+      setIsModalVisible(true);
+    }
+  }, [groupJourney, loading, groupsLoading]);  const handleCreateGroup = () => {
     if (userGroups.length === 0) {
       setShowGroupTypeSelector(true);
     } else {
@@ -241,12 +187,12 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
     setIsUserParticipant(true);
     
     // Re-verificar con backend después de un pequeño delay
-    if (groupJourney) {
+    if (groupJourney && groupJourney.activeJourney.id) {
       setTimeout(async () => {
         try {
           const token = await getToken();
           setToken(token);
-          const isParticipant = await isUserParticipantInJourney(groupJourney.activeJourney.id);
+          const isParticipant = await isUserParticipantInJourney(groupJourney.activeJourney.id!);
           console.log('Re-verificación: Usuario es participante:', isParticipant);
           setIsUserParticipant(isParticipant);
         } catch (err) {
@@ -256,20 +202,23 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
     }
   };
 
-  const renderExpandedContent = () => {
+  const renderModalContent = () => {
     if (groupJourney && ['IN_PROGRESS', 'PENDING'].includes(journeyState)) {
       // Si hay journey activo o pendiente, mostrar la info del trayecto
-      return renderActiveJourneyFromGroupForSheet(groupJourney);
+      return renderActiveJourneyContent(groupJourney);
     } else if (showJourneyOptions) {
       // Si se han pedido opciones, mostrar el selector de grupo y creación
       return (
         <GroupOptionsSheet
-          userGroups={userGroups}
+          userGroups={userGroups || []}
           showCreateGroupModal={showCreateGroupModal}
           showJoinGroupModal={showJoinGroupModal}
           showGroupTypeSelector={showGroupTypeSelector}
           selectedGroupType={selectedGroupType}
-          onClose={() => setShowJourneyOptions(false)}
+          onClose={() => {
+            setShowJourneyOptions(false);
+            setIsModalVisible(false);
+          }}
           onGroupSelected={handleGroupSelected}
           onCreateGroup={handleCreateGroup}
           onJoinGroup={handleJoinGroup}
@@ -279,7 +228,6 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
           setShowJoinGroupModal={setShowJoinGroupModal}
           setShowGroupTypeSelector={setShowGroupTypeSelector}
           setSelectedGroupType={setSelectedGroupType}
-          onLayout={handleContentLayout}
         />
       );
     } else {
@@ -287,38 +235,32 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
       return (
         <JourneySimpleInterface
           onStartJourney={() => setShowJourneyOptions(true)}
-          onLayout={handleContentLayout}
         />
       );
     }
   };
 
-  const renderActiveJourneyFromGroupForSheet = (selectedGroupJourney: GroupWithJourney) => {
+  const renderActiveJourneyContent = (selectedGroupJourney: GroupWithJourney) => {
     const canControlJourney = isUserParticipant;
     const currentState = journeyState || selectedGroupJourney.activeJourney.state;
 
     return (
-      <BottomSheetView 
-        style={styles.sheetContent}
-        onLayout={handleContentLayout}
-      >
-        
+      <View style={styles.modalContent}>
         <View style={styles.sheetHeader}>
           <View style={styles.headerLeft}>
             <Ionicons name="navigate-circle" size={24} color="#4CAF50" />
             <Text style={styles.sheetTitle}>Trayecto Activo</Text>
           </View>
           <View style={styles.headerRight}>
-            {/* Batería del usuario actual usando BatteryDisplay */}
             <View style={styles.currentUserBattery}>
               <BatteryDisplay
                 showControls={false}
                 autoRefresh={true}
-                refreshInterval={60000} // 1 minuto
+                refreshInterval={60000}
               />
             </View>
-            <Pressable onPress={collapseToTab} style={styles.collapseButton}>
-              <Ionicons name="chevron-down" size={20} color="#6B7280" />
+            <Pressable onPress={() => setIsModalVisible(false)} style={styles.collapseButton}>
+              <Ionicons name="close" size={24} color="#6B7280" />
             </Pressable>
           </View>
         </View>
@@ -383,7 +325,7 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
         </View>
 
         {/* Lista de participantes usando el componente dedicado */}
-        <BottomSheetScrollView 
+        <ScrollView 
           style={styles.participantsList} 
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.participantsListContent}
@@ -393,7 +335,7 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
             autoRefresh={true}
             refreshInterval={30000}
           />
-        </BottomSheetScrollView>
+        </ScrollView>
 
         {/* Solo mostrar botón de finalizar si ES participante y está IN_PROGRESS */}
         {canControlJourney && currentState === 'IN_PROGRESS' && onCompleteJourney && (
@@ -409,55 +351,92 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
           visible={showJoinJourneyModal}
           onClose={() => setShowJoinJourneyModal(false)}
           journey={selectedGroupJourney.activeJourney}
-          currentUser={mapUserToDto(user)}
+          currentUser={user ? mapUserToDto(user) : null}
           onJoinSuccess={handleJoinSuccess}
-          chatId={selectedGroupJourney.group.id.toString()}
+          chatId={selectedGroupJourney.group.id ? selectedGroupJourney.group.id.toString() : ""}
         />
-      </BottomSheetView>
+      </View>
     );
   };
 
   if (loading) {
     return (
-      <BottomSheet
-        ref={bottomSheetRef}
-        index={0}
-        snapPoints={[80, 200]}
-        onChange={handleSheetChanges}
-        enablePanDownToClose={false}
-        handleIndicatorStyle={styles.handleIndicator}
-        backgroundStyle={styles.bottomSheetBackground}
+      <Modal
+        visible={isModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setIsModalVisible(false)}
       >
-        <BottomSheetView style={styles.sheetContent}>
-          <Text style={styles.loadingText}>Cargando...</Text>
-        </BottomSheetView>
-      </BottomSheet>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.loadingText}>Cargando...</Text>
+          </View>
+        </View>
+      </Modal>
     );
   }
 
-  const renderSheetContent = () => {
-    if (isCollapsed) {
-      return <JourneyCollapsedTab groupJourney={groupJourney} onExpand={expandSheet} />;
-    }
-    return renderExpandedContent();
-  };
+  // Renderizar tab colapsado cuando el modal está cerrado
+  if (!isModalVisible && groupJourney) {
+    return (
+      <JourneyCollapsedTab 
+        groupJourney={groupJourney} 
+        onExpand={() => setIsModalVisible(true)} 
+      />
+    );
+  }
 
+  // Renderizar modal principal
   return (
-    <BottomSheet
-      ref={bottomSheetRef}
-      index={0} // Empezar colapsado
-      snapPoints={snapPoints}
-      onChange={handleSheetChanges}
-      enablePanDownToClose={false} // No permitir cerrar completamente
-      handleIndicatorStyle={styles.handleIndicator}
-      backgroundStyle={styles.bottomSheetBackground}
-    >
-      {renderSheetContent()}
-    </BottomSheet>
+    <>
+      {/* Tab colapsado siempre visible cuando hay journey */}
+      {groupJourney && !isModalVisible && (
+        <JourneyCollapsedTab 
+          groupJourney={groupJourney} 
+          onExpand={() => setIsModalVisible(true)} 
+        />
+      )}
+
+      {/* Modal con contenido */}
+      <Modal
+        visible={isModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setIsModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            {renderModalContent()}
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 });
 
 const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContainer: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '90%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  modalContent: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    paddingTop: 10,
+  },
   statusDot: {
     width: 8,
     height: 8,
@@ -534,14 +513,6 @@ const styles = StyleSheet.create({
   handleIndicator: {
     backgroundColor: '#D1D5DB',
     width: 40,
-  },
-  bottomSheetBackground: {
-    backgroundColor: 'rgba(255, 255, 255, 0.98)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 10,
   },
   sheetContent: {
     flex: 1,

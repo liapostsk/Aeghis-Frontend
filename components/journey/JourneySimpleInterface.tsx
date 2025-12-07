@@ -1,6 +1,4 @@
-import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { BottomSheetView } from '@gorhom/bottom-sheet';
 
 interface JourneySimpleInterfaceProps {
   onStartJourney: () => void;
@@ -9,7 +7,7 @@ interface JourneySimpleInterfaceProps {
 
 export default function JourneySimpleInterface({ onStartJourney, onLayout }: JourneySimpleInterfaceProps) {
   return (
-    <BottomSheetView
+    <View
       style={styles.sheetContent}
       onLayout={onLayout}
     >
@@ -20,7 +18,7 @@ export default function JourneySimpleInterface({ onStartJourney, onLayout }: Jou
       <Pressable style={styles.simpleButton} onPress={onStartJourney}>
         <Text style={styles.simpleButtonText}>Start a journey</Text>
       </Pressable>
-    </BottomSheetView>
+    </View>
   );
 }
 

@@ -87,10 +87,10 @@ export function useSessionState() {
 
       // Si hay usuario local válido (mismo clerkId) → usar su rol
       if (effectiveLocalUser?.id) {
-        console.log("Usuario encontrado en store local (ID:", localUser.id, ")");
-        console.log("Rol del usuario:", localUser.role);
+        console.log("Usuario encontrado en store local (ID:", localUser?.id, ")");
+        console.log("Rol del usuario:", localUser?.role);
 
-        if (localUser.role === 'ADMIN') {
+        if (localUser?.role === 'ADMIN') {
           console.log("👑 Usuario es ADMIN → Estado: admin");
           setState("admin");
         } else {
