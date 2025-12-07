@@ -177,7 +177,7 @@ export function useSessionState() {
     };
 
     validateSession();
-  }, [isLoaded, isSignedIn, clerkUser?.id, localUser?.id, localUser?.role, localUser.idClerk]);
+  }, [isLoaded, isSignedIn, clerkUser?.id, localUser?.id, localUser?.role, localUser?.idClerk]);
 
   return { state, cleanupClerkUser };
 }
