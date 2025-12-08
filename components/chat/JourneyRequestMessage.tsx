@@ -62,9 +62,20 @@ export default function JourneyRequestMessage({
         }
     };
 
-    const handleJoinJourney = async (selectedDestination: SafeLocation) => {
+    const handleJoinJourney = async (location: SafeLocation | Location) => {
         try {
             setJoining(true);
+
+            // Convertir Location a SafeLocation si es necesario
+            const selectedDestination: SafeLocation = 'name' in location ? location : {
+                id: location.id,
+                name: `Ubicación personalizada`,
+                address: `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`,
+                type: 'custom',
+                latitude: location.latitude,
+                longitude: location.longitude,
+                externalId: undefined
+            };
 
             // 1. Obtener usuario actual
             const currentUser = await getCurrentUser();

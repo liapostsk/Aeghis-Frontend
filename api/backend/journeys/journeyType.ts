@@ -1,5 +1,6 @@
 import { Participation } from "@/api/backend/participations/participationType";
 import { Group } from "../group/groupType";
+import { CompanionRequest } from "../types";
 
 export interface Journey {
     id: number;
@@ -9,6 +10,7 @@ export interface Journey {
     endDate?: string;
     participants: Participation[];
     group: Group;
+    companionRequest?: CompanionRequest;
 }
 
 export interface JourneyDto {
@@ -19,6 +21,7 @@ export interface JourneyDto {
     iniDate: string;
     endDate?: string;
     participantsIds: number[];
+    companionRequestId?: number;
 }
 
 export const JourneyTypes = {
@@ -38,7 +41,7 @@ export const JourneyStates = {
 export type JourneyState = typeof JourneyStates[keyof typeof JourneyStates];
 
 // Mapper from JourneyDto to Journey
-export const mapJourneyDtoToJourney = (dto: JourneyDto, participants: Participation[], group: Group): Journey => {
+export const mapJourneyDtoToJourney = (dto: JourneyDto, participants: Participation[], group: Group, companionRequest: CompanionRequest): Journey => {
     return {
         id: dto.id!,
         state: dto.state,
@@ -47,6 +50,7 @@ export const mapJourneyDtoToJourney = (dto: JourneyDto, participants: Participat
         endDate: dto.endDate,
         participants,
         group,
+        companionRequest
     };
 }
 
@@ -60,5 +64,6 @@ export const mapJourneyToJourneyDto = (journey: Journey): JourneyDto => {
         iniDate: journey.iniDate,
         endDate: journey.endDate,
         participantsIds: journey.participants.map(p => p.id),
+        companionRequestId: journey.companionRequest ? journey.companionRequest.id : undefined,
     };
 }

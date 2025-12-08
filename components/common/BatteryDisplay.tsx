@@ -163,7 +163,7 @@ export default function BatteryDisplay({
   );
 }
 
-// ✅ UTILIDAD: Funciones helper compartidas
+// UTILIDAD: Funciones helper compartidas
 const getBatteryIcon = (level: number | null, charging: boolean | null = false) => {
   if (level === null) return 'battery-dead-outline';
   if (charging) return 'battery-charging';
@@ -219,41 +219,45 @@ export function ParticipantsList({
   const setToken = useTokenStore((state) => state.setToken);
   const { getToken } = useAuth();
   
-  // ✅ NUEVO: Caché de usuarios para evitar re-fetch
+  // NUEVO: Caché de usuarios para evitar re-fetch
   const userCache = useRef(new Map<number, UserDto>());
   
-  // ✅ NUEVO: Ref para evitar llamadas duplicadas
+  // NUEVO: Ref para evitar llamadas duplicadas
   const isFetchingRef = useRef(false);
 
   const fetchParticipantsData = async () => {
-    // ✅ Evitar llamadas duplicadas simultáneas
+    // Evitar llamadas duplicadas simultáneas
     if (isFetchingRef.current) {
-      console.log('⏭️ Fetch ya en progreso, saltando...');
+      console.log('Fetch ya en progreso, saltando...');
       return;
     }
 
     try {
       isFetchingRef.current = true;
       setIsLoading(true);
-      console.log('📊 Cargando participantes del journey:', journey.id);
+      console.log('Cargando participantes del journey:', journey.id);
       
-      // ✅ 1. Obtener token de autenticación
+      if (!journey.id) {
+        throw new Error('Journey ID no disponible');
+      }
+      
+      // 1. Obtener token de autenticación
       const token = await getToken();
       if (token) {
         setToken(token);
       }
 
-      // ✅ 2. Obtener IDs de participantes desde el backend (UNA SOLA LLAMADA)
+      // 2. Obtener IDs de participantes desde el backend (UNA SOLA LLAMADA)
       const participantIds = await getJourneyParticipantIds(journey.id);
       console.log(`👥 ${participantIds.length} participantes encontrados:`, participantIds);
       
-      // ✅ 3. Obtener información de cada usuario (con caché)
+      // 3. Obtener información de cada usuario (con caché)
       const participantUsers: UserDto[] = [];
       
       for (const userId of participantIds) {
         // Excluir al usuario actual
         if (currentUser && userId === currentUser.id) {
-          console.log('⏭️ Saltando usuario actual:', userId);
+          console.log('Saltando usuario actual:', userId);
           continue;
         }
         
@@ -264,9 +268,9 @@ export function ParticipantsList({
           if (!user) {
             user = await getUser(userId);
             userCache.current.set(userId, user);
-            console.log('  👤 Usuario obtenido y cacheado:', user.name, `(${user.id})`);
+            console.log('  Usuario obtenido y cacheado:', user.name, `(${user.id})`);
           } else {
-            console.log('  💾 Usuario recuperado de caché:', user.name, `(${user.id})`);
+            console.log('  Usuario recuperado de caché:', user.name, `(${user.id})`);
           }
           
           participantUsers.push(user);
@@ -282,9 +286,9 @@ export function ParticipantsList({
         }
       }
 
-      console.log(`✅ ${participantUsers.length} participantes cargados (excluyendo usuario actual)`);
+      console.log(`${participantUsers.length} participantes cargados (excluyendo usuario actual)`);
 
-      // ✅ 4. Obtener información de batería de Firebase
+      // 4. Obtener información de batería de Firebase
       const clerkIds = participantUsers
         .map(user => user.clerkId || user.id.toString())
         .filter(Boolean);
@@ -296,9 +300,9 @@ export function ParticipantsList({
         : {};
       
       const batteryCount = Object.keys(batteryInfo).length;
-      console.log(`📊 Batería obtenida para ${batteryCount}/${clerkIds.length} usuarios`);
+      console.log(`Batería obtenida para ${batteryCount}/${clerkIds.length} usuarios`);
 
-      // ✅ 5. Combinar datos
+      // 5. Combinar datos
       const participantsWithData = participantUsers.map(user => {
         const firebaseId = user.clerkId || user.id.toString();
         const info = batteryInfo[firebaseId];
@@ -337,18 +341,18 @@ export function ParticipantsList({
     }
   };
 
-  // ✅ Cargar al montar y cuando cambie el journey
+  // Cargar al montar y cuando cambie el journey
   useEffect(() => {
     fetchParticipantsData();
   }, [journey.id]);
 
-  // ✅ Auto-refresh opcional
+  // Auto-refresh opcional
   useEffect(() => {
     if (!autoRefresh) return;
 
-    console.log(`🔄 Auto-refresh activado (cada ${refreshInterval / 1000}s)`);
+    console.log(`Auto-refresh activado (cada ${refreshInterval / 1000}s)`);
     const interval = setInterval(() => {
-      console.log('⏰ Auto-refresh de participantes...');
+      console.log('Auto-refresh de participantes...');
       fetchParticipantsData();
     }, refreshInterval);
 
@@ -358,7 +362,7 @@ export function ParticipantsList({
     };
   }, [autoRefresh, refreshInterval, journey.id]);
 
-  // ✅ Usar funciones helper compartidas en lugar de duplicar
+  // Usar funciones helper compartidas en lugar de duplicar
   if (isLoading && participantsData.length === 0) {
     return (
       <View style={styles.participantsLoadingContainer}>

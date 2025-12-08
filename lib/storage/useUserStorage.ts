@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { EmergencyContact, ExternalContact } from '@/api/backend/types';
+import { CompanionRequest, EmergencyContact, ExternalContact } from '@/api/backend/types';
 import { SafeLocation } from '@/api/backend/locations/locationType';
 import { getCurrentUser } from '../../api/backend/user/userApi';
 import { Group } from '@/api/backend/group/groupType';
@@ -30,6 +30,8 @@ export type User = {
   groups?: Group[];
   idClerk?: string; // ID de usuario en Clerk
   role?: "USER" | "ADMIN";
+  companionRequestsCreated?: CompanionRequest[];
+  companionRequestsAccepted?: CompanionRequest[];
 };
 
 type UserStore = {

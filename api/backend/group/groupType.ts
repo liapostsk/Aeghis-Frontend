@@ -12,6 +12,7 @@ export interface Group {
   expirationDate?: Date;
   lastModified: Date;
   ownerId: number;
+  companionRequestId?: number[];
 }
 
 export interface Invitation {

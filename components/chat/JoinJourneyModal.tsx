@@ -163,6 +163,10 @@ export default function JoinJourneyModal({
           timestamp: new Date()
         } : undefined;
 
+        if (!journey.id) {
+          throw new Error('Journey ID no disponible');
+        }
+
         await joinJourneyParticipation(chatId, journey.id.toString(), {
           destination: destinationPosition,
           backendParticipationId: participationId,
@@ -188,8 +192,8 @@ export default function JoinJourneyModal({
 
       // 6. Notificar éxito
       const createdParticipation: ParticipationDto = {
-        id: participationId,
-        ...participationData as ParticipationDto
+        ...(participationData as ParticipationDto),
+        id: participationId
       };
 
       onJoinSuccess(createdParticipation);

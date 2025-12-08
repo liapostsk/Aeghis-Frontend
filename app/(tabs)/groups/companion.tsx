@@ -3,50 +3,36 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatList,
-  TextInput,
-  ScrollView,
   Pressable,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useUserStore } from '@/lib/storage/useUserStorage';
 import ProfileVerificationScreen from '@/components/profile/ProfileVerificationScreen';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import SafeLocationModal from '@/components/safeLocations/SafeLocationModal';
-import { SafeLocation } from '@/api/backend/locations/locationType';
+import { Location } from '@/api/backend/locations/locationType';
+import { 
+  createCompanionRequest, 
+  listActiveCompanionRequests,
+  requestToJoinCompanionRequest 
+} from '@/api/backend/companionRequest/companionRequestApi';
+import { CompanionRequestDto } from '@/api/backend/types';
+import { useAuth } from '@clerk/clerk-expo';
+import { useTokenStore } from '@/lib/auth/tokenStore';
+import CompanionRequestList from '@/components/groups/companion/CompanionRequestList';
+import CreateCompanionRequest from '@/components/groups/companion/CreateCompanionRequest';
 
 
-type CompanionRequest = {
-  id: string;
-  source: SafeLocation;
-  destination: SafeLocation;
-  aproxHour: string; // ISO string datetime
-  description: string;
-  state: 'ACTIVE' | 'CANCELLED' | 'COMPLETED';
-  creationDate: string; // ISO string datetime
-};
-
-// Mock data para las solicitudes
-const mockCompanionRequests: CompanionRequest[] = [];
+type CompanionRequest = CompanionRequestDto;
 
 export default function CompanionsGroups() {
   const { user } = useUserStore();
+  const { getToken } = useAuth();
+  const setToken = useTokenStore((state) => state.setToken);
   const [showVerification, setShowVerification] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'create' | 'search'>('search');
   
-  // Estados del formulario de creación
-  const [sourceLocation, setSourceLocation] = useState<SafeLocation | null>(null);
-  const [destinationLocation, setDestinationLocation] = useState<SafeLocation | null>(null);
-  const [showSourceModal, setShowSourceModal] = useState(false);
-  const [showDestinationModal, setShowDestinationModal] = useState(false);
-  const [aproxHour, setAproxHour] = useState('');
-  const [description, setDescription] = useState('');
-  
   // Estados de búsqueda y filtros
-  const [searchQuery, setSearchQuery] = useState('');
-  const [requests, setRequests] = useState<CompanionRequest[]>(mockCompanionRequests);
+  const [requests, setRequests] = useState<CompanionRequest[]>([]);
   const verifyStatus = user?.verify;
 
 
@@ -68,39 +54,64 @@ export default function CompanionsGroups() {
     setShowVerification(false);
   };
 
-  const handleCreateRequest = () => {
-    if (!sourceLocation || !destinationLocation || !aproxHour) {
-      Alert.alert('Error', 'Por favor completa origen, destino y hora aproximada');
-      return;
+  const loadRequests = async () => {
+    try {
+      const token = await getToken();
+      setToken(token);
+      
+      const activeRequests = await listActiveCompanionRequests();
+      setRequests(activeRequests);
+    } catch (error) {
+      console.error('Error cargando solicitudes:', error);
     }
-    const newRequest: CompanionRequest = {
-      id: Date.now().toString(),
-      source: sourceLocation,
-      destination: destinationLocation,
-      aproxHour: aproxHour,
-      description,
-      state: 'ACTIVE',
-      creationDate: new Date().toISOString(),
-    };
-    setRequests([newRequest, ...requests]);
-    // Limpiar formulario
-    setSourceLocation(null);
-    setDestinationLocation(null);
-    setAproxHour('');
-    setDescription('');
-    Alert.alert('Éxito', 'Solicitud de acompañamiento creada');
-    setActiveTab('search');
   };
 
-  const filteredRequests = requests.filter(req => {
-    const sourceName = req.source?.name || req.source?.address || '';
-    const destinationName = req.destination?.name || req.destination?.address || '';
-    const matchesSearch = 
-      sourceName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      destinationName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      req.description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch;
-  });
+  useEffect(() => {
+    if (verifyStatus === 'VERIFIED') {
+      loadRequests();
+    }
+  }, [verifyStatus]);
+
+  const handleCreateRequest = async (
+    requestData: Partial<CompanionRequestDto>,
+    sourceId: number,
+    destinationId: number
+  ) => {
+    const token = await getToken();
+    setToken(token);
+    
+    const newRequest: CompanionRequestDto = {
+      sourceId: sourceId,
+      destinationId: destinationId,
+      creationDate: new Date(),
+      state: 'CREATED',
+      description: requestData.description,
+      id: 0,
+      creatorId: user?.id || 0,
+      companionId: 0,
+    };
+    
+    await createCompanionRequest(newRequest);
+    loadRequests();
+  };
+
+  const handleJoinRequest = async (requestId: number) => {
+    try {
+      const token = await getToken();
+      setToken(token);
+      
+      await requestToJoinCompanionRequest(requestId);
+      console.log('Solicitud de unión enviada');
+      loadRequests();
+    } catch (error) {
+      console.error('Error uniéndose a solicitud:', error);
+    }
+  };
+
+  const handleRequestPress = (request: CompanionRequestDto) => {
+    console.log('Solicitud seleccionada:', request);
+    // Aquí puedes navegar a una pantalla de detalle o mostrar más información
+  };
 
   if (isLoading) {
     return (
@@ -167,162 +178,16 @@ export default function CompanionsGroups() {
 
       {/* Contenido según el tab activo */}
       {activeTab === 'create' ? (
-        <ScrollView style={styles.formContainer} showsVerticalScrollIndicator={false}>
-          <Text style={styles.formTitle}>Nueva solicitud de acompañamiento</Text>
-
-          {/* Origen */}
-          <Text style={styles.label}>Origen *</Text>
-          <Pressable style={styles.input} onPress={() => setShowSourceModal(true)}>
-            <Text style={{ color: sourceLocation ? '#1F2937' : '#9CA3AF' }}>
-              {sourceLocation ? sourceLocation.name : 'Selecciona el origen'}
-            </Text>
-          </Pressable>
-          <SafeLocationModal
-            visible={showSourceModal}
-            onClose={() => setShowSourceModal(false)}
-            onSelectLocation={(loc) => {
-              setSourceLocation(loc as SafeLocation);
-              setShowSourceModal(false);
-            }}
-            title="Selecciona el origen"
-            acceptLocationTypes="all"
-          />
-
-          {/* Destino */}
-          <Text style={styles.label}>Destino *</Text>
-          <Pressable style={styles.input} onPress={() => setShowDestinationModal(true)}>
-            <Text style={{ color: destinationLocation ? '#1F2937' : '#9CA3AF' }}>
-              {destinationLocation ? destinationLocation.name : 'Selecciona el destino'}
-            </Text>
-          </Pressable>
-          <SafeLocationModal
-            visible={showDestinationModal}
-            onClose={() => setShowDestinationModal(false)}
-            onSelectLocation={(loc) => {
-              setDestinationLocation(loc as SafeLocation);
-              setShowDestinationModal(false);
-            }}
-            title="Selecciona el destino"
-            acceptLocationTypes="all"
-          />
-
-          {/* Hora aproximada */}
-          <Text style={styles.label}>Hora aproximada *</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="DD/MM/YYYY HH:MM"
-            value={aproxHour}
-            onChangeText={setAproxHour}
-          />
-
-          {/* Descripción */}
-          <Text style={styles.label}>Descripción (opcional)</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            placeholder="Añade detalles sobre el trayecto..."
-            multiline
-            numberOfLines={4}
-            value={description}
-            onChangeText={setDescription}
-          />
-
-          {/* Botón crear */}
-          <Pressable style={styles.createButton} onPress={handleCreateRequest}>
-            <Ionicons name="checkmark-circle" size={20} color="#FFF" />
-            <Text style={styles.createButtonText}>Crear solicitud</Text>
-          </Pressable>
-        </ScrollView>
+        <CreateCompanionRequest
+          onCreateRequest={handleCreateRequest}
+          onSuccess={() => setActiveTab('search')}
+        />
       ) : (
-        <View style={styles.searchContainer}>
-          {/* Barra de búsqueda */}
-          <View style={styles.searchBar}>
-            <Ionicons name="search" size={20} color="#9CA3AF" />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Buscar por origen, destino o usuario..."
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-          </View>
-
-          {/* Lista de solicitudes */}
-          <FlatList
-            data={filteredRequests}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <Pressable style={styles.requestCard}>
-                <View style={styles.requestHeader}>
-                  <View style={styles.userInfo}>
-                    <View style={styles.avatar}>
-                      <Ionicons name="time" size={20} color="#7A33CC" />
-                    </View>
-                    <View>
-                      <Text style={styles.userName}>Solicitud de acompañamiento</Text>
-                      <Text style={styles.requestDate}>
-                        {new Date(item.aproxHour).toLocaleString('es-ES', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-
-                <View style={styles.routeInfo}>
-                  <View style={styles.routePoint}>
-                    <Ionicons name="location" size={16} color="#10B981" />
-                    <Text style={styles.routeText}>
-                      {item.source?.name || item.source?.address}
-                    </Text>
-                  </View>
-                  <Ionicons name="arrow-forward" size={16} color="#9CA3AF" style={styles.routeArrow} />
-                  <View style={styles.routePoint}>
-                    <Ionicons name="location" size={16} color="#EF4444" />
-                    <Text style={styles.routeText}>
-                      {item.destination?.name || item.destination?.address}
-                    </Text>
-                  </View>
-                </View>
-
-                {item.description && (
-                  <Text style={styles.requestDescription} numberOfLines={2}>
-                    {item.description}
-                  </Text>
-                )}
-
-                <View style={styles.requestFooter}>
-                  <View style={styles.seatsInfo}>
-                    <Ionicons name="checkmark-circle" size={16} color={item.state === 'ACTIVE' ? '#10B981' : '#6B7280'} />
-                    <Text style={styles.seatsText}>
-                      {item.state === 'ACTIVE' ? 'Activa' : item.state === 'COMPLETED' ? 'Completada' : 'Cancelada'}
-                    </Text>
-                  </View>
-                  
-                  {item.state === 'ACTIVE' && (
-                    <Pressable style={styles.joinButton}>
-                      <Text style={styles.joinButtonText}>Solicitar</Text>
-                    </Pressable>
-                  )}
-                </View>
-              </Pressable>
-            )}
-            ListEmptyComponent={
-              <View style={styles.emptyState}>
-                <Ionicons name="search-outline" size={48} color="#D1D5DB" />
-                <Text style={styles.emptyText}>
-                  No se encontraron solicitudes
-                </Text>
-                <Text style={styles.emptySubtext}>
-                  Intenta ajustar los filtros o crea una nueva solicitud
-                </Text>
-              </View>
-            }
-            showsVerticalScrollIndicator={false}
-          />
-        </View>
+        <CompanionRequestList
+          requests={requests}
+          onRequestPress={handleRequestPress}
+          onJoinRequest={handleJoinRequest}
+        />
       )}
     </View>
   );
@@ -350,12 +215,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     lineHeight: 22,
   },
-  pendingSubtext: {
-    fontSize: 13,
-    color: '#9CA3AF',
-    textAlign: 'center',
-    marginTop: 24,
-  },
   container: {
     flex: 1,
     backgroundColor: '#F9FAFB',
@@ -369,8 +228,6 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     fontSize: 16,
   },
-  
-  // Tabs
   tabsContainer: {
     flexDirection: 'row',
     backgroundColor: '#FFF',
@@ -398,198 +255,5 @@ const styles = StyleSheet.create({
   },
   tabTextActive: {
     color: '#7A33CC',
-  },
-  
-  // Formulario de creación
-  formContainer: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 16,
-  },
-  formTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#1F2937',
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 8,
-    marginTop: 12,
-  },
-  input: {
-    backgroundColor: '#FFF',
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: '#1F2937',
-  },
-  textArea: {
-    height: 100,
-    textAlignVertical: 'top',
-  },
-  row: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  halfInput: {
-    flex: 1,
-  },
-  createButton: {
-    backgroundColor: '#7A33CC',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 14,
-    borderRadius: 10,
-    marginVertical: 24,
-  },
-  createButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  
-  // Búsqueda
-  searchContainer: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 16,
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    gap: 8,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 14,
-    color: '#1F2937',
-  },
-  
-  // Tarjetas de solicitudes
-  requestCard: {
-    backgroundColor: '#FFF',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  requestHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  userInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F3E8FF',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  userName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1F2937',
-  },
-  requestDate: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginTop: 2,
-  },
-  routeInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-    gap: 8,
-  },
-  routePoint: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  routeText: {
-    fontSize: 13,
-    color: '#374151',
-    fontWeight: '500',
-    flex: 1,
-  },
-  routeArrow: {
-    marginHorizontal: 4,
-  },
-  requestDescription: {
-    fontSize: 13,
-    color: '#6B7280',
-    lineHeight: 18,
-    marginBottom: 12,
-  },
-  requestFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
-  },
-  seatsInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  seatsText: {
-    fontSize: 13,
-    color: '#6B7280',
-  },
-  joinButton: {
-    backgroundColor: '#7A33CC',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 6,
-  },
-  joinButtonText: {
-    color: '#FFF',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  
-  // Empty state
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 60,
-  },
-  emptyText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#6B7280',
-    marginTop: 16,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: '#9CA3AF',
-    marginTop: 4,
-    textAlign: 'center',
   },
 });
