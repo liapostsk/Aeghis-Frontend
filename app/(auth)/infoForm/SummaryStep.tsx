@@ -157,7 +157,7 @@ export default function SummaryStep({ onBack }: { onBack: () => void }) {
       await new Promise(resolve => setTimeout(resolve, 1200));
   
       
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creando usuario en backend:", error);
       
       // ROLLBACK: Borrar usuario de Clerk para permitir reintentar

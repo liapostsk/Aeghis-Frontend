@@ -7,12 +7,17 @@ import {
   ScrollView,
   Pressable,
   Alert,
+  Platform,
+  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import SafeLocationModal from '@/components/safeLocations/SafeLocationModal';
 import { Location } from '@/api/backend/locations/locationType';
 import { CompanionRequestDto } from '@/api/backend/types';
 import { createLocation } from '@/api/backend/locations/locationsApi';
+import { useAuth } from '@clerk/clerk-expo';
+import { useTokenStore } from '@/lib/auth/tokenStore';
 
 interface CreateCompanionRequestProps {
   onCreateRequest: (request: Partial<CompanionRequestDto>, sourceId: number, destinationId: number) => Promise<void>;
@@ -36,9 +41,13 @@ export default function CreateCompanionRequest({
   const [destinationLocation, setDestinationLocation] = useState<DisplayLocation | null>(null);
   const [showSourceModal, setShowSourceModal] = useState(false);
   const [showDestinationModal, setShowDestinationModal] = useState(false);
-  const [aproxHour, setAproxHour] = useState('');
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [aproxHour, setAproxHour] = useState<Date | null>(null);
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { getToken } = useAuth();
+  const setToken = useTokenStore((state) => state.setToken);
 
   const handleSubmit = async () => {
     if (!sourceLocation || !destinationLocation) {
@@ -49,6 +58,10 @@ export default function CreateCompanionRequest({
     setIsSubmitting(true);
 
     try {
+
+      const token = await getToken();
+      setToken(token);
+
       // Crear Location para origen
       const sourceLocationData: Location = {
         id: 0,
@@ -79,6 +92,7 @@ export default function CreateCompanionRequest({
       await onCreateRequest(
         {
           description: description || undefined,
+          aproxHour: aproxHour || undefined,
         },
         sourceId,
         destId
@@ -87,7 +101,7 @@ export default function CreateCompanionRequest({
       // Limpiar formulario
       setSourceLocation(null);
       setDestinationLocation(null);
-      setAproxHour('');
+      setAproxHour(null);
       setDescription('');
 
       Alert.alert('Éxito', 'Solicitud de acompañamiento creada');
@@ -163,6 +177,75 @@ export default function CreateCompanionRequest({
         title="Selecciona el destino"
         acceptLocationTypes="all"
       />
+
+      {/* Hora aproximada */}
+      <Text style={styles.label}>Hora aproximada de quedada</Text>
+      <Pressable style={styles.input} onPress={() => setShowTimePicker(true)}>
+        <View style={styles.inputContent}>
+          <Ionicons name="time" size={20} color="#F59E0B" />
+          <Text style={{ color: aproxHour ? '#1F2937' : '#9CA3AF', flex: 1 }}>
+            {aproxHour 
+              ? aproxHour.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+              : 'Selecciona la hora (opcional)'
+            }
+          </Text>
+          {aproxHour && (
+            <Pressable onPress={() => setAproxHour(null)} style={{ padding: 4 }}>
+              <Ionicons name="close-circle" size={20} color="#9CA3AF" />
+            </Pressable>
+          )}
+          <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+        </View>
+      </Pressable>
+
+      {/* Modal para iOS */}
+      {Platform.OS === 'ios' ? (
+        <Modal
+          visible={showTimePicker}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setShowTimePicker(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Selecciona la hora</Text>
+                <Pressable onPress={() => setShowTimePicker(false)}>
+                  <Text style={styles.modalDoneButton}>Listo</Text>
+                </Pressable>
+              </View>
+              <DateTimePicker
+                value={aproxHour || new Date()}
+                mode="time"
+                is24Hour={true}
+                display="spinner"
+                onChange={(event, selectedDate) => {
+                  if (selectedDate) {
+                    setAproxHour(selectedDate);
+                  }
+                }}
+                textColor="#000000"
+                style={styles.timePicker}
+              />
+            </View>
+          </View>
+        </Modal>
+      ) : (
+        showTimePicker && (
+          <DateTimePicker
+            value={aproxHour || new Date()}
+            mode="time"
+            is24Hour={true}
+            display="default"
+            onChange={(event, selectedDate) => {
+              setShowTimePicker(false);
+              if (selectedDate) {
+                setAproxHour(selectedDate);
+              }
+            }}
+          />
+        )
+      )}
 
       {/* Descripción */}
       <Text style={styles.label}>Descripción (opcional)</Text>
@@ -267,5 +350,40 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  // Estilos para el modal del time picker (iOS)
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#FFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 34,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  modalDoneButton: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#7A33CC',
+  },
+  timePicker: {
+    height: 200,
+    backgroundColor: '#FFF',
   },
 });

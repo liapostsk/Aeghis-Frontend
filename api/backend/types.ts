@@ -85,6 +85,7 @@ export interface CompanionRequestDto {
   sourceId: number;
   destinationId: number;
   state: RequestStatus;
+  aproxHour?: Date;
   creationDate: Date;
   description?: string;
   creatorId: number;

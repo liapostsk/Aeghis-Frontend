@@ -9,7 +9,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from '@expo/vector-icons';
 import SafeLocationModal from '@/components/safeLocations/SafeLocationModal';
-import { SafeLocation } from '@/api/backend/locations/locationType';
+import { SafeLocation, Location } from '@/api/backend/locations/locationType';
 import { useUserStore } from '@/lib/storage/useUserStorage';
 
 export default function SafeLocationStep({
@@ -25,16 +25,27 @@ export default function SafeLocationStep({
   // Usar directamente las ubicaciones del store
   const selectedLocations = user?.safeLocations || [];
 
-  const handleLocationAdded = (location: SafeLocation) => {
+  const handleLocationAdded = (location: SafeLocation | Location) => {
     if (!user) return;
     
+    // Convertir Location a SafeLocation si es necesario
+    const safeLocation: SafeLocation = 'name' in location ? location : {
+      id: location.id,
+      name: `Ubicación personalizada`,
+      address: `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`,
+      type: 'custom',
+      latitude: location.latitude,
+      longitude: location.longitude,
+      externalId: undefined
+    };
+    
     const currentLocations = user.safeLocations || [];
-    console.log("📍 Intentando añadir ubicación:", location.name, "externalId:", location.externalId);
+    console.log("📍 Intentando añadir ubicación:", safeLocation.name, "externalId:", safeLocation.externalId);
     console.log("📍 Ubicaciones actuales:", currentLocations.map(loc => ({ name: loc.name, externalId: loc.externalId, id: loc.id })));
     
     // Verificar duplicados solo por externalId (place_id de Google) que es único
     const exists = currentLocations.find(
-      (loc) => loc.externalId && location.externalId && loc.externalId === location.externalId
+      (loc) => loc.externalId && safeLocation.externalId && loc.externalId === safeLocation.externalId
     );
     
     if (exists) {
@@ -42,9 +53,9 @@ export default function SafeLocationStep({
       return;
     }
 
-    const updated = [...currentLocations, location];
+    const updated = [...currentLocations, safeLocation];
     setUser({ ...user, safeLocations: updated });
-    console.log("Ubicación añadida exitosamente:", location);
+    console.log("Ubicación añadida exitosamente:", safeLocation);
     setModalVisible(false);
   };
 

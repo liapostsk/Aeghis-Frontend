@@ -7,10 +7,15 @@ import {
   Animated,
   Dimensions,
   Pressable,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useAuth } from '@clerk/clerk-expo';
 import privacyPolicyContent from '@/privacyPolicy.json';
 import { useUserStore } from '@/lib/storage/useUserStorage';
+import { useSessionState } from '@/lib/hooks/useSessionState';
 
 type PrivacyPolicyScreenProps = {
   onNext?: () => void;
@@ -21,7 +26,10 @@ export default function PrivacyPolicyScreen({ onNext }: PrivacyPolicyScreenProps
   const [accepted, setAccepted] = useState(false);
   const fadeAnim = useState(new Animated.Value(0))[0]; // Animación de opacidad
   const scaleAnim = useState(new Animated.Value(0))[0]; // Animación de escala
-  const { user, setUser } = useUserStore();
+  const { user, setUser, clearUser } = useUserStore();
+  const router = useRouter();
+  const { signOut } = useAuth();
+  const { cleanupClerkUser } = useSessionState();
   
   const handleScroll = (event: { nativeEvent: { layoutMeasurement: { height: number }, contentOffset: { y: number }, contentSize: { height: number } } }) => {
     const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
@@ -32,6 +40,38 @@ export default function PrivacyPolicyScreen({ onNext }: PrivacyPolicyScreenProps
     if (isCloseToBottom && !scrolledToBottom) {
       setScrolledToBottom(true);
     }
+  };
+
+  const handleCancel = () => {
+    Alert.alert(
+      "¿Cancelar registro?",
+      "Si cancelas ahora, se eliminará tu cuenta y deberás registrarte nuevamente. ¿Estás seguro?",
+      [
+        {
+          text: "No, continuar",
+          style: "cancel",
+        },
+        {
+          text: "Sí, cancelar",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              // Limpiar datos locales
+              clearUser();
+              
+              // Cerrar sesión de Clerk
+              await cleanupClerkUser('Usuario canceló el proceso de onboarding');
+              
+              // Redirigir a la pantalla de autenticación
+              router.replace('/(auth)');
+            } catch (error) {
+              console.error('Error al cancelar el registro:', error);
+              Alert.alert('Error', 'No se pudo cancelar el registro. Intenta nuevamente.');
+            }
+          },
+        },
+      ]
+    );
   };
 
   const handleAccept = () => {
@@ -66,8 +106,15 @@ export default function PrivacyPolicyScreen({ onNext }: PrivacyPolicyScreenProps
         {/* Contenido principal */}
         <View style={styles.contentContainer}>
           <View style={styles.headerContainer}>
-            <Text style={styles.title}>Política de Privacidad</Text>
-            <Text style={styles.subtitle}>Última actualización: {privacyPolicyContent.lastUpdated}</Text>
+            <View style={styles.headerTop}>
+              <View style={styles.headerTitleContainer}>
+                <Text style={styles.title}>Política de Privacidad</Text>
+                <Text style={styles.subtitle}>Última actualización: {privacyPolicyContent.lastUpdated}</Text>
+              </View>
+              <Pressable onPress={handleCancel} style={styles.cancelButton}>
+                <Ionicons name="close" size={24} color="#EF4444" />
+              </Pressable>
+            </View>
           </View>
 
           <ScrollView 
@@ -237,6 +284,15 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  headerTitleContainer: {
+    flex: 1,
+    marginRight: 12,
+  },
   title: {
     fontSize: 22,
     fontWeight: 'bold',
@@ -246,6 +302,15 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#999999',
     marginTop: 4,
+  },
+  cancelButton: {
+    padding: 4,
+    borderRadius: 20,
+    backgroundColor: '#FEE2E2',
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   scrollView: {
     flex: 1, // ocupar todo el espacio disponible
