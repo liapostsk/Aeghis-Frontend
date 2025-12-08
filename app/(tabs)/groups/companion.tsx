@@ -19,44 +19,16 @@ import { SafeLocation } from '@/api/backend/locations/locationType';
 
 type CompanionRequest = {
   id: string;
-  userId: number;
-  userName: string;
-  userImage: any;
-  origin: string | SafeLocation;
-  destination: string | SafeLocation;
-  date: string;
-  time: string;
-  seats: number;
+  source: SafeLocation;
+  destination: SafeLocation;
+  aproxHour: string; // ISO string datetime
   description: string;
+  state: 'ACTIVE' | 'CANCELLED' | 'COMPLETED';
+  creationDate: string; // ISO string datetime
 };
 
 // Mock data para las solicitudes
-const mockCompanionRequests: CompanionRequest[] = [
-  {
-    id: '1',
-    userId: 5,
-    userName: 'Carlos Rivera',
-    userImage: null,
-    origin: 'Plaza Catalunya',
-    destination: 'Aeropuerto El Prat',
-    date: '2025-11-20',
-    time: '18:30',
-    seats: 2,
-    description: 'Viaje al aeropuerto, puedo llevar 2 personas más',
-  },
-  {
-    id: '2',
-    userId: 8,
-    userName: 'María Vidal',
-    userImage: null,
-    origin: 'Diagonal',
-    destination: 'Parc de la Ciutadella',
-    date: '2025-11-19',
-    time: '07:00',
-    seats: 3,
-    description: 'Paseo matutino, buscamos compañía para caminar',
-  },
-];
+const mockCompanionRequests: CompanionRequest[] = [];
 
 export default function CompanionsGroups() {
   const { user } = useUserStore();
@@ -65,13 +37,11 @@ export default function CompanionsGroups() {
   const [activeTab, setActiveTab] = useState<'create' | 'search'>('search');
   
   // Estados del formulario de creación
-  const [originLocation, setOriginLocation] = useState<SafeLocation | null>(null);
+  const [sourceLocation, setSourceLocation] = useState<SafeLocation | null>(null);
   const [destinationLocation, setDestinationLocation] = useState<SafeLocation | null>(null);
-  const [showOriginModal, setShowOriginModal] = useState(false);
+  const [showSourceModal, setShowSourceModal] = useState(false);
   const [showDestinationModal, setShowDestinationModal] = useState(false);
-  const [date, setDate] = useState('');
-  const [time, setTime] = useState('');
-  const [seats, setSeats] = useState('1');
+  const [aproxHour, setAproxHour] = useState('');
   const [description, setDescription] = useState('');
   
   // Estados de búsqueda y filtros
@@ -99,41 +69,36 @@ export default function CompanionsGroups() {
   };
 
   const handleCreateRequest = () => {
-    if (!originLocation || !destinationLocation || !date || !time) {
-      Alert.alert('Error', 'Por favor selecciona origen, destino, fecha y hora');
+    if (!sourceLocation || !destinationLocation || !aproxHour) {
+      Alert.alert('Error', 'Por favor completa origen, destino y hora aproximada');
       return;
     }
-    const newRequest = {
+    const newRequest: CompanionRequest = {
       id: Date.now().toString(),
-      userId: user?.id || 0,
-      userName: user?.name || 'Usuario',
-      userImage: user?.image || null,
-      origin: originLocation,
+      source: sourceLocation,
       destination: destinationLocation,
-      date,
-      time,
-      seats: parseInt(seats),
+      aproxHour: aproxHour,
       description,
+      state: 'ACTIVE',
+      creationDate: new Date().toISOString(),
     };
     setRequests([newRequest, ...requests]);
     // Limpiar formulario
-    setOriginLocation(null);
+    setSourceLocation(null);
     setDestinationLocation(null);
-    setDate('');
-    setTime('');
-    setSeats('1');
+    setAproxHour('');
     setDescription('');
     Alert.alert('Éxito', 'Solicitud de acompañamiento creada');
     setActiveTab('search');
   };
 
   const filteredRequests = requests.filter(req => {
-    const originName = typeof req.origin === 'string' ? req.origin : req.origin?.name || req.origin?.address || '';
-    const destinationName = typeof req.destination === 'string' ? req.destination : req.destination?.name || req.destination?.address || '';
+    const sourceName = req.source?.name || req.source?.address || '';
+    const destinationName = req.destination?.name || req.destination?.address || '';
     const matchesSearch = 
-      originName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      sourceName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       destinationName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      req.userName.toLowerCase().includes(searchQuery.toLowerCase());
+      req.description.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesSearch;
   });
 
@@ -207,17 +172,17 @@ export default function CompanionsGroups() {
 
           {/* Origen */}
           <Text style={styles.label}>Origen *</Text>
-          <Pressable style={styles.input} onPress={() => setShowOriginModal(true)}>
-            <Text style={{ color: originLocation ? '#1F2937' : '#9CA3AF' }}>
-              {originLocation ? originLocation.name : 'Selecciona el origen'}
+          <Pressable style={styles.input} onPress={() => setShowSourceModal(true)}>
+            <Text style={{ color: sourceLocation ? '#1F2937' : '#9CA3AF' }}>
+              {sourceLocation ? sourceLocation.name : 'Selecciona el origen'}
             </Text>
           </Pressable>
           <SafeLocationModal
-            visible={showOriginModal}
-            onClose={() => setShowOriginModal(false)}
+            visible={showSourceModal}
+            onClose={() => setShowSourceModal(false)}
             onSelectLocation={(loc) => {
-              setOriginLocation(loc as SafeLocation);
-              setShowOriginModal(false);
+              setSourceLocation(loc as SafeLocation);
+              setShowSourceModal(false);
             }}
             title="Selecciona el origen"
             acceptLocationTypes="all"
@@ -241,36 +206,13 @@ export default function CompanionsGroups() {
             acceptLocationTypes="all"
           />
 
-          {/* Fecha y Hora */}
-          <View style={styles.row}>
-            <View style={styles.halfInput}>
-              <Text style={styles.label}>Fecha *</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="DD/MM/YYYY"
-                value={date}
-                onChangeText={setDate}
-              />
-            </View>
-            <View style={styles.halfInput}>
-              <Text style={styles.label}>Hora *</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="HH:MM"
-                value={time}
-                onChangeText={setTime}
-              />
-            </View>
-          </View>
-
-          {/* Plazas disponibles */}
-          <Text style={styles.label}>Plazas disponibles</Text>
+          {/* Hora aproximada */}
+          <Text style={styles.label}>Hora aproximada *</Text>
           <TextInput
             style={styles.input}
-            placeholder="1"
-            keyboardType="numeric"
-            value={seats}
-            onChangeText={setSeats}
+            placeholder="DD/MM/YYYY HH:MM"
+            value={aproxHour}
+            onChangeText={setAproxHour}
           />
 
           {/* Descripción */}
@@ -312,12 +254,18 @@ export default function CompanionsGroups() {
                 <View style={styles.requestHeader}>
                   <View style={styles.userInfo}>
                     <View style={styles.avatar}>
-                      <Ionicons name="person" size={20} color="#7A33CC" />
+                      <Ionicons name="time" size={20} color="#7A33CC" />
                     </View>
                     <View>
-                      <Text style={styles.userName}>{item.userName}</Text>
+                      <Text style={styles.userName}>Solicitud de acompañamiento</Text>
                       <Text style={styles.requestDate}>
-                        {item.date} · {item.time}
+                        {new Date(item.aproxHour).toLocaleString('es-ES', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
                       </Text>
                     </View>
                   </View>
@@ -327,14 +275,14 @@ export default function CompanionsGroups() {
                   <View style={styles.routePoint}>
                     <Ionicons name="location" size={16} color="#10B981" />
                     <Text style={styles.routeText}>
-                      {typeof item.origin === 'string' ? item.origin : item.origin?.name}
+                      {item.source?.name || item.source?.address}
                     </Text>
                   </View>
                   <Ionicons name="arrow-forward" size={16} color="#9CA3AF" style={styles.routeArrow} />
                   <View style={styles.routePoint}>
                     <Ionicons name="location" size={16} color="#EF4444" />
                     <Text style={styles.routeText}>
-                      {typeof item.destination === 'string' ? item.destination : item.destination?.name}
+                      {item.destination?.name || item.destination?.address}
                     </Text>
                   </View>
                 </View>
@@ -347,13 +295,17 @@ export default function CompanionsGroups() {
 
                 <View style={styles.requestFooter}>
                   <View style={styles.seatsInfo}>
-                    <Ionicons name="people" size={16} color="#6B7280" />
-                    <Text style={styles.seatsText}>{item.seats} plazas disponibles</Text>
+                    <Ionicons name="checkmark-circle" size={16} color={item.state === 'ACTIVE' ? '#10B981' : '#6B7280'} />
+                    <Text style={styles.seatsText}>
+                      {item.state === 'ACTIVE' ? 'Activa' : item.state === 'COMPLETED' ? 'Completada' : 'Cancelada'}
+                    </Text>
                   </View>
                   
-                  <Pressable style={styles.joinButton}>
-                    <Text style={styles.joinButtonText}>Solicitar</Text>
-                  </Pressable>
+                  {item.state === 'ACTIVE' && (
+                    <Pressable style={styles.joinButton}>
+                      <Text style={styles.joinButtonText}>Solicitar</Text>
+                    </Pressable>
+                  )}
                 </View>
               </Pressable>
             )}

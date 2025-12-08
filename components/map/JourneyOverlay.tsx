@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable, Modal, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 
@@ -217,7 +217,6 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
           selectedGroupType={selectedGroupType}
           onClose={() => {
             setShowJourneyOptions(false);
-            setIsModalVisible(false);
           }}
           onGroupSelected={handleGroupSelected}
           onCreateGroup={handleCreateGroup}
@@ -360,20 +359,13 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
   };
 
   if (loading) {
-    return (
-      <Modal
-        visible={isModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setIsModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.loadingText}>Cargando...</Text>
-          </View>
+    return isModalVisible ? (
+      <View style={styles.overlayContainer}>
+        <View style={styles.panelContainer}>
+          <Text style={styles.loadingText}>Cargando...</Text>
         </View>
-      </Modal>
-    );
+      </View>
+    ) : null;
   }
 
   // Renderizar tab colapsado cuando el modal está cerrado
@@ -386,7 +378,7 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
     );
   }
 
-  // Renderizar modal principal
+  // Renderizar panel deslizable
   return (
     <>
       {/* Tab colapsado siempre visible cuando hay journey */}
@@ -397,34 +389,48 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
         />
       )}
 
-      {/* Modal con contenido */}
-      <Modal
-        visible={isModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setIsModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
+      {/* Panel deslizable desde abajo */}
+      {isModalVisible && (
+        <View style={styles.overlayContainer}>
+          <Pressable 
+            style={styles.backdrop} 
+            onPress={() => setIsModalVisible(false)}
+          />
+          <View style={styles.panelContainer}>
             {renderModalContent()}
           </View>
         </View>
-      </Modal>
+      )}
     </>
   );
 });
 
 const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
+  overlayContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    top: 0,
+    zIndex: 1000,
   },
-  modalContainer: {
+  backdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+  },
+  panelContainer: {
+    position: 'absolute',
+    bottom: 60,
+    left: 0,
+    right: 0,
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: '90%',
+    maxHeight: '70%',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.25,
