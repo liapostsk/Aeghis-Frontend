@@ -14,7 +14,7 @@ import {
   listActiveCompanionRequests,
   requestToJoinCompanionRequest 
 } from '@/api/backend/companionRequest/companionRequestApi';
-import { CompanionRequestDto } from '@/api/backend/types';
+import { CompanionRequestDto, CreateCompanionRequestDto } from '@/api/backend/companionRequest/companionTypes';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 import CompanionRequestList from '@/components/groups/companion/CompanionRequestList';
@@ -33,6 +33,7 @@ export default function CompanionsGroups() {
   
   // Estados de búsqueda y filtros
   const [requests, setRequests] = useState<CompanionRequest[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
   const verifyStatus = user?.verify;
 
 
@@ -66,33 +67,28 @@ export default function CompanionsGroups() {
     }
   };
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadRequests();
+    setRefreshing(false);
+  };
+
   useEffect(() => {
     if (verifyStatus === 'VERIFIED') {
       loadRequests();
     }
   }, [verifyStatus]);
 
-  const handleCreateRequest = async (
-    requestData: Partial<CompanionRequestDto>,
-    sourceId: number,
-    destinationId: number
-  ) => {
-    const token = await getToken();
-    setToken(token);
-    
-    const newRequest: CompanionRequestDto = {
-      sourceId: sourceId,
-      destinationId: destinationId,
-      creationDate: new Date(),
-      state: 'CREATED',
-      description: requestData.description,
-      id: 0,
-      creatorId: user?.id || 0,
-      companionId: 0,
-    };
-    
-    await createCompanionRequest(newRequest);
-    loadRequests();
+  const handleCreateRequest = async (requestData: CreateCompanionRequestDto) => {
+    try {
+      const token = await getToken();
+      setToken(token);
+      
+      await createCompanionRequest(requestData);
+      await loadRequests();
+    } catch (error) {
+      console.error('Error creando solicitud:', error);
+    }
   };
 
   const handleJoinRequest = async (requestId: number) => {
@@ -187,6 +183,8 @@ export default function CompanionsGroups() {
           requests={requests}
           onRequestPress={handleRequestPress}
           onJoinRequest={handleJoinRequest}
+          onRefresh={handleRefresh}
+          refreshing={refreshing}
         />
       )}
     </View>

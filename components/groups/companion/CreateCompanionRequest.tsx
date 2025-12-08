@@ -14,13 +14,13 @@ import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import SafeLocationModal from '@/components/safeLocations/SafeLocationModal';
 import { Location } from '@/api/backend/locations/locationType';
-import { CompanionRequestDto } from '@/api/backend/types';
+import { CompanionRequestDto, CreateCompanionRequestDto } from '@/api/backend/companionRequest/companionTypes';
 import { createLocation } from '@/api/backend/locations/locationsApi';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 
 interface CreateCompanionRequestProps {
-  onCreateRequest: (request: Partial<CompanionRequestDto>, sourceId: number, destinationId: number) => Promise<void>;
+  onCreateRequest: (request: CreateCompanionRequestDto) => Promise<void>;
   onSuccess?: () => void;
 }
 
@@ -88,15 +88,15 @@ export default function CreateCompanionRequest({
         throw new Error('No se pudo crear la ubicación de destino');
       }
 
-      // Crear la solicitud con los IDs
-      await onCreateRequest(
-        {
-          description: description || undefined,
-          aproxHour: aproxHour || undefined,
-        },
+      // Crear la solicitud con solo los campos necesarios
+      const newRequest: CreateCompanionRequestDto = {
         sourceId,
-        destId
-      );
+        destinationId: destId,
+        aproxHour: aproxHour || undefined,
+        description: description || undefined,
+      };
+
+      await onCreateRequest(newRequest);
 
       // Limpiar formulario
       setSourceLocation(null);

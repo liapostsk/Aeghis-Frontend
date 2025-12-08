@@ -1,8 +1,8 @@
 import api from "../../client";
-import { CompanionRequestDto } from "../types";
+import { CompanionRequestDto, CreateCompanionRequestDto } from '@/api/backend/companionRequest/companionTypes';
 import { JourneyDto } from "../journeys/journeyType";
 
-export const createCompanionRequest = async (dto: CompanionRequestDto): Promise<number> => {
+export const createCompanionRequest = async (dto: CreateCompanionRequestDto): Promise<number> => {
   console.log(" API: Creando solicitud de acompañamiento:", dto);
   const response = await api.post("/companion-request", dto);
   console.log(" API: Respuesta de creación:", response.data);

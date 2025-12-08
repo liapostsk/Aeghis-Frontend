@@ -6,26 +6,36 @@ import {
   FlatList,
   TextInput,
   Pressable,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { CompanionRequestDto } from '@/api/backend/types';
+import { CompanionRequestDto } from '@/api/backend/companionRequest/companionTypes';
 
 interface CompanionRequestListProps {
   requests: CompanionRequestDto[];
   onRequestPress?: (request: CompanionRequestDto) => void;
   onJoinRequest?: (requestId: number) => void;
+  onRefresh?: () => void;
+  refreshing?: boolean;
 }
 
 export default function CompanionRequestList({
   requests,
   onRequestPress,
   onJoinRequest,
+  onRefresh,
+  refreshing = false,
 }: CompanionRequestListProps) {
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredRequests = requests.filter(req => {
     const matchesSearch = 
-      (req.description || '').toLowerCase().includes(searchQuery.toLowerCase());
+      (req.description || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (req.source?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (req.source?.address || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (req.destination?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (req.destination?.address || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (req.creator?.name || '').toLowerCase().includes(searchQuery.toLowerCase());
     return matchesSearch;
   });
 
@@ -49,6 +59,11 @@ export default function CompanionRequestList({
     return '#EF4444';
   };
 
+  const getLocationDisplay = (location: any) => {
+    if (!location) return 'Ubicación no disponible';
+    return location.name || location.address || `${location.latitude?.toFixed(4)}, ${location.longitude?.toFixed(4)}`;
+  };
+
   return (
     <View style={styles.container}>
       {/* Barra de búsqueda */}
@@ -56,7 +71,7 @@ export default function CompanionRequestList({
         <Ionicons name="search" size={20} color="#9CA3AF" />
         <TextInput
           style={styles.searchInput}
-          placeholder="Buscar por descripción..."
+          placeholder="Buscar por descripción, ubicación o usuario..."
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
@@ -66,6 +81,8 @@ export default function CompanionRequestList({
       <FlatList
         data={filteredRequests}
         keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
         renderItem={({ item }) => (
           <Pressable 
             style={styles.requestCard}
@@ -73,44 +90,65 @@ export default function CompanionRequestList({
           >
             <View style={styles.requestHeader}>
               <View style={styles.userInfo}>
-                <View style={styles.avatar}>
-                  <Ionicons name="time" size={20} color="#7A33CC" />
-                </View>
-                <View>
-                  <Text style={styles.userName}>Solicitud de acompañamiento</Text>
-                  <Text style={styles.requestDate}>
-                    {new Date(item.creationDate).toLocaleString('es-ES', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
+                {item.creator?.image ? (
+                  <Image 
+                    source={{ uri: item.creator.image }} 
+                    style={styles.avatarImage}
+                  />
+                ) : (
+                  <View style={styles.avatar}>
+                    <Ionicons name="person" size={20} color="#7A33CC" />
+                  </View>
+                )}
+                <View style={styles.userDetails}>
+                  <Text style={styles.userName}>
+                    {item.creator?.name || `Usuario #${item.creator?.id || 'Desconocido'}`}
                   </Text>
+                  {item.aproxHour && (
+                    <View style={styles.timeInfo}>
+                      <Ionicons name="time-outline" size={12} color="#6B7280" />
+                      <Text style={styles.requestDate}>
+                        {new Date(item.aproxHour).toLocaleString('es-ES', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </Text>
+                    </View>
+                  )}
                 </View>
-              </View>
-            </View>
-
-            <View style={styles.routeInfo}>
-              <View style={styles.routePoint}>
-                <Ionicons name="location" size={16} color="#10B981" />
-                <Text style={styles.routeText}>
-                  Ubicación #{item.sourceId}
-                </Text>
-              </View>
-              <Ionicons name="arrow-forward" size={16} color="#9CA3AF" style={styles.routeArrow} />
-              <View style={styles.routePoint}>
-                <Ionicons name="location" size={16} color="#EF4444" />
-                <Text style={styles.routeText}>
-                  Ubicación #{item.destinationId}
-                </Text>
               </View>
             </View>
 
             {item.description && (
               <Text style={styles.requestDescription} numberOfLines={2}>
-                {item.description}
+                📝 {item.description}
               </Text>
+            )}
+
+            {(item.source || item.destination) && (
+              <View style={styles.routeInfo}>
+                {item.source && (
+                  <View style={styles.routePoint}>
+                    <Ionicons name="location" size={16} color="#10B981" />
+                    <Text style={styles.routeText} numberOfLines={1}>
+                      {getLocationDisplay(item.source)}
+                    </Text>
+                  </View>
+                )}
+                {item.source && item.destination && (
+                  <Ionicons name="arrow-forward" size={16} color="#9CA3AF" style={styles.routeArrow} />
+                )}
+                {item.destination && (
+                  <View style={styles.routePoint}>
+                    <Ionicons name="location" size={16} color="#EF4444" />
+                    <Text style={styles.routeText} numberOfLines={1}>
+                      {getLocationDisplay(item.destination)}
+                    </Text>
+                  </View>
+                )}
+              </View>
             )}
 
             <View style={styles.requestFooter}>
@@ -203,6 +241,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  avatarImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
+  userDetails: {
+    flex: 1,
+  },
   userName: {
     fontSize: 14,
     fontWeight: '600',
@@ -211,6 +257,12 @@ const styles = StyleSheet.create({
   requestDate: {
     fontSize: 12,
     color: '#6B7280',
+    marginTop: 2,
+  },
+  timeInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     marginTop: 2,
   },
   routeInfo: {

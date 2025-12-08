@@ -65,34 +65,3 @@ export interface ExternalContact {
   phone: string;          // normalizado (E.164)
   relation: string;
 }
-
-export interface CompanionRequest {
-  id: number;
-  sourceId: number;
-  destinationId: number;
-  state: RequestStatus;
-  creationDate: Date;
-  description?: string;
-  creator: User;
-  companion: User;
-  companionGroup?: Group;
-  trackingGroup?: Group;
-  trayecto?: Journey;
-}
-
-export interface CompanionRequestDto {
-  id: number;
-  sourceId: number;
-  destinationId: number;
-  state: RequestStatus;
-  aproxHour?: Date;
-  creationDate: Date;
-  description?: string;
-  creatorId: number;
-  companionId: number;
-  companionGroupId?: number;
-  trackingGroupId?: number;
-  trayectoId?: number;
-}
-
-export type RequestStatus = "CREATED" | "PENDING" | "MATCHED" | "IN_PROGRESS" | "FINISHED" | "DECLINED" | "CANCELLED";
