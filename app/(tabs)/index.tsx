@@ -9,6 +9,7 @@ import EmergencyButton from '@/components/map/EmergencyButton';
 import AlertModal from '@/components/common/AlertModal';
 import { useEffect, useState } from 'react';
 import { getParticipants } from '@/api/firebase/journey/participationsService';
+import { Participation } from '@/api/firebase/types';
 import { Group } from '@/api/backend/group/groupType';
 import { JourneyDto, JourneyStates } from '@/api/backend/journeys/journeyType';
 import { changeJourneyStatus } from '@/api/backend/journeys/journeyApi';
@@ -16,6 +17,9 @@ import { updateJourneyState } from '@/api/firebase/journey/journeyService';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 
+interface Participant extends Participation {
+  id: string;
+}
 
 interface GroupWithJourney {
   group: Group;
@@ -47,7 +51,7 @@ export default function MapScreen() {
   const chatId = selectedGroupJourney?.group.id ? selectedGroupJourney.group.id.toString() : undefined;
   const journeyId = selectedGroupJourney?.activeJourney?.id ? selectedGroupJourney.activeJourney.id.toString() : undefined;
   const journeyState = selectedGroupJourney?.activeJourney?.state;
-  const [participants, setParticipants] = useState([]);
+  const [participants, setParticipants] = useState<Participant[]>([]);
 
   useEffect(() => {
     if (chatId && journeyId) {
@@ -83,6 +87,10 @@ export default function MapScreen() {
     try {
       const token = await getToken();
       setToken(token);
+      
+      if (!journey.id) {
+        throw new Error('Journey ID no disponible');
+      }
       
       const updatedJourneyData = {
         ...journey,
@@ -125,6 +133,10 @@ export default function MapScreen() {
     try {
       const token = await getToken();
       setToken(token);
+
+      if (!journey.id) {
+        throw new Error('Journey ID no disponible');
+      }
 
       const updatedJourneyData = {
         ...journey,

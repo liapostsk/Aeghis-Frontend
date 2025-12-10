@@ -1,7 +1,5 @@
-import { User } from "@/lib/storage/useUserStorage";
 import { Group } from "./group/groupType";
 import { SafeLocation } from "./locations/locationType";
-import { Journey } from "./journeys/journeyType";
 
 export enum ValidationStatus {
   PENDING = 'PENDING',

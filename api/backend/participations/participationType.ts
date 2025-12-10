@@ -29,6 +29,18 @@ export type ParticipationState = "ACCEPTED" | "IN_PROGRESS" | "CANCELLED" | "ARR
 
 // Mapeo de Participation a ParticipationDto
 export const mapParticipationToDto = (participation: Participation): ParticipationDto => {
+    if (participation.journey.id === undefined) {
+        throw new Error('Journey ID is required for ParticipationDto');
+    }
+    if (participation.user.id === undefined) {
+        throw new Error('User ID is required for ParticipationDto');
+    }
+    if (participation.source.id === undefined) {
+        throw new Error('Source location ID is required for ParticipationDto');
+    }
+    if (participation.destination.id === undefined) {
+        throw new Error('Destination location ID is required for ParticipationDto');
+    }
     return {
         id: participation.id,
         journeyId: participation.journey.id,

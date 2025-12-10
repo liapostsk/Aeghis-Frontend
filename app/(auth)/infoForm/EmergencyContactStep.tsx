@@ -79,22 +79,23 @@ export default function EmergencyContactStep({
       setToken(token);
       const existsUserId = await checkIfUserExists(contactData.phone);
       
-      if (!isEmptyOrNull(existsUserId)) {
+      if (!isEmptyOrNull(existsUserId) && existsUserId !== null) {
         // Usuario registrado - Contacto de emergencia
-        const draftEmergency: Partial<EmergencyContact> = {
-          id: undefined as any,
+        const draftEmergency: EmergencyContact = {
+          id: 0, // Temporal, el backend asignará el ID real
+          ownerId: user!.id ?? 0, // ID del usuario actual
           name: contactData.name ?? '',
           phone: contactData.phone,
           relation: contactData.relation ?? '',
           contactId: existsUserId,
           status: 'PENDING',
         };
-        const updated = [...(user!.emergencyContacts ?? []), draftEmergency as EmergencyContact];
+        const updated = [...(user!.emergencyContacts ?? []), draftEmergency];
         setUser({ ...user!, emergencyContacts: updated });
       } else {
         // Usuario no registrado - Contacto externo
         const draftExternal: ExternalContact = {
-          id: undefined as any,
+          id: 0, // Temporal, el backend asignará el ID real
           name: contactData.name ?? '',
           phone: contactData.phone,
           relation: contactData.relation ?? '',

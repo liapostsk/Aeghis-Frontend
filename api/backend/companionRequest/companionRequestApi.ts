@@ -85,7 +85,7 @@ export const searchCompanionRequests = async (
   return response.data;
 };
 
-export const requestToJoinCompanionRequest = async (id: number): Promise<void> => {
+export const requestToJoinCompanionRequest = async (id: number, companionMessage: string): Promise<void> => {
   console.log(" API: Solicitando unirse a solicitud de acompañamiento:", id);
   await api.post(`/companion-request/${id}/request-join`);
   console.log(" API: Solicitud de unión enviada");
@@ -102,8 +102,15 @@ export const cancelCompanionRequest = async (id: number): Promise<void> => {
  */
 
 export const getCompanionRequestById = async (id: number): Promise<CompanionRequestDto> => {
-  console.log(" API: Obteniendo solicitud de acompañamiento por ID:", id);
+  console.log("📋 API: Obteniendo solicitud de acompañamiento por ID:", id);
   const response = await api.get(`/companion-request/${id}`);
-  console.log(" API: Solicitud obtenida:", response.data);
+  console.log("✅ API: Solicitud obtenida:", response.data);
+  return response.data;
+};
+
+export const getCompanionRequestApplicants = async (id: number): Promise<any[]> => {
+  console.log("📋 API: Obteniendo solicitantes para companion request:", id);
+  const response = await api.get(`/companion-request/${id}/applicants`);
+  console.log("✅ API: Solicitantes obtenidos:", response.data);
   return response.data;
 };

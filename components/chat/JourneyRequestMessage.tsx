@@ -9,13 +9,12 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import SafeLocationModal from '@/components/safeLocations/SafeLocationModal';
-import { SafeLocation } from '@/api/backend/locations/locationType';
+import { Location, SelectableLocation, toSafeLocation } from '@/api/backend/locations/locationType';
 import { createParticipation } from '@/api/backend/participations/participationApi';
 import { joinJourneyParticipation } from '@/api/firebase/journey/participationsService';
 import { getJourney } from '@/api/backend/journeys/journeyApi';
 import { createLocation } from '@/api/backend/locations/locationsApi';
 import { ParticipationDto } from '@/api/backend/participations/participationType';
-import { Location } from '@/api/backend/locations/locationType';
 import { useAuth } from '@clerk/clerk-expo';
 import { getCurrentUser } from '@/api/backend/user/userApi';
 import * as ExpoLocation from 'expo-location';
@@ -62,20 +61,11 @@ export default function JourneyRequestMessage({
         }
     };
 
-    const handleJoinJourney = async (location: SafeLocation | Location) => {
+    const handleJoinJourney = async (location: SelectableLocation) => {
         try {
             setJoining(true);
 
-            // Convertir Location a SafeLocation si es necesario
-            const selectedDestination: SafeLocation = 'name' in location ? location : {
-                id: location.id,
-                name: `Ubicación personalizada`,
-                address: `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`,
-                type: 'custom',
-                latitude: location.latitude,
-                longitude: location.longitude,
-                externalId: undefined
-            };
+            const selectedDestination = toSafeLocation(location);
 
             // 1. Obtener usuario actual
             const currentUser = await getCurrentUser();
@@ -87,20 +77,24 @@ export default function JourneyRequestMessage({
             }
 
             // 3. Crear ubicación de origen
-            const originLocation: Partial<Location> = {
+            const originLocation: Location = {
+                id: 0,
+                name: 'Mi ubicación',
                 latitude: deviceLocation.coords.latitude,
                 longitude: deviceLocation.coords.longitude,
                 timestamp: new Date().toISOString(),
             };
-            const originLocationId = await createLocation(originLocation as Location);
+            const originLocationId = await createLocation(originLocation);
 
             // 4. Crear ubicación de destino
-            const destLocation: Partial<Location> = {
+            const destLocation: Location = {
+                id: 0,
+                name: selectedDestination.name,
                 latitude: selectedDestination.latitude,
                 longitude: selectedDestination.longitude,
                 timestamp: new Date().toISOString()
             };
-            const destinationLocationId = await createLocation(destLocation as Location);
+            const destinationLocationId = await createLocation(destLocation);
 
 
             // 5. Crear participación en backend

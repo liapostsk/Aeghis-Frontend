@@ -4,21 +4,23 @@ import {
   Text,
   StyleSheet,
   Pressable,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useUserStore } from '@/lib/storage/useUserStorage';
 import ProfileVerificationScreen from '@/components/profile/ProfileVerificationScreen';
-import { Location } from '@/api/backend/locations/locationType';
 import { 
   createCompanionRequest, 
   listActiveCompanionRequests,
-  requestToJoinCompanionRequest 
+  requestToJoinCompanionRequest,
+  deleteCompanionRequest
 } from '@/api/backend/companionRequest/companionRequestApi';
 import { CompanionRequestDto, CreateCompanionRequestDto } from '@/api/backend/companionRequest/companionTypes';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 import CompanionRequestList from '@/components/groups/companion/CompanionRequestList';
 import CreateCompanionRequest from '@/components/groups/companion/CreateCompanionRequest';
+import ManageCompanionRequest from '@/components/groups/companion/ManageCompanionRequest';
 
 
 type CompanionRequest = CompanionRequestDto;
@@ -34,6 +36,7 @@ export default function CompanionsGroups() {
   // Estados de búsqueda y filtros
   const [requests, setRequests] = useState<CompanionRequest[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [managingRequest, setManagingRequest] = useState<CompanionRequestDto | null>(null);
   const verifyStatus = user?.verify;
 
 
@@ -96,7 +99,7 @@ export default function CompanionsGroups() {
       const token = await getToken();
       setToken(token);
       
-      await requestToJoinCompanionRequest(requestId);
+      await requestToJoinCompanionRequest(requestId, '');
       console.log('Solicitud de unión enviada');
       loadRequests();
     } catch (error) {
@@ -107,6 +110,38 @@ export default function CompanionsGroups() {
   const handleRequestPress = (request: CompanionRequestDto) => {
     console.log('Solicitud seleccionada:', request);
     // Aquí puedes navegar a una pantalla de detalle o mostrar más información
+  };
+
+  const handleManageRequest = (request: CompanionRequestDto) => {
+    setManagingRequest(request);
+  };
+
+  const handleDeleteRequest = async (requestId: number) => {
+    Alert.alert(
+      'Eliminar solicitud',
+      '¿Estás seguro de que quieres eliminar esta solicitud de acompañamiento?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const token = await getToken();
+              setToken(token);
+              
+              await deleteCompanionRequest(requestId);
+              console.log('Solicitud eliminada:', requestId);
+              await loadRequests();
+              Alert.alert('Éxito', 'Solicitud eliminada correctamente');
+            } catch (error) {
+              console.error('Error eliminando solicitud:', error);
+              Alert.alert('Error', 'No se pudo eliminar la solicitud');
+            }
+          },
+        },
+      ]
+    );
   };
 
   if (isLoading) {
@@ -135,6 +170,20 @@ export default function CompanionsGroups() {
     return (
       <ProfileVerificationScreen
         onVerificationComplete={handleVerificationComplete}
+      />
+    );
+  }
+
+  // Si estamos gestionando una solicitud, mostrar la pantalla de gestión
+  if (managingRequest) {
+    return (
+      <ManageCompanionRequest
+        request={managingRequest}
+        onClose={() => setManagingRequest(null)}
+        onRequestUpdated={() => {
+          setManagingRequest(null);
+          loadRequests();
+        }}
       />
     );
   }
@@ -185,6 +234,9 @@ export default function CompanionsGroups() {
           onJoinRequest={handleJoinRequest}
           onRefresh={handleRefresh}
           refreshing={refreshing}
+          currentUserId={user?.id}
+          onManageRequest={handleManageRequest}
+          onDeleteRequest={handleDeleteRequest}
         />
       )}
     </View>

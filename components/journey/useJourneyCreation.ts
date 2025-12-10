@@ -185,7 +185,8 @@ ID del trayecto: ${journeyId}`;
         const destLocation: Partial<Location> = {
           latitude: selectedDestination.latitude,
           longitude: selectedDestination.longitude,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          name: selectedDestination.name
         };
         destinationLocationId = await createLocation(destLocation as Location);
       }

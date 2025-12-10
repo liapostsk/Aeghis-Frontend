@@ -1,17 +1,33 @@
 // File: components/map/GroupMap.tsx
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Alert, Image } from 'react-native';
-import MapView, { Marker, Polyline, Region } from 'react-native-maps';
+import MapView, { Marker, Polyline, Region, LatLng } from 'react-native-maps';
 import * as Location from 'expo-location';
 import MapStyleButton, { MapType } from './MapStyleButton';
 import { useAllParticipantsPositions } from '@/lib/hooks/usePositions';
 import { getRouteBetweenPoints } from '@/api/backend/locations/safeLocations/googleDirectionsApi';
+import { JourneyState } from '@/api/backend/journeys/journeyType';
 
-// Recibe props o usa contexto para chatId, journeyId, journeyState, participants
-// participants: [{ id, name, avatarUrl }]
+interface Participant {
+  id: string;
+  name?: string;
+  avatarUrl?: string;
+  destination?: {
+    latitude: number;
+    longitude: number;
+  };
+}
+
+interface PeopleOnMapProps {
+  chatId?: string;
+  journeyId?: string;
+  journeyState?: JourneyState;
+  participants: Participant[];
+}
+
 const COLORS = ["#7A33CC", "#FF5733", "#33C1FF", "#4CAF50", "#FFC300", "#FF33A8", "#33FFB5", "#FF8C33"];
 
-export default function PeopleOnMap({ chatId, journeyId, journeyState, participants }) {
+export default function PeopleOnMap({ chatId, journeyId, journeyState, participants }: PeopleOnMapProps) {
 
   const [region, setRegion] = useState<Region | null>(null);
   const [mapType, setMapType] = useState<MapType>('standard');
@@ -20,8 +36,8 @@ export default function PeopleOnMap({ chatId, journeyId, journeyState, participa
   const enabled = journeyState === 'IN_PROGRESS';
   const participantUserIds = participants.map(p => p.id);
   const { positionsMap } = useAllParticipantsPositions(
-    enabled ? chatId : undefined,
-    enabled ? journeyId : undefined,
+    enabled && chatId ? chatId : '',
+    enabled && journeyId ? journeyId : '',
     enabled ? participantUserIds : [],
     1 // Solo la última posición
   );
@@ -46,13 +62,13 @@ export default function PeopleOnMap({ chatId, journeyId, journeyState, participa
 
 
   // Estado para guardar las rutas de cada participante
-  const [routes, setRoutes] = useState({}); // { [userId]: LatLng[] }
+  const [routes, setRoutes] = useState<Record<string, LatLng[]>>({}); // { [userId]: LatLng[] }
 
   // Obtener rutas cuando el journey está activo y hay posiciones
   useEffect(() => {
     let isMounted = true;
     async function fetchRoutes() {
-      const newRoutes = {};
+      const newRoutes: Record<string, LatLng[]> = {};
       for (const [idx, participant] of participants.entries()) {
         const pos = positionsMap.get(participant.id)?.[0];
         const dest = participant.destination; // { latitude, longitude }

@@ -10,6 +10,8 @@ export interface CompanionRequest {
   state: RequestStatus;
   creationDate: Date;
   description?: string;
+  companionMessage: string;
+  aproxHour?: Date;
   creator: User;
   companion: User;
   companionGroup?: Group;
@@ -25,6 +27,7 @@ export interface CompanionRequestDto {
   aproxHour?: Date;
   creationDate: Date;
   description?: string;
+  companionMessage: string;
   creator: User;
   companionId: number;
   companionGroupId?: number;
@@ -37,6 +40,14 @@ export interface CreateCompanionRequestDto {
   destinationId: number;
   aproxHour?: Date;
   description?: string;
+}
+
+export interface CompanionApplicant {
+  userId: number;
+  userName: string;
+  userImage?: string;
+  companionMessage: string;
+  requestDate: Date;
 }
 
 export type RequestStatus = "CREATED" | "PENDING" | "MATCHED" | "IN_PROGRESS" | "FINISHED" | "DECLINED" | "CANCELLED";

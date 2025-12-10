@@ -12,7 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { JourneyDto, JourneyTypes } from '@/api/backend/journeys/journeyType';
 import { ParticipationDto } from '@/api/backend/participations/participationType';
 import { UserDto } from '@/api/backend/types';
-import { SafeLocation, Location } from '@/api/backend/locations/locationType';
+import { SafeLocation, Location, SelectableLocation, toSafeLocation } from '@/api/backend/locations/locationType';
 import { createParticipation } from '@/api/backend/participations/participationApi';
 import { createLocation } from '@/api/backend/locations/locationsApi';
 import * as ExpoLocation from 'expo-location';
@@ -74,10 +74,11 @@ export default function JoinJourneyModal({
   };
 
   // Función para crear registro de ubicación en backend
-  const createLocationRecord = async (location: ExpoLocation.LocationObject): Promise<number | null> => {
+  const createLocationRecord = async (location: ExpoLocation.LocationObject, name?: string): Promise<number | null> => {
     try {
       const locationData: Location = {
         id: 0, // Se asignará en el backend
+        name: name,
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
         timestamp: new Date().toISOString(),
@@ -113,7 +114,7 @@ export default function JoinJourneyModal({
       }
 
       // 2. Crear ubicación de origen
-      const originLocationId = await createLocationRecord(deviceLocation);
+      const originLocationId = await createLocationRecord(deviceLocation, 'Mi ubicación');
       if (!originLocationId) {
         throw new Error('No se pudo registrar tu ubicación de origen');
       }
@@ -126,12 +127,14 @@ export default function JoinJourneyModal({
 
       if (isPersonalizedJourney && selectedDestination) {
         // Para personalized: crear nueva ubicación con el destino seleccionado
-        const destLocation: Partial<Location> = {
+        const destLocation: Location = {
+          id: 0,
+          name: selectedDestination.name,
           latitude: selectedDestination.latitude,
           longitude: selectedDestination.longitude,
           timestamp: new Date().toISOString()
         };
-        const destId = await createLocation(destLocation as Location);
+        const destId = await createLocation(destLocation);
         if (!destId) {
           throw new Error('No se pudo registrar tu destino');
         }
@@ -217,17 +220,8 @@ export default function JoinJourneyModal({
     }
   };
 
-  const handleSelectDestination = (location: SafeLocation | Location) => {
-    // Convertir Location a SafeLocation si es necesario
-    const safeLocation: SafeLocation = 'name' in location ? location : {
-      id: location.id,
-      name: `Ubicación personalizada`,
-      address: `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`,
-      type: 'custom',
-      latitude: location.latitude,
-      longitude: location.longitude,
-      externalId: undefined
-    };
+  const handleSelectDestination = (location: SelectableLocation) => {
+    const safeLocation = toSafeLocation(location);
     setSelectedDestination(safeLocation);
     setShowDestinationModal(false);
   };

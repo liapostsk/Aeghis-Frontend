@@ -29,15 +29,26 @@ export default function SafeLocationStep({
     if (!user) return;
     
     // Convertir Location a SafeLocation si es necesario
-    const safeLocation: SafeLocation = 'name' in location ? location : {
-      id: location.id,
-      name: `Ubicación personalizada`,
-      address: `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`,
-      type: 'custom',
-      latitude: location.latitude,
-      longitude: location.longitude,
-      externalId: undefined
-    };
+    let safeLocation: SafeLocation;
+    
+    if ('address' in location && 'type' in location) {
+      // Ya es SafeLocation, pero asegurar que name no sea undefined
+      safeLocation = {
+        ...location,
+        name: location.name || 'Ubicación sin nombre'
+      };
+    } else {
+      // Es Location, convertir a SafeLocation
+      safeLocation = {
+        id: location.id,
+        name: location.name || 'Ubicación personalizada',
+        address: `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`,
+        type: 'custom',
+        latitude: location.latitude,
+        longitude: location.longitude,
+        externalId: undefined
+      };
+    }
     
     const currentLocations = user.safeLocations || [];
     console.log("📍 Intentando añadir ubicación:", safeLocation.name, "externalId:", safeLocation.externalId);

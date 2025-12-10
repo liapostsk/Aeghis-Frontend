@@ -1,5 +1,6 @@
 export type Location = {
   id: number;
+  name?: string;
   latitude: number;
   longitude: number;
   timestamp: string;
@@ -11,11 +12,32 @@ export interface SafeLocation {
   description?: string;
   address: string;
   type: string; // tipo traducido o principal
-  distance?: string; // ejemplo: "250 m" o "1.2 km"
+  distance?: string;
   latitude: number;
   longitude: number;
   externalId?: string; // ID del lugar en la fuente externa (Google, etc.)
 }
+
+// Tipo que puede ser cualquiera de los dos
+export type SelectableLocation = SafeLocation | Location;
+
+// Función helper para convertir Location a SafeLocation si es necesario
+export const toSafeLocation = (location: SelectableLocation): SafeLocation => {
+  if ('address' in location && 'type' in location) {
+    // Ya es SafeLocation
+    return location;
+  }
+  // Es Location, convertir a SafeLocation
+  return {
+    id: location.id,
+    name: location.name || 'Ubicación personalizada',
+    address: `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`,
+    type: 'custom',
+    latitude: location.latitude,
+    longitude: location.longitude,
+    externalId: undefined
+  };
+};
 
 // Parámetros para buscar lugares cercanos
 export interface NearbySearchParams {

@@ -17,6 +17,9 @@ interface CompanionRequestListProps {
   onJoinRequest?: (requestId: number) => void;
   onRefresh?: () => void;
   refreshing?: boolean;
+  currentUserId?: number;
+  onManageRequest?: (request: CompanionRequestDto) => void;
+  onDeleteRequest?: (requestId: number) => void;
 }
 
 export default function CompanionRequestList({
@@ -25,6 +28,9 @@ export default function CompanionRequestList({
   onJoinRequest,
   onRefresh,
   refreshing = false,
+  currentUserId,
+  onManageRequest,
+  onDeleteRequest,
 }: CompanionRequestListProps) {
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -61,7 +67,23 @@ export default function CompanionRequestList({
 
   const getLocationDisplay = (location: any) => {
     if (!location) return 'Ubicación no disponible';
-    return location.name || location.address || `${location.latitude?.toFixed(4)}, ${location.longitude?.toFixed(4)}`;
+    
+    // Priorizar name si existe (ahora viene de la BD)
+    if (location.name) {
+      return location.name;
+    }
+    
+    // Fallback a address (para SafeLocations)
+    if (location.address) {
+      return location.address;
+    }
+    
+    // Último fallback: coordenadas
+    if (location.latitude && location.longitude) {
+      return `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`;
+    }
+    
+    return 'Ubicación sin nombre';
   };
 
   return (
@@ -82,6 +104,7 @@ export default function CompanionRequestList({
         data={filteredRequests}
         keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
         refreshing={refreshing}
+        contentContainerStyle={{ paddingBottom: 40 }}
         onRefresh={onRefresh}
         renderItem={({ item }) => (
           <Pressable 
@@ -132,7 +155,7 @@ export default function CompanionRequestList({
                 {item.source && (
                   <View style={styles.routePoint}>
                     <Ionicons name="location" size={16} color="#10B981" />
-                    <Text style={styles.routeText} numberOfLines={1}>
+                    <Text style={styles.routeText} numberOfLines={2}>
                       {getLocationDisplay(item.source)}
                     </Text>
                   </View>
@@ -143,7 +166,7 @@ export default function CompanionRequestList({
                 {item.destination && (
                   <View style={styles.routePoint}>
                     <Ionicons name="location" size={16} color="#EF4444" />
-                    <Text style={styles.routeText} numberOfLines={1}>
+                    <Text style={styles.routeText} numberOfLines={2}>
                       {getLocationDisplay(item.destination)}
                     </Text>
                   </View>
@@ -163,13 +186,36 @@ export default function CompanionRequestList({
                 </Text>
               </View>
               
-              {(item.state === 'CREATED' || item.state === 'PENDING') && onJoinRequest && (
-                <Pressable 
-                  style={styles.joinButton}
-                  onPress={() => onJoinRequest(item.id)}
-                >
-                  <Text style={styles.joinButtonText}>Solicitar</Text>
-                </Pressable>
+              {/* Botones según si es el creador o no */}
+              {currentUserId && item.creator?.id === currentUserId ? (
+                <View style={styles.ownerActions}>
+                  {onManageRequest && (
+                    <Pressable 
+                      style={styles.manageButton}
+                      onPress={() => onManageRequest(item)}
+                    >
+                      <Ionicons name="settings-outline" size={16} color="#7A33CC" />
+                      <Text style={styles.manageButtonText}>Gestionar</Text>
+                    </Pressable>
+                  )}
+                  {onDeleteRequest && (
+                    <Pressable 
+                      style={styles.deleteButton}
+                      onPress={() => onDeleteRequest(item.id)}
+                    >
+                      <Ionicons name="trash-outline" size={16} color="#EF4444" />
+                    </Pressable>
+                  )}
+                </View>
+              ) : (
+                (item.state === 'CREATED' || item.state === 'PENDING') && onJoinRequest && (
+                  <Pressable 
+                    style={styles.joinButton}
+                    onPress={() => onJoinRequest(item.id)}
+                  >
+                    <Text style={styles.joinButtonText}>Solicitar</Text>
+                  </Pressable>
+                )
               )}
             </View>
           </Pressable>
@@ -319,6 +365,36 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 13,
     fontWeight: '600',
+  },
+  ownerActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  manageButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#F3E8FF',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#7A33CC',
+  },
+  manageButtonText: {
+    color: '#7A33CC',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  deleteButton: {
+    backgroundColor: '#FEE2E2',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#EF4444',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   emptyState: {
     alignItems: 'center',

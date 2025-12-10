@@ -14,7 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import SafeLocationModal from '@/components/safeLocations/SafeLocationModal';
 import { Location } from '@/api/backend/locations/locationType';
-import { CompanionRequestDto, CreateCompanionRequestDto } from '@/api/backend/companionRequest/companionTypes';
+import { CreateCompanionRequestDto } from '@/api/backend/companionRequest/companionTypes';
 import { createLocation } from '@/api/backend/locations/locationsApi';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
@@ -68,6 +68,7 @@ export default function CreateCompanionRequest({
         latitude: sourceLocation.latitude,
         longitude: sourceLocation.longitude,
         timestamp: new Date().toISOString(),
+        name: sourceLocation.name
       };
       const sourceId = await createLocation(sourceLocationData);
       
@@ -78,6 +79,7 @@ export default function CreateCompanionRequest({
       // Crear Location para destino
       const destLocationData: Location = {
         id: 0,
+        name: destinationLocation.name,
         latitude: destinationLocation.latitude,
         longitude: destinationLocation.longitude,
         timestamp: new Date().toISOString(),
@@ -88,11 +90,33 @@ export default function CreateCompanionRequest({
         throw new Error('No se pudo crear la ubicación de destino');
       }
 
+      // Combinar fecha actual con la hora seleccionada
+      let finalDateTime: Date | undefined = undefined;
+      if (aproxHour) {
+        const now = new Date();
+        const selectedDateTime = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+          aproxHour.getHours(),
+          aproxHour.getMinutes(),
+          0,
+          0
+        );
+
+        // Si la hora seleccionada ya pasó hoy, moverla al día siguiente
+        if (selectedDateTime < now) {
+          selectedDateTime.setDate(selectedDateTime.getDate() + 1);
+        }
+
+        finalDateTime = selectedDateTime;
+      }
+
       // Crear la solicitud con solo los campos necesarios
       const newRequest: CreateCompanionRequestDto = {
         sourceId,
         destinationId: destId,
-        aproxHour: aproxHour || undefined,
+        aproxHour: finalDateTime,
         description: description || undefined,
       };
 
@@ -115,7 +139,11 @@ export default function CreateCompanionRequest({
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView 
+      style={styles.container}
+      contentContainerStyle={{ paddingBottom: 40 }}
+      showsVerticalScrollIndicator={false}
+    >
       <Text style={styles.title}>Nueva solicitud de acompañamiento</Text>
 
       {/* Origen */}
