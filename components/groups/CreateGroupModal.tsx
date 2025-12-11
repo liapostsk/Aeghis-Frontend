@@ -7,8 +7,7 @@ import { useAuth } from '@clerk/clerk-expo';
 import { createGroup } from '@/api/backend/group/groupApi';
 import { Group } from '@/api/backend/group/groupType';
 import { createGroupFirebase } from '@/api/firebase/chat/chatService';
-import { invalidateGroupsCache } from '@/lib/hooks/useUserGroups'; // ✅ Importar invalidación de caché
-
+import { invalidateGroupsCache } from '@/lib/hooks/useUserGroups';
 
 type Props = { 
     visible: boolean;

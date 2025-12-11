@@ -86,9 +86,17 @@ export const searchCompanionRequests = async (
 };
 
 export const requestToJoinCompanionRequest = async (id: number, companionMessage: string): Promise<void> => {
-  console.log(" API: Solicitando unirse a solicitud de acompañamiento:", id);
-  await api.post(`/companion-request/${id}/request-join`);
-  console.log(" API: Solicitud de unión enviada");
+  console.log("🤝 API: Solicitando unirse a solicitud de acompañamiento:", id);
+  console.log("📝 Mensaje del companion:", companionMessage);
+  
+  // TODO: Implementar endpoint en backend
+  // POST /companion-request/{id}/request-join
+  // Body: { companionMessage: string }
+  // El companionMessage es un string formateado con campos estructurados:
+  // "Motivo: ... | Experiencia: ... | Disponibilidad: ... | Flexibilidad: ... | Información adicional: ..."
+  
+  await api.post(`/companion-request/${id}/request-join`, { companionMessage });
+  console.log("✅ API: Solicitud de unión enviada");
 };
 
 export const cancelCompanionRequest = async (id: number): Promise<void> => {
@@ -105,12 +113,5 @@ export const getCompanionRequestById = async (id: number): Promise<CompanionRequ
   console.log("📋 API: Obteniendo solicitud de acompañamiento por ID:", id);
   const response = await api.get(`/companion-request/${id}`);
   console.log("✅ API: Solicitud obtenida:", response.data);
-  return response.data;
-};
-
-export const getCompanionRequestApplicants = async (id: number): Promise<any[]> => {
-  console.log("📋 API: Obteniendo solicitantes para companion request:", id);
-  const response = await api.get(`/companion-request/${id}/applicants`);
-  console.log("✅ API: Solicitantes obtenidos:", response.data);
   return response.data;
 };

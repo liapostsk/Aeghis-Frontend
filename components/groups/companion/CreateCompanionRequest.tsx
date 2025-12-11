@@ -22,6 +22,7 @@ import { useTokenStore } from '@/lib/auth/tokenStore';
 interface CreateCompanionRequestProps {
   onCreateRequest: (request: CreateCompanionRequestDto) => Promise<void>;
   onSuccess?: () => void;
+  onCancel?: () => void;
 }
 
 // Tipo para mostrar en UI
@@ -36,6 +37,7 @@ type DisplayLocation = {
 export default function CreateCompanionRequest({
   onCreateRequest,
   onSuccess,
+  onCancel,
 }: CreateCompanionRequestProps) {
   const [sourceLocation, setSourceLocation] = useState<DisplayLocation | null>(null);
   const [destinationLocation, setDestinationLocation] = useState<DisplayLocation | null>(null);
@@ -139,12 +141,24 @@ export default function CreateCompanionRequest({
   };
 
   return (
-    <ScrollView 
-      style={styles.container}
-      contentContainerStyle={{ paddingBottom: 40 }}
-      showsVerticalScrollIndicator={false}
-    >
-      <Text style={styles.title}>Nueva solicitud de acompañamiento</Text>
+    <View style={styles.fullContainer}>
+      {/* Header con botón atrás */}
+      {onCancel && (
+        <View style={styles.header}>
+          <Pressable onPress={onCancel} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color="#1F2937" />
+          </Pressable>
+          <Text style={styles.headerTitle}>Nueva solicitud</Text>
+          <View style={styles.placeholder} />
+        </View>
+      )}
+
+      <ScrollView 
+        style={styles.container}
+        contentContainerStyle={{ paddingBottom: 40 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {!onCancel && <Text style={styles.title}>Nueva solicitud de acompañamiento</Text>}
 
       {/* Origen */}
       <Text style={styles.label}>Origen *</Text>
@@ -307,10 +321,36 @@ export default function CreateCompanionRequest({
         </Text>
       </Pressable>
     </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  fullContainer: {
+    flex: 1,
+    backgroundColor: '#F9FAFB',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    backgroundColor: '#FFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  backButton: {
+    padding: 4,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  placeholder: {
+    width: 32,
+  },
   container: {
     flex: 1,
     paddingHorizontal: 16,

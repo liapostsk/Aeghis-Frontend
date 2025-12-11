@@ -29,7 +29,7 @@ export interface CompanionRequestDto {
   description?: string;
   companionMessage: string;
   creator: User;
-  companionId: number;
+  companion: User;
   companionGroupId?: number;
   trackingGroupId?: number;
   trayectoId?: number;
@@ -42,6 +42,7 @@ export interface CreateCompanionRequestDto {
   description?: string;
 }
 
+/*
 export interface CompanionApplicant {
   userId: number;
   userName: string;
@@ -49,5 +50,6 @@ export interface CompanionApplicant {
   companionMessage: string;
   requestDate: Date;
 }
+*/
 
 export type RequestStatus = "CREATED" | "PENDING" | "MATCHED" | "IN_PROGRESS" | "FINISHED" | "DECLINED" | "CANCELLED";

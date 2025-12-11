@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -14,7 +14,7 @@ import { CompanionRequestDto } from '@/api/backend/companionRequest/companionTyp
 interface CompanionRequestListProps {
   requests: CompanionRequestDto[];
   onRequestPress?: (request: CompanionRequestDto) => void;
-  onJoinRequest?: (requestId: number) => void;
+  onJoinRequest?: (request: CompanionRequestDto) => void;
   onRefresh?: () => void;
   refreshing?: boolean;
   currentUserId?: number;
@@ -211,7 +211,7 @@ export default function CompanionRequestList({
                 (item.state === 'CREATED' || item.state === 'PENDING') && onJoinRequest && (
                   <Pressable 
                     style={styles.joinButton}
-                    onPress={() => onJoinRequest(item.id)}
+                    onPress={() => onJoinRequest(item)}
                   >
                     <Text style={styles.joinButtonText}>Solicitar</Text>
                   </Pressable>

@@ -12,7 +12,7 @@ import ProfileVerificationScreen from '@/components/profile/ProfileVerificationS
 import { 
   createCompanionRequest, 
   listActiveCompanionRequests,
-  requestToJoinCompanionRequest,
+  getMyCompanionRequests,
   deleteCompanionRequest
 } from '@/api/backend/companionRequest/companionRequestApi';
 import { CompanionRequestDto, CreateCompanionRequestDto } from '@/api/backend/companionRequest/companionTypes';
@@ -21,6 +21,8 @@ import { useTokenStore } from '@/lib/auth/tokenStore';
 import CompanionRequestList from '@/components/groups/companion/CompanionRequestList';
 import CreateCompanionRequest from '@/components/groups/companion/CreateCompanionRequest';
 import ManageCompanionRequest from '@/components/groups/companion/ManageCompanionRequest';
+import RequestJoinCompanion from '@/components/groups/companion/RequestJoinCompanion';
+import CompanionTabs from '@/components/groups/companion/CompanionTabs';
 
 
 type CompanionRequest = CompanionRequestDto;
@@ -31,12 +33,15 @@ export default function CompanionsGroups() {
   const setToken = useTokenStore((state) => state.setToken);
   const [showVerification, setShowVerification] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'create' | 'search'>('search');
+  const [listTab, setListTab] = useState<'explore' | 'mine'>('explore');
+  const [showCreateModal, setShowCreateModal] = useState(false);
   
   // Estados de búsqueda y filtros
-  const [requests, setRequests] = useState<CompanionRequest[]>([]);
+  const [exploreRequests, setExploreRequests] = useState<CompanionRequest[]>([]);
+  const [myRequests, setMyRequests] = useState<CompanionRequest[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [managingRequest, setManagingRequest] = useState<CompanionRequestDto | null>(null);
+  const [requestingToJoin, setRequestingToJoin] = useState<CompanionRequestDto | null>(null);
   const verifyStatus = user?.verify;
 
 
@@ -58,15 +63,35 @@ export default function CompanionsGroups() {
     setShowVerification(false);
   };
 
-  const loadRequests = async () => {
+  const loadExploreRequests = async () => {
     try {
       const token = await getToken();
       setToken(token);
       
       const activeRequests = await listActiveCompanionRequests();
-      setRequests(activeRequests);
+      setExploreRequests(activeRequests);
     } catch (error) {
-      console.error('Error cargando solicitudes:', error);
+      console.error('Error cargando solicitudes para explorar:', error);
+    }
+  };
+
+  const loadMyRequests = async () => {
+    try {
+      const token = await getToken();
+      setToken(token);
+      
+      const myRequestsList = await getMyCompanionRequests();
+      setMyRequests(myRequestsList);
+    } catch (error) {
+      console.error('Error cargando mis solicitudes:', error);
+    }
+  };
+
+  const loadRequests = async () => {
+    if (listTab === 'explore') {
+      await loadExploreRequests();
+    } else {
+      await loadMyRequests();
     }
   };
 
@@ -80,7 +105,7 @@ export default function CompanionsGroups() {
     if (verifyStatus === 'VERIFIED') {
       loadRequests();
     }
-  }, [verifyStatus]);
+  }, [verifyStatus, listTab]);
 
   const handleCreateRequest = async (requestData: CreateCompanionRequestDto) => {
     try {
@@ -88,23 +113,19 @@ export default function CompanionsGroups() {
       setToken(token);
       
       await createCompanionRequest(requestData);
-      await loadRequests();
+      // Recargar ambas listas
+      await loadExploreRequests();
+      await loadMyRequests();
+      // Cerrar modal y cambiar a tab "Mis Solicitudes" para ver la nueva solicitud
+      setShowCreateModal(false);
+      setListTab('mine');
     } catch (error) {
       console.error('Error creando solicitud:', error);
     }
   };
 
-  const handleJoinRequest = async (requestId: number) => {
-    try {
-      const token = await getToken();
-      setToken(token);
-      
-      await requestToJoinCompanionRequest(requestId, '');
-      console.log('Solicitud de unión enviada');
-      loadRequests();
-    } catch (error) {
-      console.error('Error uniéndose a solicitud:', error);
-    }
+  const handleJoinRequest = (request: CompanionRequestDto) => {
+    setRequestingToJoin(request);
   };
 
   const handleRequestPress = (request: CompanionRequestDto) => {
@@ -174,6 +195,34 @@ export default function CompanionsGroups() {
     );
   }
 
+  // Si estamos creando una solicitud, mostrar la pantalla de creación
+  if (showCreateModal) {
+    return (
+      <CreateCompanionRequest
+        onCreateRequest={handleCreateRequest}
+        onSuccess={() => {
+          setShowCreateModal(false);
+          setListTab('mine');
+        }}
+        onCancel={() => setShowCreateModal(false)}
+      />
+    );
+  }
+
+  // Si estamos solicitando unirse a una solicitud, mostrar la pantalla de solicitud
+  if (requestingToJoin) {
+    return (
+      <RequestJoinCompanion
+        request={requestingToJoin}
+        onClose={() => setRequestingToJoin(null)}
+        onRequestSent={() => {
+          setRequestingToJoin(null);
+          loadRequests();
+        }}
+      />
+    );
+  }
+
   // Si estamos gestionando una solicitud, mostrar la pantalla de gestión
   if (managingRequest) {
     return (
@@ -190,55 +239,31 @@ export default function CompanionsGroups() {
 
   return (
     <View style={styles.container}>
-      {/* Tabs */}
-      <View style={styles.tabsContainer}>
-        <Pressable
-          style={[styles.tab, activeTab === 'search' && styles.tabActive]}
-          onPress={() => setActiveTab('search')}
-        >
-          <Ionicons 
-            name="search" 
-            size={20} 
-            color={activeTab === 'search' ? '#7A33CC' : '#6B7280'} 
-          />
-          <Text style={[styles.tabText, activeTab === 'search' && styles.tabTextActive]}>
-            Buscar
-          </Text>
-        </Pressable>
-        
-        <Pressable
-          style={[styles.tab, activeTab === 'create' && styles.tabActive]}
-          onPress={() => setActiveTab('create')}
-        >
-          <Ionicons 
-            name="add-circle" 
-            size={20} 
-            color={activeTab === 'create' ? '#7A33CC' : '#6B7280'} 
-          />
-          <Text style={[styles.tabText, activeTab === 'create' && styles.tabTextActive]}>
-            Crear solicitud
-          </Text>
-        </Pressable>
-      </View>
+      {/* Tabs: Explorar y Mis Solicitudes */}
+      <CompanionTabs
+        activeTab={listTab}
+        onTabChange={setListTab}
+      />
+      
+      {/* Lista de solicitudes */}
+      <CompanionRequestList
+        requests={listTab === 'explore' ? exploreRequests : myRequests}
+        onRequestPress={handleRequestPress}
+        onJoinRequest={handleJoinRequest}
+        onRefresh={handleRefresh}
+        refreshing={refreshing}
+        currentUserId={user?.id}
+        onManageRequest={handleManageRequest}
+        onDeleteRequest={handleDeleteRequest}
+      />
 
-      {/* Contenido según el tab activo */}
-      {activeTab === 'create' ? (
-        <CreateCompanionRequest
-          onCreateRequest={handleCreateRequest}
-          onSuccess={() => setActiveTab('search')}
-        />
-      ) : (
-        <CompanionRequestList
-          requests={requests}
-          onRequestPress={handleRequestPress}
-          onJoinRequest={handleJoinRequest}
-          onRefresh={handleRefresh}
-          refreshing={refreshing}
-          currentUserId={user?.id}
-          onManageRequest={handleManageRequest}
-          onDeleteRequest={handleDeleteRequest}
-        />
-      )}
+      {/* Botón flotante para crear solicitud */}
+      <Pressable
+        style={styles.floatingButton}
+        onPress={() => setShowCreateModal(true)}
+      >
+        <Ionicons name="add" size={28} color="#FFF" />
+      </Pressable>
     </View>
   );
 }
@@ -278,32 +303,20 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     fontSize: 16,
   },
-  tabsContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#FFF',
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    gap: 12,
-  },
-  tab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
+  floatingButton: {
+    position: 'absolute',
+    bottom: 100,
+    right: 24,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#7A33CC',
     justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-  tabActive: {
-    borderBottomColor: '#7A33CC',
-  },
-  tabText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#6B7280',
-  },
-  tabTextActive: {
-    color: '#7A33CC',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
   },
 });

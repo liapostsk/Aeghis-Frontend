@@ -10,11 +10,11 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { CompanionRequestDto, CompanionApplicant } from '@/api/backend/companionRequest/companionTypes';
-import { 
-  getCompanionRequestApplicants,
+import { CompanionRequestDto } from '@/api/backend/companionRequest/companionTypes';
+import {
   acceptCompanionRequest,
-  rejectCompanionRequest 
+  rejectCompanionRequest, 
+  getCompanionRequestById
 } from '@/api/backend/companionRequest/companionRequestApi';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
@@ -30,33 +30,33 @@ export default function ManageCompanionRequest({
   onClose,
   onRequestUpdated,
 }: ManageCompanionRequestProps) {
-  const [applicants, setApplicants] = useState<CompanionApplicant[]>([]);
+  const [requestData, setRequestData] = useState<CompanionRequestDto | null>(null);
   const [loading, setLoading] = useState(true);
-  const [processingId, setProcessingId] = useState<number | null>(null);
+  const [processing, setProcessing] = useState(false);
   const { getToken } = useAuth();
   const setToken = useTokenStore((state) => state.setToken);
 
   useEffect(() => {
-    loadApplicants();
+    loadRequestData();
   }, [request.id]);
 
-  const loadApplicants = async () => {
+  const loadRequestData = async () => {
     try {
       setLoading(true);
       const token = await getToken();
       setToken(token);
 
-      const data = await getCompanionRequestApplicants(request.id);
-      setApplicants(data);
+      const data = await getCompanionRequestById(request.id);
+      setRequestData(data);
     } catch (error) {
-      console.error('Error cargando solicitantes:', error);
-      Alert.alert('Error', 'No se pudieron cargar los solicitantes');
+      console.error('Error cargando datos de la solicitud:', error);
+      Alert.alert('Error', 'No se pudieron cargar los datos de la solicitud');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAccept = async (userId: number) => {
+  const handleAccept = async () => {
     Alert.alert(
       'Aceptar solicitud',
       '¿Estás seguro de que quieres aceptar a este usuario como tu acompañante?',
@@ -66,7 +66,7 @@ export default function ManageCompanionRequest({
           text: 'Aceptar',
           onPress: async () => {
             try {
-              setProcessingId(userId);
+              setProcessing(true);
               const token = await getToken();
               setToken(token);
 
@@ -84,7 +84,7 @@ export default function ManageCompanionRequest({
               console.error('Error aceptando solicitud:', error);
               Alert.alert('Error', 'No se pudo aceptar la solicitud');
             } finally {
-              setProcessingId(null);
+              setProcessing(false);
             }
           },
         },
@@ -92,7 +92,7 @@ export default function ManageCompanionRequest({
     );
   };
 
-  const handleReject = async (userId: number) => {
+  const handleReject = async () => {
     Alert.alert(
       'Rechazar solicitud',
       '¿Estás seguro de que quieres rechazar a este usuario?',
@@ -103,18 +103,25 @@ export default function ManageCompanionRequest({
           style: 'destructive',
           onPress: async () => {
             try {
-              setProcessingId(userId);
+              setProcessing(true);
               const token = await getToken();
               setToken(token);
 
               await rejectCompanionRequest(request.id);
-              Alert.alert('Solicitud rechazada', 'Has rechazado al solicitante');
-              await loadApplicants();
+              Alert.alert('Solicitud rechazada', 'Has rechazado al solicitante', [
+                {
+                  text: 'OK',
+                  onPress: () => {
+                    onRequestUpdated();
+                    onClose();
+                  },
+                },
+              ]);
             } catch (error) {
               console.error('Error rechazando solicitud:', error);
               Alert.alert('Error', 'No se pudo rechazar la solicitud');
             } finally {
-              setProcessingId(null);
+              setProcessing(false);
             }
           },
         },
@@ -144,145 +151,150 @@ export default function ManageCompanionRequest({
         showsVerticalScrollIndicator={false}
       >
         {/* Información de la solicitud */}
-        <View style={styles.requestInfoCard}>
-          <Text style={styles.sectionTitle}>Detalles de tu solicitud</Text>
-          
-          {request.description && (
-            <View style={styles.infoRow}>
-              <Ionicons name="document-text-outline" size={20} color="#6B7280" />
-              <Text style={styles.infoText}>{request.description}</Text>
-            </View>
-          )}
-
-          <View style={styles.routeContainer}>
-            <View style={styles.routeItem}>
-              <Ionicons name="location" size={20} color="#10B981" />
-              <View style={styles.routeDetails}>
-                <Text style={styles.routeLabel}>Origen</Text>
-                <Text style={styles.routeValue}>{getLocationDisplay(request.source)}</Text>
-              </View>
-            </View>
-
-            <Ionicons name="arrow-down" size={20} color="#9CA3AF" style={styles.routeSeparator} />
-
-            <View style={styles.routeItem}>
-              <Ionicons name="location" size={20} color="#EF4444" />
-              <View style={styles.routeDetails}>
-                <Text style={styles.routeLabel}>Destino</Text>
-                <Text style={styles.routeValue}>{getLocationDisplay(request.destination)}</Text>
-              </View>
-            </View>
+        {loading ? (
+          <View style={styles.requestInfoCard}>
+            <ActivityIndicator size="large" color="#7A33CC" />
           </View>
+        ) : requestData ? (
+          <View style={styles.requestInfoCard}>
+            <Text style={styles.sectionTitle}>Detalles de tu solicitud</Text>
+            
+            {requestData.description && (
+              <View style={styles.infoRow}>
+                <Ionicons name="document-text-outline" size={20} color="#6B7280" />
+                <Text style={styles.infoText}>{requestData.description}</Text>
+              </View>
+            )}
 
-          {request.aproxHour && (
-            <View style={styles.infoRow}>
-              <Ionicons name="time-outline" size={20} color="#6B7280" />
-              <Text style={styles.infoText}>
-                {new Date(request.aproxHour).toLocaleString('es-ES', {
-                  weekday: 'long',
-                  day: '2-digit',
-                  month: 'long',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })}
-              </Text>
+            <View style={styles.routeContainer}>
+              <View style={styles.routeItem}>
+                <Ionicons name="location" size={20} color="#10B981" />
+                <View style={styles.routeDetails}>
+                  <Text style={styles.routeLabel}>Origen</Text>
+                  <Text style={styles.routeValue}>{getLocationDisplay(requestData.source)}</Text>
+                </View>
+              </View>
+
+              <Ionicons name="arrow-down" size={20} color="#9CA3AF" style={styles.routeSeparator} />
+
+              <View style={styles.routeItem}>
+                <Ionicons name="location" size={20} color="#EF4444" />
+                <View style={styles.routeDetails}>
+                  <Text style={styles.routeLabel}>Destino</Text>
+                  <Text style={styles.routeValue}>{getLocationDisplay(requestData.destination)}</Text>
+                </View>
+              </View>
             </View>
-          )}
-        </View>
 
-        {/* Lista de solicitantes */}
+            {requestData.aproxHour && (
+              <View style={styles.infoRow}>
+                <Ionicons name="time-outline" size={20} color="#6B7280" />
+                <Text style={styles.infoText}>
+                  {new Date(requestData.aproxHour).toLocaleString('es-ES', {
+                    weekday: 'long',
+                    day: '2-digit',
+                    month: 'long',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </Text>
+              </View>
+            )}
+          </View>
+        ) : null}
+
+        {/* Información del solicitante */}
         <View style={styles.applicantsSection}>
           <Text style={styles.sectionTitle}>
-            Solicitantes ({applicants.length})
+            Solicitante
           </Text>
 
           {loading ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#7A33CC" />
-              <Text style={styles.loadingText}>Cargando solicitantes...</Text>
+              <Text style={styles.loadingText}>Cargando información...</Text>
             </View>
-          ) : applicants.length === 0 ? (
+          ) : !requestData || !requestData.companion ? (
             <View style={styles.emptyState}>
-              <Ionicons name="people-outline" size={48} color="#D1D5DB" />
-              <Text style={styles.emptyText}>No hay solicitantes aún</Text>
+              <Ionicons name="person-outline" size={48} color="#D1D5DB" />
+              <Text style={styles.emptyText}>No hay solicitante</Text>
               <Text style={styles.emptySubtext}>
-                Cuando alguien solicite unirse a tu viaje, aparecerá aquí
+                Aún no hay nadie interesado en acompañarte
               </Text>
             </View>
           ) : (
-            applicants.map((applicant) => (
-              <View key={applicant.userId} style={styles.applicantCard}>
-                <View style={styles.applicantHeader}>
-                  {applicant.userImage ? (
-                    <Image 
-                      source={{ uri: applicant.userImage }} 
-                      style={styles.applicantAvatar}
-                    />
-                  ) : (
-                    <View style={styles.applicantAvatarPlaceholder}>
-                      <Ionicons name="person" size={24} color="#7A33CC" />
-                    </View>
-                  )}
-                  
-                  <View style={styles.applicantInfo}>
-                    <Text style={styles.applicantName}>{applicant.userName}</Text>
-                    <Text style={styles.applicantDate}>
-                      Solicitó: {new Date(applicant.requestDate).toLocaleDateString('es-ES', {
-                        day: '2-digit',
-                        month: 'short',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
-                    </Text>
-                  </View>
-                </View>
-
-                {applicant.companionMessage && (
-                  <View style={styles.messageContainer}>
-                    <Ionicons name="chatbubble-outline" size={16} color="#6B7280" />
-                    <Text style={styles.messageText}>{applicant.companionMessage}</Text>
+            <View style={styles.applicantCard}>
+              <View style={styles.applicantHeader}>
+                {requestData.companion.image ? (
+                  <Image 
+                    source={{ uri: requestData.companion.image }} 
+                    style={styles.applicantAvatar}
+                  />
+                ) : (
+                  <View style={styles.applicantAvatarPlaceholder}>
+                    <Ionicons name="person" size={24} color="#7A33CC" />
                   </View>
                 )}
-
-                <View style={styles.applicantActions}>
-                  <Pressable
-                    style={[
-                      styles.rejectButton,
-                      processingId === applicant.userId && styles.buttonDisabled
-                    ]}
-                    onPress={() => handleReject(applicant.userId)}
-                    disabled={processingId === applicant.userId}
-                  >
-                    {processingId === applicant.userId ? (
-                      <ActivityIndicator size="small" color="#EF4444" />
-                    ) : (
-                      <>
-                        <Ionicons name="close-circle-outline" size={20} color="#EF4444" />
-                        <Text style={styles.rejectButtonText}>Rechazar</Text>
-                      </>
-                    )}
-                  </Pressable>
-
-                  <Pressable
-                    style={[
-                      styles.acceptButton,
-                      processingId === applicant.userId && styles.buttonDisabled
-                    ]}
-                    onPress={() => handleAccept(applicant.userId)}
-                    disabled={processingId === applicant.userId}
-                  >
-                    {processingId === applicant.userId ? (
-                      <ActivityIndicator size="small" color="#FFF" />
-                    ) : (
-                      <>
-                        <Ionicons name="checkmark-circle-outline" size={20} color="#FFF" />
-                        <Text style={styles.acceptButtonText}>Aceptar</Text>
-                      </>
-                    )}
-                  </Pressable>
+                
+                <View style={styles.applicantInfo}>
+                  <Text style={styles.applicantName}>{requestData.companion.name}</Text>
+                  {requestData.creationDate && (
+                    <Text style={styles.applicantDate}>
+                      Solicitó el {new Date(requestData.creationDate).toLocaleDateString('es-ES', {
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric'
+                      })}
+                    </Text>
+                  )}
                 </View>
               </View>
-            ))
+
+              {requestData.companionMessage && (
+                <View style={styles.messageContainer}>
+                  <Ionicons name="chatbubble-outline" size={16} color="#6B7280" />
+                  <Text style={styles.messageText}>{requestData.companionMessage}</Text>
+                </View>
+              )}
+
+              <View style={styles.applicantActions}>
+                <Pressable
+                  style={[
+                    styles.rejectButton,
+                    processing && styles.buttonDisabled
+                  ]}
+                  onPress={handleReject}
+                  disabled={processing}
+                >
+                  {processing ? (
+                    <ActivityIndicator size="small" color="#EF4444" />
+                  ) : (
+                    <>
+                      <Ionicons name="close-circle-outline" size={20} color="#EF4444" />
+                      <Text style={styles.rejectButtonText}>Rechazar</Text>
+                    </>
+                  )}
+                </Pressable>
+
+                <Pressable
+                  style={[
+                    styles.acceptButton,
+                    processing && styles.buttonDisabled
+                  ]}
+                  onPress={handleAccept}
+                  disabled={processing}
+                >
+                  {processing ? (
+                    <ActivityIndicator size="small" color="#FFF" />
+                  ) : (
+                    <>
+                      <Ionicons name="checkmark-circle-outline" size={20} color="#FFF" />
+                      <Text style={styles.acceptButtonText}>Aceptar</Text>
+                    </>
+                  )}
+                </Pressable>
+              </View>
+            </View>
           )}
         </View>
       </ScrollView>
