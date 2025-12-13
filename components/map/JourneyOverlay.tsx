@@ -4,9 +4,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 
 // Importar APIs y tipos
-import { JourneyDto, JourneyStates } from '@/api/backend/journeys/journeyType';
+import { JourneyDto } from '@/api/backend/journeys/journeyType';
 import { isUserParticipantInJourney } from '@/api/backend/journeys/journeyApi';
-import { Group, GROUP_TYPES } from '@/api/backend/group/groupType';
+import { Group } from '@/api/backend/group/groupType';
 import { User, useUserStore } from "../../lib/storage/useUserStorage";
 import { useUserGroups } from '@/lib/hooks/useUserGroups';
 
@@ -138,12 +138,10 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
     };
   }, [groupJourney]);
 
-  useEffect(() => {
-    // Abrir modal automáticamente si hay journey o si el usuario quiere iniciar uno
-    if (groupJourney || (!loading && !groupsLoading)) {
-      setIsModalVisible(true);
-    }
-  }, [groupJourney, loading, groupsLoading]);  const handleCreateGroup = () => {
+  // No abrir automáticamente el modal, solo mostrar el tab colapsado
+  // El usuario lo expandirá manualmente cuando lo necesite
+
+  const handleCreateGroup = () => {
     if (userGroups.length === 0) {
       setShowGroupTypeSelector(true);
     } else {
@@ -359,17 +357,17 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
   };
 
   if (loading) {
-    return isModalVisible ? (
+    return (
       <View style={styles.overlayContainer}>
         <View style={styles.panelContainer}>
           <Text style={styles.loadingText}>Cargando...</Text>
         </View>
       </View>
-    ) : null;
+    );
   }
 
-  // Renderizar tab colapsado cuando el modal está cerrado
-  if (!isModalVisible && groupJourney) {
+  // Si hay journey activo y el modal está cerrado, mostrar tab colapsado
+  if (groupJourney && !isModalVisible) {
     return (
       <JourneyCollapsedTab 
         groupJourney={groupJourney} 
@@ -378,30 +376,28 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
     );
   }
 
-  // Renderizar panel deslizable
-  return (
-    <>
-      {/* Tab colapsado siempre visible cuando hay journey */}
-      {groupJourney && !isModalVisible && (
-        <JourneyCollapsedTab 
-          groupJourney={groupJourney} 
-          onExpand={() => setIsModalVisible(true)} 
+  // Si hay journey activo y el modal está abierto, mostrar panel expandido
+  if (groupJourney && isModalVisible) {
+    return (
+      <View style={styles.overlayContainer}>
+        <Pressable 
+          style={styles.backdrop} 
+          onPress={() => setIsModalVisible(false)}
         />
-      )}
-
-      {/* Panel deslizable desde abajo */}
-      {isModalVisible && (
-        <View style={styles.overlayContainer}>
-          <Pressable 
-            style={styles.backdrop} 
-            onPress={() => setIsModalVisible(false)}
-          />
-          <View style={styles.panelContainer}>
-            {renderModalContent()}
-          </View>
+        <View style={styles.panelContainer}>
+          {renderModalContent()}
         </View>
-      )}
-    </>
+      </View>
+    );
+  }
+
+  // Si NO hay journey activo, mostrar panel simple siempre visible
+  return (
+    <View style={styles.overlayContainer}>
+      <View style={styles.panelContainer}>
+        {renderModalContent()}
+      </View>
+    </View>
   );
 });
 

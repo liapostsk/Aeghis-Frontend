@@ -44,7 +44,6 @@ export default function CompanionsGroups() {
   const [requestingToJoin, setRequestingToJoin] = useState<CompanionRequestDto | null>(null);
   const verifyStatus = user?.verify;
 
-
   useEffect(() => {
     console.log("Comprobando estado de verificación...", { user, verifyStatus });
     if (!user) {
@@ -107,20 +106,41 @@ export default function CompanionsGroups() {
     }
   }, [verifyStatus, listTab]);
 
+  const handleOpenCreate = async () => {
+    console.log('Intentando abrir modal de creación de solicitud...');
+    await loadMyRequests();
+
+    const alreadyCreated = myRequests.some(r => r.state === 'CREATED');
+    if (alreadyCreated) {
+      Alert.alert(
+        'No puedes crear otra solicitud',
+        'Ya tienes una solicitud de acompañamiento en estado "Creada". Cancélala o edítala antes de crear una nueva.'
+      );
+      return;
+    }
+
+    setShowCreateModal(true);
+  };
+
   const handleCreateRequest = async (requestData: CreateCompanionRequestDto) => {
     try {
       const token = await getToken();
       setToken(token);
       
       await createCompanionRequest(requestData);
-      // Recargar ambas listas
       await loadExploreRequests();
       await loadMyRequests();
       // Cerrar modal y cambiar a tab "Mis Solicitudes" para ver la nueva solicitud
       setShowCreateModal(false);
       setListTab('mine');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creando solicitud:', error);
+      
+      const backendMessage =
+        error?.response?.data?.message ||
+        'No se pudo crear la solicitud. Revisa que no tengas otra en estado "Creada".';
+
+      Alert.alert('Error al crear', backendMessage);
     }
   };
 
@@ -239,13 +259,11 @@ export default function CompanionsGroups() {
 
   return (
     <View style={styles.container}>
-      {/* Tabs: Explorar y Mis Solicitudes */}
       <CompanionTabs
         activeTab={listTab}
         onTabChange={setListTab}
       />
       
-      {/* Lista de solicitudes */}
       <CompanionRequestList
         requests={listTab === 'explore' ? exploreRequests : myRequests}
         onRequestPress={handleRequestPress}
@@ -260,7 +278,7 @@ export default function CompanionsGroups() {
       {/* Botón flotante para crear solicitud */}
       <Pressable
         style={styles.floatingButton}
-        onPress={() => setShowCreateModal(true)}
+        onPress={() => handleOpenCreate()}
       >
         <Ionicons name="add" size={28} color="#FFF" />
       </Pressable>

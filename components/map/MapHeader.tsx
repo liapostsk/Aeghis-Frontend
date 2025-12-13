@@ -91,6 +91,42 @@ export default function MapHeader({ activeGroupJourney, onGroupJourneySelect }: 
     loadGroupsWithActiveJourneys();
   }, [userGroups]);
 
+  // Listener para detectar cambios en journeys en tiempo real
+  useEffect(() => {
+    if (userGroups.length === 0) return;
+
+    const { getDatabase, ref, onValue, off } = require('firebase/database');
+    const db = getDatabase();
+    
+    const listeners: (() => void)[] = [];
+    
+    console.log('🎧 [MapHeader] Configurando listeners de Firebase para', userGroups.length, 'grupos');
+
+    // Crear un listener para cada grupo
+    userGroups.forEach((group) => {
+      const journeysRef = ref(db, `/chats/${group.id}/journeys`);
+      
+      const listener = onValue(journeysRef, (snapshot: any) => {
+        if (snapshot.exists()) {
+          console.log(`🔔 [MapHeader] Cambio detectado en journeys de grupo ${group.name}`);
+          // Recargar todos los journeys cuando hay cambios
+          loadGroupsWithActiveJourneys();
+        }
+      }, (error: any) => {
+        console.error(`❌ [MapHeader] Error en listener para grupo ${group.id}:`, error);
+      });
+
+      // Guardar la función de limpieza
+      listeners.push(() => off(journeysRef));
+    });
+
+    // Cleanup: desuscribir todos los listeners
+    return () => {
+      console.log('🧹 [MapHeader] Limpiando listeners de Firebase');
+      listeners.forEach(cleanup => cleanup());
+    };
+  }, [userGroups]);
+
   const handleGroupSelect = (groupJourney: GroupWithJourney) => {
     onGroupJourneySelect(groupJourney);
     setShowDropdown(false);

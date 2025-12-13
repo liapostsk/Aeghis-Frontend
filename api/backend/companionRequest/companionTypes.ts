@@ -52,4 +52,4 @@ export interface CompanionApplicant {
 }
 */
 
-export type RequestStatus = "CREATED" | "PENDING" | "MATCHED" | "IN_PROGRESS" | "FINISHED" | "DECLINED" | "CANCELLED";
+export type RequestStatus = "CREATED" | "PENDING" | "MATCHED" | "IN_PROGRESS" | "FINISHED" | "EXPIRED" | "CANCELLED";

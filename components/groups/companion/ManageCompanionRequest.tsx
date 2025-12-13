@@ -14,7 +14,8 @@ import { CompanionRequestDto } from '@/api/backend/companionRequest/companionTyp
 import {
   acceptCompanionRequest,
   rejectCompanionRequest, 
-  getCompanionRequestById
+  getCompanionRequestById,
+  finishCompanionRequest
 } from '@/api/backend/companionRequest/companionRequestApi';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
@@ -55,6 +56,8 @@ export default function ManageCompanionRequest({
       setLoading(false);
     }
   };
+
+  const canManage = requestData && requestData.companion && requestData.state === 'PENDING';
 
   const handleAccept = async () => {
     Alert.alert(
@@ -120,6 +123,43 @@ export default function ManageCompanionRequest({
             } catch (error) {
               console.error('Error rechazando solicitud:', error);
               Alert.alert('Error', 'No se pudo rechazar la solicitud');
+            } finally {
+              setProcessing(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleFinish = async () => {
+    Alert.alert(
+      'Finalizar solicitud',
+      '¿Estás seguro de que quieres finalizar esta solicitud? No se podrán hacer más cambios.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Finalizar',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setProcessing(true);
+              const token = await getToken();
+              setToken(token);
+
+              await finishCompanionRequest(request.id);
+              Alert.alert('Solicitud finalizada', 'Has finalizado la solicitud', [
+                {
+                  text: 'OK',
+                  onPress: () => {
+                    onRequestUpdated();
+                    onClose();
+                  },
+                },
+              ]);
+            } catch (error) {
+              console.error('Error finalizando solicitud:', error);
+              Alert.alert('Error', 'No se pudo finalizar la solicitud');
             } finally {
               setProcessing(false);
             }
@@ -257,6 +297,7 @@ export default function ManageCompanionRequest({
                 </View>
               )}
 
+            {canManage ? (
               <View style={styles.applicantActions}>
                 <Pressable
                   style={[
@@ -294,9 +335,43 @@ export default function ManageCompanionRequest({
                   )}
                 </Pressable>
               </View>
+            ) : (
+              <View style={styles.stateNotice}>
+                <Ionicons name="information-circle-outline" size={16} color="#6B7280" />
+                <Text style={styles.stateNoticeText}>
+                  Esta solicitud ya no admite cambios (estado: {requestData?.state}).
+                </Text>
+              </View>
+            )}
             </View>
           )}
         </View>
+
+        {/* Botón de finalizar solicitud (solo para el creador) */}
+        {!loading && requestData && requestData.state === 'PENDING' && (
+          <View style={styles.finishSection}>
+            <Pressable
+              style={[
+                styles.finishButton,
+                processing && styles.buttonDisabled
+              ]}
+              onPress={handleFinish}
+              disabled={processing}
+            >
+              {processing ? (
+                <ActivityIndicator size="small" color="#EF4444" />
+              ) : (
+                <>
+                  <Ionicons name="stop-circle-outline" size={20} color="#EF4444" />
+                  <Text style={styles.finishButtonText}>Finalizar solicitud</Text>
+                </>
+              )}
+            </Pressable>
+            <Text style={styles.finishDescription}>
+              Al finalizar la solicitud, ya no podrás recibir más aplicantes ni realizar cambios.
+            </Text>
+          </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -507,4 +582,50 @@ const styles = StyleSheet.create({
   buttonDisabled: {
     opacity: 0.5,
   },
+  stateNotice: {
+  marginTop: 12,
+  padding: 10,
+  borderRadius: 8,
+  backgroundColor: '#F3F4F6',
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 8,
+},
+stateNoticeText: {
+  fontSize: 13,
+  color: '#4B5563',
+  flex: 1,
+},
+finishSection: {
+  marginHorizontal: 16,
+  marginTop: 16,
+  padding: 16,
+  backgroundColor: '#FFF',
+  borderRadius: 12,
+  borderWidth: 1,
+  borderColor: '#FEE2E2',
+},
+finishButton: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 8,
+  backgroundColor: '#FEE2E2',
+  paddingVertical: 12,
+  borderRadius: 8,
+  borderWidth: 1,
+  borderColor: '#EF4444',
+  marginBottom: 8,
+},
+finishButtonText: {
+  fontSize: 14,
+  fontWeight: '600',
+  color: '#EF4444',
+},
+finishDescription: {
+  fontSize: 12,
+  color: '#6B7280',
+  textAlign: 'center',
+  lineHeight: 16,
+},
 });

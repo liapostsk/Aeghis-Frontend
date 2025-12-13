@@ -52,7 +52,7 @@ export default function CompanionRequestList({
       case 'MATCHED': return 'Emparejada';
       case 'IN_PROGRESS': return 'En progreso';
       case 'FINISHED': return 'Finalizada';
-      case 'DECLINED': return 'Rechazada';
+      case 'EXPIRED': return 'Expirada';
       case 'CANCELLED': return 'Cancelada';
       default: return state;
     }
@@ -62,6 +62,7 @@ export default function CompanionRequestList({
     if (state === 'CREATED' || state === 'PENDING') return '#10B981';
     if (state === 'IN_PROGRESS') return '#3B82F6';
     if (state === 'FINISHED') return '#6B7280';
+    if (state === 'EXPIRED') return '#9CA3AF';
     return '#EF4444';
   };
 

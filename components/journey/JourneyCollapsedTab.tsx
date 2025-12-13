@@ -1,8 +1,7 @@
-import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { JourneyDto } from '@/api/backend/journeys/journeyType';
 import { Group } from '@/api/backend/group/groupType';
+import { JourneyDto } from '@/api/backend/journeys/journeyType';
 
 interface GroupWithJourney {
   group: Group;
