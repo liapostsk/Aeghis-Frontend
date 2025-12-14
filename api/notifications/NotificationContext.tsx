@@ -37,10 +37,10 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
   const responseListener = useRef<Notifications.EventSubscription | null>(null);
 
   useEffect(() => {
-    console.log('👂 [usePushNotifications] Configurando listeners de notificaciones');
+    console.log('[usePushNotifications] Configurando listeners de notificaciones');
 
     registerForPushNotificationsAsync().then(
-      (token) => setExpoPushToken(token),
+      (token) => setExpoPushToken(token? token : null),
       (error) => setError(error)
     );
 
@@ -74,25 +74,3 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     </NotificationContext.Provider>
   );
 };
-
-/*
-Navegación al hacer clic en una notificación (ejemplo):
-responseListener.current =
-  Notifications.addNotificationResponseReceivedListener((response) => {
-    const data = response.notification.request.content.data as any;
-    
-    console.log("👆 [NotificationProvider] Usuario tocó notificación");
-    console.log("  📦 Data:", data);
-
-    // ✅ Navegar según el tipo de notificación
-    if (data?.type === 'chat_message' && data?.groupId) {
-      router.push(`/chat?groupId=${data.groupId}`);
-    } else if (data?.type === 'journey_alert' && data?.journeyId) {
-      router.push(`/chat/journey?journeyId=${data.journeyId}`);
-    } else if (data?.type === 'sos' && data?.groupId) {
-      router.push(`/chat?groupId=${data.groupId}`);
-    } else if (data?.screen) {
-      router.push(data.screen as any);
-    }
-  });
-*/

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -19,6 +19,10 @@ import {
 } from '@/api/backend/companionRequest/companionRequestApi';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
+import { useUserStore } from '@/lib/storage/useUserStorage';
+import { createGroup } from '@/api/backend/group/groupApi';
+import { createGroupFirebase } from '@/api/firebase/chat/chatService';
+import { invalidateGroupsCache } from '@/lib/hooks/useUserGroups';
 
 interface ManageCompanionRequestProps {
   request: CompanionRequestDto;
@@ -36,6 +40,7 @@ export default function ManageCompanionRequest({
   const [processing, setProcessing] = useState(false);
   const { getToken } = useAuth();
   const setToken = useTokenStore((state) => state.setToken);
+  const { user } = useUserStore();
 
   useEffect(() => {
     loadRequestData();
@@ -62,7 +67,7 @@ export default function ManageCompanionRequest({
   const handleAccept = async () => {
     Alert.alert(
       'Aceptar solicitud',
-      '¿Estás seguro de que quieres aceptar a este usuario como tu acompañante?',
+      '¿Estás seguro de que quieres aceptar a este usuario como tu acompañante? Se creará automáticamente un grupo para coordinar el viaje.',
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -73,16 +78,66 @@ export default function ManageCompanionRequest({
               const token = await getToken();
               setToken(token);
 
+              // Primero aceptar la solicitud
               await acceptCompanionRequest(request.id);
-              Alert.alert('¡Éxito!', 'Has aceptado al acompañante', [
-                {
-                  text: 'OK',
-                  onPress: () => {
-                    onRequestUpdated();
-                    onClose();
-                  },
-                },
-              ]);
+              console.log('Solicitud aceptada');
+
+              // Crear grupo automáticamente
+              if (requestData && requestData.companion) {
+                const groupData = {
+                  name: `Acompañamiento: ${getLocationDisplay(requestData.source)} → ${getLocationDisplay(requestData.destination)}`,
+                  description: `Grupo creado para coordinar el viaje compartido. Miembros: ${user?.name || 'Tú'} y ${requestData.companion.name}`,
+                  imageUrl: '',
+                  type: 'COMPANION' as const,
+                  ownerId: user?.id || requestData.creator?.id
+                };
+
+                console.log('Creando grupo COMPANION:', groupData);
+
+                try {
+                  // Crear grupo en backend
+                  const groupId = await createGroup(groupData);
+                  console.log('Grupo creado con ID:', groupId);
+
+                  // Crear chat en Firebase
+                  const chatId = await createGroupFirebase({ ...groupData, id: groupId });
+                  console.log('Chat de Firebase inicializado:', chatId);
+
+                  // Invalidar caché para actualizar listas
+                  invalidateGroupsCache();
+
+                  Alert.alert(
+                    '¡Éxito!', 
+                    `Has aceptado al acompañante y se ha creado el grupo "${groupData.name}". Podrás coordinar el viaje desde la pestaña de grupos.`,
+                    [
+                      {
+                        text: 'OK',
+                        onPress: () => {
+                          onRequestUpdated();
+                          onClose();
+                        },
+                      },
+                    ]
+                  );
+                } catch (groupError) {
+                  console.error('Error creando grupo:', groupError);
+                  // Aunque el grupo falle, la solicitud ya fue aceptada
+                  Alert.alert(
+                    'Solicitud aceptada',
+                    'Has aceptado al acompañante, pero hubo un problema creando el grupo automático. Puedes crear uno manualmente desde la pestaña de grupos.',
+                    [
+                      {
+                        text: 'OK',
+                        onPress: () => {
+                          onRequestUpdated();
+                          onClose();
+                        },
+                      },
+                    ]
+                  );
+                }
+              }
+
             } catch (error) {
               console.error('Error aceptando solicitud:', error);
               Alert.alert('Error', 'No se pudo aceptar la solicitud');

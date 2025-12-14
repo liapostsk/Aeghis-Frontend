@@ -1,8 +1,3 @@
-/**
- * api/notifications/index.ts
- * Exporta las funcionalidades principales de notificaciones
- */
-
 // Re-exportar Context y hook
 export { NotificationProvider, useNotification } from './NotificationContext';
 

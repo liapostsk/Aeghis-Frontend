@@ -10,12 +10,10 @@ import {
   serverTimestamp,
   setDoc,
   updateDoc,
-  where,
   Unsubscribe,
   arrayUnion,
   writeBatch,
   limit,
-  getCountFromServer,
   getDocs,
   arrayRemove,
 } from 'firebase/firestore';
@@ -28,9 +26,9 @@ import { Group } from '../../backend/group/groupType';
  */
 function requireUid(): string {
   const uid = auth.currentUser?.uid;
-  console.log('🔐 requireUid - Usuario actual:', uid);
+  console.log('requireUid - Usuario actual:', uid);
   if (!uid) {
-    console.error('❌ No Firebase session en requireUid');
+    console.error('No Firebase session en requireUid');
     throw new Error('No Firebase session. Call linkFirebaseSessionOnce() after Clerk login.');
   }
   return uid;
@@ -38,7 +36,7 @@ function requireUid(): string {
 
 // Creación de chats en Firestore
 export async function createGroupFirebase(group: Partial<Group>): Promise<string> {
-  console.log('🏗️ createGroupFirebase - Creando grupo:', group.id, group.name);
+  console.log('createGroupFirebase - Creando grupo:', group.id, group.name);
   
   try {
     const ownerUid = requireUid();
@@ -46,7 +44,7 @@ export async function createGroupFirebase(group: Partial<Group>): Promise<string
     const now = serverTimestamp();
 
     const payload: ChatDoc = {
-      type: 'group',
+      type: 'CONFIANZA',
       admins: ownerUid ? [ownerUid] : [],
       members: ownerUid ? [ownerUid] : [],
       ownerId: ownerUid || '',
@@ -55,33 +53,33 @@ export async function createGroupFirebase(group: Partial<Group>): Promise<string
       lastMessageAt: "",
     };
 
-    console.log('💾 Guardando grupo en Firestore...');
+    console.log('Guardando grupo en Firestore...');
     await setDoc(chatRef, payload, { merge: true });
-    console.log('✅ Grupo creado exitosamente en Firebase:', chatRef.id);
+    console.log('Grupo creado exitosamente en Firebase:', chatRef.id);
     return chatRef.id;
-  } catch (error) {
-    console.error('💥 Error creando grupo en Firebase:', error);
-    console.error('📋 Error details:', { code: error.code, message: error.message, groupId: group.id });
+  } catch (error: any) {
+    console.error('Error creando grupo en Firebase:', error);
+    console.error('Error details:', { code: error?.code, message: error?.message, groupId: group.id });
     throw error;
   }
 }
 
 export async function joinGroupChatFirebase(groupId: string) {
-  console.log('🚪 joinGroupChatFirebase - Uniéndose al grupo:', groupId);
+  console.log('joinGroupChatFirebase - Uniéndose al grupo:', groupId);
   
   try {
     const uid = requireUid();
     const chatRef = doc(db, 'chats', String(groupId));
 
-    console.log('🔄 Añadiendo usuario a miembros del grupo...');
+    console.log('Añadiendo usuario a miembros del grupo...');
     await updateDoc(chatRef, {
       members: arrayUnion(uid),
       updatedAt: serverTimestamp(),
     });
-    console.log('✅ Usuario unido exitosamente al grupo:', groupId);
+    console.log('Usuario unido exitosamente al grupo:', groupId);
   } catch (e: any) {
-    console.error('💥 Error uniéndose al grupo:', e.code, e.message);
-    console.error('📋 Join failed details:', { groupId, code: e.code, message: e.message });
+    console.error('Error uniéndose al grupo:', e.code, e.message);
+    console.error('Join failed details:', { groupId, code: e.code, message: e.message });
     throw e;
   }
 }
@@ -133,6 +131,7 @@ export async function sendMessageFirebase(
     await batch.commit();
     return newMsgRef.id;
   } catch (error) {
+    console.error('Error enviando mensaje:', error);
     throw error;
   }
 }
@@ -168,17 +167,17 @@ export async function markAllMessagesAsRead(groupId: string): Promise<void> {
     
     await batch.commit();
     
-  } catch (error) {
-    console.error("Error details:", error.code, error.message);
+  } catch (error: any) {
+    console.error("Error details:", error?.code, error?.message);
   }
 }
 
 /**
  * Marcar un mensaje específico como leído
- * ✅ NUEVO: Función para marcar mensaje individual
+ * NUEVO: Función para marcar mensaje individual
  */
 export async function markMessageAsRead(groupId: string, messageId: string): Promise<void> {
-  console.log('👁️ markMessageAsRead - Marcando mensaje:', { groupId, messageId });
+  console.log('markMessageAsRead - Marcando mensaje:', { groupId, messageId });
   
   try {
     const uid = requireUid();
@@ -186,7 +185,7 @@ export async function markMessageAsRead(groupId: string, messageId: string): Pro
     
     const messageSnap = await getDoc(messageRef);
     if (!messageSnap.exists()) {
-      console.warn('⚠️ Mensaje no encontrado:', messageId);
+      console.warn('Mensaje no encontrado:', messageId);
       return;
     }
     
@@ -195,44 +194,44 @@ export async function markMessageAsRead(groupId: string, messageId: string): Pro
     
     // No hacer nada si ya está leído
     if (readBy.includes(uid)) {
-      console.log('ℹ️ Mensaje ya marcado como leído');
+      console.log('Mensaje ya marcado como leído');
       return;
     }
     
     // No marcar como leído si es el remitente
     if (data.senderId === uid) {
-      console.log('ℹ️ No marcar propio mensaje como leído');
+      console.log('No marcar propio mensaje como leído');
       return;
     }
     
-    console.log('🔄 Agregando usuario a readBy...');
+    console.log('Agregando usuario a readBy...');
     await updateDoc(messageRef, {
       readBy: arrayUnion(uid),
     });
     
-    console.log('✅ Mensaje marcado como leído');
+    console.log('Mensaje marcado como leído');
   } catch (error) {
-    console.error('💥 Error marcando mensaje como leído:', error);
+    console.error('Error marcando mensaje como leído:', error);
   }
 }
 
 /**
  * Obtener usuarios que NO han leído un mensaje específico
- * ✅ NUEVO: Para enviar notificaciones selectivas
+ * NUEVO: Para enviar notificaciones selectivas
  */
 export async function getUnreadUserIds(
   groupId: string,
   messageId: string,
   allMemberClerkIds: string[]
 ): Promise<string[]> {
-  console.log('🔍 getUnreadUserIds:', { groupId, messageId });
+  console.log('getUnreadUserIds:', { groupId, messageId });
   
   try {
     const messageRef = doc(db, 'chats', String(groupId), 'messages', messageId);
     const messageSnap = await getDoc(messageRef);
     
     if (!messageSnap.exists()) {
-      console.warn('⚠️ Mensaje no encontrado');
+      console.warn('Mensaje no encontrado');
       return [];
     }
     
@@ -240,35 +239,35 @@ export async function getUnreadUserIds(
     const readBy = data.readBy || [];
     const senderId = data.senderId;
     
-    // ✅ Filtrar: miembros que NO están en readBy y NO son el remitente
+    // Filtrar: miembros que NO están en readBy y NO son el remitente
     const unreadUsers = allMemberClerkIds.filter(
       clerkId => !readBy.includes(clerkId) && clerkId !== senderId
     );
     
-    console.log(`✅ ${unreadUsers.length} usuarios no han leído el mensaje`);
+    console.log(`${unreadUsers.length} usuarios no han leído el mensaje`);
     return unreadUsers;
     
   } catch (error) {
-    console.error('❌ Error obteniendo usuarios no leídos:', error);
+    console.error('Error obteniendo usuarios no leídos:', error);
     return [];
   }
 }
 
 export async function markChatSeen(groupId: string) {
-  console.log('👁️ markChatSeen - Marcando chat como visto:', groupId);
+  console.log('markChatSeen - Marcando chat como visto:', groupId);
   
   try {
     const uid = requireUid();
     const ref = doc(db, 'users', uid, 'chatState', String(groupId));
     
-    console.log('💾 Actualizando estado de chat visto...');
+    console.log('Actualizando estado de chat visto...');
     await setDoc(ref, { lastReadAt: serverTimestamp() }, { merge: true });
-    console.log('✅ Chat marcado como visto exitosamente');
-  } catch (error) {
-    console.error('💥 Error marcando chat como visto:', error);
-    console.error('📋 MarkChatSeen error details:', { 
-      code: error.code, 
-      message: error.message, 
+    console.log('Chat marcado como visto exitosamente');
+  } catch (error: any) {
+    console.error('Error marcando chat como visto:', error);
+    console.error('MarkChatSeen error details:', { 
+      code: error?.code, 
+      message: error?.message, 
       groupId 
     });
     throw error;
@@ -290,7 +289,10 @@ export function listenGroupMessages(
     );
     
     return onSnapshot(q, snap => {
-      const items = snap.docs.map(d => ({ id: d.id, ...(d.data() as MessageDoc) }));
+      const items = snap.docs.map(d => {
+        const data = d.data() as MessageDoc;
+        return { ...data, id: d.id };
+      });
       onChange(items);
     }, (error) => {
       if (error?.code === 'permission-denied') {
@@ -300,15 +302,16 @@ export function listenGroupMessages(
       if (onError) onError(error);
     });
   } catch (error) {
+    console.error('Error configurando listener de mensajes:', error);
     throw error;
   }
 }
 
 export  async function getGroupTileInfo(groupId: string): Promise<GroupTileInfo> {
-  console.log(`🔍 getGroupTileInfo INICIADA para groupId: ${groupId}`);
+  console.log(`getGroupTileInfo INICIADA para groupId: ${groupId}`);
   
   const uid = requireUid();
-  console.log(`🔍 UID obtenido: ${uid}`);
+  console.log(`UID obtenido: ${uid}`);
   
   const chatRef = doc(db, 'chats', String(groupId));
   
@@ -318,16 +321,16 @@ export  async function getGroupTileInfo(groupId: string): Promise<GroupTileInfo>
       getDoc(doc(db, 'users', uid, 'chatState', String(groupId))), // permitido al propio usuario
     ]);
 
-    console.log(`🔍 chatSnap exists: ${chatSnap.exists()}`);
-    console.log(`🔍 seenSnap exists: ${seenSnap.exists()}`);
+    console.log(`chatSnap exists: ${chatSnap.exists()}`);
+    console.log(`seenSnap exists: ${seenSnap.exists()}`);
 
     if (!chatSnap.exists()) {
-      console.error(`❌ Chat ${groupId} no existe o no tienes permisos`);
+      console.error(`Chat ${groupId} no existe o no tienes permisos`);
       throw new Error(`Chat ${groupId} not found or no access`);
     }
 
     const chat = chatSnap.data() as any;
-    console.log(`🔍 Chat data:`, {
+    console.log(`Chat data:`, {
       name: chat?.name,
       members: chat?.members,
       membersCount: chat?.members?.length,
@@ -338,8 +341,8 @@ export  async function getGroupTileInfo(groupId: string): Promise<GroupTileInfo>
     
     // Verificar si realmente es miembro
     if (!chat?.members?.includes(uid)) {
-      console.error(`❌ Usuario ${uid} NO es miembro del chat ${groupId}`);
-      console.error(`❌ Miembros actuales:`, chat?.members);
+      console.error(`Usuario ${uid} NO es miembro del chat ${groupId}`);
+      console.error(`Miembros actuales:`, chat?.members);
       throw new Error(`User ${uid} is not a member of chat ${groupId}`);
     }
 
@@ -358,33 +361,32 @@ export  async function getGroupTileInfo(groupId: string): Promise<GroupTileInfo>
       unreadCount: unreadCount,
     };
     
-    console.log(`✅ GroupTileInfo generado:`, result);
+    console.log(`GroupTileInfo generado:`, result);
     return result;
     
   } catch (error) {
-    console.error(`❌ Error en getGroupTileInfo para grupo ${groupId}:`, error);
+    console.error(`Error en getGroupTileInfo para grupo ${groupId}:`, error);
     throw error; // Re-lanzar para que el caller pueda manejarlo
   }
 }
 
 /**
  * Obtiene únicamente el número de mensajes no leídos de un chat específico
- * ✅ ACTUALIZADO: Usa readBy en lugar de read
  * @param groupId ID del grupo/chat
  * @returns Promise<number> - Número de mensajes no leídos
  */
 export async function getUnreadMessagesCount(groupId: string): Promise<number> {
   try {
     const uid = requireUid();
-    console.log(`🔍 getUnreadMessagesCount para groupId: ${groupId}, uid: ${uid}`);
+    console.log(`getUnreadMessagesCount para groupId: ${groupId}, uid: ${uid}`);
     
-    // ✅ Obtener todos los mensajes recientes
+    // Obtener todos los mensajes recientes
     const messagesRef = collection(db, 'chats', String(groupId), 'messages');
     const messagesSnapshot = await getDocs(
       query(messagesRef, orderBy('timestamp', 'desc'), limit(100))
     );
     
-    // ✅ Contar mensajes donde el usuario NO está en readBy y NO es el remitente
+    // Contar mensajes donde el usuario NO está en readBy y NO es el remitente
     let count = 0;
     messagesSnapshot.docs.forEach(doc => {
       const data = doc.data();
@@ -396,15 +398,15 @@ export async function getUnreadMessagesCount(groupId: string): Promise<number> {
       }
     });
     
-    console.log(`✅ Mensajes no leídos en chat ${groupId}: ${count}`);
+    console.log(`Mensajes no leídos en chat ${groupId}: ${count}`);
     return count;
     
   } catch (error: any) {
-    console.error(`❌ Error obteniendo mensajes no leídos para chat ${groupId}:`, error);
-    console.error(`❌ Error code: ${error.code}, message: ${error.message}`);
+    console.error(`Error obteniendo mensajes no leídos para chat ${groupId}:`, error);
+    console.error(`Error code: ${error?.code}, message: ${error?.message}`);
     
-    if (error.code === 'permission-denied') {
-      console.warn(`⚠️ Sin permisos para contar mensajes en chat ${groupId}, devolviendo 0`);
+    if (error?.code === 'permission-denied') {
+      console.warn(`Sin permisos para contar mensajes en chat ${groupId}, devolviendo 0`);
     }
     
     return 0;
@@ -413,22 +415,22 @@ export async function getUnreadMessagesCount(groupId: string): Promise<number> {
 
 // (Opcional) para varias tarjetas en paralelo:
 export async function getGroupTilesInfo(groupIds: Array<string | number>) {
-  console.log(`🔍 getGroupTilesInfo para grupos:`, groupIds);
+  console.log(`getGroupTilesInfo para grupos:`, groupIds);
   
   const promises = groupIds.map(async (id) => {
     try {
       const result = await getGroupTileInfo(String(id));
-      console.log(`✅ Tile obtenido para grupo ${id}:`, result.chatId);
+      console.log(`Tile obtenido para grupo ${id}:`, result.chatId);
       return result;
     } catch (error) {
-      console.error(`❌ Error obteniendo tile para grupo ${id}:`, error);
+      console.error(`Error obteniendo tile para grupo ${id}:`, error);
       // En lugar de fallar todo, devolver null para este grupo específico
       return null;
     }
   });
   
   const results = await Promise.all(promises);
-  console.log(`🔍 Resultados de getGroupTilesInfo:`, results.map((r, i) => ({ 
+  console.log(`Resultados de getGroupTilesInfo:`, results.map((r, i) => ({ 
     groupId: groupIds[i], 
     success: r !== null 
   })));
@@ -445,7 +447,7 @@ export async function getGroupTilesInfo(groupIds: Array<string | number>) {
  * @param userClerkId Clerk ID del usuario a promover
  */
 export async function makeMemberAdminFirebase(groupId: string, userClerkId: string): Promise<void> {
-  console.log('👑 makeMemberAdminFirebase - Promoviendo usuario a admin:', { groupId, userClerkId });
+  console.log('makeMemberAdminFirebase - Promoviendo usuario a admin:', { groupId, userClerkId });
   
   try {
     const uid = requireUid();
@@ -463,15 +465,15 @@ export async function makeMemberAdminFirebase(groupId: string, userClerkId: stri
     }
 
     // Agregar el usuario a la lista de admins si no está ya
-    console.log('🔄 Agregando usuario a lista de administradores...');
+    console.log('Agregando usuario a lista de administradores...');
     await updateDoc(chatRef, {
       admins: arrayUnion(userClerkId),
       updatedAt: serverTimestamp(),
     });
     
-    console.log('✅ Usuario promovido a administrador exitosamente');
+    console.log('Usuario promovido a administrador exitosamente');
   } catch (error) {
-    console.error('💥 Error promoviendo usuario a admin:', error);
+    console.error('Error promoviendo usuario a admin:', error);
     throw error;
   }
 }
@@ -482,7 +484,7 @@ export async function makeMemberAdminFirebase(groupId: string, userClerkId: stri
  * @param userClerkId Clerk ID del usuario a degradar
  */
 export async function removeAdminFirebase(groupId: string, userClerkId: string): Promise<void> {
-  console.log('👤 removeAdminFirebase - Degradando admin a miembro:', { groupId, userClerkId });
+  console.log('removeAdminFirebase - Degradando admin a miembro:', { groupId, userClerkId });
   
   try {
     const uid = requireUid();
@@ -505,15 +507,15 @@ export async function removeAdminFirebase(groupId: string, userClerkId: string):
     }
 
     // Remover el usuario de la lista de admins
-    console.log('🔄 Removiendo usuario de lista de administradores...');
+    console.log('Removiendo usuario de lista de administradores...');
     await updateDoc(chatRef, {
       admins: arrayRemove(userClerkId),
       updatedAt: serverTimestamp(),
     });
     
-    console.log('✅ Usuario degradado de administrador exitosamente');
+    console.log('Usuario degradado de administrador exitosamente');
   } catch (error) {
-    console.error('💥 Error degradando admin:', error);
+    console.error('Error degradando admin:', error);
     throw error;
   }
 }
@@ -524,7 +526,7 @@ export async function removeAdminFirebase(groupId: string, userClerkId: string):
  * @param userClerkId Clerk ID del usuario a remover
  */
 export async function removeMemberFromGroupFirebase(groupId: string, userClerkId: string): Promise<void> {
-  console.log('🚪 removeMemberFromGroupFirebase - Removiendo miembro:', { groupId, userClerkId });
+  console.log('removeMemberFromGroupFirebase - Removiendo miembro:', { groupId, userClerkId });
   
   try {
     const uid = requireUid();
@@ -546,7 +548,7 @@ export async function removeMemberFromGroupFirebase(groupId: string, userClerkId
       throw new Error('No puedes removerte siendo el único administrador');
     }
 
-    console.log('🔄 Removiendo usuario del grupo...');
+    console.log('Removiendo usuario del grupo...');
     const batch = writeBatch(db);
     
     // Remover de miembros y admins
@@ -557,9 +559,9 @@ export async function removeMemberFromGroupFirebase(groupId: string, userClerkId
     });
 
     await batch.commit();
-    console.log('✅ Miembro removido exitosamente');
+    console.log('Miembro removido exitosamente');
   } catch (error) {
-    console.error('💥 Error removiendo miembro:', error);
+    console.error('Error removiendo miembro:', error);
     throw error;
   }
 }
@@ -569,7 +571,7 @@ export async function removeMemberFromGroupFirebase(groupId: string, userClerkId
  * @param groupId ID del grupo a eliminar
  */
 export async function deleteGroupFirebase(groupId: string): Promise<void> {
-  console.log('🗑️ deleteGroupFirebase - Eliminando grupo:', groupId);
+  console.log('deleteGroupFirebase - Eliminando grupo:', groupId);
   
   try {
     const uid = requireUid();
@@ -578,7 +580,7 @@ export async function deleteGroupFirebase(groupId: string): Promise<void> {
     // Verificar que el usuario actual es admin/owner
     const chatDoc = await getDoc(chatRef);
     if (!chatDoc.exists()) {
-      console.log('⚠️ Chat ya no existe, considerando como eliminado');
+      console.log('Chat ya no existe, considerando como eliminado');
       return;
     }
 
@@ -587,7 +589,7 @@ export async function deleteGroupFirebase(groupId: string): Promise<void> {
       throw new Error('No tienes permisos para eliminar este grupo');
     }
 
-    console.log('🔄 Eliminando chat...');
+    console.log('Eliminando chat...');
     
     const batch = writeBatch(db);
     
@@ -599,14 +601,14 @@ export async function deleteGroupFirebase(groupId: string): Promise<void> {
     // Por ahora solo eliminamos el documento principal
     
     await batch.commit();
-    console.log('✅ Grupo eliminado exitosamente de Firebase');
+    console.log('Grupo eliminado exitosamente de Firebase');
     
     // Pequeña espera para dar tiempo a que los listeners se desconecten
     // y procesen el cambio antes de continuar
     await new Promise(resolve => setTimeout(resolve, 300));
     
   } catch (error) {
-    console.error('💥 Error eliminando grupo:', error);
+    console.error('Error eliminando grupo:', error);
     throw error;
   }
 }
@@ -616,12 +618,12 @@ export async function deleteGroupFirebase(groupId: string): Promise<void> {
  * @param group Datos actualizados del grupo
  */
 export async function updateGroupFirebase(group: Group): Promise<void> {
-  console.log('🔄 updateGroupFirebase - Actualizando grupo:', group.id, group.name);
+  console.log('updateGroupFirebase - Actualizando grupo:', group.id, group.name);
   
   try {
     const chatRef = doc(db, 'chats', String(group.id));
 
-    console.log('💾 Actualizando información del grupo en Firebase...');
+    console.log('Actualizando información del grupo en Firebase...');
     await setDoc(chatRef, {
       // Convertir IDs numéricos a strings para Clerk IDs si es necesario
       // members: group.membersIds?.map(id => String(id)) || [],
@@ -629,12 +631,12 @@ export async function updateGroupFirebase(group: Group): Promise<void> {
       updatedAt: serverTimestamp(),
     }, { merge: true });
     
-    console.log('✅ Grupo actualizado exitosamente en Firebase');
-  } catch (error) {
-    console.error('💥 Error actualizando grupo en Firebase:', error);
-    console.error('📋 UpdateGroup error details:', { 
-      code: error.code, 
-      message: error.message, 
+    console.log('Grupo actualizado exitosamente en Firebase');
+  } catch (error: any) {
+    console.error('Error actualizando grupo en Firebase:', error);
+    console.error('UpdateGroup error details:', { 
+      code: error?.code, 
+      message: error?.message, 
       groupId: group.id 
     });
     throw error;

@@ -26,6 +26,6 @@ export interface Invitation {
 
 export const GROUP_TYPES = [
   "CONFIANZA",
-  "Temporals",
-  "Companions",
+  "TEMPORAL",
+  "COMPANION",
 ] 

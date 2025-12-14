@@ -1,4 +1,4 @@
-export type ChatType = 'direct' | 'group';
+export type ChatType = 'CONFIANZA' | 'TEMPORAL' | 'COMPANION';
 import { JourneyType, JourneyState } from '../backend/journeys/journeyType';
 import { ParticipationState } from '../backend/participations/participationType';
 

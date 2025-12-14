@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { View, Text, TextInput, Modal, StyleSheet, Alert, Pressable, ScrollView } from 'react-native';
 import { useTokenStore } from "@/lib/auth/tokenStore";
 import { useUserStore } from "@/lib/storage/useUserStorage";

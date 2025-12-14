@@ -13,34 +13,34 @@ import { UserDto } from '@/api/backend/types';
  * Debe montarse en app/_layout.tsx para funcionar globalmente.
  */
 export function useChatNotifications() {
-  const { groups, loading: groupsLoading } = useUserGroups(); // ✅ Usar hook existente
+  const { groups, loading: groupsLoading } = useUserGroups(); //Usar hook existente
   const groupMembersCache = useRef(new Map<number, UserDto[]>());
-  const processedMessages = useRef(new Set<string>()); // ✅ Evitar duplicados
+  const processedMessages = useRef(new Set<string>());
 
   useEffect(() => {
-    // ✅ Esperar a que termine de cargar
+    // Esperar a que termine de cargar
     if (groupsLoading) {
       console.log('⏳ [ChatNotifications] Cargando grupos...');
       return;
     }
 
     if (!groups || groups.length === 0) {
-      console.log('⚠️ [ChatNotifications] Usuario sin grupos');
+      console.log('[ChatNotifications] Usuario sin grupos');
       return;
     }
 
     const currentUid = auth.currentUser?.uid;
     if (!currentUid) {
-      console.warn('⚠️ [ChatNotifications] Usuario no autenticado en Firebase');
+      console.warn('[ChatNotifications] Usuario no autenticado en Firebase');
       return;
     }
 
-    console.log(`👂 [ChatNotifications] Escuchando ${groups.length} grupos...`);
+    console.log(`[ChatNotifications] Escuchando ${groups.length} grupos...`);
     groups.forEach(g => console.log(`   - ${g.name} (ID: ${g.id})`));
     
     const unsubscribers: Array<() => void> = [];
 
-    // ✅ Escuchar mensajes de TODOS los grupos
+    // Escuchar mensajes de TODOS los grupos
     groups.forEach((group) => {
       const groupId = group.id; // Mantener el tipo number
       const groupIdString = String(groupId); // Para Firebase
@@ -53,7 +53,7 @@ export function useChatNotifications() {
           const latestMessage = messages[messages.length - 1];
           const messageKey = `${groupId}-${latestMessage.id}`;
           
-          // ✅ Evitar procesar el mismo mensaje múltiples veces
+          // Evitar procesar el mismo mensaje múltiples veces
           if (processedMessages.current.has(messageKey)) {
             return;
           }
@@ -74,37 +74,35 @@ export function useChatNotifications() {
           console.log(`   De: ${latestMessage.senderName}`);
           console.log(`   Mensaje: ${latestMessage.content.substring(0, 50)}...`);
 
-          // ✅ Cargar miembros del grupo (con caché)
+          // Cargar miembros del grupo (con caché)
           let groupMembers = groupMembersCache.current.get(groupId);
           
           if (!groupMembers) {
-            console.log(`📥 [ChatNotifications] Cargando miembros del grupo ${group.name}...`);
+            console.log(`[ChatNotifications] Cargando miembros del grupo ${group.name}...`);
             
             try {
               const memberPromises = group.membersIds.map(id => getUser(id));
               groupMembers = await Promise.all(memberPromises);
               groupMembersCache.current.set(groupId, groupMembers);
               
-              console.log(`✅ [ChatNotifications] ${groupMembers.length} miembros cargados`);
+              console.log(`[ChatNotifications] ${groupMembers.length} miembros cargados`);
             } catch (error) {
               console.log(`Error cargando miembros del grupo ${group.name}:`, error);
               return;
             }
           }
-
-          // ✅ Encontrar usuarios que NO han leído
+          // Encontrar usuarios que NO han leído
           const unreadMembers = groupMembers.filter(member => {
-            const hasRead = latestMessage.readBy?.includes(member.clerkId);
+            const hasRead = latestMessage.readBy?.includes(member.clerkId? member.clerkId : '');
             const isSender = member.clerkId === latestMessage.senderId;
             return !hasRead && !isSender;
           });
-
-          // ✅ Enviar notificaciones
+          // Enviar notificaciones
           if (unreadMembers.length > 0) {
-            console.log(`📤 [ChatNotifications] Enviando a ${unreadMembers.length} usuarios...`);
+            console.log(`[ChatNotifications] Enviando a ${unreadMembers.length} usuarios...`);
             
             const notificationPromises = unreadMembers.map(async (member) => {
-                console.log(`  🔔 Enviando a ${member.name} (ID: ${member.id})...`);
+                console.log(`Enviando a ${member.name} (ID: ${member.id})...`);
               try {
                 await sendPushToUser({
                   userId: member.id,
@@ -120,29 +118,29 @@ export function useChatNotifications() {
                   channelId: 'chat',
                 });
                 
-                console.log(`  ✅ Notificación enviada a ${member.name}`);
+                console.log(`Notificación enviada a ${member.name}`);
               } catch (error) {
-                console.warn(`  ⚠️ Error enviando notificación a ${member.name}:`, error);
+                console.warn(`Error enviando notificación a ${member.name}:`, error);
               }
             });
 
             await Promise.allSettled(notificationPromises);
           }
 
-          // ✅ Marcar como procesado
+          // Marcar como procesado
           processedMessages.current.add(messageKey);
         },
         (error) => {
-          console.error(`❌ [ChatNotifications] Error en grupo ${groupId}:`, error);
+          console.error(`[ChatNotifications] Error en grupo ${groupId}:`, error);
         }
       );
 
       unsubscribers.push(unsub);
     });
 
-    // ✅ Cleanup
+    // Cleanup
     return () => {
-      console.log('🧹 [ChatNotifications] Limpiando listeners...');
+      console.log('[ChatNotifications] Limpiando listeners...');
       unsubscribers.forEach(unsub => unsub());
       groupMembersCache.current.clear();
       processedMessages.current.clear();

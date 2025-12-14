@@ -1,7 +1,6 @@
 /**
  * Hook para enviar notificaciones push de forma sencilla
  */
-
 import { useState } from 'react';
 import { sendPushToUser } from '@/api/notifications/notificationsApi';
 import type { SendPushToUserRequest } from '@/api/notifications/types';
@@ -48,11 +47,11 @@ export function useNotificationSender() {
 
       await sendPushToUser(request);
 
-      console.log('✅ [useNotificationSender] Notificación enviada exitosamente');
+      console.log('[useNotificationSender] Notificación enviada exitosamente');
       return true;
     } catch (err: any) {
       const errorMessage = err?.message || 'Error enviando notificación';
-      console.error('❌ [useNotificationSender] Error:', errorMessage);
+      console.error('[useNotificationSender] Error:', errorMessage);
       setError(errorMessage);
       return false;
     } finally {

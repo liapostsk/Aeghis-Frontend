@@ -23,13 +23,13 @@ export async function registerForPushNotificationsAsync() {
       finalStatus = status;
     }
     if (finalStatus !== "granted") {
-      console.warn("⚠️ Permisos de notificaciones denegados");
+      console.warn("Permisos de notificaciones denegados");
     }
     const projectId =
       Constants?.expoConfig?.extra?.eas?.projectId ??
       Constants?.easConfig?.projectId;
     if (!projectId) {
-      console.error("❌ Project ID not found");
+      console.error("Project ID not found");
     }
     try {
       const pushTokenString = (
@@ -40,10 +40,10 @@ export async function registerForPushNotificationsAsync() {
       console.log(pushTokenString);
       return pushTokenString;
     } catch (e: unknown) {
-        console.error("❌ Error obteniendo token:", e);
+        console.error("Error obteniendo token:", e);
     }
   } else {
-    console.warn("⚠️ Debe usar un dispositivo físico para push notifications");
+    console.warn("Debe usar un dispositivo físico para push notifications");
   }
 }
 

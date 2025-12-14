@@ -23,7 +23,7 @@ import { JourneyDto } from '@/api/backend/journeys/journeyType';
 import { getParticipation } from '@/api/backend/participations/participationApi';
 import { ParticipationDto } from '@/api/backend/participations/participationType';
 import { getCurrentUser } from '@/api/backend/user/userApi';
-import { SafeLocation, Location } from '@/api/backend/locations/locationType';
+import { SafeLocation, Location, SelectableLocation, toSafeLocation } from '@/api/backend/locations/locationType';
 import SafeLocationModal from '@/components/safeLocations/SafeLocationModal';
 import { 
   MessageBubble, 
@@ -104,16 +104,8 @@ export default function ChatScreen() {
   };
 
   // Manejar selección de destino desde el modal
-  const handleSelectDestination = (location: SafeLocation | Location) => {
-    const safeLocation: SafeLocation = 'name' in location ? location : {
-      id: location.id,
-      name: `Ubicación personalizada`,
-      address: `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`,
-      type: 'custom',
-      latitude: location.latitude,
-      longitude: location.longitude,
-      externalId: undefined
-    };
+  const handleSelectDestination = (location: SelectableLocation) => {
+    const safeLocation: SafeLocation = toSafeLocation(location);
     setSelectedDestination(safeLocation);
     setShowDestinationModal(false);
   };
