@@ -109,6 +109,13 @@ export const cancelCompanionRequest = async (id: number): Promise<void> => {
  * Endpoint for both the creator and the searcher
  */
 
+export const updateCompanionGroupId = async (companionRequestId: number, groupId: number): Promise<CompanionRequestDto> => {
+  console.log("🔄 API: Vinculando grupo con companion request:", { companionRequestId, groupId });
+  const response = await api.post(`/companion-request/${companionRequestId}/link-group/${groupId}`);
+  console.log("✅ API: Grupo vinculado al companion request:", response.data);
+  return response.data;
+};
+
 export const getCompanionRequestById = async (id: number): Promise<CompanionRequestDto> => {
   console.log("📋 API: Obteniendo solicitud de acompañamiento por ID:", id);
   const response = await api.get(`/companion-request/${id}`);

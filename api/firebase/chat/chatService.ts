@@ -17,7 +17,7 @@ import {
   getDocs,
   arrayRemove,
 } from 'firebase/firestore';
-import type { ChatDoc, GroupTileInfo, MessageDoc } from '../types';
+import type { ChatDoc, GroupTileInfo, MessageDoc, ChatType } from '../types';
 import { Group } from '../../backend/group/groupType';
 
 /**
@@ -44,7 +44,7 @@ export async function createGroupFirebase(group: Partial<Group>): Promise<string
     const now = serverTimestamp();
 
     const payload: ChatDoc = {
-      type: 'CONFIANZA',
+      type: group.type as ChatType || 'CONFIANZA',
       admins: ownerUid ? [ownerUid] : [],
       members: ownerUid ? [ownerUid] : [],
       ownerId: ownerUid || '',
@@ -64,11 +64,32 @@ export async function createGroupFirebase(group: Partial<Group>): Promise<string
   }
 }
 
+// Auto-unión a grupo en Firestore
 export async function joinGroupChatFirebase(groupId: string) {
   console.log('joinGroupChatFirebase - Uniéndose al grupo:', groupId);
   
   try {
     const uid = requireUid();
+    const chatRef = doc(db, 'chats', String(groupId));
+
+    console.log('Añadiendo usuario a miembros del grupo...');
+    await updateDoc(chatRef, {
+      members: arrayUnion(uid),
+      updatedAt: serverTimestamp(),
+    });
+    console.log('Usuario unido exitosamente al grupo:', groupId);
+  } catch (e: any) {
+    console.error('Error uniéndose al grupo:', e.code, e.message);
+    console.error('Join failed details:', { groupId, code: e.code, message: e.message });
+    throw e;
+  }
+}
+
+export async function joinGroupChatFirebaseWithClerkId(groupId: string, clerkId: string) {
+  console.log('joinGroupChatFirebase - Uniéndose al grupo:', groupId);
+  
+  try {
+    const uid = clerkId;
     const chatRef = doc(db, 'chats', String(groupId));
 
     console.log('Añadiendo usuario a miembros del grupo...');

@@ -20,6 +20,7 @@ interface CompanionRequestListProps {
   currentUserId?: number;
   onManageRequest?: (request: CompanionRequestDto) => void;
   onDeleteRequest?: (requestId: number) => void;
+  onOpenChat?: (request: CompanionRequestDto) => void;
 }
 
 export default function CompanionRequestList({
@@ -31,6 +32,7 @@ export default function CompanionRequestList({
   currentUserId,
   onManageRequest,
   onDeleteRequest,
+  onOpenChat,
 }: CompanionRequestListProps) {
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -190,6 +192,17 @@ export default function CompanionRequestList({
               {/* Botones según si es el creador o no */}
               {currentUserId && item.creator?.id === currentUserId ? (
                 <View style={styles.ownerActions}>
+                  {/* Botón de chat para solicitudes MATCHED */}
+                  {item.state === 'MATCHED' && onOpenChat && (
+                    <Pressable 
+                      style={styles.chatButton}
+                      onPress={() => onOpenChat(item)}
+                    >
+                      <Ionicons name="chatbubbles-outline" size={16} color="#7A33CC" />
+                      <Text style={styles.chatButtonText}>Chat</Text>
+                    </Pressable>
+                  )}
+                  
                   {onManageRequest && (
                     <Pressable 
                       style={styles.manageButton}
@@ -209,14 +222,28 @@ export default function CompanionRequestList({
                   )}
                 </View>
               ) : (
-                (item.state === 'CREATED' || item.state === 'PENDING') && onJoinRequest && (
-                  <Pressable 
-                    style={styles.joinButton}
-                    onPress={() => onJoinRequest(item)}
-                  >
-                    <Text style={styles.joinButtonText}>Solicitar</Text>
-                  </Pressable>
-                )
+                <View style={styles.nonOwnerActions}>
+                  {/* Botón de chat para no-creadores en solicitudes MATCHED */}
+                  {item.state === 'MATCHED' && onOpenChat && (
+                    <Pressable 
+                      style={styles.chatButton}
+                      onPress={() => onOpenChat(item)}
+                    >
+                      <Ionicons name="chatbubbles-outline" size={16} color="#7A33CC" />
+                      <Text style={styles.chatButtonText}>Abrir chat</Text>
+                    </Pressable>
+                  )}
+                  
+                  {/* Botón de solicitar solo para estados CREATED/PENDING */}
+                  {(item.state === 'CREATED' || item.state === 'PENDING') && onJoinRequest && (
+                    <Pressable 
+                      style={styles.joinButton}
+                      onPress={() => onJoinRequest(item)}
+                    >
+                      <Text style={styles.joinButtonText}>Solicitar</Text>
+                    </Pressable>
+                  )}
+                </View>
               )}
             </View>
           </Pressable>
@@ -370,6 +397,26 @@ const styles = StyleSheet.create({
   ownerActions: {
     flexDirection: 'row',
     gap: 8,
+  },
+  nonOwnerActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  chatButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#F3E8FF',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#7A33CC',
+  },
+  chatButtonText: {
+    color: '#7A33CC',
+    fontSize: 13,
+    fontWeight: '600',
   },
   manageButton: {
     flexDirection: 'row',

@@ -15,13 +15,14 @@ import {
   acceptCompanionRequest,
   rejectCompanionRequest, 
   getCompanionRequestById,
-  finishCompanionRequest
+  finishCompanionRequest,
+  updateCompanionGroupId
 } from '@/api/backend/companionRequest/companionRequestApi';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 import { useUserStore } from '@/lib/storage/useUserStorage';
 import { createGroup } from '@/api/backend/group/groupApi';
-import { createGroupFirebase } from '@/api/firebase/chat/chatService';
+import { createGroupFirebase, joinGroupChatFirebaseWithClerkId } from '@/api/firebase/chat/chatService';
 import { invalidateGroupsCache } from '@/lib/hooks/useUserGroups';
 
 interface ManageCompanionRequestProps {
@@ -84,12 +85,21 @@ export default function ManageCompanionRequest({
 
               // Crear grupo automáticamente
               if (requestData && requestData.companion) {
+                const creatorId = user?.id || requestData.creator?.id;
+                const companionId = requestData.companion.id;
+
+                if (!creatorId || !companionId) {
+                  throw new Error('IDs de usuario requeridos para crear el grupo');
+                }
+
                 const groupData = {
                   name: `Acompañamiento: ${getLocationDisplay(requestData.source)} → ${getLocationDisplay(requestData.destination)}`,
                   description: `Grupo creado para coordinar el viaje compartido. Miembros: ${user?.name || 'Tú'} y ${requestData.companion.name}`,
                   imageUrl: '',
                   type: 'COMPANION' as const,
-                  ownerId: user?.id || requestData.creator?.id
+                  ownerId: creatorId,
+                  membersIds: [creatorId, companionId],
+                  adminsIds: [creatorId]
                 };
 
                 console.log('Creando grupo COMPANION:', groupData);
@@ -98,6 +108,15 @@ export default function ManageCompanionRequest({
                   // Crear grupo en backend
                   const groupId = await createGroup(groupData);
                   console.log('Grupo creado con ID:', groupId);
+
+                  if (!requestData.companion.idClerk) {
+                    throw new Error('El usuario acompañante no tiene un idClerk definido.');
+                  }
+                  joinGroupChatFirebaseWithClerkId(groupId.toString(), requestData.companion.idClerk);
+
+                  // Guardar el ID del grupo en la solicitud de acompañamiento
+                  await updateCompanionGroupId(request.id, groupId);
+                  console.log('CompanionGroupId actualizado en la solicitud');
 
                   // Crear chat en Firebase
                   const chatId = await createGroupFirebase({ ...groupData, id: groupId });

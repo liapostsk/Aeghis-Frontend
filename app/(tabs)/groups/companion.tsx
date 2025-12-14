@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -23,6 +23,8 @@ import CreateCompanionRequest from '@/components/groups/companion/CreateCompanio
 import ManageCompanionRequest from '@/components/groups/companion/ManageCompanionRequest';
 import RequestJoinCompanion from '@/components/groups/companion/RequestJoinCompanion';
 import CompanionTabs from '@/components/groups/companion/CompanionTabs';
+import { router } from 'expo-router';
+import { getGroupById } from '@/api/backend/group/groupApi';
 
 
 type CompanionRequest = CompanionRequestDto;
@@ -185,6 +187,50 @@ export default function CompanionsGroups() {
     );
   };
 
+  const handleOpenChat = async (request: CompanionRequestDto) => {
+    try {
+      setRefreshing(true);
+      
+      // Verificar que existe el companionGroupId
+      if (!request.companionGroupId) {
+        Alert.alert(
+          'Chat no disponible', 
+          'El grupo asociado a esta solicitud aún no se ha creado.'
+        );
+        return;
+      }
+
+      const token = await getToken();
+      setToken(token);
+
+      // Buscar el grupo asociado a esta solicitud
+      const group = await getGroupById(request.companionGroupId);
+      
+      if (group) {
+        console.log('🗨️ Navegando al chat del grupo:', group.name);
+        
+        // Navegar al chat del grupo
+        router.push({
+          pathname: '/chat',
+          params: { 
+            groupId: group.id.toString(),
+            groupName: group.name 
+          }
+        });
+      } else {
+        Alert.alert(
+          'Chat no encontrado', 
+          'No se pudo encontrar el grupo asociado a esta solicitud.'
+        );
+      }
+    } catch (error) {
+      console.error('❌ Error abriendo chat:', error);
+      Alert.alert('Error', 'No se pudo abrir el chat del grupo');
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -273,6 +319,7 @@ export default function CompanionsGroups() {
         currentUserId={user?.id}
         onManageRequest={handleManageRequest}
         onDeleteRequest={handleDeleteRequest}
+        onOpenChat={handleOpenChat}
       />
 
       {/* Botón flotante para crear solicitud */}
