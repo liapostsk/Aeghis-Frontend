@@ -122,3 +122,47 @@ export const getCompanionRequestById = async (id: number): Promise<CompanionRequ
   console.log("✅ API: Solicitud obtenida:", response.data);
   return response.data;
 };
+
+// ============================================================================
+// ENDPOINTS PARA TRACKING GROUPS
+// Estos endpoints permiten asociar los grupos donde cada participante comparte
+// su ubicación durante el trayecto de acompañamiento
+// ============================================================================
+
+/**
+ * Asocia un grupo de tracking (del creador o companion) a la solicitud
+ * 
+ * @param companionRequestId - ID de la companion request
+ * @param trackingGroupId - ID del grupo donde se comparte ubicación
+ * @param isCreatorTrackingGroup - true si es el grupo del creador, false si es del companion
+ * 
+ * Backend: POST /companion-request/{id}/link-tracking-group/{groupId}?isCreatorTrackingGroup=true/false
+ * - Si ambos tracking groups están rellenos, cambia el estado a IN_PROGRESS
+ */
+export const linkTrackingGroupToCompanionRequest = async (
+  companionRequestId: number, 
+  trackingGroupId: number,
+  isCreatorTrackingGroup: boolean
+): Promise<CompanionRequestDto> => {
+  console.log("🎯 API: Asociando grupo de tracking:", { companionRequestId, trackingGroupId, isCreatorTrackingGroup });
+  const response = await api.post(
+    `/companion-request/${companionRequestId}/link-tracking-group/${trackingGroupId}`,
+    null,
+    { params: { isCreatorTrackingGroup } }
+  );
+  console.log("✅ API: Grupo de tracking asociado:", response.data);
+  return response.data;
+};
+
+/**
+ * Obtiene el CompanionRequest asociado a un grupo COMPANION específico
+ * Útil para obtener el ID de la request cuando solo tenemos el groupId
+ * 
+ * Backend: GET /companion-request/by-companion-group/{groupId}
+ */
+export const getCompanionRequestByCompanionGroupId = async (groupId: number): Promise<CompanionRequestDto> => {
+  console.log("🔍 API: Buscando companion request por companion groupId:", groupId);
+  const response = await api.get(`/companion-request/by-companion-group/${groupId}`);
+  console.log("✅ API: Companion request encontrada:", response.data);
+  return response.data;
+};

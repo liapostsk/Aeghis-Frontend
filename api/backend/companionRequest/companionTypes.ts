@@ -17,6 +17,9 @@ export interface CompanionRequest {
   companionGroup?: Group;
   trackingGroup?: Group;
   trayecto?: Journey;
+  // Grupos donde cada participante comparte su ubicación
+  creatorTrackingGroup?: Group;
+  companionTrackingGroup?: Group;
 }
 
 export interface CompanionRequestDto {
@@ -33,6 +36,9 @@ export interface CompanionRequestDto {
   companionGroupId?: number;
   trackingGroupId?: number;
   trayectoId?: number;
+  // IDs de los grupos donde cada participante comparte su ubicación
+  creatorTrackingGroupId?: number;
+  companionTrackingGroupId?: number;
 }
 
 export interface CreateCompanionRequestDto {

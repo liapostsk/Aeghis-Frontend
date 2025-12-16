@@ -18,6 +18,10 @@ import { JourneyType, validateJourneyForm } from './journeyUtils';
 import { createJourney } from '@/api/backend/journeys/journeyApi';
 import { createParticipation } from '@/api/backend/participations/participationApi';
 import { createLocation } from '@/api/backend/locations/locationsApi';
+import { 
+  getCompanionRequestByCompanionGroupId,
+  linkTrackingGroupToCompanionRequest 
+} from '@/api/backend/companionRequest/companionRequestApi';
 
 interface UseJourneyCreationProps {
   groupId: string;
@@ -80,17 +84,11 @@ export const useJourneyCreation = ({
   // Función para enviar mensaje de solicitud de trayecto al chat
   const sendJourneyRequestMessage = async (
     journeyId: number, 
-    journeyName: string, 
-    targetParticipants: number[],
+    journeyName: string,
     selectedDestination: SafeLocation | null
   ) => {
     try {
       if (!group?.id) return;
-
-      const targetNames = members
-        .filter(m => targetParticipants.includes(m.id))
-        .map(m => m.name)
-        .join(', ');
 
       const destinationText = selectedDestination ? selectedDestination.name : 'Por definir';
 
@@ -136,7 +134,9 @@ ID del trayecto: ${journeyId}`;
     journeyType: JourneyType,
     journeyName: string,
     selectedParticipants: number[],
-    selectedDestination: SafeLocation | null
+    selectedDestination: SafeLocation | null,
+    targetGroupId?: string,
+    companionGroupId?: string // ID del grupo COMPANION para enviar notificación
   ) => {
     if (!validateForm(journeyType, journeyName, selectedParticipants, selectedDestination)) return;
 
@@ -146,8 +146,11 @@ ID del trayecto: ${journeyId}`;
       // 1. Crear Journey primero
       setCreationStep('Creando trayecto...');
       
+      // Usar targetGroupId si está disponible (para grupos COMPANION)
+      const effectiveGroupId = targetGroupId ? Number(targetGroupId) : Number(groupId);
+      
       const journeyData: Partial<JourneyDto> = {
-        groupId: Number(groupId),
+        groupId: effectiveGroupId,
         journeyType: journeyType === 'individual' ? JourneyTypes.INDIVIDUAL : 
               journeyType === 'common_destination' ? JourneyTypes.COMMON_DESTINATION : JourneyTypes.PERSONALIZED,
         state: journeyType === 'individual' ? JourneyStates.IN_PROGRESS : JourneyStates.PENDING,
@@ -159,9 +162,9 @@ ID del trayecto: ${journeyId}`;
 
       const journeyId = await createJourney(journeyData as JourneyDto);
 
-      // Crear journey en Firebase
+      // Crear journey en Firebase (usar el grupo objetivo si está disponible)
       setCreationStep('Configurando journey en tiempo real...');
-      const chatId = group?.id?.toString();
+      const chatId = targetGroupId || group?.id?.toString();
       if (chatId) {
         await createJourneyInChat(chatId, { ...journeyData, id: journeyId } as JourneyDto);
       }
@@ -232,6 +235,38 @@ ID del trayecto: ${journeyId}`;
 
       // 4. Manejar según tipo
       if (journeyType === 'individual') {
+        // Si viene de un grupo COMPANION, asociar tracking group y enviar notificación
+        if (companionGroupId && targetGroupId) {
+          try {
+            setCreationStep('Asociando grupo de tracking...');
+            
+            // Obtener la companion request asociada al grupo COMPANION
+            const companionRequest = await getCompanionRequestByCompanionGroupId(Number(companionGroupId));
+            
+            // Determinar si el usuario actual es el creador o el companion
+            const isCreator = companionRequest.creator?.id === currentUser?.id;
+            
+            // Usar el endpoint unificado con el parámetro isCreatorTrackingGroup
+            await linkTrackingGroupToCompanionRequest(
+              companionRequest.id, 
+              Number(targetGroupId), 
+              isCreator
+            );
+            console.log(`Tracking group ${isCreator ? 'del creador' : 'del companion'} asociado`);
+          } catch (trackingError) {
+            console.warn('Error asociando tracking group:', trackingError);
+          }
+          
+          // Enviar notificación al chat del grupo COMPANION
+          try {
+            const statusMessage = `${currentUser?.name || 'Un miembro'} ha empezado a compartir su ubicación`;
+            await sendMessageFirebase(companionGroupId, statusMessage, 'status');
+            console.log('Notificación enviada al grupo COMPANION');
+          } catch (notifyError) {
+            console.warn('Error enviando notificación al grupo COMPANION:', notifyError);
+          }
+        }
+
         Alert.alert(
           '¡Trayecto individual creado!',
           `El trayecto "${journeyName}" está listo. Puedes iniciarlo cuando quieras desde la vista del mapa.`,
@@ -242,7 +277,7 @@ ID del trayecto: ${journeyId}`;
         
         try {
           const targetParticipants = selectedParticipants.filter(id => id !== currentUser?.id);
-          await sendJourneyRequestMessage(journeyId, journeyName, targetParticipants, selectedDestination);
+          await sendJourneyRequestMessage(journeyId, journeyName, selectedDestination);
 
           const participantNames = members
             .filter(m => targetParticipants.includes(m.id))

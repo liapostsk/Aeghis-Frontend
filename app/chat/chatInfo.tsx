@@ -32,6 +32,7 @@ import {
     deleteGroupFirebase 
 } from '@/api/firebase/chat/chatService';
 import { getUserProfileFB } from '@/api/firebase/users/userService';
+import { finishCompanionRequest } from '@/api/backend/companionRequest/companionRequestApi';
 import AlertModal from '@/components/common/AlertModal';
 import InviteModal from '@/components/groups/InviteModal';
 import EditGroupModal from '@/components/groups/EditGroupModal';
@@ -168,19 +169,19 @@ export default function GroupInfoScreen() {
     const confirmRemoveMember = async () => {
         if (selectedMember && group) {
             try {
-                console.log(`🗑️ Eliminando miembro ${selectedMember.name} del grupo ${group.name}`);
+                console.log(`Eliminando miembro ${selectedMember.name} del grupo ${group.name}`);
                 
                 const token = await getToken();
                 setToken(token);
 
                 // 1. Llamada al backend para remover miembro
                 await removeMember(group.id, selectedMember.id);
-                console.log('✅ Miembro removido del backend');
+                console.log('Miembro removido del backend');
                 
                 // 2. Actualizar Firebase si el usuario tiene clerkId
                 if (selectedMember.clerkId) {
                     await removeMemberFromGroupFirebase(group.id.toString(), selectedMember.clerkId);
-                    console.log('✅ Miembro removido de Firebase');
+                    console.log('Miembro removido de Firebase');
                 }
                 
                 // 3. Actualizar estado local
@@ -199,7 +200,7 @@ export default function GroupInfoScreen() {
                 Alert.alert('Éxito', `${selectedMember.name} ha sido eliminado del grupo`);
                 
             } catch (error) {
-                console.error('💥 Error eliminando miembro:', error);
+                console.error('Error eliminando miembro:', error);
                 Alert.alert('Error', 'No se pudo eliminar el miembro');
             }
         }
@@ -215,19 +216,19 @@ export default function GroupInfoScreen() {
     const confirmPromoteToAdmin = async () => {
         if (selectedMember && group) {
             try {
-                console.log(`👑 Promoviendo ${selectedMember.name} a administrador del grupo ${group.name}`);
+                console.log(`Promoviendo ${selectedMember.name} a administrador del grupo ${group.name}`);
                 
                 const token = await getToken();
                 setToken(token);
 
                 // 1. Llamada al backend para promover a admin
                 const updatedGroup = await promoteToAdmin(group.id, selectedMember.id);
-                console.log('✅ Usuario promovido en backend');
+                console.log('Usuario promovido en backend');
                 
                 // 2. Actualizar Firebase si el usuario tiene clerkId
                 if (selectedMember.clerkId) {
                     await makeMemberAdminFirebase(group.id.toString(), selectedMember.clerkId);
-                    console.log('✅ Usuario promovido en Firebase');
+                    console.log('Usuario promovido en Firebase');
                 }
                 
                 // 3. Actualizar estado local
@@ -237,7 +238,7 @@ export default function GroupInfoScreen() {
                 Alert.alert('Éxito', `${selectedMember.name} ahora es administrador`);
                 
             } catch (error) {
-                console.error('💥 Error promoviendo miembro:', error);
+                console.error('Error promoviendo miembro:', error);
                 Alert.alert('Error', 'No se pudo promover el miembro');
             }
         }
@@ -254,12 +255,12 @@ export default function GroupInfoScreen() {
 
             // 1. Llamada al backend para degradar admin
             const updatedGroup = await demoteToMember(group!.id, member.id);
-            console.log('✅ Usuario degradado en backend');
+            console.log('Usuario degradado en backend');
             
             // 2. Actualizar Firebase si el usuario tiene clerkId
             if (member.clerkId) {
                 await removeAdminFirebase(group!.id.toString(), member.clerkId);
-                console.log('✅ Usuario degradado en Firebase');
+                console.log('Usuario degradado en Firebase');
             }
             
             // 3. Actualizar estado local
@@ -269,8 +270,51 @@ export default function GroupInfoScreen() {
             Alert.alert('Éxito', `${member.name} ya no es administrador`);
             
         } catch (error) {
-            console.error('💥 Error degradando admin:', error);
+            console.error('Error degradando admin:', error);
             Alert.alert('Error', 'No se pudo remover los permisos de administrador');
+        }
+    };
+
+    // Manejar finalización de acompañamiento (solo para grupos COMPANION)
+    const handleFinishCompanionship = () => {
+        Alert.alert(
+            'Finalizar acompañamiento',
+            '¿Estás seguro de que quieres finalizar este acompañamiento? Se cerrará la solicitud y se eliminará el grupo.',
+            [
+                {
+                    text: 'Finalizar',
+                    style: 'destructive',
+                    onPress: confirmFinishCompanionship
+                },
+                { text: 'Cancelar', style: 'cancel' }
+            ]
+        );
+    };
+
+    const confirmFinishCompanionship = async () => {
+        if (!group) return;
+
+        try {
+            const token = await getToken();
+            setToken(token);
+
+            // 1. Finalizar companion request si existe
+            // Nota: Necesitarás obtener el companionRequestId del grupo o de otra fuente
+            // Por ahora, buscamos por el grupo COMPANION
+            // TODO: Implementar getCompanionRequestByGroupId en la API si no existe
+            
+            // 2. Eliminar grupo de Firebase y backend
+            await deleteGroupFirebase(group.id.toString());
+            await deleteGroup(group.id);
+            
+            Alert.alert(
+                'Acompañamiento finalizado', 
+                'El acompañamiento ha sido finalizado exitosamente',
+                [{ text: 'OK', onPress: () => router.replace('/groups') }]
+            );
+        } catch (error: any) {
+            console.error('Error finalizando acompañamiento:', error);
+            Alert.alert('Error', 'No se pudo finalizar el acompañamiento');
         }
     };
 
@@ -306,14 +350,13 @@ export default function GroupInfoScreen() {
                 router.replace('/chat');
             }
         } catch (error: any) {
-            console.error('💥 Error al salir/eliminar grupo:', error);
+            console.error('Error al salir/eliminar grupo:', error);
             Alert.alert('Error', 'No se pudo completar la operación');
         }
         
         setShowExitGroupModal(false);
     };
 
-    // Renderizar miembro con componente
     const renderMember = (user: UserDto) => {
         const role = memberRoles[user.id] || 'member';
         const firebaseStatus = memberFirebaseStatus[user.clerkId || ''] || { isOnline: false };
@@ -356,7 +399,6 @@ export default function GroupInfoScreen() {
         <View style={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor="#7A33CC" />
             <SafeAreaView style={styles.topArea}>
-                {/* Header */}
                 <View style={styles.header}>
                     <Pressable onPress={() => router.back()} style={styles.backButton}>
                         <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
@@ -380,31 +422,63 @@ export default function GroupInfoScreen() {
                         onEdit={() => setShowEditGroupModal(true)}
                     />
 
-                    {/* Acciones */}
-                    <GroupActions
-                        groupId={group.id}
-                        onStartJourney={() => router.push(`/chat/journey?groupId=${groupId}`)}
-                        hasActiveJourney={hasActiveJourney}
-                    />
+                    {/* Acciones solo para grupos no-COMPANION */}
+                    {group.type !== 'COMPANION' && (
+                        <GroupActions
+                            groupId={group.id}
+                            onStartJourney={() => router.push(`/chat/journey?groupId=${groupId}`)}
+                            hasActiveJourney={hasActiveJourney}
+                        />
+                    )}
+
+                    {/* Mensaje informativo para grupos COMPANION */}
+                    {group.type === 'COMPANION' && (
+                        <View style={styles.companionNotice}>
+                            <Ionicons name="people-outline" size={24} color="#7A33CC" />
+                            <View style={styles.companionNoticeContent}>
+                                <Text style={styles.companionNoticeTitle}>Grupo de acompañamiento</Text>
+                                <Text style={styles.companionNoticeText}>
+                                    Este grupo está diseñado para coordinar acompañamientos. Para crear trayectos grupales, únete a un grupo de confianza o temporal.
+                                </Text>
+                            </View>
+                        </View>
+                    )}
+
+                    {/* Acción para crear trayecto individual en grupos COMPANION */}
+                    {group.type === 'COMPANION' && (
+                        <View style={styles.companionActions}>
+                            <Pressable
+                                style={styles.companionJourneyButton}
+                                onPress={() => router.push(`/chat/journey?groupId=${groupId}`)}
+                            >
+                                <Ionicons name="location-outline" size={20} color="#7A33CC" />
+                                <Text style={styles.companionJourneyText}>Crear trayecto individual</Text>
+                            </Pressable>
+                        </View>
+                    )}
 
                     {/* Lista de miembros */}
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>Miembros</Text>
                     </View>
                     
-                    {/* Invitar miembros */}
-                    <InviteMemberCard onPress={() => setShowInviteModal(true)} />
+                    {/* Invitar miembros solo para grupos no-COMPANION */}
+                    {group.type !== 'COMPANION' && (
+                        <InviteMemberCard onPress={() => setShowInviteModal(true)} />
+                    )}
                     
                     {/* Miembros */}
                     {members.map(member => renderMember(member))}
                 </ScrollView>
 
-                {/* Invite Modal */}
-                <InviteModal
-                    visible={showInviteModal}
-                    onClose={() => setShowInviteModal(false)}
-                    groupId={group.id}
-                />
+                {/* Invite Modal solo para grupos no-COMPANION */}
+                {group.type !== 'COMPANION' && (
+                    <InviteModal
+                        visible={showInviteModal}
+                        onClose={() => setShowInviteModal(false)}
+                        groupId={group.id}
+                    />
+                )}
 
                 {/* Modal de confirmación para eliminar miembro */}
                 <AlertModal
@@ -436,11 +510,21 @@ export default function GroupInfoScreen() {
                     }}
                 />
 
-                {/* Botón de salir/eliminar grupo */}
-                <ExitGroupButton
-                    isLastMember={members.length <= 1}
-                    onPress={handleExitGroup}
-                />
+                {/* Botón de finalizar acompañamiento para grupos COMPANION */}
+                {group.type === 'COMPANION' ? (
+                    <Pressable
+                        style={styles.finishCompanionshipButton}
+                        onPress={handleFinishCompanionship}
+                    >
+                        <Ionicons name="close-circle-outline" size={20} color="#FFFFFF" />
+                        <Text style={styles.finishCompanionshipText}>Finalizar acompañamiento</Text>
+                    </Pressable>
+                ) : (
+                    <ExitGroupButton
+                        isLastMember={members.length <= 1}
+                        onPress={handleExitGroup}
+                    />
+                )}
 
                 {/* Modal de confirmación para salir/eliminar grupo */}
                 <AlertModal
@@ -507,5 +591,71 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#1F2937',
+  },
+
+  // Companion Notice
+  companionNotice: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#F3E8FF',
+    margin: 16,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E9D5FF',
+  },
+  companionNoticeContent: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  companionNoticeTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#7A33CC',
+    marginBottom: 4,
+  },
+  companionNoticeText: {
+    fontSize: 13,
+    color: '#6B21A8',
+    lineHeight: 18,
+  },
+
+  // Companion Actions
+  companionActions: {
+    margin: 16,
+  },
+  companionJourneyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F3E8FF',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E9D5FF',
+  },
+  companionJourneyText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#7A33CC',
+    marginLeft: 8,
+  },
+
+  // Finish Companionship Button
+  finishCompanionshipButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#EF4444',
+    marginHorizontal: 16,
+    marginBottom: 20,
+    paddingVertical: 14,
+    borderRadius: 12,
+  },
+  finishCompanionshipText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginLeft: 8,
   },
 });

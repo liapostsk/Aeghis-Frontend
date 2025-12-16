@@ -210,13 +210,7 @@ export default function CompanionsGroups() {
         console.log('🗨️ Navegando al chat del grupo:', group.name);
         
         // Navegar al chat del grupo
-        router.push({
-          pathname: '/chat',
-          params: { 
-            groupId: group.id.toString(),
-            groupName: group.name 
-          }
-        });
+        router.push(`/chat?groupId=${group.id}`);
       } else {
         Alert.alert(
           'Chat no encontrado', 

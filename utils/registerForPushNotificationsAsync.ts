@@ -4,6 +4,7 @@ import Constants from "expo-constants";
 import { Platform } from "react-native";
 
 // Registro para notificaciones push y obtención del token
+
 export async function registerForPushNotificationsAsync() {
   if (Platform.OS === "android") {
     await Notifications.setNotificationChannelAsync("default", {
@@ -28,9 +29,7 @@ export async function registerForPushNotificationsAsync() {
     const projectId =
       Constants?.expoConfig?.extra?.eas?.projectId ??
       Constants?.easConfig?.projectId;
-    if (!projectId) {
-      console.error("Project ID not found");
-    }
+    if (!projectId) console.error("Project ID no definido en eas.json");
     try {
       const pushTokenString = (
         await Notifications.getExpoPushTokenAsync({
@@ -50,7 +49,6 @@ export async function registerForPushNotificationsAsync() {
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowBanner: true,
-    shouldShowAlert: true,
     shouldShowList: true,
     shouldPlaySound: true,
     shouldSetBadge: true,

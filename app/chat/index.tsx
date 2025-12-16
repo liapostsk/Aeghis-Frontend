@@ -23,7 +23,7 @@ import { JourneyDto } from '@/api/backend/journeys/journeyType';
 import { getParticipation } from '@/api/backend/participations/participationApi';
 import { ParticipationDto } from '@/api/backend/participations/participationType';
 import { getCurrentUser } from '@/api/backend/user/userApi';
-import { SafeLocation, Location, SelectableLocation, toSafeLocation } from '@/api/backend/locations/locationType';
+import { SafeLocation, SelectableLocation, toSafeLocation } from '@/api/backend/locations/locationType';
 import SafeLocationModal from '@/components/safeLocations/SafeLocationModal';
 import { 
   MessageBubble, 
