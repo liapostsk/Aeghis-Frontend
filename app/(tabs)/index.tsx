@@ -16,6 +16,7 @@ import { changeJourneyStatus } from '@/api/backend/journeys/journeyApi';
 import { updateJourneyState } from '@/api/firebase/journey/journeyService';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
+import * as Location from 'expo-location';
 
 interface Participant extends Participation {
   id: string;
@@ -47,6 +48,22 @@ export default function MapScreen() {
   const { getToken } = useAuth();
   const setToken = useTokenStore((state) => state.setToken);
 
+  // --- USER LOCATION FOR EMERGENCY ---
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | undefined>();
+
+  useEffect(() => {
+    (async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === 'granted') {
+        const location = await Location.getCurrentPositionAsync({});
+        setUserLocation({
+          lat: location.coords.latitude,
+          lng: location.coords.longitude,
+        });
+      }
+    })();
+  }, []);
+
   // --- PARTICIPANTS LOGIC ---
   const chatId = selectedGroupJourney?.group.id ? selectedGroupJourney.group.id.toString() : undefined;
   const journeyId = selectedGroupJourney?.activeJourney?.id ? selectedGroupJourney.activeJourney.id.toString() : undefined;
@@ -60,16 +77,6 @@ export default function MapScreen() {
       setParticipants([]);
     }
   }, [chatId, journeyId]);
-
-  /*
-  Enviar notificación de bienvenida al entrar al mapa
-  useEffect(() => {
-    if (user?.id) {
-      console.log('🔔 [MapScreen] Enviando notificación de bienvenida...');
-      sendWelcomeNotification(user.id);
-    }
-  }, []); // Solo se ejecuta al montar el componente
-  */
 
   const handleStartJourney = async () => {
     if (!selectedGroupJourney?.activeJourney) {
@@ -191,7 +198,10 @@ export default function MapScreen() {
         journeyState={journeyState}
         participants={participants}
       />
-      <EmergencyButton onPress={() => console.log('✅ Emergencia procesada correctamente')} />
+      <EmergencyButton 
+        onPress={() => console.log('✅ Emergencia procesada correctamente')} 
+        userLocation={userLocation}
+      />
       <JourneyOverlay 
         groupJourney={selectedGroupJourney}
         onStartJourney={handleStartJourney}

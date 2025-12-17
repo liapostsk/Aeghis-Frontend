@@ -391,12 +391,9 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
     );
   }
 
-  // Si NO hay journey activo, mostrar panel simple siempre visible
   return (
-    <View style={styles.overlayContainer}>
-      <View style={styles.panelContainer}>
-        {renderModalContent()}
-      </View>
+    <View style={styles.simplePanelContainer}>
+      {renderModalContent()}
     </View>
   );
 });
@@ -643,6 +640,22 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
     paddingVertical: 8,
+  },
+  simplePanelContainer: {
+    position: 'absolute',
+    bottom: 60,
+    left: 0,
+    right: 0,
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '70%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 10,
+    // NO bloquea el mapa, solo ocupa su espacio en la parte inferior
   },
 });
 

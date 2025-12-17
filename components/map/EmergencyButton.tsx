@@ -1,28 +1,37 @@
-// File: components/map/EmergencyButton.tsx
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
   StyleSheet, 
   Text, 
   TouchableOpacity, 
-  View, 
-  Animated,
+  View,
   Modal,
   Pressable,
   Vibration,
   Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { triggerEmergency } from '@/api/notifications/notificationsApi';
+import { useUserStore } from '@/lib/storage/useUserStorage';
+import { useAuth } from '@clerk/clerk-expo';
+import { useTokenStore } from '@/lib/auth/tokenStore';
 
 interface EmergencyButtonProps {
   onPress: () => void;
+  userLocation?: { lat: number; lng: number };
 }
 
-export default function EmergencyButton({ onPress }: EmergencyButtonProps) {
+export default function EmergencyButton({ onPress, userLocation }: EmergencyButtonProps) {
   const [showCountdown, setShowCountdown] = useState(false);
   const [countdown, setCountdown] = useState(5);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  const { getToken } = useAuth();
+  const setToken = useTokenStore((state) => state.setToken);
   
   const countdownIntervalRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
+  // Hook para datos del usuario
+  const user = useUserStore((state) => state.user);
 
   // Manejar countdown
   useEffect(() => {
@@ -46,13 +55,13 @@ export default function EmergencyButton({ onPress }: EmergencyButtonProps) {
   }, [showCountdown, countdown]);
 
   const handleEmergencyPress = () => {
-    console.log('🚨 Botón de emergencia presionado');
+    console.log('Botón de emergencia presionado');
     setShowCountdown(true);
     setCountdown(5);
   };
 
   const handleCancelCountdown = () => {
-    console.log('❌ Emergencia cancelada por el usuario');
+    console.log('Emergencia cancelada por el usuario');
     setShowCountdown(false);
     setCountdown(5);
     if (countdownIntervalRef.current) {
@@ -68,21 +77,39 @@ export default function EmergencyButton({ onPress }: EmergencyButtonProps) {
     Vibration.vibrate([0, 500, 200, 500]);
 
     try {
-      // 🧪 MOCKEO: Aquí iría la lógica real de emergencia
-      console.log('📱 [MOCK] Enviando alertas a contactos de emergencia...');
-      console.log('📍 [MOCK] Compartiendo ubicación actual...');
-      console.log('🔔 [MOCK] Enviando notificaciones push...');
-      console.log('📞 [MOCK] Iniciando llamada automática...');
+      // Verificar si hay contactos de emergencia
+      const emergencyContacts = user?.emergencyContacts || [];
       
-      // Simular delay de envío
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      if (emergencyContacts.length === 0) {
+        setIsProcessing(false);
+        setShowCountdown(false);
+        Alert.alert(
+          'Sin contactos de emergencia',
+          'No tienes contactos de emergencia configurados. Por favor, agrega contactos en tu perfil.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      console.log('🚨 Disparando alerta de emergencia...');
+      console.log('📍 Ubicación:', userLocation);
+
+      const token = await getToken();
+      setToken(token);
+
+      // Disparar alerta de emergencia en el backend
+      await triggerEmergency({
+        latitude: userLocation?.lat,
+        longitude: userLocation?.lng,
+        message: 'Necesito ayuda urgente',
+      });
 
       setShowCountdown(false);
       setIsProcessing(false);
       
       // Mostrar confirmación
       Alert.alert(
-        '✅ Alerta de Emergencia Enviada',
+        'Alerta de Emergencia Enviada',
         'Tus contactos de emergencia han sido notificados con tu ubicación actual.',
         [
           { 
@@ -95,7 +122,7 @@ export default function EmergencyButton({ onPress }: EmergencyButtonProps) {
       );
 
     } catch (error) {
-      console.error('❌ Error activando emergencia:', error);
+      console.error('Error activando emergencia:', error);
       setIsProcessing(false);
       setShowCountdown(false);
       
@@ -172,7 +199,7 @@ export default function EmergencyButton({ onPress }: EmergencyButtonProps) {
                 </View>
 
                 <Text style={styles.helpText}>
-                  💡 Presiona "Cancelar" si fue accidental
+                  Presiona "Cancelar" si fue accidental
                 </Text>
               </>
             )}

@@ -5,11 +5,12 @@ export { NotificationProvider, useNotification } from './NotificationContext';
 export { useNotificationSender } from '@/components/notifications/useNotificationSender';
 
 // Re-exportar funciones de API directas
-export { registerToken, revokeToken, sendPushToUser } from './notificationsApi';
+export { registerToken, revokeToken, sendPushToUser, triggerEmergency } from './notificationsApi';
 
 // Re-exportar tipos
 export type { 
   PlatformName, 
   RegisterTokenDto, 
-  SendPushToUserRequest 
+  SendPushToUserRequest,
+  EmergencyTriggerRequest
 } from './types';

@@ -12,3 +12,9 @@ export interface SendPushToUserRequest {
   data?: Record<string, any>;
   channelId?: string; // por defecto: "default"
 }
+
+export interface EmergencyTriggerRequest {
+  latitude?: number;
+  longitude?: number;
+  message?: string;
+}

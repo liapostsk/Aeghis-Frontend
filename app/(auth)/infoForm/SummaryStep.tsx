@@ -72,17 +72,15 @@ export default function SummaryStep({ onBack }: { onBack: () => void }) {
       // Crear DTO con datos del formulario
       const baseDto = mapUserToDto(user);
       
-      // Preparar datos para el backend (el DTO base ya incluye todo)
       // El backend se encargará de crear los IDs de ubicaciones y contactos
       console.log(" Creando usuario en backend...");
       console.log(" Ubicaciones del usuario:", user.safeLocations?.length || 0);
       console.log(" Contactos de emergencia:", user.emergencyContacts?.length || 0);
       console.log(" Contactos externos:", user.externalContacts?.length || 0);
       
-      const userId = await createUser(baseDto as any); // Cast a any para evitar conflicto de tipos
+      const userId = await createUser(baseDto as any);
       console.log(" Usuario creado con ID:", userId);
       
-      // 3. Obtener datos actualizados del backend (ahora con IDs asignados)
       setLoadingMessage('Sincronizando datos...');
       const userData = await getCurrentUser();
       

@@ -219,7 +219,7 @@ ID del trayecto: ${journeyId}`;
           backendParticipationId: creatorParticipationId,
           initialState: 'ACCEPTED'
         });
-        console.log('Participación sincronizada con Firebaseeeeeeee');
+        console.log('Participación sincronizada con Firebase');
 
         // Añadir posición inicial
         if (deviceLocation) {
