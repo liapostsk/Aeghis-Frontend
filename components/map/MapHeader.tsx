@@ -1,4 +1,3 @@
-// File: components/map/MapHeader.tsx
 import { View, Text, StyleSheet, Pressable, ScrollView, ActivityIndicator, TouchableWithoutFeedback } from 'react-native';
 import Icon from '@expo/vector-icons/Ionicons';
 import { useUserGroups } from '@/lib/hooks/useUserGroups';
@@ -8,6 +7,7 @@ import { JourneyDto } from '@/api/backend/journeys/journeyType';
 import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
+import { useTranslation } from 'react-i18next';
 
 interface GroupWithJourney {
   group: Group;
@@ -20,6 +20,7 @@ interface Props {
 }
 
 export default function MapHeader({ activeGroupJourney, onGroupJourneySelect }: Props) {
+  const { t } = useTranslation();
   const [showDropdown, setShowDropdown] = useState(false);
   const [groupsWithJourneys, setGroupsWithJourneys] = useState<GroupWithJourney[]>([]);
   const [loading, setLoading] = useState(false);
@@ -44,7 +45,7 @@ export default function MapHeader({ activeGroupJourney, onGroupJourneySelect }: 
 
           const activeJourney = await getCurrentJourneyForGroup(group.id);
           
-          console.log(`✅ Grupo: ${group.name}, Journey:`, activeJourney?.id || 'ninguno');
+          console.log(`Grupo: ${group.name}, Journey:`, activeJourney?.id || 'ninguno');
 
           if (activeJourney && 
               (activeJourney.state === 'IN_PROGRESS' || activeJourney.state === 'PENDING')) {
@@ -61,32 +62,29 @@ export default function MapHeader({ activeGroupJourney, onGroupJourneySelect }: 
       
       setGroupsWithJourneys(validGroupJourneys);
 
-      // Auto-seleccionar el primero si no hay ninguno seleccionado
       if (validGroupJourneys.length > 0 && !activeGroupJourney) {
-        console.log('🎯 [MapHeader] Auto-seleccionando:', validGroupJourneys[0].activeJourney.id);
+        console.log('[MapHeader] Auto-seleccionando:', validGroupJourneys[0].activeJourney.id);
         onGroupJourneySelect(validGroupJourneys[0]);
       }
       
-      // Limpiar si el seleccionado ya no existe
       if (activeGroupJourney) {
         const stillActive = validGroupJourneys.find(
           gj => gj.group.id === activeGroupJourney.group.id
         );
         if (!stillActive) {
-          console.log('⚠️ [MapHeader] Journey ya no activo, limpiando');
+          console.log('[MapHeader] Journey ya no activo, limpiando');
           onGroupJourneySelect(null);
         }
       }
       
     } catch (error) {
-      console.error('❌ Error loading groups:', error);
+      console.error('Error loading groups:', error);
       setGroupsWithJourneys([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Solo recargar cuando cambian los grupos
   useEffect(() => {
     loadGroupsWithActiveJourneys();
   }, [userGroups]);
@@ -99,21 +97,17 @@ export default function MapHeader({ activeGroupJourney, onGroupJourneySelect }: 
     const db = getDatabase();
     
     const listeners: (() => void)[] = [];
-    
-    console.log('🎧 [MapHeader] Configurando listeners de Firebase para', userGroups.length, 'grupos');
 
-    // Crear un listener para cada grupo
     userGroups.forEach((group) => {
       const journeysRef = ref(db, `/chats/${group.id}/journeys`);
       
       const listener = onValue(journeysRef, (snapshot: any) => {
         if (snapshot.exists()) {
-          console.log(`🔔 [MapHeader] Cambio detectado en journeys de grupo ${group.name}`);
-          // Recargar todos los journeys cuando hay cambios
+          console.log(`[MapHeader] Cambio detectado en journeys de grupo ${group.name}`);
           loadGroupsWithActiveJourneys();
         }
       }, (error: any) => {
-        console.error(`❌ [MapHeader] Error en listener para grupo ${group.id}:`, error);
+        console.error(`[MapHeader] Error en listener para grupo ${group.id}:`, error);
       });
 
       // Guardar la función de limpieza
@@ -139,11 +133,11 @@ export default function MapHeader({ activeGroupJourney, onGroupJourneySelect }: 
 
   const getJourneyStateInfo = (journey: JourneyDto) => {
     if (journey.state === 'IN_PROGRESS') {
-      return { color: '#10B981', text: 'En progreso' };
+      return { color: '#10B981', text: t('mapHeader.status.inProgress') };
     } else if (journey.state === 'PENDING') {
-      return { color: '#F59E0B', text: 'Pendiente' };
+      return { color: '#F59E0B', text: t('mapHeader.status.pending') };
     }
-    return { color: '#6B7280', text: 'Desconocido' };
+    return { color: '#6B7280', text: t('mapHeader.status.unknown') };
   };
 
   return (
@@ -177,7 +171,7 @@ export default function MapHeader({ activeGroupJourney, onGroupJourneySelect }: 
         ) : (
           <>
             <Text style={styles.noGroupText}>
-              {groupsWithJourneys.length > 0 ? 'Seleccionar grupo' : 'No hay grupos activos'}
+              {groupsWithJourneys.length > 0 ? t('mapHeader.selectGroup') : t('mapHeader.noActiveGroups')}
             </Text>
             {groupsWithJourneys.length > 0 && (
               <Icon name="chevron-down" size={20} color="#666" />
@@ -195,7 +189,7 @@ export default function MapHeader({ activeGroupJourney, onGroupJourneySelect }: 
           
           <View style={styles.dropdown}>
             <View style={styles.dropdownHeader}>
-              <Text style={styles.dropdownTitle}>Grupos con trayectos activos</Text>
+              <Text style={styles.dropdownTitle}>{t('mapHeader.activeJourneysGroups')}</Text>
               <Pressable onPress={() => setShowDropdown(false)}>
                 <Icon name="close" size={24} color="#666" />
               </Pressable>
@@ -204,14 +198,14 @@ export default function MapHeader({ activeGroupJourney, onGroupJourneySelect }: 
             {loading ? (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator color="#7A33CC" />
-                <Text style={styles.loadingText}>Cargando grupos...</Text>
+                <Text style={styles.loadingText}>{t('mapHeader.loadingGroups')}</Text>
               </View>
             ) : groupsWithJourneys.length === 0 ? (
               <View style={styles.emptyContainer}>
                 <Icon name="car-outline" size={48} color="#D1D5DB" />
-                <Text style={styles.emptyTitle}>Sin trayectos activos</Text>
+                <Text style={styles.emptyTitle}>{t('mapHeader.noActiveJourneys')}</Text>
                 <Text style={styles.emptyText}>
-                  No hay grupos con trayectos en progreso o pendientes
+                  {t('mapHeader.noJourneysDescription')}
                 </Text>
               </View>
             ) : (
@@ -224,7 +218,7 @@ export default function MapHeader({ activeGroupJourney, onGroupJourneySelect }: 
                   >
                     <View style={styles.groupOptionContent}>
                       <Icon name="close-circle-outline" size={24} color="#EF4444" />
-                      <Text style={styles.clearText}>Limpiar selección</Text>
+                      <Text style={styles.clearText}>{t('mapHeader.clearSelection')}</Text>
                     </View>
                   </Pressable>
                 )}
@@ -254,7 +248,7 @@ export default function MapHeader({ activeGroupJourney, onGroupJourneySelect }: 
                           <View style={styles.journeyInfo}>
                             <View style={[styles.statusDot, { backgroundColor: stateInfo.color }]} />
                             <Text style={styles.journeyTypeText}>
-                              Trayecto {groupJourney.activeJourney.journeyType?.toLowerCase() || 'desconocido'} • {stateInfo.text}
+                              {t('mapHeader.journey')} {groupJourney.activeJourney.journeyType?.toLowerCase() || t('mapHeader.status.unknown').toLowerCase()} • {stateInfo.text}
                             </Text>
                           </View>
                         </View>
@@ -274,7 +268,7 @@ export default function MapHeader({ activeGroupJourney, onGroupJourneySelect }: 
               onPress={loadGroupsWithActiveJourneys}
             >
               <Icon name="refresh" size={18} color="#7A33CC" />
-              <Text style={styles.refreshText}>Actualizar</Text>
+              <Text style={styles.refreshText}>{t('mapHeader.refresh')}</Text>
             </Pressable>
           </View>
         </>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 
 type MapType = 'standard' | 'satellite' | 'hybrid' | 'terrain';
 
@@ -10,11 +11,12 @@ interface MapStyleButtonProps {
 }
 
 export default function MapStyleButton({ mapType, onMapTypeChange }: MapStyleButtonProps) {
+  const { t } = useTranslation();
   const [showControls, setShowControls] = useState(false);
 
   const mapTypes: { type: MapType; label: string; icon: string }[] = [
-    { type: 'standard', label: 'Normal', icon: 'map-outline' },
-    { type: 'hybrid', label: 'Híbrido', icon: 'layers-outline' },
+    { type: 'standard', label: t('mapStyleButton.types.standard'), icon: 'map-outline' },
+    { type: 'hybrid', label: t('mapStyleButton.types.hybrid'), icon: 'layers-outline' },
   ];
 
   const handleMapTypeSelect = (type: MapType) => {
@@ -40,7 +42,7 @@ export default function MapStyleButton({ mapType, onMapTypeChange }: MapStyleBut
       {showControls && (
         <View style={styles.controlsPanel}>
           <View style={styles.controlSection}>
-            <Text style={styles.controlTitle}>Tipo de mapa</Text>
+            <Text style={styles.controlTitle}>{t('mapStyleButton.mapType')}</Text>
             <View style={styles.mapTypeButtons}>
               {mapTypes.map((type) => (
                 <Pressable

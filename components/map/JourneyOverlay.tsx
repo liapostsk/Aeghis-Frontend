@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 
 // Importar APIs y tipos
 import { JourneyDto } from '@/api/backend/journeys/journeyType';
@@ -37,6 +38,7 @@ interface Props {
 }
 
 const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStartJourney, onCompleteJourney }: Props) {
+  const { t } = useTranslation();
   // Estados principales
   const [loading, setLoading] = useState(false);
   const [showJourneyOptions, setShowJourneyOptions] = useState(false);
@@ -246,7 +248,7 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
         <View style={styles.sheetHeader}>
           <View style={styles.headerLeft}>
             <Ionicons name="navigate-circle" size={24} color="#4CAF50" />
-            <Text style={styles.sheetTitle}>Trayecto Activo</Text>
+            <Text style={styles.sheetTitle}>{t('overlay.activeJourney')}</Text>
           </View>
           <View style={styles.headerRight}>
             <View style={styles.currentUserBattery}>
@@ -268,21 +270,21 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
 
         <View style={styles.journeyInfo}>
           <Text style={styles.journeyStatus}>
-            Estado: {currentState === 'IN_PROGRESS' ? 'En progreso' : currentState === 'COMPLETED' ? 'Completado' : 'Pendiente'}
+            {t('overlay.status')}: {currentState === 'IN_PROGRESS' ? t('overlay.inProgress') : currentState === 'COMPLETED' ? t('overlay.completed') : t('overlay.pending')}
           </Text>
           
           {/* Mostrar botón de unirse solo si NO es individual */}
           {!checkingParticipation && !canControlJourney && currentState !== 'COMPLETED' && selectedGroupJourney.activeJourney.journeyType !== 'INDIVIDUAL' && (
             <View style={styles.notParticipantContainer}>
               <Text style={styles.notParticipantText}>
-                📋 No estás participando en este trayecto
+                {t('overlay.notParticipating')}
               </Text>
               <Pressable 
                 style={styles.joinJourneyButton} 
                 onPress={() => setShowJoinJourneyModal(true)}
               >
                 <Ionicons name="person-add" size={20} color="#fff" />
-                <Text style={styles.joinJourneyButtonText}>Unirme al Trayecto</Text>
+                <Text style={styles.joinJourneyButtonText}>{t('overlay.joinJourney')}</Text>
               </Pressable>
             </View>
           )}
@@ -293,21 +295,21 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
               {currentState === 'PENDING' && (
                 <Pressable style={styles.startButton} onPress={onStartJourney}>
                   <Ionicons name="play" size={20} color="#fff" />
-                  <Text style={styles.startButtonText}>Iniciar Trayecto</Text>
+                  <Text style={styles.startButtonText}>{t('overlay.startJourney')}</Text>
                 </Pressable>
               )}
               
               {currentState === 'IN_PROGRESS' && (
                 <View style={styles.actionButtonsContainer}>
                   <Text style={styles.inProgressText}>
-                    🟢 Trayecto en curso • Ubicación compartida
+                    {t('overlay.journeyInProgress')}
                   </Text>
                 </View>
               )}
 
               {currentState === 'COMPLETED' && (
                 <Text style={styles.completedText}>
-                  ✅ Trayecto completado
+                  {t('overlay.journeyCompleted')}
                 </Text>
               )}
             </>
@@ -316,7 +318,7 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
           {/* Mostrar indicador de carga mientras se verifica */}
           {checkingParticipation && (
             <Text style={styles.checkingText}>
-              ⏳ Verificando participación...
+              {t('overlay.checkingParticipation')}
             </Text>
           )}
         </View>
@@ -339,7 +341,7 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
           <View style={styles.sheetFooter}>
             <Pressable style={styles.endButton} onPress={onCompleteJourney}>
               <Ionicons name="stop-circle" size={20} color="#FFFFFF" />
-              <Text style={styles.endButtonText}>Finalizar Trayecto</Text>
+              <Text style={styles.endButtonText}>{t('overlay.finishJourney')}</Text>
             </Pressable>
           </View>
         )}
@@ -360,7 +362,7 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
     return (
       <View style={styles.overlayContainer}>
         <View style={styles.panelContainer}>
-          <Text style={styles.loadingText}>Cargando...</Text>
+          <Text style={styles.loadingText}>{t('overlay.loading')}</Text>
         </View>
       </View>
     );

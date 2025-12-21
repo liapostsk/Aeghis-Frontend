@@ -1,0 +1,338 @@
+{
+  "map": {
+    "journeyActive": {
+      "title": "Journey Active",
+      "message": "The journey is already in progress",
+      "confirm": "Understood"
+    },
+    "journeyStarted": {
+      "title": "Journey Started",
+      "message": "The journey has started.",
+      "locationSharing": "Your location is being shared.",
+      "participantsCanSee": "All participants can see locations in real time.",
+      "confirm": "Continue"
+    },
+    "journeyError": {
+      "title": "Error Starting Journey",
+      "message": "Could not start the journey. What would you like to do?",
+      "confirm": "Create New",
+      "cancel": "Cancel"
+    },
+    "confirmComplete": {
+      "title": "Finish Journey?",
+      "message": "Are you sure you want to finish this journey?",
+      "confirm": "Finish",
+      "cancel": "Cancel"
+    },
+    "journeyCompleted": {
+      "title": "Journey Completed",
+      "message": "The journey has finished successfully.",
+      "confirm": "Accept"
+    },
+    "completeError": {
+      "title": "Error",
+      "message": "Could not complete the journey. Please try again.",
+      "confirm": "Retry",
+      "cancel": "Cancel"
+    }
+  },
+  "overlay": {
+    "activeJourney": "Active Journey",
+    "status": "Status",
+    "inProgress": "In progress",
+    "completed": "Completed",
+    "pending": "Pending",
+    "notParticipating": "📋 You are not participating in this journey",
+    "joinJourney": "Join Journey",
+    "startJourney": "Start Journey",
+    "journeyInProgress": "🟢 Journey in progress • Location shared",
+    "journeyCompleted": "✅ Journey completed",
+    "checkingParticipation": "⏳ Checking participation...",
+    "finishJourney": "Finish Journey",
+    "loading": "Loading..."
+  },
+  "journeySimple": {
+    "noTripMessage": "You're currently not on a trip. Activate one if you'd like someone to keep an eye on you 😊",
+    "startJourney": "Start a journey"
+  },
+  "mapHeader": {
+    "selectGroup": "Select group",
+    "noActiveGroups": "No active groups",
+    "activeJourneysGroups": "Groups with active journeys",
+    "loadingGroups": "Loading groups...",
+    "noActiveJourneys": "No active journeys",
+    "noJourneysDescription": "There are no groups with journeys in progress or pending",
+    "clearSelection": "Clear selection",
+    "journey": "Journey",
+    "refresh": "Refresh",
+    "status": {
+      "inProgress": "In progress",
+      "pending": "Pending",
+      "unknown": "Unknown"
+    }
+  },
+  "mapLocationPicker": {
+    "title": "Select a location on the map",
+    "gettingLocation": "Getting location...",
+    "nameLocation": "Name this location",
+    "placeholder": "E.g: My home, Office, Gym...",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "selectedLocation": "Selected location",
+    "customLocation": "Custom location",
+    "errors": {
+      "permissionDenied": "Permission denied",
+      "locationRequired": "Location access is required.",
+      "error": "Error",
+      "cantGetLocation": "Could not get current location.",
+      "cantGetLocationInfo": "Could not get location information."
+    }
+  },
+  "mapStyleButton": {
+    "mapType": "Map type",
+    "types": {
+      "standard": "Standard",
+      "hybrid": "Hybrid"
+    }
+  },
+  "peopleOnMap": {
+    "permissionDenied": "Permission denied",
+    "locationRequired": "Location access is required.",
+    "destination": "Destination"
+  },
+  "emergencyButton": {
+    "emergency": "Emergency",
+    "sendingAlert": "Sending Alert...",
+    "notifyingContacts": "Notifying your emergency contacts",
+    "alertTitle": "⚠️ Emergency Alert",
+    "alertDescription": "Your location will be sent to your emergency contacts in:",
+    "cancel": "Cancel",
+    "sendNow": "Send Now",
+    "helpText": "Press \"Cancel\" if this was accidental",
+    "noContactsTitle": "No emergency contacts",
+    "noContactsMessage": "You don't have any emergency contacts configured. Please add contacts in your profile.",
+    "ok": "OK",
+    "needHelp": "I need urgent help",
+    "alertSentTitle": "Emergency Alert Sent",
+    "alertSentMessage": "Your emergency contacts have been notified with your current location.",
+    "error": "Error",
+    "errorMessage": "Could not send emergency alert. Please try again."
+  },
+  "createJourneyButton": {
+    "creatingJourney": "Creating journey...",
+    "createJourney": "Create journey",
+    "completeAllFields": "Complete all required fields"
+  },
+  "destinationSelector": {
+    "selectDestination": "Select destination",
+    "originAutomatic": "The origin will be automatically your current location",
+    "selectDestinationPlaceholder": "Select destination",
+    "selectDestinationToContinue": "Select a destination to continue"
+  },
+  "groupBanner": {
+    "member": "member",
+    "members": "members"
+  },
+  "groupOptionsSheet": {
+    "startJourney": "Start Journey",
+    "createFirstJourney": "Create Your First Journey",
+    "groupsAvailable": "You have {{count}} group available",
+    "groupsAvailable_plural": "You have {{count}} groups available",
+    "whichToStart": "Which one do you want to start with?",
+    "needGroupToStart": "To start a journey you need a group. What would you like to do?",
+    "yourGroups": "Your groups:",
+    "member": "member",
+    "members": "members",
+    "moreOptions": "More options:",
+    "createAnotherGroup": "Create Another Group",
+    "createGroup": "Create Group",
+    "createNewGroupDesc": "Create a new temporary or trusted group",
+    "createGroupDesc": "Create a trusted or temporary group",
+    "joinGroup": "Join Group",
+    "joinGroupDesc": "Join an existing group with invitation code"
+  },
+  "journeyNameInput": {
+    "journeyName": "Journey name",
+    "placeholder": "E.g: Trip to work",
+    "characters": "characters"
+  },
+  "journeyTypeSelector": {
+    "journeyType": "Journey type",
+    "selectHowToShare": "Select how you want to share locations",
+    "types": {
+      "individual": {
+        "title": "Individual",
+        "description": "Only you will share your location with the group"
+      },
+      "commonDestination": {
+        "title": "Group with common destination",
+        "description": "Everyone shares location to the same destination"
+      },
+      "personalized": {
+        "title": "Personalized group",
+        "description": "Each participant has their own destination"
+      }
+    }
+  },
+  "journeyCollapsedTab": {
+    "activeJourney": "Active Journey",
+    "inProgress": "In progress",
+    "pending": "Pending",
+    "appName": "Aegis",
+    "tapToStart": "Tap to start a journey"
+  },
+  "journeyCreationHeader": {
+    "createJourney": "Create journey"
+  },
+  "journeyUtils": {
+    "validation": {
+      "selectType": "Select a journey type",
+      "enterName": "Enter a name for the journey",
+      "nameMinLength": "Name must be at least 3 characters long",
+      "selectDestination": "Select a destination for the group journey"
+    },
+    "defaultName": "Journey"
+  },
+  "loadingJourneyScreen": {
+    "defaultMessage": "Loading information..."
+  },
+  "useGroupData": {
+    "errors": {
+      "title": "Error",
+      "loadFailed": "Could not load group information",
+      "notFound": "Group not found",
+      "noPermission": "You don't have permission to view this group",
+      "invalidId": "Invalid group ID"
+    }
+  },
+  "useJourneyCreation": {
+    "permissions": {
+      "title": "Permissions Required",
+      "locationMessage": "We need access to your location to create the journey"
+    },
+    "errors": {
+      "title": "Error",
+      "locationFailed": "Could not get your current location",
+      "locationRequired": "Could not get your current location",
+      "locationRegisterFailed": "Could not register your location",
+      "creationFailed": "Could not create the journey. Check your connection and try again."
+    },
+    "steps": {
+      "creating": "Creating journey...",
+      "configuring": "Configuring real-time journey...",
+      "addingParticipant": "Adding you as participant...",
+      "linkingTracking": "Linking tracking group...",
+      "sendingRequest": "Sending request to group..."
+    },
+    "success": {
+      "individualTitle": "Individual Journey Created!",
+      "individualMessage": "Journey \"{name}\" is ready. You can start it whenever you want from the map view.",
+      "requestTitle": "Journey Request Sent!",
+      "requestMessage": "A request for journey \"{name}\" has been sent to {participants}. They can join from the group chat by selecting their destination.",
+      "createdTitle": "Journey Created",
+      "createdMessage": "Journey \"{name}\" was created successfully, but the group could not be notified.",
+      "ok": "OK"
+    },
+    "notifications": {
+      "locationSharing": "{user} has started sharing their location"
+    }
+  },
+  "createGroupModal": {
+    "titles": {
+      "confianza": "Create Trusted Group",
+      "temporal": "Create TEMPORAL Group",
+      "companion": "Create COMPANION Group",
+      "default": "Create Group"
+    },
+    "descriptions": {
+      "confianza": "A secure group for close friends and family",
+      "temporal": "A temporary group that expires after a set time",
+      "companion": "A group for finding companions and activities"
+    },
+    "fields": {
+      "groupName": "Group Name *",
+      "description": "Description",
+      "groupNamePlaceholder": "Enter group name",
+      "descriptionPlaceholder": "What's this group about?"
+    },
+    "infoBox": {
+      "confianza": "Trusted groups have enhanced security features and are perfect for family and close friends.",
+      "temporal": "TEMPORAL groups are automatically deleted after the specified duration.",
+      "companion": "COMPANION groups help you find people with similar interests and activities."
+    },
+    "buttons": {
+      "cancel": "Cancel",
+      "create": "Create Group"
+    },
+    "alerts": {
+      "error": "Error",
+      "nameRequired": "Group name is required",
+      "success": "Success",
+      "groupCreated": "Group created successfully!",
+      "createFailed": "Failed to create group"
+    }
+  },
+  "editGroupModal": {
+    "title": "Edit group",
+    "buttons": {
+      "cancel": "Cancel",
+      "ok": "OK"
+    },
+    "fields": {
+      "groupName": "Group name",
+      "groupDescription": "Group description",
+      "namePlaceholder": "Enter group name",
+      "descriptionPlaceholder": "Enter a description (optional)"
+    },
+    "photo": {
+      "change": "Change photo",
+      "delete": "Delete photo",
+      "select": "Select photo",
+      "uploading": "Uploading...",
+      "add": "Add photo",
+      "deleteTitle": "Delete Photo",
+      "deleteConfirm": "Are you sure?",
+      "actionTitle": "Group Photo",
+      "actionMessage": "What would you like to do?"
+    },
+    "alerts": {
+      "error": "Error",
+      "nameEmpty": "Group name cannot be empty",
+      "success": "Success",
+      "groupUpdated": "Group updated",
+      "updateFailed": "Could not update group",
+      "photoUpdated": "Photo updated",
+      "photoUpdateFailed": "Could not update photo",
+      "selectFailed": "Could not select image",
+      "photoDeleted": "Photo deleted",
+      "photoDeleteFailed": "Could not delete photo",
+      "permissionRequired": "Permission Required",
+      "permissionMessage": "We need access to your photos"
+    }
+  },
+  "groupsList": {
+    "states": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "closed": "Closed",
+      "pending": "Pending"
+    },
+    "noMessages": "No messages yet",
+    "me": "Me",
+    "members": {
+      "singular": "member",
+      "plural": "members"
+    }
+  },
+  "groupActionModal": {
+    "title": "What would you like to do?",
+    "createGroup": {
+      "title": "Create New Group",
+      "description": "Start a new group and invite your friends"
+    },
+    "joinGroup": {
+      "title": "Join with Code",
+      "description": "Enter an 8-digit code to join an existing group"
+    }
+  }
+}

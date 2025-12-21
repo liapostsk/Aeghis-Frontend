@@ -1,17 +1,22 @@
 import React from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 interface LoadingJourneyScreenProps {
   message?: string;
 }
 
 export default function LoadingJourneyScreen({ 
-  message = 'Cargando información...' 
+  message
 }: LoadingJourneyScreenProps) {
+  const { t } = useTranslation();
+  
   return (
     <View style={styles.center}>
       <ActivityIndicator size="large" color="#7A33CC" />
-      <Text style={styles.loadingText}>{message}</Text>
+      <Text style={styles.loadingText}>
+        {message || t('loadingJourneyScreen.defaultMessage')}
+      </Text>
     </View>
   );
 }

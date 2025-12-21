@@ -2,6 +2,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Group } from '@/api/backend/group/groupType';
 import { JourneyDto } from '@/api/backend/journeys/journeyType';
+import { useTranslation } from 'react-i18next';
 
 interface GroupWithJourney {
   group: Group;
@@ -14,6 +15,8 @@ interface JourneyCollapsedTabProps {
 }
 
 export default function JourneyCollapsedTab({ groupJourney, onExpand }: JourneyCollapsedTabProps) {
+  const { t } = useTranslation();
+  
   if (groupJourney) {
     return (
       <View style={styles.collapsedContainer}>
@@ -29,9 +32,9 @@ export default function JourneyCollapsedTab({ groupJourney, onExpand }: JourneyC
               <Ionicons name="navigate-circle" size={20} color="#4CAF50" />
             </View>
             <View style={styles.collapsedInfo}>
-              <Text style={styles.collapsedTitle}>Trayecto Activo</Text>
+              <Text style={styles.collapsedTitle}>{t('journeyCollapsedTab.activeJourney')}</Text>
               <Text style={styles.collapsedSubtitle}>
-                {groupJourney.activeJourney.state === 'IN_PROGRESS' ? 'En progreso' : 'Pendiente'} • 
+                {groupJourney.activeJourney.state === 'IN_PROGRESS' ? t('journeyCollapsedTab.inProgress') : t('journeyCollapsedTab.pending')} •
                 {' '}{groupJourney.group.name}
               </Text>
             </View>
@@ -51,8 +54,8 @@ export default function JourneyCollapsedTab({ groupJourney, onExpand }: JourneyC
             <Ionicons name="location" size={20} color="#7A33CC" />
           </View>
           <View style={styles.collapsedInfo}>
-            <Text style={styles.collapsedTitle}>Aegis</Text>
-            <Text style={styles.collapsedSubtitle}>Tap para iniciar un trayecto</Text>
+            <Text style={styles.collapsedTitle}>{t('journeyCollapsedTab.appName')}</Text>
+            <Text style={styles.collapsedSubtitle}>{t('journeyCollapsedTab.tapToStart')}</Text>
           </View>
           <Ionicons name="chevron-up" size={20} color="#6B7280" />
         </View>

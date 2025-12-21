@@ -13,6 +13,7 @@ import { joinJourneyParticipation } from '@/api/firebase/journey/participationsS
 import { addUserPosition } from '@/api/firebase/journey/positionsService';
 import { auth } from '@/firebaseconfig';
 import { JourneyType, validateJourneyForm } from './journeyUtils';
+import i18next from 'i18next';
 
 // Endpoints de creación de trayectos, participaciones y ubicaciones
 import { createJourney } from '@/api/backend/journeys/journeyApi';
@@ -48,7 +49,10 @@ export const useJourneyCreation = ({
     try {
       const { status } = await ExpoLocation.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permisos requeridos', 'Necesitamos acceso a tu ubicación para crear el trayecto');
+        Alert.alert(
+          i18next.t('useJourneyCreation.permissions.title'), 
+          i18next.t('useJourneyCreation.permissions.locationMessage')
+        );
         return null;
       }
 
@@ -58,7 +62,10 @@ export const useJourneyCreation = ({
       return location;
     } catch (error) {
       console.error('Error getting location:', error);
-      Alert.alert('Error', 'No se pudo obtener tu ubicación actual');
+      Alert.alert(
+        i18next.t('useJourneyCreation.errors.title'), 
+        i18next.t('useJourneyCreation.errors.locationFailed')
+      );
       return null;
     }
   };
@@ -144,7 +151,7 @@ ID del trayecto: ${journeyId}`;
       setCreating(true);
 
       // 1. Crear Journey primero
-      setCreationStep('Creando trayecto...');
+      setCreationStep(i18next.t('useJourneyCreation.steps.creating'));
       
       // Usar targetGroupId si está disponible (para grupos COMPANION)
       const effectiveGroupId = targetGroupId ? Number(targetGroupId) : Number(groupId);
@@ -163,23 +170,23 @@ ID del trayecto: ${journeyId}`;
       const journeyId = await createJourney(journeyData as JourneyDto);
 
       // Crear journey en Firebase (usar el grupo objetivo si está disponible)
-      setCreationStep('Configurando journey en tiempo real...');
+      setCreationStep(i18next.t('useJourneyCreation.steps.configuring'));
       const chatId = targetGroupId || group?.id?.toString();
       if (chatId) {
         await createJourneyInChat(chatId, { ...journeyData, id: journeyId } as JourneyDto);
       }
 
       // 2. Añadir creador como participante
-      setCreationStep('Añadiéndote como participante...');
+      setCreationStep(i18next.t('useJourneyCreation.steps.addingParticipant'));
       
       const deviceLocation = await getCurrentLocation();
       if (!deviceLocation) {
-        throw new Error('No se pudo obtener tu ubicación actual');
+        throw new Error(i18next.t('useJourneyCreation.errors.locationRequired'));
       }
 
       const originLocationId = await createLocationRecord(deviceLocation);
       if (!originLocationId) {
-        throw new Error('No se pudo registrar tu ubicación');
+        throw new Error(i18next.t('useJourneyCreation.errors.locationRegisterFailed'));
       }
 
       // Crear ubicación de destino
@@ -238,7 +245,7 @@ ID del trayecto: ${journeyId}`;
         // Si viene de un grupo COMPANION, asociar tracking group y enviar notificación
         if (companionGroupId && targetGroupId) {
           try {
-            setCreationStep('Asociando grupo de tracking...');
+            setCreationStep(i18next.t('useJourneyCreation.steps.linkingTracking'));
             
             // Obtener la companion request asociada al grupo COMPANION
             const companionRequest = await getCompanionRequestByCompanionGroupId(Number(companionGroupId));
@@ -259,7 +266,9 @@ ID del trayecto: ${journeyId}`;
           
           // Enviar notificación al chat del grupo COMPANION
           try {
-            const statusMessage = `${currentUser?.name || 'Un miembro'} ha empezado a compartir su ubicación`;
+            const statusMessage = i18next.t('useJourneyCreation.notifications.locationSharing', { 
+              user: currentUser?.name || 'Un miembro' 
+            });
             await sendMessageFirebase(companionGroupId, statusMessage, 'status');
             console.log('Notificación enviada al grupo COMPANION');
           } catch (notifyError) {
@@ -268,12 +277,12 @@ ID del trayecto: ${journeyId}`;
         }
 
         Alert.alert(
-          '¡Trayecto individual creado!',
-          `El trayecto "${journeyName}" está listo. Puedes iniciarlo cuando quieras desde la vista del mapa.`,
-          [{ text: 'OK', onPress: () => router.back() }]
+          i18next.t('useJourneyCreation.success.individualTitle'),
+          i18next.t('useJourneyCreation.success.individualMessage', { name: journeyName }),
+          [{ text: i18next.t('useJourneyCreation.success.ok'), onPress: () => router.back() }]
         );
       } else {
-        setCreationStep('Enviando solicitud al grupo...');
+        setCreationStep(i18next.t('useJourneyCreation.steps.sendingRequest'));
         
         try {
           const targetParticipants = selectedParticipants.filter(id => id !== currentUser?.id);
@@ -285,25 +294,27 @@ ID del trayecto: ${journeyId}`;
             .join(', ');
 
           Alert.alert(
-            '¡Solicitud de trayecto enviada!',
-            `Se ha enviado una solicitud para el trayecto "${journeyName}" a ${participantNames}. ` +
-            'Podrán unirse desde el chat del grupo seleccionando su destino.',
-            [{ text: 'OK', onPress: () => router.back() }]
+            i18next.t('useJourneyCreation.success.requestTitle'),
+            i18next.t('useJourneyCreation.success.requestMessage', { 
+              name: journeyName,
+              participants: participantNames 
+            }),
+            [{ text: i18next.t('useJourneyCreation.success.ok'), onPress: () => router.back() }]
           );
         } catch (chatError) {
           console.warn('Error enviando mensaje al chat:', chatError);
           Alert.alert(
-            'Trayecto creado',
-            `El trayecto "${journeyName}" se ha creado correctamente, pero no se pudo notificar al grupo.`,
-            [{ text: 'OK', onPress: () => router.back() }]
+            i18next.t('useJourneyCreation.success.createdTitle'),
+            i18next.t('useJourneyCreation.success.createdMessage', { name: journeyName }),
+            [{ text: i18next.t('useJourneyCreation.success.ok'), onPress: () => router.back() }]
           );
         }
       }
 
     } catch (error) {
       Alert.alert(
-        'Error', 
-        'No se pudo crear el trayecto. Verifica tu conexión e inténtalo de nuevo.'
+        i18next.t('useJourneyCreation.errors.title'), 
+        i18next.t('useJourneyCreation.errors.creationFailed')
       );
     } finally {
       setCreating(false);

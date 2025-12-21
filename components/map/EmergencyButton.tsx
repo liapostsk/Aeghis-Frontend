@@ -14,6 +14,7 @@ import { triggerEmergency } from '@/api/notifications/notificationsApi';
 import { useUserStore } from '@/lib/storage/useUserStorage';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
+import { useTranslation } from 'react-i18next';
 
 interface EmergencyButtonProps {
   onPress: () => void;
@@ -21,6 +22,7 @@ interface EmergencyButtonProps {
 }
 
 export default function EmergencyButton({ onPress, userLocation }: EmergencyButtonProps) {
+  const { t } = useTranslation();
   const [showCountdown, setShowCountdown] = useState(false);
   const [countdown, setCountdown] = useState(5);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -43,7 +45,6 @@ export default function EmergencyButton({ onPress, userLocation }: EmergencyButt
         setCountdown(prev => prev - 1);
       }, 1000);
     } else if (showCountdown && countdown === 0) {
-      // Countdown terminado, activar emergencia
       handleEmergencyActivated();
     }
 
@@ -70,23 +71,20 @@ export default function EmergencyButton({ onPress, userLocation }: EmergencyButt
   };
 
   const handleEmergencyActivated = async () => {
-    console.log('🚨🚨🚨 EMERGENCIA ACTIVADA 🚨🚨🚨');
     setIsProcessing(true);
     
-    // Vibración fuerte
     Vibration.vibrate([0, 500, 200, 500]);
 
     try {
-      // Verificar si hay contactos de emergencia
       const emergencyContacts = user?.emergencyContacts || [];
       
       if (emergencyContacts.length === 0) {
         setIsProcessing(false);
         setShowCountdown(false);
         Alert.alert(
-          'Sin contactos de emergencia',
-          'No tienes contactos de emergencia configurados. Por favor, agrega contactos en tu perfil.',
-          [{ text: 'OK' }]
+          t('emergencyButton.noContactsTitle'),
+          t('emergencyButton.noContactsMessage'),
+          [{ text: t('emergencyButton.ok') }]
         );
         return;
       }
@@ -97,23 +95,21 @@ export default function EmergencyButton({ onPress, userLocation }: EmergencyButt
       const token = await getToken();
       setToken(token);
 
-      // Disparar alerta de emergencia en el backend
       await triggerEmergency({
         latitude: userLocation?.lat,
         longitude: userLocation?.lng,
-        message: 'Necesito ayuda urgente',
+        message: t('emergencyButton.needHelp'),
       });
 
       setShowCountdown(false);
       setIsProcessing(false);
       
-      // Mostrar confirmación
       Alert.alert(
-        'Alerta de Emergencia Enviada',
-        'Tus contactos de emergencia han sido notificados con tu ubicación actual.',
+        t('emergencyButton.alertSentTitle'),
+        t('emergencyButton.alertSentMessage'),
         [
           { 
-            text: 'OK',
+            text: t('emergencyButton.ok'),
             onPress: () => {
               onPress(); // Callback adicional si es necesario
             }
@@ -127,9 +123,9 @@ export default function EmergencyButton({ onPress, userLocation }: EmergencyButt
       setShowCountdown(false);
       
       Alert.alert(
-        'Error',
-        'No se pudo enviar la alerta de emergencia. Por favor, intenta de nuevo.',
-        [{ text: 'OK' }]
+        t('emergencyButton.error'),
+        t('emergencyButton.errorMessage'),
+        [{ text: t('emergencyButton.ok') }]
       );
     }
   };
@@ -141,7 +137,7 @@ export default function EmergencyButton({ onPress, userLocation }: EmergencyButt
         onPress={handleEmergencyPress}
         activeOpacity={0.8}
       >
-        <Text style={styles.emergencyText}>Emergency</Text>
+        <Text style={styles.emergencyText}>{t('emergencyButton.emergency')}</Text>
         <Ionicons name="alert-circle" size={24} color="white" />
       </TouchableOpacity>
 
@@ -159,9 +155,9 @@ export default function EmergencyButton({ onPress, userLocation }: EmergencyButt
                 <View style={styles.processingIconContainer}>
                   <Ionicons name="alert-circle" size={80} color="#EF4444" />
                 </View>
-                <Text style={styles.processingTitle}>Enviando Alerta...</Text>
+                <Text style={styles.processingTitle}>{t('emergencyButton.sendingAlert')}</Text>
                 <Text style={styles.processingSubtitle}>
-                  Notificando a tus contactos de emergencia
+                  {t('emergencyButton.notifyingContacts')}
                 </Text>
               </>
             ) : (
@@ -171,11 +167,11 @@ export default function EmergencyButton({ onPress, userLocation }: EmergencyButt
                 </View>
                 
                 <Text style={styles.countdownTitle}>
-                  ⚠️ Alerta de Emergencia
+                  {t('emergencyButton.alertTitle')}
                 </Text>
                 
                 <Text style={styles.countdownDescription}>
-                  Se enviará tu ubicación a tus contactos de emergencia en:
+                  {t('emergencyButton.alertDescription')}
                 </Text>
 
                 <View style={styles.actionsContainer}>
@@ -184,7 +180,7 @@ export default function EmergencyButton({ onPress, userLocation }: EmergencyButt
                     onPress={handleCancelCountdown}
                   >
                     <Ionicons name="close-circle" size={24} color="#FFF" />
-                    <Text style={styles.cancelButtonText}>Cancelar</Text>
+                    <Text style={styles.cancelButtonText}>{t('emergencyButton.cancel')}</Text>
                   </Pressable>
 
                   <Pressable 
@@ -194,12 +190,12 @@ export default function EmergencyButton({ onPress, userLocation }: EmergencyButt
                     }}
                   >
                     <Ionicons name="send" size={24} color="#FFF" />
-                    <Text style={styles.sendNowButtonText}>Enviar Ahora</Text>
+                    <Text style={styles.sendNowButtonText}>{t('emergencyButton.sendNow')}</Text>
                   </Pressable>
                 </View>
 
                 <Text style={styles.helpText}>
-                  Presiona "Cancelar" si fue accidental
+                  {t('emergencyButton.helpText')}
                 </Text>
               </>
             )}

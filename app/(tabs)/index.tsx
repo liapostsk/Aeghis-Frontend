@@ -17,6 +17,7 @@ import { updateJourneyState } from '@/api/firebase/journey/journeyService';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 import * as Location from 'expo-location';
+import { useTranslation } from 'react-i18next';
 
 interface Participant extends Participation {
   id: string;
@@ -43,6 +44,7 @@ interface ModalState {
 }
 
 export default function MapScreen() {
+  const { t } = useTranslation();
   const [selectedGroupJourney, setSelectedGroupJourney] = useState<GroupWithJourney | null>(null);
   const [modalState, setModalState] = useState<ModalState>({ type: null });
   const { getToken } = useAuth();
@@ -116,8 +118,8 @@ export default function MapScreen() {
       });
 
       const message = journey.journeyType === 'INDIVIDUAL' 
-        ? 'Tu ubicación se está compartiendo.'
-        : 'Todos los participantes pueden ver las ubicaciones en tiempo real.';
+        ? t('map.journeyStarted.locationSharing')
+        : t('map.journeyStarted.participantsCanSee');
       
       setModalState({ type: 'journeyStarted', message });
 
@@ -199,7 +201,7 @@ export default function MapScreen() {
         participants={participants}
       />
       <EmergencyButton 
-        onPress={() => console.log('✅ Emergencia procesada correctamente')} 
+        onPress={() => console.log('Emergencia procesada correctamente')} 
         userLocation={userLocation}
       />
       <JourneyOverlay 
@@ -212,9 +214,9 @@ export default function MapScreen() {
       <AlertModal
         visible={modalState.type === 'journeyActive'}
         type="warning"
-        title="Journey Activo"
-        message="El journey ya está en progreso"
-        confirmText="Entendido"
+        title={t('map.journeyActive.title')}
+        message={t('map.journeyActive.message')}
+        confirmText={t('map.journeyActive.confirm')}
         showCancelButton={false}
         onConfirm={closeModal}
       />
@@ -223,9 +225,9 @@ export default function MapScreen() {
       <AlertModal
         visible={modalState.type === 'journeyStarted'}
         type="success"
-        title="Journey Iniciado"
-        message={`El journey ha comenzado. ${modalState.message || ''}`}
-        confirmText="Continuar"
+        title={t('map.journeyStarted.title')}
+        message={`${t('map.journeyStarted.message')} ${modalState.message || ''}`}
+        confirmText={t('map.journeyStarted.confirm')}
         showCancelButton={false}
         onConfirm={closeModal}
       />
@@ -234,10 +236,10 @@ export default function MapScreen() {
       <AlertModal
         visible={modalState.type === 'journeyError'}
         type="danger"
-        title="Error al Iniciar Journey"
-        message="No se pudo iniciar el journey. ¿Qué deseas hacer?"
-        confirmText="Crear Nuevo"
-        cancelText="Cancelar"
+        title={t('map.journeyError.title')}
+        message={t('map.journeyError.message')}
+        confirmText={t('map.journeyError.confirm')}
+        cancelText={t('map.journeyError.cancel')}
         onConfirm={() => {
           closeModal();
           router.push('/chat/journey');
@@ -249,10 +251,10 @@ export default function MapScreen() {
       <AlertModal
         visible={modalState.type === 'confirmComplete'}
         type="warning"
-        title="¿Finalizar Journey?"
-        message="¿Estás seguro de que quieres finalizar este journey?"
-        confirmText="Finalizar"
-        cancelText="Cancelar"
+        title={t('map.confirmComplete.title')}
+        message={t('map.confirmComplete.message')}
+        confirmText={t('map.confirmComplete.confirm')}
+        cancelText={t('map.confirmComplete.cancel')}
         confirmButtonColor="#EF4444"
         onConfirm={() => {
           closeModal();
@@ -265,9 +267,9 @@ export default function MapScreen() {
       <AlertModal
         visible={modalState.type === 'journeyCompleted'}
         type="success"
-        title="Journey Completado"
-        message="El journey ha finalizado correctamente."
-        confirmText="Aceptar"
+        title={t('map.journeyCompleted.title')}
+        message={t('map.journeyCompleted.message')}
+        confirmText={t('map.journeyCompleted.confirm')}
         showCancelButton={false}
         onConfirm={closeModal}
       />
@@ -276,10 +278,10 @@ export default function MapScreen() {
       <AlertModal
         visible={modalState.type === 'completeError'}
         type="danger"
-        title="Error"
-        message="No se pudo completar el journey. Intenta de nuevo."
-        confirmText="Reintentar"
-        cancelText="Cancelar"
+        title={t('map.completeError.title')}
+        message={t('map.completeError.message')}
+        confirmText={t('map.completeError.confirm')}
+        cancelText={t('map.completeError.cancel')}
         onConfirm={() => {
           closeModal();
           confirmCompleteJourney();

@@ -1,0 +1,338 @@
+{
+  "map": {
+    "journeyActive": {
+      "title": "Journey Activo",
+      "message": "El journey ya está en progreso",
+      "confirm": "Entendido"
+    },
+    "journeyStarted": {
+      "title": "Journey Iniciado",
+      "message": "El journey ha comenzado.",
+      "locationSharing": "Tu ubicación se está compartiendo.",
+      "participantsCanSee": "Todos los participantes pueden ver las ubicaciones en tiempo real.",
+      "confirm": "Continuar"
+    },
+    "journeyError": {
+      "title": "Error al Iniciar Journey",
+      "message": "No se pudo iniciar el journey. ¿Qué deseas hacer?",
+      "confirm": "Crear Nuevo",
+      "cancel": "Cancelar"
+    },
+    "confirmComplete": {
+      "title": "¿Finalizar Journey?",
+      "message": "¿Estás seguro de que quieres finalizar este journey?",
+      "confirm": "Finalizar",
+      "cancel": "Cancelar"
+    },
+    "journeyCompleted": {
+      "title": "Journey Completado",
+      "message": "El journey ha finalizado correctamente.",
+      "confirm": "Aceptar"
+    },
+    "completeError": {
+      "title": "Error",
+      "message": "No se pudo completar el journey. Intenta de nuevo.",
+      "confirm": "Reintentar",
+      "cancel": "Cancelar"
+    }
+  },
+  "overlay": {
+    "activeJourney": "Trayecto Activo",
+    "status": "Estado",
+    "inProgress": "En progreso",
+    "completed": "Completado",
+    "pending": "Pendiente",
+    "notParticipating": "📋 No estás participando en este trayecto",
+    "joinJourney": "Unirme al Trayecto",
+    "startJourney": "Iniciar Trayecto",
+    "journeyInProgress": "🟢 Trayecto en curso • Ubicación compartida",
+    "journeyCompleted": "✅ Trayecto completado",
+    "checkingParticipation": "⏳ Verificando participación...",
+    "finishJourney": "Finalizar Trayecto",
+    "loading": "Cargando..."
+  },
+  "journeySimple": {
+    "noTripMessage": "Actualmente no estás en un viaje. Activa uno si quieres que alguien te vigile 😊",
+    "startJourney": "Iniciar un trayecto"
+  },
+  "mapHeader": {
+    "selectGroup": "Seleccionar grupo",
+    "noActiveGroups": "No hay grupos activos",
+    "activeJourneysGroups": "Grupos con trayectos activos",
+    "loadingGroups": "Cargando grupos...",
+    "noActiveJourneys": "Sin trayectos activos",
+    "noJourneysDescription": "No hay grupos con trayectos en progreso o pendientes",
+    "clearSelection": "Limpiar selección",
+    "journey": "Trayecto",
+    "refresh": "Actualizar",
+    "status": {
+      "inProgress": "En progreso",
+      "pending": "Pendiente",
+      "unknown": "Desconocido"
+    }
+  },
+  "mapLocationPicker": {
+    "title": "Selecciona una ubicación en el mapa",
+    "gettingLocation": "Obteniendo ubicación...",
+    "nameLocation": "Nombra esta ubicación",
+    "placeholder": "Ej: Mi casa, Oficina, Gimnasio...",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "selectedLocation": "Ubicación seleccionada",
+    "customLocation": "Ubicación personalizada",
+    "errors": {
+      "permissionDenied": "Permiso denegado",
+      "locationRequired": "Se requiere acceso a la ubicación.",
+      "error": "Error",
+      "cantGetLocation": "No se pudo obtener la ubicación actual.",
+      "cantGetLocationInfo": "No se pudo obtener información de la ubicación."
+    }
+  },
+  "mapStyleButton": {
+    "mapType": "Tipo de mapa",
+    "types": {
+      "standard": "Normal",
+      "hybrid": "Híbrido"
+    }
+  },
+  "peopleOnMap": {
+    "permissionDenied": "Permiso denegado",
+    "locationRequired": "Se requiere acceso a la ubicación.",
+    "destination": "Destino"
+  },
+  "emergencyButton": {
+    "emergency": "Emergencia",
+    "sendingAlert": "Enviando Alerta...",
+    "notifyingContacts": "Notificando a tus contactos de emergencia",
+    "alertTitle": "⚠️ Alerta de Emergencia",
+    "alertDescription": "Se enviará tu ubicación a tus contactos de emergencia en:",
+    "cancel": "Cancelar",
+    "sendNow": "Enviar Ahora",
+    "helpText": "Presiona \"Cancelar\" si fue accidental",
+    "noContactsTitle": "Sin contactos de emergencia",
+    "noContactsMessage": "No tienes contactos de emergencia configurados. Por favor, agrega contactos en tu perfil.",
+    "ok": "OK",
+    "needHelp": "Necesito ayuda urgente",
+    "alertSentTitle": "Alerta de Emergencia Enviada",
+    "alertSentMessage": "Tus contactos de emergencia han sido notificados con tu ubicación actual.",
+    "error": "Error",
+    "errorMessage": "No se pudo enviar la alerta de emergencia. Por favor, intenta de nuevo."
+  },
+  "createJourneyButton": {
+    "creatingJourney": "Creando trayecto...",
+    "createJourney": "Crear trayecto",
+    "completeAllFields": "Completa todos los campos requeridos"
+  },
+  "destinationSelector": {
+    "selectDestination": "Seleccionar destino",
+    "originAutomatic": "El origen será automáticamente tu ubicación actual",
+    "selectDestinationPlaceholder": "Seleccionar destino",
+    "selectDestinationToContinue": "Selecciona un destino para continuar"
+  },
+  "groupBanner": {
+    "member": "miembro",
+    "members": "miembros"
+  },
+  "groupOptionsSheet": {
+    "startJourney": "Iniciar Trayecto",
+    "createFirstJourney": "Crear tu Primer Trayecto",
+    "groupsAvailable": "Tienes {{count}} grupo disponible",
+    "groupsAvailable_plural": "Tienes {{count}} grupos disponibles",
+    "whichToStart": "¿Con cuál quieres empezar?",
+    "needGroupToStart": "Para iniciar un trayecto necesitas un grupo. ¿Qué te gustaría hacer?",
+    "yourGroups": "Tus grupos:",
+    "member": "miembro",
+    "members": "miembros",
+    "moreOptions": "Más opciones:",
+    "createAnotherGroup": "Crear Otro Grupo",
+    "createGroup": "Crear Grupo",
+    "createNewGroupDesc": "Crea un nuevo grupo temporal o de confianza",
+    "createGroupDesc": "Crea un grupo de confianza o temporal",
+    "joinGroup": "Unirse a Grupo",
+    "joinGroupDesc": "Únete a un grupo existente con código de invitación"
+  },
+  "journeyNameInput": {
+    "journeyName": "Nombre del trayecto",
+    "placeholder": "Ej: Trayecto al trabajo",
+    "characters": "caracteres"
+  },
+  "journeyTypeSelector": {
+    "journeyType": "Tipo de trayecto",
+    "selectHowToShare": "Selecciona cómo quieres compartir las ubicaciones",
+    "types": {
+      "individual": {
+        "title": "Individual",
+        "description": "Solo tú compartirás tu ubicación con el grupo"
+      },
+      "commonDestination": {
+        "title": "Grupal con destino común",
+        "description": "Todos comparten ubicación hacia el mismo destino"
+      },
+      "personalized": {
+        "title": "Grupal personalizado",
+        "description": "Cada participante tiene su propio destino"
+      }
+    }
+  },
+  "journeyCollapsedTab": {
+    "activeJourney": "Trayecto Activo",
+    "inProgress": "En progreso",
+    "pending": "Pendiente",
+    "appName": "Aegis",
+    "tapToStart": "Tap para iniciar un trayecto"
+  },
+  "journeyCreationHeader": {
+    "createJourney": "Crear trayecto"
+  },
+  "journeyUtils": {
+    "validation": {
+      "selectType": "Selecciona un tipo de trayecto",
+      "enterName": "Ingresa un nombre para el trayecto",
+      "nameMinLength": "El nombre debe tener al menos 3 caracteres",
+      "selectDestination": "Selecciona un destino para el trayecto grupal"
+    },
+    "defaultName": "Trayecto"
+  },
+  "loadingJourneyScreen": {
+    "defaultMessage": "Cargando información..."
+  },
+  "useGroupData": {
+    "errors": {
+      "title": "Error",
+      "loadFailed": "No se pudo cargar la información del grupo",
+      "notFound": "Grupo no encontrado",
+      "noPermission": "No tienes permisos para ver este grupo",
+      "invalidId": "ID de grupo inválido"
+    }
+  },
+  "useJourneyCreation": {
+    "permissions": {
+      "title": "Permisos requeridos",
+      "locationMessage": "Necesitamos acceso a tu ubicación para crear el trayecto"
+    },
+    "errors": {
+      "title": "Error",
+      "locationFailed": "No se pudo obtener tu ubicación actual",
+      "locationRequired": "No se pudo obtener tu ubicación actual",
+      "locationRegisterFailed": "No se pudo registrar tu ubicación",
+      "creationFailed": "No se pudo crear el trayecto. Verifica tu conexión e inténtalo de nuevo."
+    },
+    "steps": {
+      "creating": "Creando trayecto...",
+      "configuring": "Configurando journey en tiempo real...",
+      "addingParticipant": "Añadiéndote como participante...",
+      "linkingTracking": "Asociando grupo de tracking...",
+      "sendingRequest": "Enviando solicitud al grupo..."
+    },
+    "success": {
+      "individualTitle": "¡Trayecto individual creado!",
+      "individualMessage": "El trayecto \"{name}\" está listo. Puedes iniciarlo cuando quieras desde la vista del mapa.",
+      "requestTitle": "¡Solicitud de trayecto enviada!",
+      "requestMessage": "Se ha enviado una solicitud para el trayecto \"{name}\" a {participants}. Podrán unirse desde el chat del grupo seleccionando su destino.",
+      "createdTitle": "Trayecto creado",
+      "createdMessage": "El trayecto \"{name}\" se ha creado correctamente, pero no se pudo notificar al grupo.",
+      "ok": "OK"
+    },
+    "notifications": {
+      "locationSharing": "{user} ha empezado a compartir su ubicación"
+    }
+  },
+  "createGroupModal": {
+    "titles": {
+      "confianza": "Crear Grupo de Confianza",
+      "temporal": "Crear Grupo TEMPORAL",
+      "companion": "Crear Grupo COMPANION",
+      "default": "Crear Grupo"
+    },
+    "descriptions": {
+      "confianza": "Un grupo seguro para amigos cercanos y familia",
+      "temporal": "Un grupo temporal que expira después de un tiempo establecido",
+      "companion": "Un grupo para encontrar compañeros y actividades"
+    },
+    "fields": {
+      "groupName": "Nombre del Grupo *",
+      "description": "Descripción",
+      "groupNamePlaceholder": "Ingresa el nombre del grupo",
+      "descriptionPlaceholder": "¿De qué trata este grupo?"
+    },
+    "infoBox": {
+      "confianza": "Los grupos de confianza tienen características de seguridad mejoradas y son perfectos para familia y amigos cercanos.",
+      "temporal": "Los grupos TEMPORALES se eliminan automáticamente después de la duración especificada.",
+      "companion": "Los grupos COMPANION te ayudan a encontrar personas con intereses y actividades similares."
+    },
+    "buttons": {
+      "cancel": "Cancelar",
+      "create": "Crear Grupo"
+    },
+    "alerts": {
+      "error": "Error",
+      "nameRequired": "El nombre del grupo es requerido",
+      "success": "Éxito",
+      "groupCreated": "¡Grupo creado exitosamente!",
+      "createFailed": "No se pudo crear el grupo"
+    }
+  },
+  "editGroupModal": {
+    "title": "Editar grupo",
+    "buttons": {
+      "cancel": "Cancelar",
+      "ok": "OK"
+    },
+    "fields": {
+      "groupName": "Nombre del grupo",
+      "groupDescription": "Descripción del grupo",
+      "namePlaceholder": "Ingresa el nombre del grupo",
+      "descriptionPlaceholder": "Ingresa una descripción (opcional)"
+    },
+    "photo": {
+      "change": "Cambiar foto",
+      "delete": "Eliminar foto",
+      "select": "Seleccionar foto",
+      "uploading": "Subiendo...",
+      "add": "Añadir foto",
+      "deleteTitle": "Eliminar foto",
+      "deleteConfirm": "¿Estás seguro?",
+      "actionTitle": "Foto del grupo",
+      "actionMessage": "¿Qué te gustaría hacer?"
+    },
+    "alerts": {
+      "error": "Error",
+      "nameEmpty": "El nombre del grupo no puede estar vacío",
+      "success": "Éxito",
+      "groupUpdated": "Grupo actualizado",
+      "updateFailed": "No se pudo actualizar el grupo",
+      "photoUpdated": "Foto actualizada",
+      "photoUpdateFailed": "No se pudo actualizar la foto",
+      "selectFailed": "No se pudo seleccionar la imagen",
+      "photoDeleted": "Foto eliminada",
+      "photoDeleteFailed": "No se pudo eliminar la foto",
+      "permissionRequired": "Permisos requeridos",
+      "permissionMessage": "Necesitamos acceso a tus fotos"
+    }
+  },
+  "groupsList": {
+    "states": {
+      "active": "Activo",
+      "inactive": "Inactivo",
+      "closed": "Cerrado",
+      "pending": "Pendiente"
+    },
+    "noMessages": "Aún no hay mensajes",
+    "me": "Yo",
+    "members": {
+      "singular": "miembro",
+      "plural": "miembros"
+    }
+  },
+  "groupActionModal": {
+    "title": "¿Qué te gustaría hacer?",
+    "createGroup": {
+      "title": "Crear Nuevo Grupo",
+      "description": "Inicia un nuevo grupo e invita a tus amigos"
+    },
+    "joinGroup": {
+      "title": "Unirse con Código",
+      "description": "Ingresa un código de 8 dígitos para unirte a un grupo existente"
+    }
+  }
+}

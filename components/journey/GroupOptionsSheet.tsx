@@ -5,6 +5,7 @@ import { Group } from '@/api/backend/group/groupType';
 import CreateGroupModal from '@/components/groups/CreateGroupModal';
 import JoinGroupModal from '@/components/groups/JoinGroupModal';
 import GroupTypeSelector from '@/components/groups/GroupTypeSelector';
+import { useTranslation } from 'react-i18next';
 
 interface GroupOptionsSheetProps {
   userGroups: Group[];
@@ -43,6 +44,7 @@ export default function GroupOptionsSheet({
   setSelectedGroupType,
   onLayout
 }: GroupOptionsSheetProps) {
+  const { t } = useTranslation();
   const hasGroups = userGroups.length > 0;
 
   return (
@@ -55,7 +57,7 @@ export default function GroupOptionsSheet({
         <View style={styles.headerLeft}>
           <Ionicons name="location" size={24} color="#7A33CC" />
           <Text style={styles.sheetTitle}>
-            {hasGroups ? 'Iniciar Trayecto' : 'Crear tu Primer Trayecto'}
+            {hasGroups ? t('groupOptionsSheet.startJourney') : t('groupOptionsSheet.createFirstJourney')}
           </Text>
         </View>
         <Pressable onPress={onClose} style={styles.collapseButton}>
@@ -65,8 +67,8 @@ export default function GroupOptionsSheet({
 
       <Text style={styles.subtitle}>
         {hasGroups 
-          ? `Tienes ${userGroups.length} grupo${userGroups.length > 1 ? 's' : ''} disponible${userGroups.length > 1 ? 's' : ''}. ¿Con cuál quieres empezar?`
-          : 'Para iniciar un trayecto necesitas un grupo. ¿Qué te gustaría hacer?'
+          ? `${t('groupOptionsSheet.groupsAvailable', { count: userGroups.length })} ${t('groupOptionsSheet.whichToStart')}`
+          : t('groupOptionsSheet.needGroupToStart')
         }
       </Text>
 
@@ -77,7 +79,7 @@ export default function GroupOptionsSheet({
       >
         {hasGroups ? (
           <>
-            <Text style={styles.sectionTitle}>Tus grupos:</Text>
+            <Text style={styles.sectionTitle}>{t('groupOptionsSheet.yourGroups')}</Text>
             {userGroups.map((group) => (
               <Pressable 
                 key={group.id} 
@@ -94,7 +96,7 @@ export default function GroupOptionsSheet({
                 <View style={styles.groupInfo}>
                   <Text style={styles.groupName}>{group.name}</Text>
                   <Text style={styles.groupType}>
-                    {group.type} • {group.membersIds.length} miembro{group.membersIds.length > 1 ? 's' : ''}
+                    {group.type} • {group.membersIds.length} {group.membersIds.length > 1 ? t('groupOptionsSheet.members') : t('groupOptionsSheet.member')}
                   </Text>
                   {group.description && (
                     <Text style={styles.groupDescription}>{group.description}</Text>
@@ -107,7 +109,7 @@ export default function GroupOptionsSheet({
             ))}
             
             <View style={styles.divider} />
-            <Text style={styles.sectionTitle}>Más opciones:</Text>
+            <Text style={styles.sectionTitle}>{t('groupOptionsSheet.moreOptions')}</Text>
           </>
         ) : null}
 
@@ -118,12 +120,12 @@ export default function GroupOptionsSheet({
           </View>
           <View style={styles.optionContent}>
             <Text style={styles.optionTitle}>
-              {hasGroups ? 'Crear Otro Grupo' : 'Crear Grupo'}
+              {hasGroups ? t('groupOptionsSheet.createAnotherGroup') : t('groupOptionsSheet.createGroup')}
             </Text>
             <Text style={styles.optionDescription}>
               {hasGroups 
-                ? 'Crea un nuevo grupo temporal o de confianza'
-                : 'Crea un grupo de confianza o temporal'
+                ? t('groupOptionsSheet.createNewGroupDesc')
+                : t('groupOptionsSheet.createGroupDesc')
               }
             </Text>
           </View>
@@ -136,9 +138,9 @@ export default function GroupOptionsSheet({
             <Ionicons name="person-add" size={32} color="#FF9800" />
           </View>
           <View style={styles.optionContent}>
-            <Text style={styles.optionTitle}>Unirse a Grupo</Text>
+            <Text style={styles.optionTitle}>{t('groupOptionsSheet.joinGroup')}</Text>
             <Text style={styles.optionDescription}>
-              Únete a un grupo existente con código de invitación
+              {t('groupOptionsSheet.joinGroupDesc')}
             </Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color="#ccc" />

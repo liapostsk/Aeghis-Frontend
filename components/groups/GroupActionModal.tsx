@@ -8,6 +8,7 @@ import {
   Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 
 interface GroupActionModalProps {
   visible: boolean;
@@ -22,6 +23,8 @@ export default function GroupActionModal({
   onCreateGroup, 
   onJoinGroup 
 }: GroupActionModalProps) {
+  const { t } = useTranslation();
+  
   return (
     <Modal
       visible={visible}
@@ -33,7 +36,7 @@ export default function GroupActionModal({
         <View style={styles.container}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>What would you like to do?</Text>
+            <Text style={styles.title}>{t('groupActionModal.title')}</Text>
             <Pressable onPress={onClose} style={styles.closeButton}>
               <Ionicons name="close" size={24} color="#666" />
             </Pressable>
@@ -47,9 +50,9 @@ export default function GroupActionModal({
                 <Ionicons name="add-circle" size={32} color="#7A33CC" />
               </View>
               <View style={styles.optionContent}>
-                <Text style={styles.optionTitle}>Create New Group</Text>
+                <Text style={styles.optionTitle}>{t('groupActionModal.createGroup.title')}</Text>
                 <Text style={styles.optionDescription}>
-                  Start a new group and invite your friends
+                  {t('groupActionModal.createGroup.description')}
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color="#999" />
@@ -61,9 +64,9 @@ export default function GroupActionModal({
                 <Ionicons name="log-in" size={32} color="#F5C80E" />
               </View>
               <View style={styles.optionContent}>
-                <Text style={styles.optionTitle}>Join with Code</Text>
+                <Text style={styles.optionTitle}>{t('groupActionModal.joinGroup.title')}</Text>
                 <Text style={styles.optionDescription}>
-                  Enter an 8-digit code to join an existing group
+                  {t('groupActionModal.joinGroup.description')}
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color="#999" />

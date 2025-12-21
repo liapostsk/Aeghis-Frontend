@@ -1,5 +1,6 @@
 import { View, Text, Pressable, ActivityIndicator, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 
 interface CreateJourneyButtonProps {
   onPress: () => void;
@@ -14,6 +15,8 @@ export default function CreateJourneyButton({
   loading, 
   creationStep 
 }: CreateJourneyButtonProps) {
+  const { t } = useTranslation();
+  
   return (
     <View style={styles.buttonContainer}>
       <Pressable
@@ -28,20 +31,20 @@ export default function CreateJourneyButton({
           <>
             <ActivityIndicator color="#FFFFFF" size="small" />
             <Text style={styles.createButtonText}>
-              {creationStep || 'Creando trayecto...'}
+              {creationStep || t('createJourneyButton.creatingJourney')}
             </Text>
           </>
         ) : (
           <>
             <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
-            <Text style={styles.createButtonText}>Crear trayecto</Text>
+            <Text style={styles.createButtonText}>{t('createJourneyButton.createJourney')}</Text>
           </>
         )}
       </Pressable>
       
       {disabled && !loading && (
         <Text style={styles.disabledHint}>
-          Completa todos los campos requeridos
+          {t('createJourneyButton.completeAllFields')}
         </Text>
       )}
     </View>

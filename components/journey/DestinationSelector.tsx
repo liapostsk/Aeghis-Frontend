@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeLocation } from '@/api/backend/locations/locationType';
+import { useTranslation } from 'react-i18next';
 
 interface DestinationSelectorProps {
   selectedDestination: SafeLocation | null;
@@ -14,13 +15,15 @@ export default function DestinationSelector({
   onPress, 
   isRequired = false 
 }: DestinationSelectorProps) {
+  const { t } = useTranslation();
+  
   return (
     <View style={styles.container}>
       <Text style={styles.sectionTitle}>
-        Seleccionar destino {isRequired && <Text style={styles.required}>*</Text>}
+        {t('destinationSelector.selectDestination')} {isRequired && <Text style={styles.required}>*</Text>}
       </Text>
       <Text style={styles.sectionSubtitle}>
-        El origen será automáticamente tu ubicación actual
+        {t('destinationSelector.originAutomatic')}
       </Text>
       
       <Pressable
@@ -40,7 +43,7 @@ export default function DestinationSelector({
             styles.destinationText,
             !selectedDestination && styles.destinationTextPlaceholder
           ]}>
-            {selectedDestination ? selectedDestination.name : 'Seleccionar destino'}
+            {selectedDestination ? selectedDestination.name : t('destinationSelector.selectDestinationPlaceholder')}
           </Text>
           {selectedDestination && (
             <Text style={styles.destinationAddress}>
@@ -53,7 +56,7 @@ export default function DestinationSelector({
       
       {!selectedDestination && isRequired && (
         <Text style={styles.errorText}>
-          Selecciona un destino para continuar
+          {t('destinationSelector.selectDestinationToContinue')}
         </Text>
       )}
     </View>

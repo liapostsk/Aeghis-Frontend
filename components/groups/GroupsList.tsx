@@ -10,6 +10,7 @@ import { auth } from '@/firebaseconfig';
 import { Group } from '@/api/backend/group/groupType';
 import { useGroupSeach } from '@/app/(tabs)/groups/_layout';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 
 // Helpers
 const getInitials = (name?: string) => {
@@ -24,16 +25,6 @@ const formatTime = (ts?: any) => {
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
 
-const stateLabel = (state?: string) => {
-  switch (state) {
-    case 'ACTIVO': return 'Active';
-    case 'INACTIVO': return 'Inactive';
-    case 'CERRADO': return 'Closed';
-    case 'PENDIENTE': return 'Pending';
-    default: return state ?? '';
-  }
-};
-
 type Props = {
   groupType: 'CONFIANZA' | 'TEMPORAL';
   emptyTitle: string;
@@ -42,6 +33,7 @@ type Props = {
 };
 
 export default function GroupsList({ groupType, emptyTitle, emptySubtitle, noteText }: Props) {
+  const { t } = useTranslation();
   const { search } = useGroupSeach();
   const [groups, setGroups] = useState<Group[]>([]);
   const [tilesById, setTilesById] = useState<Record<string, GroupTileInfo>>({});
@@ -49,6 +41,16 @@ export default function GroupsList({ groupType, emptyTitle, emptySubtitle, noteT
 
   const { getToken } = useAuth();
   const setToken = useTokenStore((state) => state.setToken);
+
+  const stateLabel = (state?: string) => {
+    switch (state) {
+      case 'ACTIVO': return t('groupsList.states.active');
+      case 'INACTIVO': return t('groupsList.states.inactive');
+      case 'CERRADO': return t('groupsList.states.closed');
+      case 'PENDIENTE': return t('groupsList.states.pending');
+      default: return state ?? '';
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -131,10 +133,10 @@ export default function GroupsList({ groupType, emptyTitle, emptySubtitle, noteT
             
             // Verificación robusta del mensaje
             const lastMessage = (() => {
-              if (!tile || !tile.lastMessage) return 'No messages yet';
+              if (!tile || !tile.lastMessage) return t('groupsList.noMessages');
               
               const senderPrefix = tile.lastSenderId === auth.currentUser?.uid 
-                ? 'Yo: '
+                ? `${t('groupsList.me')}: `
                 : tile.lastSenderName 
                   ? `${tile.lastSenderName}: `
                   : '';
@@ -179,7 +181,7 @@ export default function GroupsList({ groupType, emptyTitle, emptySubtitle, noteT
                   <View style={styles.bottomRow}>
                     <Text style={styles.status}>{status}</Text>
                     <Text style={styles.memberCount}>
-                      {memberCount} member{memberCount !== 1 ? 's' : ''}
+                      {memberCount} {memberCount !== 1 ? t('groupsList.members.plural') : t('groupsList.members.singular')}
                     </Text>
                   </View>
                 </View>

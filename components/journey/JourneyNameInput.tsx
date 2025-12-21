@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TextInput, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 
 interface JourneyNameInputProps {
   value: string;
@@ -11,16 +12,18 @@ interface JourneyNameInputProps {
 export default function JourneyNameInput({ 
   value, 
   onChangeText, 
-  placeholder = "Ej: Trayecto al trabajo" 
+  placeholder 
 }: JourneyNameInputProps) {
+  const { t } = useTranslation();
+  
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Nombre del trayecto</Text>
+      <Text style={styles.sectionTitle}>{t('journeyNameInput.journeyName')}</Text>
       <View style={styles.inputContainer}>
         <Ionicons name="navigate" size={20} color="#7A33CC" style={styles.inputIcon} />
         <TextInput
           style={styles.input}
-          placeholder={placeholder}
+          placeholder={placeholder || t('journeyNameInput.placeholder')}
           value={value}
           onChangeText={onChangeText}
           placeholderTextColor="#9CA3AF"
@@ -30,7 +33,7 @@ export default function JourneyNameInput({
       </View>
       {value.length > 40 && (
         <Text style={styles.charCount}>
-          {value.length}/50 caracteres
+          {value.length}/50 {t('journeyNameInput.characters')}
         </Text>
       )}
     </View>

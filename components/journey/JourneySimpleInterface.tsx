@@ -1,4 +1,5 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 interface JourneySimpleInterfaceProps {
   onStartJourney: () => void;
@@ -6,17 +7,19 @@ interface JourneySimpleInterfaceProps {
 }
 
 export default function JourneySimpleInterface({ onStartJourney, onLayout }: JourneySimpleInterfaceProps) {
+  const { t } = useTranslation();
+  
   return (
     <View
       style={styles.sheetContent}
       onLayout={onLayout}
     >
       <Text style={styles.simpleText}>
-        You're currently not on a trip. Activate one if you'd like someone to keep an eye on you 😊
+        {t('journeySimple.noTripMessage')}
       </Text>
       
       <Pressable style={styles.simpleButton} onPress={onStartJourney}>
-        <Text style={styles.simpleButtonText}>Start a journey</Text>
+        <Text style={styles.simpleButtonText}>{t('journeySimple.startJourney')}</Text>
       </Pressable>
     </View>
   );

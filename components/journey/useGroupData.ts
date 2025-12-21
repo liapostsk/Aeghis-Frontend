@@ -5,6 +5,7 @@ import { UserDto } from '@/api/backend/types';
 import { Group } from '@/api/backend/group/groupType';
 import { getGroupById } from '@/api/backend/group/groupApi';
 import { getUser, getCurrentUser } from '@/api/backend/user/userApi';
+import i18next from 'i18next';
 
 interface UseGroupDataProps {
   groupId: string;
@@ -34,11 +35,11 @@ export const useGroupData = ({ groupId, getToken, setToken }: UseGroupDataProps)
         // Validar groupId
         const id = Number(groupId);
         if (!groupId || groupId === 'undefined' || groupId === 'null' || Number.isNaN(id)) {
-          console.error('❌ [useGroupData] ID de grupo inválido:', groupId);
+          console.error('[useGroupData] ID de grupo inválido:', groupId);
           throw new Error(`ID de grupo inválido: ${groupId}`);
         }
 
-        console.log('📥 [useGroupData] Obteniendo datos del grupo:', id);
+        console.log('[useGroupData] Obteniendo datos del grupo:', id);
 
         // Cargar grupo y usuario actual en paralelo
         const [groupData, userData] = await Promise.all([
@@ -47,12 +48,12 @@ export const useGroupData = ({ groupId, getToken, setToken }: UseGroupDataProps)
         ]);
 
         if (!mounted) {
-          console.log('⚠️ [useGroupData] Componente desmontado, cancelando actualización');
+          console.log('[useGroupData] Componente desmontado, cancelando actualización');
           return;
         }
 
-        console.log('✅ [useGroupData] Grupo obtenido:', groupData.name);
-        console.log('✅ [useGroupData] Usuario actual:', userData.name);
+        console.log('[useGroupData] Grupo obtenido:', groupData.name);
+        console.log('[useGroupData] Usuario actual:', userData.name);
 
         setGroup(groupData);
         setCurrentUser(userData);
@@ -87,17 +88,17 @@ export const useGroupData = ({ groupId, getToken, setToken }: UseGroupDataProps)
         
         if (mounted) {
           // Mensajes de error específicos
-          let errorMessage = 'No se pudo cargar la información del grupo';
+          let errorMessage = i18next.t('useGroupData.errors.loadFailed');
           
           if (error?.response?.status === 404) {
-            errorMessage = 'Grupo no encontrado';
+            errorMessage = i18next.t('useGroupData.errors.notFound');
           } else if (error?.response?.status === 401) {
-            errorMessage = 'No tienes permisos para ver este grupo';
+            errorMessage = i18next.t('useGroupData.errors.noPermission');
           } else if (error?.message?.includes('Invalid group id') || error?.message?.includes('inválido')) {
-            errorMessage = `ID de grupo inválido: ${groupId}`;
+            errorMessage = `${i18next.t('useGroupData.errors.invalidId')}: ${groupId}`;
           }
           
-          Alert.alert('Error', errorMessage);
+          Alert.alert(i18next.t('useGroupData.errors.title'), errorMessage);
           router.back();
         }
       } finally {
@@ -109,7 +110,7 @@ export const useGroupData = ({ groupId, getToken, setToken }: UseGroupDataProps)
 
     loadGroupData();
     return () => { mounted = false; };
-  }, [groupId]); // ✅ Solo groupId como dependencia
+  }, [groupId]);
 
   return {
     group,

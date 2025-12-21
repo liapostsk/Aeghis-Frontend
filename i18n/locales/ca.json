@@ -1,0 +1,338 @@
+{
+  "map": {
+    "journeyActive": {
+      "title": "Journey Actiu",
+      "message": "El journey ja està en progrés",
+      "confirm": "Entès"
+    },
+    "journeyStarted": {
+      "title": "Journey Iniciat",
+      "message": "El journey ha començat.",
+      "locationSharing": "La teva ubicació s'està compartint.",
+      "participantsCanSee": "Tots els participants poden veure les ubicacions en temps real.",
+      "confirm": "Continuar"
+    },
+    "journeyError": {
+      "title": "Error en Iniciar Journey",
+      "message": "No s'ha pogut iniciar el journey. Què vols fer?",
+      "confirm": "Crear Nou",
+      "cancel": "Cancel·lar"
+    },
+    "confirmComplete": {
+      "title": "Finalitzar Journey?",
+      "message": "Estàs segur que vols finalitzar aquest journey?",
+      "confirm": "Finalitzar",
+      "cancel": "Cancel·lar"
+    },
+    "journeyCompleted": {
+      "title": "Journey Completat",
+      "message": "El journey ha finalitzat correctament.",
+      "confirm": "Acceptar"
+    },
+    "completeError": {
+      "title": "Error",
+      "message": "No s'ha pogut completar el journey. Torna-ho a intentar.",
+      "confirm": "Reintentar",
+      "cancel": "Cancel·lar"
+    }
+  },
+  "overlay": {
+    "activeJourney": "Trajecte Actiu",
+    "status": "Estat",
+    "inProgress": "En progrés",
+    "completed": "Completat",
+    "pending": "Pendent",
+    "notParticipating": "📋 No estàs participant en aquest trajecte",
+    "joinJourney": "Unir-me al Trajecte",
+    "startJourney": "Iniciar Trajecte",
+    "journeyInProgress": "🟢 Trajecte en curs • Ubicació compartida",
+    "journeyCompleted": "✅ Trajecte completat",
+    "checkingParticipation": "⏳ Verificant participació...",
+    "finishJourney": "Finalitzar Trajecte",
+    "loading": "Carregant..."
+  },
+  "journeySimple": {
+    "noTripMessage": "Actualment no estàs en un viatge. Activa'n un si vols que algú et vigili 😊",
+    "startJourney": "Iniciar un trajecte"
+  },
+  "mapHeader": {
+    "selectGroup": "Seleccionar grup",
+    "noActiveGroups": "No hi ha grups actius",
+    "activeJourneysGroups": "Grups amb trajectes actius",
+    "loadingGroups": "Carregant grups...",
+    "noActiveJourneys": "Sense trajectes actius",
+    "noJourneysDescription": "No hi ha grups amb trajectes en progrés o pendents",
+    "clearSelection": "Netejar selecció",
+    "journey": "Trajecte",
+    "refresh": "Actualitzar",
+    "status": {
+      "inProgress": "En progrés",
+      "pending": "Pendent",
+      "unknown": "Desconegut"
+    }
+  },
+  "mapLocationPicker": {
+    "title": "Selecciona una ubicació al mapa",
+    "gettingLocation": "Obtenint ubicació...",
+    "nameLocation": "Anomena aquesta ubicació",
+    "placeholder": "Ex: Casa meva, Oficina, Gimnàs...",
+    "cancel": "Cancel·lar",
+    "confirm": "Confirmar",
+    "selectedLocation": "Ubicació seleccionada",
+    "customLocation": "Ubicació personalitzada",
+    "errors": {
+      "permissionDenied": "Permís denegat",
+      "locationRequired": "Es requereix accés a la ubicació.",
+      "error": "Error",
+      "cantGetLocation": "No s'ha pogut obtenir la ubicació actual.",
+      "cantGetLocationInfo": "No s'ha pogut obtenir informació de la ubicació."
+    }
+  },
+  "mapStyleButton": {
+    "mapType": "Tipus de mapa",
+    "types": {
+      "standard": "Normal",
+      "hybrid": "Híbrid"
+    }
+  },
+  "peopleOnMap": {
+    "permissionDenied": "Permís denegat",
+    "locationRequired": "Es requereix accés a la ubicació.",
+    "destination": "Destinació"
+  },
+  "emergencyButton": {
+    "emergency": "Emergència",
+    "sendingAlert": "Enviant Alerta...",
+    "notifyingContacts": "Notificant als teus contactes d'emergència",
+    "alertTitle": "⚠️ Alerta d'Emergència",
+    "alertDescription": "S'enviarà la teva ubicació als teus contactes d'emergència en:",
+    "cancel": "Cancel·lar",
+    "sendNow": "Enviar Ara",
+    "helpText": "Prem \"Cancel·lar\" si ha estat accidental",
+    "noContactsTitle": "Sense contactes d'emergència",
+    "noContactsMessage": "No tens contactes d'emergència configurats. Si us plau, afegeix contactes al teu perfil.",
+    "ok": "D'acord",
+    "needHelp": "Necessito ajuda urgent",
+    "alertSentTitle": "Alerta d'Emergència Enviada",
+    "alertSentMessage": "Els teus contactes d'emergència han estat notificats amb la teva ubicació actual.",
+    "error": "Error",
+    "errorMessage": "No s'ha pogut enviar l'alerta d'emergència. Si us plau, torna-ho a intentar."
+  },
+  "createJourneyButton": {
+    "creatingJourney": "Creant trajecte...",
+    "createJourney": "Crear trajecte",
+    "completeAllFields": "Completa tots els camps requerits"
+  },
+  "destinationSelector": {
+    "selectDestination": "Seleccionar destinació",
+    "originAutomatic": "L'origen serà automàticament la teva ubicació actual",
+    "selectDestinationPlaceholder": "Seleccionar destinació",
+    "selectDestinationToContinue": "Selecciona una destinació per continuar"
+  },
+  "groupBanner": {
+    "member": "membre",
+    "members": "membres"
+  },
+  "groupOptionsSheet": {
+    "startJourney": "Iniciar Trajecte",
+    "createFirstJourney": "Crear el teu Primer Trajecte",
+    "groupsAvailable": "Tens {{count}} grup disponible",
+    "groupsAvailable_plural": "Tens {{count}} grups disponibles",
+    "whichToStart": "Amb quin vols començar?",
+    "needGroupToStart": "Per iniciar un trajecte necessites un grup. Què t'agradaria fer?",
+    "yourGroups": "Els teus grups:",
+    "member": "membre",
+    "members": "membres",
+    "moreOptions": "Més opcions:",
+    "createAnotherGroup": "Crear Un Altre Grup",
+    "createGroup": "Crear Grup",
+    "createNewGroupDesc": "Crea un nou grup temporal o de confiança",
+    "createGroupDesc": "Crea un grup de confiança o temporal",
+    "joinGroup": "Unir-se a Grup",
+    "joinGroupDesc": "Uneix-te a un grup existent amb codi d'invitació"
+  },
+  "journeyNameInput": {
+    "journeyName": "Nom del trajecte",
+    "placeholder": "Ex: Trajecte a la feina",
+    "characters": "caràcters"
+  },
+  "journeyTypeSelector": {
+    "journeyType": "Tipus de trajecte",
+    "selectHowToShare": "Selecciona com vols compartir les ubicacions",
+    "types": {
+      "individual": {
+        "title": "Individual",
+        "description": "Només tu compartiràs la teva ubicació amb el grup"
+      },
+      "commonDestination": {
+        "title": "Grupal amb destinació comuna",
+        "description": "Tots comparteixen ubicació cap a la mateixa destinació"
+      },
+      "personalized": {
+        "title": "Grupal personalitzat",
+        "description": "Cada participant té la seva pròpia destinació"
+      }
+    }
+  },
+  "journeyCollapsedTab": {
+    "activeJourney": "Trajecte Actiu",
+    "inProgress": "En progrés",
+    "pending": "Pendent",
+    "appName": "Aegis",
+    "tapToStart": "Toca per iniciar un trajecte"
+  },
+  "journeyCreationHeader": {
+    "createJourney": "Crear trajecte"
+  },
+  "journeyUtils": {
+    "validation": {
+      "selectType": "Selecciona un tipus de trajecte",
+      "enterName": "Introdueix un nom per al trajecte",
+      "nameMinLength": "El nom ha de tenir almenys 3 caràcters",
+      "selectDestination": "Selecciona una destinació per al trajecte grupal"
+    },
+    "defaultName": "Trajecte"
+  },
+  "loadingJourneyScreen": {
+    "defaultMessage": "Carregant informació..."
+  },
+  "useGroupData": {
+    "errors": {
+      "title": "Error",
+      "loadFailed": "No s'ha pogut carregar la informació del grup",
+      "notFound": "Grup no trobat",
+      "noPermission": "No tens permisos per veure aquest grup",
+      "invalidId": "ID de grup invàlid"
+    }
+  },
+  "useJourneyCreation": {
+    "permissions": {
+      "title": "Permisos requerits",
+      "locationMessage": "Necessitem accés a la teva ubicació per crear el trajecte"
+    },
+    "errors": {
+      "title": "Error",
+      "locationFailed": "No s'ha pogut obtenir la teva ubicació actual",
+      "locationRequired": "No s'ha pogut obtenir la teva ubicació actual",
+      "locationRegisterFailed": "No s'ha pogut registrar la teva ubicació",
+      "creationFailed": "No s'ha pogut crear el trajecte. Verifica la teva connexió i torna-ho a provar."
+    },
+    "steps": {
+      "creating": "Creant trajecte...",
+      "configuring": "Configurant journey en temps real...",
+      "addingParticipant": "Afegint-te com a participant...",
+      "linkingTracking": "Associant grup de tracking...",
+      "sendingRequest": "Enviant sol·licitud al grup..."
+    },
+    "success": {
+      "individualTitle": "Trajecte individual creat!",
+      "individualMessage": "El trajecte \"{name}\" està llest. Pots iniciar-lo quan vulguis des de la vista del mapa.",
+      "requestTitle": "Sol·licitud de trajecte enviada!",
+      "requestMessage": "S'ha enviat una sol·licitud per al trajecte \"{name}\" a {participants}. Podran unir-se des del xat del grup seleccionant la seva destinació.",
+      "createdTitle": "Trajecte creat",
+      "createdMessage": "El trajecte \"{name}\" s'ha creat correctament, però no s'ha pogut notificar al grup.",
+      "ok": "OK"
+    },
+    "notifications": {
+      "locationSharing": "{user} ha començat a compartir la seva ubicació"
+    }
+  },
+  "createGroupModal": {
+    "titles": {
+      "confianza": "Crear Grup de Confiança",
+      "temporal": "Crear Grup TEMPORAL",
+      "companion": "Crear Grup COMPANION",
+      "default": "Crear Grup"
+    },
+    "descriptions": {
+      "confianza": "Un grup segur per a amics íntims i família",
+      "temporal": "Un grup temporal que expira després d'un temps establert",
+      "companion": "Un grup per trobar companys i activitats"
+    },
+    "fields": {
+      "groupName": "Nom del Grup *",
+      "description": "Descripció",
+      "groupNamePlaceholder": "Introdueix el nom del grup",
+      "descriptionPlaceholder": "De què tracta aquest grup?"
+    },
+    "infoBox": {
+      "confianza": "Els grups de confiança tenen característiques de seguretat millorades i són perfectes per a família i amics íntims.",
+      "temporal": "Els grups TEMPORALS s'eliminen automàticament després de la durada especificada.",
+      "companion": "Els grups COMPANION t'ajuden a trobar persones amb interessos i activitats similars."
+    },
+    "buttons": {
+      "cancel": "Cancel·lar",
+      "create": "Crear Grup"
+    },
+    "alerts": {
+      "error": "Error",
+      "nameRequired": "El nom del grup és requerit",
+      "success": "Èxit",
+      "groupCreated": "Grup creat exitosament!",
+      "createFailed": "No s'ha pogut crear el grup"
+    }
+  },
+  "editGroupModal": {
+    "title": "Editar grup",
+    "buttons": {
+      "cancel": "Cancel·lar",
+      "ok": "OK"
+    },
+    "fields": {
+      "groupName": "Nom del grup",
+      "groupDescription": "Descripció del grup",
+      "namePlaceholder": "Introdueix el nom del grup",
+      "descriptionPlaceholder": "Introdueix una descripció (opcional)"
+    },
+    "photo": {
+      "change": "Canviar foto",
+      "delete": "Eliminar foto",
+      "select": "Seleccionar foto",
+      "uploading": "Pujant...",
+      "add": "Afegir foto",
+      "deleteTitle": "Eliminar foto",
+      "deleteConfirm": "Estàs segur?",
+      "actionTitle": "Foto del grup",
+      "actionMessage": "Què t'agradaria fer?"
+    },
+    "alerts": {
+      "error": "Error",
+      "nameEmpty": "El nom del grup no pot estar buit",
+      "success": "Èxit",
+      "groupUpdated": "Grup actualitzat",
+      "updateFailed": "No s'ha pogut actualitzar el grup",
+      "photoUpdated": "Foto actualitzada",
+      "photoUpdateFailed": "No s'ha pogut actualitzar la foto",
+      "selectFailed": "No s'ha pogut seleccionar la imatge",
+      "photoDeleted": "Foto eliminada",
+      "photoDeleteFailed": "No s'ha pogut eliminar la foto",
+      "permissionRequired": "Permisos requerits",
+      "permissionMessage": "Necessitem accés a les teves fotos"
+    }
+  },
+  "groupsList": {
+    "states": {
+      "active": "Actiu",
+      "inactive": "Inactiu",
+      "closed": "Tancat",
+      "pending": "Pendent"
+    },
+    "noMessages": "Encara no hi ha missatges",
+    "me": "Jo",
+    "members": {
+      "singular": "membre",
+      "plural": "membres"
+    }
+  },
+  "groupActionModal": {
+    "title": "Què t'agradaria fer?",
+    "createGroup": {
+      "title": "Crear Nou Grup",
+      "description": "Inicia un nou grup i convida els teus amics"
+    },
+    "joinGroup": {
+      "title": "Unir-se amb Codi",
+      "description": "Introdueix un codi de 8 dígits per unir-te a un grup existent"
+    }
+  }
+}

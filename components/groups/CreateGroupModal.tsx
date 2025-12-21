@@ -8,6 +8,7 @@ import { createGroup } from '@/api/backend/group/groupApi';
 import { Group } from '@/api/backend/group/groupType';
 import { createGroupFirebase } from '@/api/firebase/chat/chatService';
 import { invalidateGroupsCache } from '@/lib/hooks/useUserGroups';
+import { useTranslation } from 'react-i18next';
 
 type Props = { 
     visible: boolean;
@@ -17,6 +18,7 @@ type Props = {
 };
 
 export default function CreateGroupModal({ visible, onClose, onSuccess, type }: Props) {
+  const { t } = useTranslation();
   const [groupName, setGroupName] = useState('');
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
@@ -29,25 +31,25 @@ export default function CreateGroupModal({ visible, onClose, onSuccess, type }: 
 
   const getModalTitle = () => {
     switch (type) {
-      case 'CONFIANZA': return 'Create Trusted Group';
-      case 'TEMPORAL': return 'Create TEMPORAL Group';
-      case 'COMPANION': return 'Create COMPANION Group';
-      default: return 'Create Group';
+      case 'CONFIANZA': return t('createGroupModal.titles.confianza');
+      case 'TEMPORAL': return t('createGroupModal.titles.temporal');
+      case 'COMPANION': return t('createGroupModal.titles.companion');
+      default: return t('createGroupModal.titles.default');
     }
   };
 
   const getModalDescription = () => {
     switch (type) {
-      case 'CONFIANZA': return 'A secure group for close friends and family';
-      case 'TEMPORAL': return 'A temporary group that expires after a set time';
-      case 'COMPANION': return 'A group for finding COMPANIONs and activities';
+      case 'CONFIANZA': return t('createGroupModal.descriptions.confianza');
+      case 'TEMPORAL': return t('createGroupModal.descriptions.temporal');
+      case 'COMPANION': return t('createGroupModal.descriptions.companion');
       default: return '';
     }
   };
 
   const handleCreateGroup = async () => {
     if (!groupName.trim()) {
-      Alert.alert('Error', 'Group name is required');
+      Alert.alert(t('createGroupModal.alerts.error'), t('createGroupModal.alerts.nameRequired'));
       return;
     }
     
@@ -91,11 +93,11 @@ export default function CreateGroupModal({ visible, onClose, onSuccess, type }: 
       setDescription('');
       setLoading(false);
       
-      Alert.alert('Success', 'Group created successfully!');
+      Alert.alert(t('createGroupModal.alerts.success'), t('createGroupModal.alerts.groupCreated'));
       
     } catch (error) {
       console.error('❌ Error creating group:', error);
-      Alert.alert('Error', 'Failed to create group');
+      Alert.alert(t('createGroupModal.alerts.error'), t('createGroupModal.alerts.createFailed'));
       setLoading(false);
     }
   } 
@@ -123,10 +125,10 @@ export default function CreateGroupModal({ visible, onClose, onSuccess, type }: 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* Group Name */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Group Name *</Text>
+            <Text style={styles.label}>{t('createGroupModal.fields.groupName')}</Text>
             <TextInput
               style={styles.input}
-              placeholder="Enter group name"
+              placeholder={t('createGroupModal.fields.groupNamePlaceholder')}
               placeholderTextColor="#999"
               value={groupName}
               onChangeText={setGroupName}
@@ -137,10 +139,10 @@ export default function CreateGroupModal({ visible, onClose, onSuccess, type }: 
 
           {/* Description */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Description</Text>
+            <Text style={styles.label}>{t('createGroupModal.fields.description')}</Text>
             <TextInput
               style={[styles.input, styles.textArea]}
-              placeholder="What's this group about?"
+              placeholder={t('createGroupModal.fields.descriptionPlaceholder')}
               placeholderTextColor="#999"
               value={description}
               onChangeText={setDescription}
@@ -155,9 +157,9 @@ export default function CreateGroupModal({ visible, onClose, onSuccess, type }: 
           <View style={styles.infoBox}>
             <Ionicons name="information-circle" size={20} color="#7A33CC" />
             <Text style={styles.infoText}>
-              {type === 'CONFIANZA' && 'Trusted groups have enhanced security features and are perfect for family and close friends.'}
-              {type === 'TEMPORAL' && 'TEMPORAL groups are automatically deleted after the specified duration.'}
-              {type === 'COMPANION' && 'COMPANION groups help you find people with similar interests and activities.'}
+              {type === 'CONFIANZA' && t('createGroupModal.infoBox.confianza')}
+              {type === 'TEMPORAL' && t('createGroupModal.infoBox.temporal')}
+              {type === 'COMPANION' && t('createGroupModal.infoBox.companion')}
             </Text>
           </View>
         </ScrollView>
@@ -165,10 +167,10 @@ export default function CreateGroupModal({ visible, onClose, onSuccess, type }: 
         {/* Footer */}
         <View style={styles.footer}>
           <Pressable style={styles.cancelButton} onPress={onClose}>
-            <Text style={styles.cancelButtonText}>Cancel</Text>
+            <Text style={styles.cancelButtonText}>{t('createGroupModal.buttons.cancel')}</Text>
           </Pressable>
           <Pressable style={styles.createButton} onPress={handleCreateGroup}>
-            <Text style={styles.createButtonText}>Create Group</Text>
+            <Text style={styles.createButtonText}>{t('createGroupModal.buttons.create')}</Text>
           </Pressable>
         </View>
       </View>

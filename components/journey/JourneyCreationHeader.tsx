@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 
 interface JourneyCreationHeaderProps {
   onBack: () => void;
@@ -9,14 +10,16 @@ interface JourneyCreationHeaderProps {
 
 export default function JourneyCreationHeader({ 
   onBack, 
-  title = 'Crear trayecto' 
+  title
 }: JourneyCreationHeaderProps) {
+  const { t } = useTranslation();
+  
   return (
     <View style={styles.header}>
       <Pressable onPress={onBack} style={styles.backButton}>
         <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
       </Pressable>
-      <Text style={styles.headerTitle}>{title}</Text>
+      <Text style={styles.headerTitle}>{title || t('journeyCreationHeader.createJourney')}</Text>
     </View>
   );
 }

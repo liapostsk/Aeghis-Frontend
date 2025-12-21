@@ -7,6 +7,7 @@ import MapStyleButton, { MapType } from './MapStyleButton';
 import { useAllParticipantsPositions } from '@/lib/hooks/usePositions';
 import { getRouteBetweenPoints } from '@/api/backend/locations/safeLocations/googleDirectionsApi';
 import { JourneyState } from '@/api/backend/journeys/journeyType';
+import { useTranslation } from 'react-i18next';
 
 interface Participant {
   id: string;
@@ -28,6 +29,7 @@ interface PeopleOnMapProps {
 const COLORS = ["#7A33CC", "#FF5733", "#33C1FF", "#4CAF50", "#FFC300", "#FF33A8", "#33FFB5", "#FF8C33"];
 
 export default function PeopleOnMap({ chatId, journeyId, journeyState, participants }: PeopleOnMapProps) {
+  const { t } = useTranslation();
 
   const [region, setRegion] = useState<Region | null>(null);
   const [mapType, setMapType] = useState<MapType>('standard');
@@ -47,7 +49,7 @@ export default function PeopleOnMap({ chatId, journeyId, journeyState, participa
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert("Permission denied", "Location access is required.");
+        Alert.alert(t('peopleOnMap.permissionDenied'), t('peopleOnMap.locationRequired'));
         return;
       }
       const location = await Location.getCurrentPositionAsync({});
@@ -160,7 +162,7 @@ export default function PeopleOnMap({ chatId, journeyId, journeyState, participa
                     longitude: dest.longitude,
                   }}
                   pinColor={color}
-                  title="Destino"
+                  title={t('peopleOnMap.destination')}
                 />
               )}
             </React.Fragment>

@@ -5,6 +5,7 @@ import MapView, { Marker, Region } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { SafeLocation } from '@/api/backend/locations/locationType';
 import { getLocationFromCoordinates } from '@/api/backend/locations/safeLocations/googleGeocodingApi';
+import { useTranslation } from 'react-i18next';
 
 type MapLocationPickerProps = {
     visible: boolean;
@@ -13,6 +14,7 @@ type MapLocationPickerProps = {
 };
 
 export default function MapLocationPicker({ visible, onClose, onSelectLocation }: MapLocationPickerProps) {
+    const { t } = useTranslation();
     const [region, setRegion] = useState<Region | null>(null);
     const [selectedCoordinates, setSelectedCoordinates] = useState<{ latitude: number; longitude: number } | null>(null);
     const [locationName, setLocationName] = useState<string>('');
@@ -33,7 +35,7 @@ export default function MapLocationPicker({ visible, onClose, onSelectLocation }
 
                 const { status } = await Location.requestForegroundPermissionsAsync();
                 if (status !== 'granted') {
-                    Alert.alert("Permission denied", "Location access is required.");
+                    Alert.alert(t('mapLocationPicker.errors.permissionDenied'), t('mapLocationPicker.errors.locationRequired'));
                     return;
                 }
 
@@ -45,8 +47,8 @@ export default function MapLocationPicker({ visible, onClose, onSelectLocation }
                     longitudeDelta: 0.01,
                 });
             } catch (error) {
-                console.error("❌ Error al obtener ubicación:", error);
-                Alert.alert("Error", "No se pudo obtener la ubicación actual.");
+                console.error("Error al obtener ubicación:", error);
+                Alert.alert(t('mapLocationPicker.errors.error'), t('mapLocationPicker.errors.cantGetLocation'));
             }
         };
 
@@ -59,7 +61,7 @@ export default function MapLocationPicker({ visible, onClose, onSelectLocation }
 
     const handleMapPress = (event: any) => {
         const { latitude, longitude } = event.nativeEvent.coordinate;
-        console.log("📍 Ubicación seleccionada:", { latitude, longitude });
+        console.log("Ubicación seleccionada:", { latitude, longitude });
         
         // Primero establecemos las coordenadas
         setSelectedCoordinates({ latitude, longitude });
@@ -71,7 +73,7 @@ export default function MapLocationPicker({ visible, onClose, onSelectLocation }
 
     const handleConfirmLocation = async () => {
         if (selectedCoordinates && locationName.trim()) {
-            console.log("✅ Confirmando ubicación:", selectedCoordinates, locationName);
+            console.log("Confirmando ubicación:", selectedCoordinates, locationName);
             try {
                 // Obtenemos los detalles de la ubicación
                 const locationInfo = await getLocationFromCoordinates(
@@ -84,20 +86,20 @@ export default function MapLocationPicker({ visible, onClose, onSelectLocation }
                 );
                 
                 if (!locationInfo) {
-                    throw new Error("No se pudo obtener información de la ubicación.");
+                    throw new Error(t('mapLocationPicker.errors.cantGetLocationInfo'));
                 }
                 
-                console.log("✅ Ubicación con geocoding:", locationInfo);
+                console.log("Ubicación con geocoding:", locationInfo);
                 onSelectLocation(locationInfo);
                 
             } catch (error) {
-                console.error("❌ Error al obtener detalles de la ubicación:", error);
-                console.log("🔄 Usando fallback sin geocoding");
+                console.error("Error al obtener detalles de la ubicación:", error);
+                console.log("Usando fallback sin geocoding");
                 
                 // Fallback: crear ubicación básica sin geocoding
                 const locationData: SafeLocation = {
                     name: locationName.trim(),
-                    description: "Ubicación personalizada", 
+                    description: t('mapLocationPicker.customLocation'), 
                     address: `${selectedCoordinates.latitude.toFixed(6)}, ${selectedCoordinates.longitude.toFixed(6)}`,
                     type: 'custom',
                     latitude: selectedCoordinates.latitude,
@@ -105,7 +107,7 @@ export default function MapLocationPicker({ visible, onClose, onSelectLocation }
                     externalId: `custom_${selectedCoordinates.latitude}_${selectedCoordinates.longitude}`,
                 };
                 
-                console.log("✅ Ubicación fallback:", locationData);
+                console.log("Ubicación fallback:", locationData);
                 onSelectLocation(locationData);
             } finally {
                 // Siempre limpiar estado al final
@@ -113,20 +115,18 @@ export default function MapLocationPicker({ visible, onClose, onSelectLocation }
                 onClose();
             }
         } else {
-            console.warn("⚠️ No se puede confirmar: faltan coordenadas o nombre");
+            console.warn("No se puede confirmar: faltan coordenadas o nombre");
         }
     };
 
     const handleCancelNaming = () => {
-        console.log("❌ Cancelando nombrado de ubicación");
-        // Solo ocultamos el modal de nombrado, mantenemos el marker para que puedan seleccionar otro punto
+        console.log("Cancelando nombrado de ubicación");
         setShowNamingModal(false);
         setLocationName('');
-        // NO limpiamos selectedCoordinates para que el marker se mantenga visible
     };
 
     const handleCloseModal = () => {
-        console.log("❌ Cerrando modal completo");
+        console.log("Cerrando modal completo");
         resetState();
         onClose();
     };
@@ -137,7 +137,7 @@ export default function MapLocationPicker({ visible, onClose, onSelectLocation }
                 <View style={styles.modal}>
                     {/* Header */}
                     <View style={styles.header}>
-                        <Text style={styles.textTitle}>Selecciona una ubicación en el mapa</Text>
+                        <Text style={styles.textTitle}>{t('mapLocationPicker.title')}</Text>
                         <Pressable style={styles.closeButton} onPress={handleCloseModal}>
                             <Ionicons name="close" size={24} color="#000" />
                         </Pressable>
@@ -146,7 +146,7 @@ export default function MapLocationPicker({ visible, onClose, onSelectLocation }
                     {/* Contenido del mapa */}
                     {!region ? (
                         <View style={styles.loadingContainer}>
-                            <Text style={styles.loadingText}>Obteniendo ubicación...</Text>
+                            <Text style={styles.loadingText}>{t('mapLocationPicker.gettingLocation')}</Text>
                         </View>
                     ) : (
                         <>
@@ -164,7 +164,7 @@ export default function MapLocationPicker({ visible, onClose, onSelectLocation }
                                                 latitude: selectedCoordinates.latitude,
                                                 longitude: selectedCoordinates.longitude,
                                             }}
-                                            title={locationName || 'Ubicación seleccionada'}
+                                            title={locationName || t('mapLocationPicker.selectedLocation')}
                                             pinColor="#7A33CC"
                                         />
                                     )}
@@ -181,10 +181,10 @@ export default function MapLocationPicker({ visible, onClose, onSelectLocation }
                                             style={styles.namingOverlay}
                                         >
                                             <View style={styles.namingContainer}>
-                                                <Text style={styles.namingTitle}>Nombra esta ubicación</Text>
+                                                <Text style={styles.namingTitle}>{t('mapLocationPicker.nameLocation')}</Text>
                                                 <TextInput
                                                     style={styles.nameInput}
-                                                    placeholder="Ej: Mi casa, Oficina, Gimnasio..."
+                                                    placeholder={t('mapLocationPicker.placeholder')}
                                                     value={locationName}
                                                     onChangeText={setLocationName}
                                                     autoFocus
@@ -195,14 +195,14 @@ export default function MapLocationPicker({ visible, onClose, onSelectLocation }
                                                         style={styles.cancelButton} 
                                                         onPress={handleCancelNaming}
                                                     >
-                                                        <Text style={styles.cancelButtonText}>Cancelar</Text>
+                                                        <Text style={styles.cancelButtonText}>{t('mapLocationPicker.cancel')}</Text>
                                                     </Pressable>
                                                     <Pressable 
                                                         style={[styles.confirmButton, !locationName.trim() && styles.confirmButtonDisabled]} 
                                                         onPress={handleConfirmLocation}
                                                         disabled={!locationName.trim()}
                                                     >
-                                                        <Text style={styles.confirmButtonText}>Confirmar</Text>
+                                                        <Text style={styles.confirmButtonText}>{t('mapLocationPicker.confirm')}</Text>
                                                     </Pressable>
                                                 </View>
                                             </View>

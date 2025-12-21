@@ -4,13 +4,22 @@ import { Slot, useRouter, useSegments } from 'expo-router';
 import TokenProvider from '@/lib/auth/tokenProvider';
 import { NotificationProvider } from '@/api/notifications/NotificationContext';
 import { useSessionState } from '@/lib/hooks/useSessionState';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import LoadingScreen from '@/components/common/LoadingScreen';
+import { I18nextProvider } from "react-i18next";
+import i18n, { initI18n } from "@/i18n/i18n";
 
 function RootNavigator() {
   const { state } = useSessionState();
   const segments = useSegments();
   const router = useRouter();
+  const [i18nReady, setI18nReady] = useState(false);
+
+  useEffect(() => {
+    initI18n().then(() => {
+      setI18nReady(true);
+    });
+  }, []);
 
   useEffect(() => {
     if (state === 'checking') return; // Wait for validation to complete
@@ -72,14 +81,16 @@ function RootNavigator() {
 
 export default function RootLayout() {
   return (
-    <ClerkProvider tokenCache={tokenCache}>
-      <TokenProvider>
-        <ClerkLoaded>
-          <NotificationProvider>
-            <RootNavigator />
-          </NotificationProvider>
-        </ClerkLoaded>
-      </TokenProvider>
-    </ClerkProvider>
+    <I18nextProvider i18n={i18n}>
+      <ClerkProvider tokenCache={tokenCache}>
+        <TokenProvider>
+          <ClerkLoaded>
+            <NotificationProvider>
+              <RootNavigator />
+            </NotificationProvider>
+          </ClerkLoaded>
+        </TokenProvider>
+      </ClerkProvider>
+    </I18nextProvider>
   );
 }

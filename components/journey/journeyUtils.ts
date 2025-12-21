@@ -1,8 +1,6 @@
 import { JourneyType } from './JourneyTypeSelector';
 import { SafeLocation } from '@/api/backend/locations/locationType';
-
-// Re-exportar JourneyType para conveniencia
-export type { JourneyType } from './JourneyTypeSelector';
+import { useTranslation } from 'react-i18next';
 
 export interface JourneyFormData {
   journeyType: JourneyType | null;
@@ -18,9 +16,6 @@ export interface ValidationResult {
   }>;
 }
 
-/**
- * Valida los datos del formulario de creación de trayecto
- */
 export function validateJourneyForm(formData: JourneyFormData): ValidationResult {
   const errors: ValidationResult['errors'] = [];
 
@@ -63,6 +58,7 @@ export function validateJourneyForm(formData: JourneyFormData): ValidationResult
  * Genera un nombre de trayecto por defecto basado en la fecha/hora actual
  */
 export function generateDefaultJourneyName(): string {
+  const { t } = useTranslation();
   const now = new Date();
   const date = now.toLocaleDateString('es-ES', { 
     day: '2-digit', 
@@ -73,7 +69,7 @@ export function generateDefaultJourneyName(): string {
     minute: '2-digit' 
   });
   
-  return `Trayecto ${date} ${time}`;
+  return `${t('journeyUtils.defaultName')} ${date} ${time}`;
 }
 
 /**
@@ -88,3 +84,5 @@ export function mapJourneyTypeToAPI(journeyType: JourneyType) {
 
   return mappings[journeyType];
 }
+
+export { JourneyType };

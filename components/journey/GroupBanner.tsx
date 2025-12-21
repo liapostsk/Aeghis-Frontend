@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Group } from '@/api/backend/group/groupType';
 import { UserDto } from '@/api/backend/types';
+import { useTranslation } from 'react-i18next';
 
 interface GroupBannerProps {
   group: Group | null;
@@ -10,6 +11,8 @@ interface GroupBannerProps {
 }
 
 export default function GroupBanner({ group, members }: GroupBannerProps) {
+  const { t } = useTranslation();
+  
   if (!group) return null;
 
   return (
@@ -20,7 +23,7 @@ export default function GroupBanner({ group, members }: GroupBannerProps) {
       <View style={styles.groupBannerInfo}>
         <Text style={styles.groupBannerTitle}>{group.name}</Text>
         <Text style={styles.groupBannerSubtitle}>
-          {members.length} miembro{members.length !== 1 ? 's' : ''}
+          {members.length} {members.length !== 1 ? t('groupBanner.members') : t('groupBanner.member')}
         </Text>
       </View>
     </View>

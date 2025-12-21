@@ -20,6 +20,7 @@ import { Group } from '@/api/backend/group/groupType';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 import { uploadGroupPhotoAsync, deleteGroupPhoto } from '@/api/firebase/storage/photoService';
+import { useTranslation } from 'react-i18next';
 
 interface EditGroupModalProps {
     visible: boolean;
@@ -34,6 +35,7 @@ export default function EditGroupModal({
   group,
   onGroupUpdated
 }: EditGroupModalProps) {
+    const { t } = useTranslation();
     const [name, setName] = useState(group.name);
     const [description, setDescription] = useState(group.description || '');
     const [imageUri, setImageUri] = useState<string | undefined>(group.imageUrl);
@@ -58,7 +60,7 @@ export default function EditGroupModal({
 
     const handleSave = async () => {
         if (!name.trim()) {
-            Alert.alert('Error', 'El nombre del grupo no puede estar vacío');
+            Alert.alert(t('editGroupModal.alerts.error'), t('editGroupModal.alerts.nameEmpty'));
             return;
         }
         
@@ -78,10 +80,10 @@ export default function EditGroupModal({
             onGroupUpdated({ ...updatedGroup, imageUrl: imageUri });
             onClose();
             
-            Alert.alert('Éxito', 'Grupo actualizado');
+            Alert.alert(t('editGroupModal.alerts.success'), t('editGroupModal.alerts.groupUpdated'));
         } catch (error) {
             console.error('Error:', error);
-            Alert.alert('Error', 'No se pudo actualizar el grupo');
+            Alert.alert(t('editGroupModal.alerts.error'), t('editGroupModal.alerts.updateFailed'));
         } finally {
             setSaving(false);
         }
@@ -89,8 +91,8 @@ export default function EditGroupModal({
 
     const showImageOptions = () => {
         const options = imageUri 
-            ? ['Change Photo', 'Delete Photo', 'Cancel']
-            : ['Select Photo', 'Cancel'];
+            ? [t('editGroupModal.photo.change'), t('editGroupModal.photo.delete'), t('editGroupModal.buttons.cancel')]
+            : [t('editGroupModal.photo.select'), t('editGroupModal.buttons.cancel')];
         
         const destructiveButtonIndex = imageUri ? 1 : undefined;
         const cancelButtonIndex = imageUri ? 2 : 1;
@@ -105,10 +107,10 @@ export default function EditGroupModal({
             );
         } else {
             if (imageUri) {
-                Alert.alert('Group Photo', 'What would you like to do?', [
-                    { text: 'Change Photo', onPress: handleChangePhoto },
-                    { text: 'Delete Photo', onPress: handleDeletePhoto, style: 'destructive' },
-                    { text: 'Cancel', style: 'cancel' },
+                Alert.alert(t('editGroupModal.photo.actionTitle'), t('editGroupModal.photo.actionMessage'), [
+                    { text: t('editGroupModal.photo.change'), onPress: handleChangePhoto },
+                    { text: t('editGroupModal.photo.delete'), onPress: handleDeletePhoto, style: 'destructive' },
+                    { text: t('editGroupModal.buttons.cancel'), style: 'cancel' },
                 ]);
             } else {
                 handleChangePhoto();
@@ -120,7 +122,7 @@ export default function EditGroupModal({
         try {
             const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
             if (status !== 'granted') {
-                Alert.alert('Permission Required', 'We need access to your photos');
+                Alert.alert(t('editGroupModal.alerts.permissionRequired'), t('editGroupModal.alerts.permissionMessage'));
                 return;
             }
 
@@ -149,25 +151,25 @@ export default function EditGroupModal({
                     setImageUri(downloadURL);
                     onGroupUpdated({ ...group, imageUrl: downloadURL });
                     
-                    Alert.alert('Éxito', 'Foto actualizada');
+                    Alert.alert(t('editGroupModal.alerts.success'), t('editGroupModal.alerts.photoUpdated'));
                 } catch (error) {
                     console.error('Error:', error);
-                    Alert.alert('Error', 'No se pudo actualizar la foto');
+                    Alert.alert(t('editGroupModal.alerts.error'), t('editGroupModal.alerts.photoUpdateFailed'));
                 } finally {
                     setImageLoading(false);
                 }
             }
         } catch (error) {
             console.error('Error:', error);
-            Alert.alert('Error', 'No se pudo seleccionar la imagen');
+            Alert.alert(t('editGroupModal.alerts.error'), t('editGroupModal.alerts.selectFailed'));
         }
     };
 
     const handleDeletePhoto = async () => {
-        Alert.alert('Delete Photo', 'Are you sure?', [
-            { text: 'Cancel', style: 'cancel' },
+        Alert.alert(t('editGroupModal.photo.deleteTitle'), t('editGroupModal.photo.deleteConfirm'), [
+            { text: t('editGroupModal.buttons.cancel'), style: 'cancel' },
             {
-                text: 'Delete',
+                text: t('editGroupModal.photo.delete'),
                 style: 'destructive',
                 onPress: async () => {
                     try {
@@ -182,10 +184,10 @@ export default function EditGroupModal({
                         setImageUri(undefined);
                         onGroupUpdated({ ...group, imageUrl: undefined });
                         
-                        Alert.alert('Éxito', 'Foto eliminada');
+                        Alert.alert(t('editGroupModal.alerts.success'), t('editGroupModal.alerts.photoDeleted'));
                     } catch (error) {
                         console.error('Error:', error);
-                        Alert.alert('Error', 'No se pudo eliminar la foto');
+                        Alert.alert(t('editGroupModal.alerts.error'), t('editGroupModal.alerts.photoDeleteFailed'));
                     } finally {
                         setImageLoading(false);
                     }
@@ -239,24 +241,24 @@ export default function EditGroupModal({
                     </Pressable>
 
                     <View style={styles.inputContainer}>
-                        <Text style={styles.inputLabel}>Nombre del grupo</Text>
+                        <Text style={styles.inputLabel}>{t('editGroupModal.fields.groupName')}</Text>
                         <TextInput
                             style={styles.titleInput}
                             value={name}
                             onChangeText={setName}
-                            placeholder="Ingresa el nombre del grupo"
+                            placeholder={t('editGroupModal.fields.namePlaceholder')}
                             maxLength={50}
                             autoCapitalize="words"
                         />
                     </View>
                     
                     <View style={styles.inputContainer}>
-                        <Text style={styles.inputLabel}>Descripción del grupo</Text>
+                        <Text style={styles.inputLabel}>{t('editGroupModal.fields.groupDescription')}</Text>
                         <TextInput
                             style={styles.titleInput}
                             value={description}
                             onChangeText={setDescription}
-                            placeholder="Ingresa una descripción (opcional)"
+                            placeholder={t('editGroupModal.fields.descriptionPlaceholder')}
                             maxLength={100}
                             autoCapitalize="sentences"
                             onSubmitEditing={handleSave}

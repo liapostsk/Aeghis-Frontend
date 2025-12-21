@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 
 export type JourneyType = 'individual' | 'common_destination' | 'personalized';
 
@@ -16,31 +17,33 @@ interface JourneyTypeSelectorProps {
   onSelectType: (type: JourneyType) => void;
 }
 
-const JOURNEY_TYPE_OPTIONS: JourneyTypeOption[] = [
-  {
-    type: 'individual',
-    icon: 'person',
-    title: 'Individual',
-    description: 'Solo tú compartirás tu ubicación con el grupo'
-  },
-  {
-    type: 'common_destination',
-    icon: 'people',
-    title: 'Grupal con destino común',
-    description: 'Todos comparten ubicación hacia el mismo destino'
-  },
-  {
-    type: 'personalized',
-    icon: 'git-network',
-    title: 'Grupal personalizado',
-    description: 'Cada participante tiene su propio destino'
-  }
-];
-
 export default function JourneyTypeSelector({ 
   selectedType, 
   onSelectType 
 }: JourneyTypeSelectorProps) {
+  const { t } = useTranslation();
+  
+  const JOURNEY_TYPE_OPTIONS: JourneyTypeOption[] = [
+    {
+      type: 'individual',
+      icon: 'person',
+      title: t('journeyTypeSelector.types.individual.title'),
+      description: t('journeyTypeSelector.types.individual.description')
+    },
+    {
+      type: 'common_destination',
+      icon: 'people',
+      title: t('journeyTypeSelector.types.commonDestination.title'),
+      description: t('journeyTypeSelector.types.commonDestination.description')
+    },
+    {
+      type: 'personalized',
+      icon: 'git-network',
+      title: t('journeyTypeSelector.types.personalized.title'),
+      description: t('journeyTypeSelector.types.personalized.description')
+    }
+  ];
+
   const renderTypeOption = (option: JourneyTypeOption) => {
     const isSelected = selectedType === option.type;
 
@@ -74,9 +77,9 @@ export default function JourneyTypeSelector({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Tipo de trayecto</Text>
+      <Text style={styles.sectionTitle}>{t('journeyTypeSelector.journeyType')}</Text>
       <Text style={styles.sectionSubtitle}>
-        Selecciona cómo quieres compartir las ubicaciones
+        {t('journeyTypeSelector.selectHowToShare')}
       </Text>
       
       {JOURNEY_TYPE_OPTIONS.map(renderTypeOption)}
