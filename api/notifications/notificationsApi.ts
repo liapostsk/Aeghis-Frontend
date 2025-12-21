@@ -40,5 +40,5 @@ export async function sendPushToUser(req: SendPushToUserRequest) {
  */
 export async function triggerEmergency(req: EmergencyTriggerRequest): Promise<void> {
   await api.post('/me/emergency-contact/trigger', req);
-  console.log('✅ [triggerEmergency] Alerta de emergencia disparada exitosamente');
+  console.log('[triggerEmergency] Alerta de emergencia disparada exitosamente');
 }
