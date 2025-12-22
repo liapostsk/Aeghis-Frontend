@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import * as Contacts from 'expo-contacts';
 import ManualContactForm from './ManualContactForm';
 import ContactList from './ContactList';
 import { Contact } from '@/api/backend/types';
+import { useTranslation } from 'react-i18next';
 
 
 const { height } = Dimensions.get('window');
@@ -26,6 +27,7 @@ type Props = {
 };
 
 export default function EmergencyContactAddModal({ visible, onClose, onAddContact }: Props) {
+  const { t } = useTranslation();
   const [modalMode, setModalMode] = useState<'initial' | 'manual' | 'contacts'>('initial');
   const [contacts, setContacts] = useState<Contact[]>([]);
 
@@ -41,7 +43,10 @@ export default function EmergencyContactAddModal({ visible, onClose, onAddContac
   const getContactsFromDevice = async () => {
     const { status } = await Contacts.requestPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permiso denegado', 'No se pudo acceder a los contactos.');
+      Alert.alert(
+        t('emergencyContact.addModal.alerts.permissionDenied.title'),
+        t('emergencyContact.addModal.alerts.permissionDenied.message')
+      );
       return;
     }
 
@@ -62,7 +67,10 @@ export default function EmergencyContactAddModal({ visible, onClose, onAddContac
       setContacts(transformedContacts);
       setModalMode('contacts');
     } else {
-      Alert.alert('Sin contactos válidos', 'No se encontraron contactos con teléfono.');
+      Alert.alert(
+        t('emergencyContact.addModal.alerts.noValidContacts.title'),
+        t('emergencyContact.addModal.alerts.noValidContacts.message')
+      );
     }
   };
 
@@ -92,7 +100,7 @@ export default function EmergencyContactAddModal({ visible, onClose, onAddContac
               onCancel={() => setModalMode('initial')}
             />
             <Pressable style={styles.button} onPress={getContactsFromDevice}>
-              <Text style={styles.buttonText}>Actualizar contactos</Text>
+              <Text style={styles.buttonText}>{t('emergencyContact.addModal.updateContacts')}</Text>
             </Pressable>
           </>
         );
@@ -100,23 +108,23 @@ export default function EmergencyContactAddModal({ visible, onClose, onAddContac
       default: // Pantalla inicial
         return (
           <>
-            <Text style={styles.modalTitle}>Nuevo contacto de emergencia</Text>
-            <Text style={styles.modalText}>¡Añade al menos uno!</Text>
+            <Text style={styles.modalTitle}>{t('emergencyContact.addModal.title')}</Text>
+            <Text style={styles.modalText}>{t('emergencyContact.addModal.subtitle')}</Text>
             <Image
               source={require('@/assets/images/think.png')}
               style={styles.imageModal}
             />
             <Pressable style={styles.button} onPress={getContactsFromDevice}>
-              <Text style={styles.buttonText}>Desde contactos</Text>
+              <Text style={styles.buttonText}>{t('emergencyContact.addModal.fromContacts')}</Text>
             </Pressable>
             <Pressable
               style={[styles.button, styles.buttonSecondary]}
               onPress={() => setModalMode('manual')}
             >
-              <Text style={styles.buttonText}>Agregar manualmente</Text>
+              <Text style={styles.buttonText}>{t('emergencyContact.addModal.addManually')}</Text>
             </Pressable>
             <Pressable onPress={onClose} style={styles.cancelButton}>
-              <Text style={styles.cancelText}>Cancelar</Text>
+              <Text style={styles.cancelText}>{t('emergencyContact.addModal.cancel')}</Text>
             </Pressable>
           </>
         );

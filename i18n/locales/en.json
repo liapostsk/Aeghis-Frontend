@@ -1073,5 +1073,53 @@
         "lastSeen": "Seen {{date}}"
       }
     }
+  },
+  "emergencyContact": {
+    "addModal": {
+      "title": "New emergency contact",
+      "subtitle": "Add at least one!",
+      "fromContacts": "From contacts",
+      "addManually": "Add manually",
+      "cancel": "Cancel",
+      "updateContacts": "Update contacts",
+      "alerts": {
+        "permissionDenied": {
+          "title": "Permission denied",
+          "message": "Could not access contacts."
+        },
+        "noValidContacts": {
+          "title": "No valid contacts",
+          "message": "No contacts with phone number found."
+        }
+      }
+    },
+    "contactList": {
+      "title": "Select a contact",
+      "back": "Back"
+    },
+    "editorModal": {
+      "title": "Edit contact",
+      "namePlaceholder": "Name",
+      "phonePlaceholder": "Phone",
+      "relationPlaceholder": "Relationship",
+      "cancel": "Cancel",
+      "save": "Save",
+      "errors": {
+        "relationRequired": "Relationship is required",
+        "fieldsRequired": "Name and phone are required"
+      }
+    },
+    "manualForm": {
+      "title": "Add contact manually",
+      "namePlaceholder": "Full name",
+      "phonePlaceholder": "Phone number",
+      "relationPlaceholder": "Relationship (optional)",
+      "save": "Save",
+      "cancel": "Cancel"
+    }
+  },
+  "alertModal": {
+    "defaultConfirm": "Accept",
+    "defaultCancel": "Cancel"
   }
 }

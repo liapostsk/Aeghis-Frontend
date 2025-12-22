@@ -1,6 +1,6 @@
-import React from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Contact } from '@/api/backend/types';
+import { useTranslation } from 'react-i18next';
 
 type Props = {
   contacts: Contact[];
@@ -9,9 +9,11 @@ type Props = {
 };
 
 export default function ContactList({ contacts, onSelect, onCancel }: Props) {
+  const { t } = useTranslation();
+  
   return (
     <View style={styles.container}>
-      <Text style={styles.modalTitle}>Select a Contact</Text>
+      <Text style={styles.modalTitle}>{t('emergencyContact.contactList.title')}</Text>
       
       <FlatList
         data={contacts}
@@ -30,7 +32,7 @@ export default function ContactList({ contacts, onSelect, onCancel }: Props) {
       
       {onCancel && (
         <Pressable onPress={onCancel} style={styles.cancelButton}>
-          <Text style={styles.cancelText}>Back</Text>
+          <Text style={styles.cancelText}>{t('emergencyContact.contactList.back')}</Text>
         </Pressable>
       )}
     </View>

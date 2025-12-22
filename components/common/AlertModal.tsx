@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   View,
   Text,
@@ -7,6 +6,7 @@ import {
   Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 
 interface AlertModalProps {
   visible: boolean;
@@ -28,8 +28,8 @@ export default function AlertModal({
   visible,
   title,
   message,
-  confirmText = 'Aceptar',
-  cancelText = 'Cancelar',
+  confirmText,
+  cancelText,
   confirmButtonColor,
   cancelButtonColor,
   icon,
@@ -39,8 +39,11 @@ export default function AlertModal({
   showCancelButton = true,
   type = 'default',
 }: AlertModalProps) {
+  const { t } = useTranslation();
   
-  // Configuración por tipo
+  const defaultConfirmText = confirmText || t('alertModal.defaultConfirm');
+  const defaultCancelText = cancelText || t('alertModal.defaultCancel');
+  
   const getTypeConfig = () => {
     switch (type) {
       case 'success':
@@ -124,7 +127,7 @@ export default function AlertModal({
                   styles.cancelButtonText,
                   cancelButtonColor && { color: '#FFFFFF' }
                 ]}>
-                  {cancelText}
+                  {defaultCancelText}
                 </Text>
               </Pressable>
             )}
@@ -139,7 +142,7 @@ export default function AlertModal({
               onPress={handleConfirm}
             >
               <Text style={[styles.buttonText, styles.confirmButtonText]}>
-                {confirmText}
+                {defaultConfirmText}
               </Text>
             </Pressable>
           </View>

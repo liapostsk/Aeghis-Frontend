@@ -1,10 +1,4 @@
-// components/common/LoadingScreen.tsx
-
-import React from 'react';
-import { View, Text, Image, StyleSheet, Dimensions } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-
-const { width, height } = Dimensions.get('window');
+import { View, Text, Image, StyleSheet } from 'react-native';
 
 interface LoadingScreenProps {
   message?: string;

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import { EmergencyContact, ExternalContact, Contact } from '@/api/backend/types';
+import { useTranslation } from 'react-i18next';
 
 type Props = {
   visible: boolean;
@@ -28,14 +29,13 @@ export default function ContactEditorModal({
   onClose,
   onSave,
 }: Props) {
+  const { t } = useTranslation();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [relation, setRelation] = useState('');
 
-  // Campos editables
   const isNameEditable = !isEmergencyContact;
   const isPhoneEditable = !isEmergencyContact;
-  const isRelationEditable = true; // Siempre editable
 
   useEffect(() => {
     if (contact) {
@@ -54,13 +54,13 @@ export default function ContactEditorModal({
     if (isEmergencyContact) {
       // Para contactos de emergencia, solo validar relación
       if (!relation.trim()) {
-        Alert.alert('Error', 'La relación es obligatoria');
+        Alert.alert(t('error'), t('emergencyContact.editorModal.errors.relationRequired'));
         return;
       }
     } else {
       // Para contactos externos, validar todos los campos
       if (!name.trim() || !phone.trim()) {
-        Alert.alert('Error', 'El nombre y teléfono son obligatorios');
+        Alert.alert(t('error'), t('emergencyContact.editorModal.errors.fieldsRequired'));
         return;
       }
     }
@@ -85,34 +85,34 @@ export default function ContactEditorModal({
           style={styles.container}
         >
           <View style={styles.modal}>
-            <Text style={styles.title}>Editar contacto</Text>
+            <Text style={styles.title}>{t('emergencyContact.editorModal.title')}</Text>
           {}
             <TextInput
               style={styles.input}
-              placeholder="Nombre"
+              placeholder={t('emergencyContact.editorModal.namePlaceholder')}
               value={name}
               onChangeText={setName}
             />
             <TextInput
               style={styles.input}
-              placeholder="Teléfono"
+              placeholder={t('emergencyContact.editorModal.phonePlaceholder')}
               value={phone}
               onChangeText={setPhone}
               keyboardType="phone-pad"
             />
             <TextInput
               style={styles.input}
-              placeholder="Relación"
+              placeholder={t('emergencyContact.editorModal.relationPlaceholder')}
               value={relation}
               onChangeText={setRelation}
             />
 
             <View style={styles.buttonRow}>
               <TouchableOpacity onPress={onClose}>
-                <Text style={styles.cancelText}>Cancelar</Text>
+                <Text style={styles.cancelText}>{t('emergencyContact.editorModal.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={handleSave}>
-                <Text style={styles.saveText}>Guardar</Text>
+                <Text style={styles.saveText}>{t('emergencyContact.editorModal.save')}</Text>
               </TouchableOpacity>
             </View>
           </View>

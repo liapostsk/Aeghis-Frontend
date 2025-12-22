@@ -1071,5 +1071,53 @@
         "lastSeen": "Vist {{date}}"
       }
     }
+  },
+  "emergencyContact": {
+    "addModal": {
+      "title": "Nou contacte d'emergència",
+      "subtitle": "Afegeix almenys un!",
+      "fromContacts": "Des de contactes",
+      "addManually": "Afegir manualment",
+      "cancel": "Cancel·lar",
+      "updateContacts": "Actualitzar contactes",
+      "alerts": {
+        "permissionDenied": {
+          "title": "Permís denegat",
+          "message": "No s'ha pogut accedir als contactes."
+        },
+        "noValidContacts": {
+          "title": "Sense contactes vàlids",
+          "message": "No s'han trobat contactes amb telèfon."
+        }
+      }
+    },
+    "contactList": {
+      "title": "Selecciona un contacte",
+      "back": "Tornar"
+    },
+    "editorModal": {
+      "title": "Editar contacte",
+      "namePlaceholder": "Nom",
+      "phonePlaceholder": "Telèfon",
+      "relationPlaceholder": "Relació",
+      "cancel": "Cancel·lar",
+      "save": "Desar",
+      "errors": {
+        "relationRequired": "La relació és obligatòria",
+        "fieldsRequired": "El nom i telèfon són obligatoris"
+      }
+    },
+    "manualForm": {
+      "title": "Afegir contacte manualment",
+      "namePlaceholder": "Nom complet",
+      "phonePlaceholder": "Número de telèfon",
+      "relationPlaceholder": "Relació (opcional)",
+      "save": "Desar",
+      "cancel": "Cancel·lar"
+    }
+  },
+  "alertModal": {
+    "defaultConfirm": "Acceptar",
+    "defaultCancel": "Cancel·lar"
   }
 }

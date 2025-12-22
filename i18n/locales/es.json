@@ -1073,5 +1073,53 @@
         "lastSeen": "Visto {{date}}"
       }
     }
+  },
+  "emergencyContact": {
+    "addModal": {
+      "title": "Nuevo contacto de emergencia",
+      "subtitle": "¡Añade al menos uno!",
+      "fromContacts": "Desde contactos",
+      "addManually": "Agregar manualmente",
+      "cancel": "Cancelar",
+      "updateContacts": "Actualizar contactos",
+      "alerts": {
+        "permissionDenied": {
+          "title": "Permiso denegado",
+          "message": "No se pudo acceder a los contactos."
+        },
+        "noValidContacts": {
+          "title": "Sin contactos válidos",
+          "message": "No se encontraron contactos con teléfono."
+        }
+      }
+    },
+    "contactList": {
+      "title": "Selecciona un contacto",
+      "back": "Volver"
+    },
+    "editorModal": {
+      "title": "Editar contacto",
+      "namePlaceholder": "Nombre",
+      "phonePlaceholder": "Teléfono",
+      "relationPlaceholder": "Relación",
+      "cancel": "Cancelar",
+      "save": "Guardar",
+      "errors": {
+        "relationRequired": "La relación es obligatoria",
+        "fieldsRequired": "El nombre y teléfono son obligatorios"
+      }
+    },
+    "manualForm": {
+      "title": "Agregar contacto manualmente",
+      "namePlaceholder": "Nombre completo",
+      "phonePlaceholder": "Número de teléfono",
+      "relationPlaceholder": "Relación (opcional)",
+      "save": "Guardar",
+      "cancel": "Cancelar"
+    }
+  },
+  "alertModal": {
+    "defaultConfirm": "Aceptar",
+    "defaultCancel": "Cancelar"
   }
 }
