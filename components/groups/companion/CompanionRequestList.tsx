@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CompanionRequestDto } from '@/api/backend/companionRequest/companionTypes';
+import { useTranslation } from 'react-i18next';
 
 interface CompanionRequestListProps {
   requests: CompanionRequestDto[];
@@ -34,6 +35,7 @@ export default function CompanionRequestList({
   onDeleteRequest,
   onOpenChat,
 }: CompanionRequestListProps) {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredRequests = requests.filter(req => {
@@ -48,16 +50,17 @@ export default function CompanionRequestList({
   });
 
   const getStateLabel = (state: string) => {
-    switch (state) {
-      case 'CREATED': return 'Creada';
-      case 'PENDING': return 'Pendiente';
-      case 'MATCHED': return 'Emparejada';
-      case 'IN_PROGRESS': return 'En progreso';
-      case 'FINISHED': return 'Finalizada';
-      case 'EXPIRED': return 'Expirada';
-      case 'CANCELLED': return 'Cancelada';
-      default: return state;
-    }
+    const stateKey = state.toLowerCase().replace('_', '');
+    const stateMap: { [key: string]: string } = {
+      'created': 'created',
+      'pending': 'pending',
+      'matched': 'matched',
+      'inprogress': 'inProgress',
+      'finished': 'finished',
+      'expired': 'expired',
+      'cancelled': 'cancelled'
+    };
+    return t(`companion.list.states.${stateMap[stateKey] || 'pending'}`);
   };
 
   const getStateColor = (state: string) => {
@@ -69,7 +72,7 @@ export default function CompanionRequestList({
   };
 
   const getLocationDisplay = (location: any) => {
-    if (!location) return 'Ubicación no disponible';
+    if (!location) return t('companion.list.locationUnavailable');
     
     // Priorizar name si existe (ahora viene de la BD)
     if (location.name) {
@@ -86,7 +89,7 @@ export default function CompanionRequestList({
       return `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`;
     }
     
-    return 'Ubicación sin nombre';
+    return t('companion.list.locationUnnamed');
   };
 
   return (
@@ -96,7 +99,7 @@ export default function CompanionRequestList({
         <Ionicons name="search" size={20} color="#9CA3AF" />
         <TextInput
           style={styles.searchInput}
-          placeholder="Buscar por descripción, ubicación o usuario..."
+          placeholder={t('companion.list.searchPlaceholder')}
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
@@ -199,7 +202,7 @@ export default function CompanionRequestList({
                       onPress={() => onOpenChat(item)}
                     >
                       <Ionicons name="chatbubbles-outline" size={16} color="#7A33CC" />
-                      <Text style={styles.chatButtonText}>Chat</Text>
+                      <Text style={styles.chatButtonText}>{t('companion.list.chat')}</Text>
                     </Pressable>
                   )}
                   
@@ -209,7 +212,7 @@ export default function CompanionRequestList({
                       onPress={() => onManageRequest(item)}
                     >
                       <Ionicons name="settings-outline" size={16} color="#7A33CC" />
-                      <Text style={styles.manageButtonText}>Gestionar</Text>
+                      <Text style={styles.manageButtonText}>{t('companion.list.manage')}</Text>
                     </Pressable>
                   )}
                   {onDeleteRequest && (
@@ -230,7 +233,7 @@ export default function CompanionRequestList({
                       onPress={() => onOpenChat(item)}
                     >
                       <Ionicons name="chatbubbles-outline" size={16} color="#7A33CC" />
-                      <Text style={styles.chatButtonText}>Abrir chat</Text>
+                      <Text style={styles.chatButtonText}>{t('companion.list.chat')}</Text>
                     </Pressable>
                   )}
                   
@@ -240,7 +243,7 @@ export default function CompanionRequestList({
                       style={styles.joinButton}
                       onPress={() => onJoinRequest(item)}
                     >
-                      <Text style={styles.joinButtonText}>Solicitar</Text>
+                      <Text style={styles.joinButtonText}>{t('companion.list.join')}</Text>
                     </Pressable>
                   )}
                 </View>
@@ -252,10 +255,10 @@ export default function CompanionRequestList({
           <View style={styles.emptyState}>
             <Ionicons name="search-outline" size={48} color="#D1D5DB" />
             <Text style={styles.emptyText}>
-              No se encontraron solicitudes
+              {t('companion.list.emptyTitle')}
             </Text>
             <Text style={styles.emptySubtext}>
-              Intenta ajustar los filtros o crea una nueva solicitud
+              {t('companion.list.emptySubtitle')}
             </Text>
           </View>
         }

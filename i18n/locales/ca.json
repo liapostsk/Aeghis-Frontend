@@ -1119,5 +1119,200 @@
   "alertModal": {
     "defaultConfirm": "Acceptar",
     "defaultCancel": "Cancel·lar"
+  },
+  "companion": {
+    "tabs": {
+      "explore": "Explorar",
+      "mine": "Les Meves Sol·licituds"
+    },
+    "list": {
+      "searchPlaceholder": "Cercar per descripció, ubicació o usuari...",
+      "locationUnavailable": "Ubicació no disponible",
+      "locationUnnamed": "Ubicació sense nom",
+      "states": {
+        "created": "Creada",
+        "pending": "Pendent",
+        "matched": "Emparellada",
+        "inProgress": "En progrés",
+        "finished": "Finalitzada",
+        "expired": "Expirada",
+        "cancelled": "Cancel·lada"
+      },
+      "chat": "Xat",
+      "manage": "Gestionar",
+      "join": "Unir-me",
+      "emptyTitle": "No s'han trobat sol·licituds",
+      "emptySubtitle": "Intenta ajustar els filtres o crea una nova sol·licitud"
+    },
+    "create": {
+      "title": "Nova sol·licitud",
+      "titleLong": "Nova sol·licitud d'acompanyament",
+      "originLabel": "Origen *",
+      "originPlaceholder": "Selecciona l'origen",
+      "destinationLabel": "Destinació *",
+      "destinationPlaceholder": "Selecciona la destinació",
+      "timeLabel": "Hora aproximada de trobada",
+      "timePlaceholder": "Selecciona l'hora (opcional)",
+      "descriptionLabel": "Descripció (opcional)",
+      "descriptionPlaceholder": "Afegeix detalls sobre el trajecte...",
+      "infoText": "La teva sol·licitud serà visible per altres usuaris que puguin acompanyar-te en el teu trajecte.",
+      "creating": "Creant...",
+      "createButton": "Crear sol·licitud",
+      "customLocation": "Ubicació personalitzada",
+      "selectOrigin": "Selecciona l'origen",
+      "selectDestination": "Selecciona la destinació",
+      "done": "Fet",
+      "selectTime": "Seleccionar hora",
+      "alerts": {
+        "missingFields": {
+          "title": "Error",
+          "message": "Si us plau completa origen i destinació"
+        },
+        "sourceError": "No s'ha pogut crear la ubicació d'origen",
+        "destinationError": "No s'ha pogut crear la ubicació de destinació",
+        "success": {
+          "title": "Èxit",
+          "message": "Sol·licitud d'acompanyament creada"
+        },
+        "error": {
+          "title": "Error",
+          "message": "No s'ha pogut crear la sol·licitud"
+        }
+      }
+    },
+    "manage": {
+      "title": "Gestionar sol·licitud",
+      "applicantTitle": "Sol·licitant",
+      "loading": "Carregant...",
+      "loadingInfo": "Carregant informació...",
+      "emptyTitle": "Sense sol·licitants",
+      "emptySubtitle": "Encara no hi ha ningú interessat en acompanyar-te.",
+      "tripDetails": "Detalls del viatge",
+      "from": "Des de",
+      "to": "Fins a",
+      "time": "Hora aproximada",
+      "description": "Descripció",
+      "accept": {
+        "title": "Acceptar sol·licitud",
+        "message": "Estàs segur que vols acceptar aquest usuari com el teu acompanyant? Es crearà automàticament un grup per coordinar el viatge.",
+        "cancel": "Cancel·lar",
+        "confirm": "Acceptar",
+        "groupName": "Acompanyament: {{source}} → {{destination}}",
+        "groupDescription": "Grup creat per coordinar el viatge compartit. Membres: {{creator}} i {{companion}}",
+        "errorUserIds": "IDs d'usuari requerits per crear el grup",
+        "error": {
+          "title": "Error",
+          "message": "No s'ha pogut acceptar la sol·licitud"
+        }
+      },
+      "reject": {
+        "title": "Rebutjar sol·licitud",
+        "message": "Estàs segur que vols rebutjar aquest usuari?",
+        "cancel": "Cancel·lar",
+        "confirm": "Rebutjar",
+        "success": {
+          "title": "Sol·licitud rebutjada",
+          "message": "Has rebutjat el sol·licitant"
+        },
+        "error": {
+          "title": "Error",
+          "message": "No s'ha pogut rebutjar la sol·licitud"
+        }
+      },
+      "finish": {
+        "title": "Finalitzar sol·licitud",
+        "message": "Estàs segur que vols finalitzar aquesta sol·licitud? No es podran fer més canvis.",
+        "cancel": "Cancel·lar",
+        "confirm": "Finalitzar",
+        "success": {
+          "title": "Sol·licitud finalitzada",
+          "message": "Has finalitzat la sol·licitud"
+        },
+        "error": {
+          "title": "Error",
+          "message": "No s'ha pogut finalitzar la sol·licitud"
+        }
+      },
+      "loadError": {
+        "title": "Error",
+        "message": "No s'han pogut carregar les dades de la sol·licitud"
+      }
+    },
+    "request": {
+      "title": "Sol·licitar acompanyar",
+      "tripDetails": "Detalls del viatge",
+      "yourRequest": "La teva sol·licitud",
+      "subtitle": "Completa la informació perquè el creador pugui conèixer-te millor",
+      "departurePoint": {
+        "label": "D'on surts?",
+        "placeholder": "Ex: \"la zona de Sants\", \"prop de Glòries\", \"Hospitalet centre\"",
+        "required": "OBLIGATORI"
+      },
+      "departureTime": {
+        "label": "A quina hora aproximada?",
+        "placeholder": "Ex: \"sobre les 19:00\", \"abans de les 22:00\", \"a les 18:30\"",
+        "required": "OBLIGATORI"
+      },
+      "destinationDetail": {
+        "label": "La teva destinació específica",
+        "placeholder": "Ex: \"també la UPC Nord\", \"prop de Diagonal Mar\", \"la mateixa zona\"",
+        "required": "OBLIGATORI",
+        "hint": "És la mateixa destinació o propera a la del creador?"
+      },
+      "trustInfo": {
+        "label": "Explica'li alguna cosa sobre tu",
+        "placeholder": "Ex: \"Sóc estudiant d'enginyeria a la UPC\", \"Treballo en una oficina per la zona\"...",
+        "required": "OBLIGATORI",
+        "hint": "Comparteix informació que generi confiança (estudis, feina, interessos...)"
+      },
+      "preview": {
+        "title": "Vista prèvia del missatge",
+        "greeting": "Hola",
+        "from": "Surto des de {{point}}",
+        "time": "{{time}}",
+        "destination": "La meva destinació és {{destination}}",
+        "info": "{{info}}"
+      },
+      "characterCount": "{{current}}/{{max}}",
+      "send": "Enviar sol·licitud",
+      "sending": "Enviant...",
+      "from": "Des de",
+      "to": "Fins a",
+      "time": "Hora",
+      "createdBy": "Creat per {{name}}",
+      "validation": {
+        "departurePoint": {
+          "title": "Camp requerit",
+          "message": "Si us plau, indica d'on surts"
+        },
+        "departureTime": {
+          "title": "Camp requerit",
+          "message": "Si us plau, indica a quina hora aproximada surts"
+        },
+        "destinationDetail": {
+          "title": "Camp requerit",
+          "message": "Si us plau, indica la teva destinació específica"
+        },
+        "trustInfo": {
+          "title": "Camp requerit",
+          "message": "Si us plau, comparteix alguna cosa sobre tu que generi confiança"
+        }
+      },
+      "confirm": {
+        "title": "Confirmar sol·licitud",
+        "message": "Estàs segur que vols enviar la teva sol·licitud per unir-te a aquest viatge?",
+        "cancel": "Cancel·lar",
+        "send": "Enviar"
+      },
+      "success": {
+        "title": "Sol·licitud enviada!",
+        "message": "La teva sol·licitud ha estat enviada al creador del viatge. T'avisarem quan respongui."
+      },
+      "error": {
+        "title": "Error",
+        "message": "No s'ha pogut enviar la sol·licitud. Intenta-ho de nou."
+      },
+      "locationUnavailable": "Ubicació no disponible"
+    }
   }
 }

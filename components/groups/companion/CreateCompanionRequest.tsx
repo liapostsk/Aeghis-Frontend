@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import { CreateCompanionRequestDto } from '@/api/backend/companionRequest/compan
 import { createLocation } from '@/api/backend/locations/locationsApi';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
+import { useTranslation } from 'react-i18next';
 
 interface CreateCompanionRequestProps {
   onCreateRequest: (request: CreateCompanionRequestDto) => Promise<void>;
@@ -39,6 +40,7 @@ export default function CreateCompanionRequest({
   onSuccess,
   onCancel,
 }: CreateCompanionRequestProps) {
+  const { t } = useTranslation();
   const [sourceLocation, setSourceLocation] = useState<DisplayLocation | null>(null);
   const [destinationLocation, setDestinationLocation] = useState<DisplayLocation | null>(null);
   const [showSourceModal, setShowSourceModal] = useState(false);
@@ -53,7 +55,10 @@ export default function CreateCompanionRequest({
 
   const handleSubmit = async () => {
     if (!sourceLocation || !destinationLocation) {
-      Alert.alert('Error', 'Por favor completa origen y destino');
+      Alert.alert(
+        t('companion.create.alerts.missingFields.title'),
+        t('companion.create.alerts.missingFields.message')
+      );
       return;
     }
 
@@ -75,7 +80,7 @@ export default function CreateCompanionRequest({
       const sourceId = await createLocation(sourceLocationData);
       
       if (!sourceId) {
-        throw new Error('No se pudo crear la ubicación de origen');
+        throw new Error(t('companion.create.alerts.sourceError'));
       }
 
       // Crear Location para destino
@@ -89,7 +94,7 @@ export default function CreateCompanionRequest({
       const destId = await createLocation(destLocationData);
       
       if (!destId) {
-        throw new Error('No se pudo crear la ubicación de destino');
+        throw new Error(t('companion.create.alerts.destinationError'));
       }
 
       // Combinar fecha actual con la hora seleccionada
@@ -130,11 +135,17 @@ export default function CreateCompanionRequest({
       setAproxHour(null);
       setDescription('');
 
-      Alert.alert('Éxito', 'Solicitud de acompañamiento creada');
+      Alert.alert(
+        t('companion.create.alerts.success.title'),
+        t('companion.create.alerts.success.message')
+      );
       onSuccess?.();
     } catch (error) {
       console.error('Error creando solicitud:', error);
-      Alert.alert('Error', 'No se pudo crear la solicitud');
+      Alert.alert(
+        t('companion.create.alerts.error.title'),
+        t('companion.create.alerts.error.message')
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -148,7 +159,7 @@ export default function CreateCompanionRequest({
           <Pressable onPress={onCancel} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color="#1F2937" />
           </Pressable>
-          <Text style={styles.headerTitle}>Nueva solicitud</Text>
+          <Text style={styles.headerTitle}>{t('companion.create.title')}</Text>
           <View style={styles.placeholder} />
         </View>
       )}
@@ -158,15 +169,15 @@ export default function CreateCompanionRequest({
         contentContainerStyle={{ paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
       >
-        {!onCancel && <Text style={styles.title}>Nueva solicitud de acompañamiento</Text>}
+        {!onCancel && <Text style={styles.title}>{t('companion.create.titleLong')}</Text>}
 
       {/* Origen */}
-      <Text style={styles.label}>Origen *</Text>
+      <Text style={styles.label}>{t('companion.create.originLabel')}</Text>
       <Pressable style={styles.input} onPress={() => setShowSourceModal(true)}>
         <View style={styles.inputContent}>
           <Ionicons name="location" size={20} color="#7A33CC" />
           <Text style={{ color: sourceLocation ? '#1F2937' : '#9CA3AF', flex: 1 }}>
-            {sourceLocation ? sourceLocation.name : 'Selecciona el origen'}
+            {sourceLocation ? sourceLocation.name : t('companion.create.originPlaceholder')}
           </Text>
           <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
         </View>
@@ -177,7 +188,7 @@ export default function CreateCompanionRequest({
         onSelectLocation={(loc) => {
           // Extraer info para mostrar en UI
           const displayLoc: DisplayLocation = {
-            name: ('name' in loc && loc.name) ? loc.name : 'Ubicación personalizada',
+            name: ('name' in loc && loc.name) ? loc.name : t('companion.create.customLocation'),
             address: ('address' in loc && loc.address) ? loc.address : `${loc.latitude.toFixed(4)}, ${loc.longitude.toFixed(4)}`,
             latitude: loc.latitude,
             longitude: loc.longitude,
@@ -186,17 +197,17 @@ export default function CreateCompanionRequest({
           setSourceLocation(displayLoc);
           setShowSourceModal(false);
         }}
-        title="Selecciona el origen"
+        title={t('companion.create.selectOrigin')}
         acceptLocationTypes="all"
       />
 
       {/* Destino */}
-      <Text style={styles.label}>Destino *</Text>
+      <Text style={styles.label}>{t('companion.create.destinationLabel')}</Text>
       <Pressable style={styles.input} onPress={() => setShowDestinationModal(true)}>
         <View style={styles.inputContent}>
           <Ionicons name="location" size={20} color="#EF4444" />
           <Text style={{ color: destinationLocation ? '#1F2937' : '#9CA3AF', flex: 1 }}>
-            {destinationLocation ? destinationLocation.name : 'Selecciona el destino'}
+            {destinationLocation ? destinationLocation.name : t('companion.create.destinationPlaceholder')}
           </Text>
           <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
         </View>
@@ -207,7 +218,7 @@ export default function CreateCompanionRequest({
         onSelectLocation={(loc) => {
           // Extraer info para mostrar en UI
           const displayLoc: DisplayLocation = {
-            name: ('name' in loc && loc.name) ? loc.name : 'Ubicación personalizada',
+            name: ('name' in loc && loc.name) ? loc.name : t('companion.create.customLocation'),
             address: ('address' in loc && loc.address) ? loc.address : `${loc.latitude.toFixed(4)}, ${loc.longitude.toFixed(4)}`,
             latitude: loc.latitude,
             longitude: loc.longitude,
@@ -216,19 +227,19 @@ export default function CreateCompanionRequest({
           setDestinationLocation(displayLoc);
           setShowDestinationModal(false);
         }}
-        title="Selecciona el destino"
+        title={t('companion.create.selectDestination')}
         acceptLocationTypes="all"
       />
 
       {/* Hora aproximada */}
-      <Text style={styles.label}>Hora aproximada de quedada</Text>
+      <Text style={styles.label}>{t('companion.create.timeLabel')}</Text>
       <Pressable style={styles.input} onPress={() => setShowTimePicker(true)}>
         <View style={styles.inputContent}>
           <Ionicons name="time" size={20} color="#F59E0B" />
           <Text style={{ color: aproxHour ? '#1F2937' : '#9CA3AF', flex: 1 }}>
             {aproxHour 
               ? aproxHour.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
-              : 'Selecciona la hora (opcional)'
+              : t('companion.create.timePlaceholder')
             }
           </Text>
           {aproxHour && (
@@ -251,9 +262,9 @@ export default function CreateCompanionRequest({
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Selecciona la hora</Text>
+                <Text style={styles.modalTitle}>{t('companion.create.selectTime')}</Text>
                 <Pressable onPress={() => setShowTimePicker(false)}>
-                  <Text style={styles.modalDoneButton}>Listo</Text>
+                  <Text style={styles.modalDoneButton}>{t('companion.create.done')}</Text>
                 </Pressable>
               </View>
               <DateTimePicker
@@ -290,10 +301,10 @@ export default function CreateCompanionRequest({
       )}
 
       {/* Descripción */}
-      <Text style={styles.label}>Descripción (opcional)</Text>
+      <Text style={styles.label}>{t('companion.create.descriptionLabel')}</Text>
       <TextInput
         style={[styles.input, styles.textArea]}
-        placeholder="Añade detalles sobre el trayecto..."
+        placeholder={t('companion.create.descriptionPlaceholder')}
         multiline
         numberOfLines={4}
         value={description}
@@ -305,7 +316,7 @@ export default function CreateCompanionRequest({
       <View style={styles.infoBox}>
         <Ionicons name="information-circle" size={20} color="#7A33CC" />
         <Text style={styles.infoText}>
-          Tu solicitud será visible para otros usuarios que puedan acompañarte en tu trayecto.
+          {t('companion.create.infoText')}
         </Text>
       </View>
 
@@ -317,7 +328,7 @@ export default function CreateCompanionRequest({
       >
         <Ionicons name="checkmark-circle" size={20} color="#FFF" />
         <Text style={styles.createButtonText}>
-          {isSubmitting ? 'Creando...' : 'Crear solicitud'}
+          {isSubmitting ? t('companion.create.creating') : t('companion.create.createButton')}
         </Text>
       </Pressable>
     </ScrollView>

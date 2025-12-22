@@ -24,6 +24,7 @@ import { useUserStore } from '@/lib/storage/useUserStorage';
 import { createGroup } from '@/api/backend/group/groupApi';
 import { createGroupFirebase, joinGroupChatFirebaseWithClerkId } from '@/api/firebase/chat/chatService';
 import { invalidateGroupsCache } from '@/lib/hooks/useUserGroups';
+import { useTranslation } from 'react-i18next';
 
 interface ManageCompanionRequestProps {
   request: CompanionRequestDto;
@@ -36,6 +37,7 @@ export default function ManageCompanionRequest({
   onClose,
   onRequestUpdated,
 }: ManageCompanionRequestProps) {
+  const { t } = useTranslation();
   const [requestData, setRequestData] = useState<CompanionRequestDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
@@ -57,7 +59,10 @@ export default function ManageCompanionRequest({
       setRequestData(data);
     } catch (error) {
       console.error('Error cargando datos de la solicitud:', error);
-      Alert.alert('Error', 'No se pudieron cargar los datos de la solicitud');
+      Alert.alert(
+        t('companion.manage.loadError.title'),
+        t('companion.manage.loadError.message')
+      );
     } finally {
       setLoading(false);
     }
@@ -67,12 +72,12 @@ export default function ManageCompanionRequest({
 
   const handleAccept = async () => {
     Alert.alert(
-      'Aceptar solicitud',
-      '¿Estás seguro de que quieres aceptar a este usuario como tu acompañante? Se creará automáticamente un grupo para coordinar el viaje.',
+      t('companion.manage.accept.title'),
+      t('companion.manage.accept.message'),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('companion.manage.accept.cancel'), style: 'cancel' },
         {
-          text: 'Aceptar',
+          text: t('companion.manage.accept.confirm'),
           onPress: async () => {
             try {
               setProcessing(true);
@@ -89,12 +94,18 @@ export default function ManageCompanionRequest({
                 const companionId = requestData.companion.id;
 
                 if (!creatorId || !companionId) {
-                  throw new Error('IDs de usuario requeridos para crear el grupo');
+                  throw new Error(t('companion.manage.accept.errorUserIds'));
                 }
 
                 const groupData = {
-                  name: `Acompañamiento: ${getLocationDisplay(requestData.source)} → ${getLocationDisplay(requestData.destination)}`,
-                  description: `Grupo creado para coordinar el viaje compartido. Miembros: ${user?.name || 'Tú'} y ${requestData.companion.name}`,
+                  name: t('companion.manage.accept.groupName', {
+                    source: getLocationDisplay(requestData.source),
+                    destination: getLocationDisplay(requestData.destination)
+                  }),
+                  description: t('companion.manage.accept.groupDescription', {
+                    creator: user?.name || 'Tú',
+                    companion: requestData.companion.name
+                  }),
                   imageUrl: '',
                   type: 'COMPANION' as const,
                   ownerId: creatorId,
@@ -159,7 +170,10 @@ export default function ManageCompanionRequest({
 
             } catch (error) {
               console.error('Error aceptando solicitud:', error);
-              Alert.alert('Error', 'No se pudo aceptar la solicitud');
+              Alert.alert(
+                t('companion.manage.accept.error.title'),
+                t('companion.manage.accept.error.message')
+              );
             } finally {
               setProcessing(false);
             }
@@ -171,12 +185,12 @@ export default function ManageCompanionRequest({
 
   const handleReject = async () => {
     Alert.alert(
-      'Rechazar solicitud',
-      '¿Estás seguro de que quieres rechazar a este usuario?',
+      t('companion.manage.reject.title'),
+      t('companion.manage.reject.message'),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('companion.manage.reject.cancel'), style: 'cancel' },
         {
-          text: 'Rechazar',
+          text: t('companion.manage.reject.confirm'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -185,18 +199,25 @@ export default function ManageCompanionRequest({
               setToken(token);
 
               await rejectCompanionRequest(request.id);
-              Alert.alert('Solicitud rechazada', 'Has rechazado al solicitante', [
-                {
-                  text: 'OK',
-                  onPress: () => {
-                    onRequestUpdated();
-                    onClose();
+              Alert.alert(
+                t('companion.manage.reject.success.title'),
+                t('companion.manage.reject.success.message'),
+                [
+                  {
+                    text: 'OK',
+                    onPress: () => {
+                      onRequestUpdated();
+                      onClose();
+                    },
                   },
-                },
-              ]);
+                ]
+              );
             } catch (error) {
               console.error('Error rechazando solicitud:', error);
-              Alert.alert('Error', 'No se pudo rechazar la solicitud');
+              Alert.alert(
+                t('companion.manage.reject.error.title'),
+                t('companion.manage.reject.error.message')
+              );
             } finally {
               setProcessing(false);
             }
@@ -208,12 +229,12 @@ export default function ManageCompanionRequest({
 
   const handleFinish = async () => {
     Alert.alert(
-      'Finalizar solicitud',
-      '¿Estás seguro de que quieres finalizar esta solicitud? No se podrán hacer más cambios.',
+      t('companion.manage.finish.title'),
+      t('companion.manage.finish.message'),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('companion.manage.finish.cancel'), style: 'cancel' },
         {
-          text: 'Finalizar',
+          text: t('companion.manage.finish.confirm'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -222,18 +243,25 @@ export default function ManageCompanionRequest({
               setToken(token);
 
               await finishCompanionRequest(request.id);
-              Alert.alert('Solicitud finalizada', 'Has finalizado la solicitud', [
-                {
-                  text: 'OK',
-                  onPress: () => {
-                    onRequestUpdated();
-                    onClose();
+              Alert.alert(
+                t('companion.manage.finish.success.title'),
+                t('companion.manage.finish.success.message'),
+                [
+                  {
+                    text: 'OK',
+                    onPress: () => {
+                      onRequestUpdated();
+                      onClose();
+                    },
                   },
-                },
-              ]);
+                ]
+              );
             } catch (error) {
               console.error('Error finalizando solicitud:', error);
-              Alert.alert('Error', 'No se pudo finalizar la solicitud');
+              Alert.alert(
+                t('companion.manage.finish.error.title'),
+                t('companion.manage.finish.error.message')
+              );
             } finally {
               setProcessing(false);
             }
@@ -244,7 +272,7 @@ export default function ManageCompanionRequest({
   };
 
   const getLocationDisplay = (location: any) => {
-    if (!location) return 'Ubicación no disponible';
+    if (!location) return t('companion.list.locationUnavailable');
     return location.name || location.address || `${location.latitude?.toFixed(4)}, ${location.longitude?.toFixed(4)}`;
   };
 
@@ -255,7 +283,7 @@ export default function ManageCompanionRequest({
         <Pressable onPress={onClose} style={styles.closeButton}>
           <Ionicons name="arrow-back" size={24} color="#1F2937" />
         </Pressable>
-        <Text style={styles.headerTitle}>Gestionar solicitud</Text>
+        <Text style={styles.headerTitle}>{t('companion.manage.title')}</Text>
         <View style={styles.placeholder} />
       </View>
 
@@ -271,7 +299,7 @@ export default function ManageCompanionRequest({
           </View>
         ) : requestData ? (
           <View style={styles.requestInfoCard}>
-            <Text style={styles.sectionTitle}>Detalles de tu solicitud</Text>
+            <Text style={styles.sectionTitle}>{t('companion.manage.tripDetails')}</Text>
             
             {requestData.description && (
               <View style={styles.infoRow}>
@@ -284,7 +312,7 @@ export default function ManageCompanionRequest({
               <View style={styles.routeItem}>
                 <Ionicons name="location" size={20} color="#10B981" />
                 <View style={styles.routeDetails}>
-                  <Text style={styles.routeLabel}>Origen</Text>
+                  <Text style={styles.routeLabel}>{t('companion.manage.from')}</Text>
                   <Text style={styles.routeValue}>{getLocationDisplay(requestData.source)}</Text>
                 </View>
               </View>
@@ -294,7 +322,7 @@ export default function ManageCompanionRequest({
               <View style={styles.routeItem}>
                 <Ionicons name="location" size={20} color="#EF4444" />
                 <View style={styles.routeDetails}>
-                  <Text style={styles.routeLabel}>Destino</Text>
+                  <Text style={styles.routeLabel}>{t('companion.manage.to')}</Text>
                   <Text style={styles.routeValue}>{getLocationDisplay(requestData.destination)}</Text>
                 </View>
               </View>
@@ -320,20 +348,20 @@ export default function ManageCompanionRequest({
         {/* Información del solicitante */}
         <View style={styles.applicantsSection}>
           <Text style={styles.sectionTitle}>
-            Solicitante
+            {t('companion.manage.applicantTitle')}
           </Text>
 
           {loading ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#7A33CC" />
-              <Text style={styles.loadingText}>Cargando información...</Text>
+              <Text style={styles.loadingText}>{t('companion.manage.loadingInfo')}</Text>
             </View>
           ) : !requestData || !requestData.companion ? (
             <View style={styles.emptyState}>
               <Ionicons name="person-outline" size={48} color="#D1D5DB" />
-              <Text style={styles.emptyText}>No hay solicitante</Text>
+              <Text style={styles.emptyText}>{t('companion.manage.emptyTitle')}</Text>
               <Text style={styles.emptySubtext}>
-                Aún no hay nadie interesado en acompañarte
+                {t('companion.manage.emptySubtitle')}
               </Text>
             </View>
           ) : (
@@ -386,7 +414,7 @@ export default function ManageCompanionRequest({
                   ) : (
                     <>
                       <Ionicons name="close-circle-outline" size={20} color="#EF4444" />
-                      <Text style={styles.rejectButtonText}>Rechazar</Text>
+                      <Text style={styles.rejectButtonText}>{t('companion.manage.reject.confirm')}</Text>
                     </>
                   )}
                 </Pressable>
@@ -404,7 +432,7 @@ export default function ManageCompanionRequest({
                   ) : (
                     <>
                       <Ionicons name="checkmark-circle-outline" size={20} color="#FFF" />
-                      <Text style={styles.acceptButtonText}>Aceptar</Text>
+                      <Text style={styles.acceptButtonText}>{t('companion.manage.accept.confirm')}</Text>
                     </>
                   )}
                 </Pressable>
@@ -437,12 +465,12 @@ export default function ManageCompanionRequest({
               ) : (
                 <>
                   <Ionicons name="stop-circle-outline" size={20} color="#EF4444" />
-                  <Text style={styles.finishButtonText}>Finalizar solicitud</Text>
+                  <Text style={styles.finishButtonText}>{t('companion.manage.finish.confirm')}</Text>
                 </>
               )}
             </Pressable>
             <Text style={styles.finishDescription}>
-              Al finalizar la solicitud, ya no podrás recibir más aplicantes ni realizar cambios.
+              {t('companion.manage.finish.message')}
             </Text>
           </View>
         )}

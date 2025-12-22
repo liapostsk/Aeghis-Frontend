@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import { CompanionRequestDto } from '@/api/backend/companionRequest/companionTyp
 import { requestToJoinCompanionRequest } from '@/api/backend/companionRequest/companionRequestApi';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
+import { useTranslation } from 'react-i18next';
 
 interface RequestJoinCompanionProps {
   request: CompanionRequestDto;
@@ -28,6 +29,7 @@ export default function RequestJoinCompanion({
   onClose,
   onRequestSent,
 }: RequestJoinCompanionProps) {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     departurePoint: '', // Desde dónde sales
     departureTime: '', // A qué hora
@@ -39,25 +41,37 @@ export default function RequestJoinCompanion({
   const setToken = useTokenStore((state) => state.setToken);
 
   const getLocationDisplay = (location: any) => {
-    if (!location) return 'Ubicación no disponible';
+    if (!location) return t('companion.request.locationUnavailable');
     return location.name || location.address || `${location.latitude?.toFixed(4)}, ${location.longitude?.toFixed(4)}`;
   };
 
   const validateForm = (): boolean => {
     if (!formData.departurePoint.trim()) {
-      Alert.alert('Campo requerido', 'Por favor, indica desde dónde sales');
+      Alert.alert(
+        t('companion.request.validation.departurePoint.title'),
+        t('companion.request.validation.departurePoint.message')
+      );
       return false;
     }
     if (!formData.departureTime.trim()) {
-      Alert.alert('Campo requerido', 'Por favor, indica a qué hora aproximada sales');
+      Alert.alert(
+        t('companion.request.validation.departureTime.title'),
+        t('companion.request.validation.departureTime.message')
+      );
       return false;
     }
     if (!formData.destinationDetail.trim()) {
-      Alert.alert('Campo requerido', 'Por favor, indica tu destino específico');
+      Alert.alert(
+        t('companion.request.validation.destinationDetail.title'),
+        t('companion.request.validation.destinationDetail.message')
+      );
       return false;
     }
     if (!formData.trustInfo.trim()) {
-      Alert.alert('Campo requerido', 'Por favor, comparte algo sobre ti que genere confianza');
+      Alert.alert(
+        t('companion.request.validation.trustInfo.title'),
+        t('companion.request.validation.trustInfo.message')
+      );
       return false;
     }
     return true;
@@ -66,22 +80,22 @@ export default function RequestJoinCompanion({
   const buildCompanionMessage = (): string => {
     const parts: string[] = [];
     
-    parts.push('Hola 😊');
+    parts.push(t('companion.request.preview.greeting'));
     
     if (formData.departurePoint) {
-      parts.push(`Salgo desde ${formData.departurePoint}`);
+      parts.push(t('companion.request.preview.from', { point: formData.departurePoint }));
     }
     
     if (formData.departureTime) {
-      parts.push(`${formData.departureTime}`);
+      parts.push(t('companion.request.preview.time', { time: formData.departureTime }));
     }
     
     if (formData.destinationDetail) {
-      parts.push(`Mi destino es ${formData.destinationDetail}`);
+      parts.push(t('companion.request.preview.destination', { destination: formData.destinationDetail }));
     }
     
     if (formData.trustInfo) {
-      parts.push(`${formData.trustInfo}`);
+      parts.push(t('companion.request.preview.info', { info: formData.trustInfo }));
     }
     
     return parts.join('. ') + '.';
@@ -91,12 +105,12 @@ export default function RequestJoinCompanion({
     if (!validateForm()) return;
 
     Alert.alert(
-      'Confirmar solicitud',
-      '¿Estás seguro de que quieres enviar tu solicitud para unirte a este viaje?',
+      t('companion.request.confirm.title'),
+      t('companion.request.confirm.message'),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('companion.request.confirm.cancel'), style: 'cancel' },
         {
-          text: 'Enviar',
+          text: t('companion.request.confirm.send'),
           onPress: async () => {
             try {
               setLoading(true);
@@ -105,12 +119,11 @@ export default function RequestJoinCompanion({
 
               const companionMessage = buildCompanionMessage();
               
-              // TODO: Implementar endpoint
               await requestToJoinCompanionRequest(request.id, companionMessage);
               
               Alert.alert(
-                '¡Solicitud enviada!',
-                'Tu solicitud ha sido enviada al creador del viaje. Te notificaremos cuando responda.',
+                t('companion.request.success.title'),
+                t('companion.request.success.message'),
                 [
                   {
                     text: 'OK',
@@ -123,7 +136,10 @@ export default function RequestJoinCompanion({
               );
             } catch (error) {
               console.error('Error enviando solicitud:', error);
-              Alert.alert('Error', 'No se pudo enviar la solicitud. Inténtalo de nuevo.');
+              Alert.alert(
+                t('companion.request.error.title'),
+                t('companion.request.error.message')
+              );
             } finally {
               setLoading(false);
             }
@@ -140,7 +156,7 @@ export default function RequestJoinCompanion({
         <Pressable onPress={onClose} style={styles.closeButton}>
           <Ionicons name="arrow-back" size={24} color="#1F2937" />
         </Pressable>
-        <Text style={styles.headerTitle}>Solicitar acompañar</Text>
+        <Text style={styles.headerTitle}>{t('companion.request.title')}</Text>
         <View style={styles.placeholder} />
       </View>
 
@@ -156,18 +172,20 @@ export default function RequestJoinCompanion({
         >
           {/* Información del viaje */}
           <View style={styles.tripInfoCard}>
-            <Text style={styles.sectionTitle}>Detalles del viaje</Text>
+            <Text style={styles.sectionTitle}>{t('companion.request.tripDetails')}</Text>
             
             <View style={styles.creatorInfo}>
               <Ionicons name="person-circle-outline" size={20} color="#7A33CC" />
-              <Text style={styles.creatorText}>Creado por: {request.creator?.name || 'Usuario'}</Text>
+              <Text style={styles.creatorText}>
+                {t('companion.request.createdBy', { name: request.creator?.name || 'Usuario' })}
+              </Text>
             </View>
 
             <View style={styles.routeContainer}>
               <View style={styles.routeItem}>
                 <Ionicons name="location" size={18} color="#10B981" />
                 <View style={styles.routeDetails}>
-                  <Text style={styles.routeLabel}>Origen</Text>
+                  <Text style={styles.routeLabel}>{t('companion.request.from')}</Text>
                   <Text style={styles.routeValue}>{getLocationDisplay(request.source)}</Text>
                 </View>
               </View>
@@ -177,7 +195,7 @@ export default function RequestJoinCompanion({
               <View style={styles.routeItem}>
                 <Ionicons name="location" size={18} color="#EF4444" />
                 <View style={styles.routeDetails}>
-                  <Text style={styles.routeLabel}>Destino</Text>
+                  <Text style={styles.routeLabel}>{t('companion.request.to')}</Text>
                   <Text style={styles.routeValue}>{getLocationDisplay(request.destination)}</Text>
                 </View>
               </View>
@@ -200,7 +218,7 @@ export default function RequestJoinCompanion({
 
             {request.description && (
               <View style={styles.descriptionContainer}>
-                <Text style={styles.descriptionLabel}>Descripción:</Text>
+                <Text style={styles.descriptionLabel}>{t('companion.manage.description')}:</Text>
                 <Text style={styles.descriptionText}>{request.description}</Text>
               </View>
             )}
@@ -208,84 +226,87 @@ export default function RequestJoinCompanion({
 
           {/* Formulario de solicitud */}
           <View style={styles.formCard}>
-            <Text style={styles.sectionTitle}>Tu solicitud</Text>
+            <Text style={styles.sectionTitle}>{t('companion.request.yourRequest')}</Text>
             <Text style={styles.sectionSubtitle}>
-              Completa la información para que el creador pueda conocerte mejor
+              {t('companion.request.subtitle')}
             </Text>
 
             {/* Punto de salida (requerido) */}
             <View style={styles.inputGroup}>
               <View style={styles.labelRow}>
-                <Text style={styles.inputLabel}>¿Desde dónde sales?</Text>
-                <Text style={styles.requiredBadge}>Requerido</Text>
+                <Text style={styles.inputLabel}>{t('companion.request.departurePoint.label')}</Text>
+                <Text style={styles.requiredBadge}>{t('companion.request.departurePoint.required')}</Text>
               </View>
               <TextInput
                 style={styles.textInput}
-                placeholder='Ej: "la zona de Sants", "cerca de Glòries", "Hospitalet centro"'
+                placeholder={t('companion.request.departurePoint.placeholder')}
                 value={formData.departurePoint}
                 onChangeText={(text) => setFormData({ ...formData, departurePoint: text })}
                 maxLength={80}
               />
-              <Text style={styles.characterCount}>{formData.departurePoint.length}/80</Text>
-              <Text style={styles.fieldHint}>Indica tu punto de salida aproximado</Text>
+              <Text style={styles.characterCount}>
+                {t('companion.request.characterCount', { current: formData.departurePoint.length, max: 80 })}
+              </Text>
             </View>
 
             {/* Hora de salida (requerido) */}
             <View style={styles.inputGroup}>
               <View style={styles.labelRow}>
-                <Text style={styles.inputLabel}>¿A qué hora aproximada?</Text>
-                <Text style={styles.requiredBadge}>Requerido</Text>
+                <Text style={styles.inputLabel}>{t('companion.request.departureTime.label')}</Text>
+                <Text style={styles.requiredBadge}>{t('companion.request.departureTime.required')}</Text>
               </View>
               <TextInput
                 style={styles.textInput}
-                placeholder='Ej: "sobre las 19:00", "antes de las 22:00", "a las 18:30"'
+                placeholder={t('companion.request.departureTime.placeholder')}
                 value={formData.departureTime}
                 onChangeText={(text) => setFormData({ ...formData, departureTime: text })}
                 maxLength={60}
               />
-              <Text style={styles.characterCount}>{formData.departureTime.length}/60</Text>
-              <Text style={styles.fieldHint}>Indica tu hora de salida flexible</Text>
+              <Text style={styles.characterCount}>
+                {t('companion.request.characterCount', { current: formData.departureTime.length, max: 60 })}
+              </Text>
             </View>
 
             {/* Destino específico (requerido) */}
             <View style={styles.inputGroup}>
               <View style={styles.labelRow}>
-                <Text style={styles.inputLabel}>Tu destino específico</Text>
-                <Text style={styles.requiredBadge}>Requerido</Text>
+                <Text style={styles.inputLabel}>{t('companion.request.destinationDetail.label')}</Text>
+                <Text style={styles.requiredBadge}>{t('companion.request.destinationDetail.required')}</Text>
               </View>
               <TextInput
                 style={styles.textInput}
-                placeholder='Ej: "también la UPC Nord", "cerca de Diagonal Mar", "la misma zona"'
+                placeholder={t('companion.request.destinationDetail.placeholder')}
                 value={formData.destinationDetail}
                 onChangeText={(text) => setFormData({ ...formData, destinationDetail: text })}
                 maxLength={80}
               />
-              <Text style={styles.characterCount}>{formData.destinationDetail.length}/80</Text>
+              <Text style={styles.characterCount}>
+                {t('companion.request.characterCount', { current: formData.destinationDetail.length, max: 80 })}
+              </Text>
               <Text style={styles.fieldHint}>
-                {request.destination ? 
-                  `El creador va a: ${getLocationDisplay(request.destination)}` : 
-                  'Indica tu destino específico'
-                }
+                {t('companion.request.destinationDetail.hint')}
               </Text>
             </View>
 
             {/* Información de confianza (requerido) */}
             <View style={styles.inputGroup}>
               <View style={styles.labelRow}>
-                <Text style={styles.inputLabel}>Algo sobre ti</Text>
-                <Text style={styles.requiredBadge}>Requerido</Text>
+                <Text style={styles.inputLabel}>{t('companion.request.trustInfo.label')}</Text>
+                <Text style={styles.requiredBadge}>{t('companion.request.trustInfo.required')}</Text>
               </View>
               <TextInput
                 style={[styles.textInput, styles.textArea]}
-                placeholder='Ej: "Es mi primera vez con la app, pero conozco bien la zona", "Suelo ir andando rápido", "Me gusta ir hablando durante el camino"'
+                placeholder={t('companion.request.trustInfo.placeholder')}
                 value={formData.trustInfo}
                 onChangeText={(text) => setFormData({ ...formData, trustInfo: text })}
                 multiline
                 numberOfLines={2}
                 maxLength={120}
               />
-              <Text style={styles.characterCount}>{formData.trustInfo.length}/120</Text>
-              <Text style={styles.fieldHint}>Comparte algo que te haga confiable</Text>
+              <Text style={styles.characterCount}>
+                {t('companion.request.characterCount', { current: formData.trustInfo.length, max: 120 })}
+              </Text>
+              <Text style={styles.fieldHint}>{t('companion.request.trustInfo.hint')}</Text>
             </View>
 
             {/* Vista previa del mensaje */}
@@ -293,7 +314,7 @@ export default function RequestJoinCompanion({
               <View style={styles.previewContainer}>
                 <View style={styles.previewHeader}>
                   <Ionicons name="eye-outline" size={18} color="#7A33CC" />
-                  <Text style={styles.previewTitle}>Vista previa del mensaje</Text>
+                  <Text style={styles.previewTitle}>{t('companion.request.preview.title')}</Text>
                 </View>
                 <Text style={styles.previewText}>{buildCompanionMessage()}</Text>
               </View>
@@ -312,7 +333,7 @@ export default function RequestJoinCompanion({
               ) : (
                 <>
                   <Ionicons name="send" size={20} color="#FFF" />
-                  <Text style={styles.submitButtonText}>Enviar solicitud</Text>
+                  <Text style={styles.submitButtonText}>{t('companion.request.send')}</Text>
                 </>
               )}
             </Pressable>

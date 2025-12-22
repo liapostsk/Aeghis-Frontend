@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 
 interface CompanionTabsProps {
   activeTab: 'explore' | 'mine';
@@ -7,6 +8,8 @@ interface CompanionTabsProps {
 }
 
 export default function CompanionTabs({ activeTab, onTabChange }: CompanionTabsProps) {
+  const { t } = useTranslation();
+  
   return (
     <View style={styles.container}>
       <Pressable
@@ -19,7 +22,7 @@ export default function CompanionTabs({ activeTab, onTabChange }: CompanionTabsP
           color={activeTab === 'explore' ? '#7A33CC' : '#6B7280'}
         />
         <Text style={[styles.tabText, activeTab === 'explore' && styles.tabTextActive]}>
-          Explorar
+          {t('companion.tabs.explore')}
         </Text>
       </Pressable>
 
@@ -33,7 +36,7 @@ export default function CompanionTabs({ activeTab, onTabChange }: CompanionTabsP
           color={activeTab === 'mine' ? '#7A33CC' : '#6B7280'}
         />
         <Text style={[styles.tabText, activeTab === 'mine' && styles.tabTextActive]}>
-          Mis Solicitudes
+          {t('companion.tabs.mine')}
         </Text>
       </Pressable>
     </View>

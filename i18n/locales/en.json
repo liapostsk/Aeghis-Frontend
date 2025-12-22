@@ -1121,5 +1121,200 @@
   "alertModal": {
     "defaultConfirm": "Accept",
     "defaultCancel": "Cancel"
+  },
+  "companion": {
+    "tabs": {
+      "explore": "Explore",
+      "mine": "My Requests"
+    },
+    "list": {
+      "searchPlaceholder": "Search by description, location or user...",
+      "locationUnavailable": "Location unavailable",
+      "locationUnnamed": "Unnamed location",
+      "states": {
+        "created": "Created",
+        "pending": "Pending",
+        "matched": "Matched",
+        "inProgress": "In Progress",
+        "finished": "Finished",
+        "expired": "Expired",
+        "cancelled": "Cancelled"
+      },
+      "chat": "Chat",
+      "manage": "Manage",
+      "join": "Join",
+      "emptyTitle": "No requests found",
+      "emptySubtitle": "Try adjusting the filters or create a new request"
+    },
+    "create": {
+      "title": "New request",
+      "titleLong": "New companion request",
+      "originLabel": "Origin *",
+      "originPlaceholder": "Select origin",
+      "destinationLabel": "Destination *",
+      "destinationPlaceholder": "Select destination",
+      "timeLabel": "Approximate meeting time",
+      "timePlaceholder": "Select time (optional)",
+      "descriptionLabel": "Description (optional)",
+      "descriptionPlaceholder": "Add details about the trip...",
+      "infoText": "Your request will be visible to other users who can accompany you on your journey.",
+      "creating": "Creating...",
+      "createButton": "Create request",
+      "customLocation": "Custom location",
+      "selectOrigin": "Select origin",
+      "selectDestination": "Select destination",
+      "done": "Done",
+      "selectTime": "Select time",
+      "alerts": {
+        "missingFields": {
+          "title": "Error",
+          "message": "Please complete origin and destination"
+        },
+        "sourceError": "Could not create origin location",
+        "destinationError": "Could not create destination location",
+        "success": {
+          "title": "Success",
+          "message": "Companion request created"
+        },
+        "error": {
+          "title": "Error",
+          "message": "Could not create request"
+        }
+      }
+    },
+    "manage": {
+      "title": "Manage request",
+      "applicantTitle": "Applicant",
+      "loading": "Loading...",
+      "loadingInfo": "Loading information...",
+      "emptyTitle": "No applicants",
+      "emptySubtitle": "No one is interested in accompanying you yet.",
+      "tripDetails": "Trip details",
+      "from": "From",
+      "to": "To",
+      "time": "Approximate time",
+      "description": "Description",
+      "accept": {
+        "title": "Accept request",
+        "message": "Are you sure you want to accept this user as your companion? A group will be automatically created to coordinate the trip.",
+        "cancel": "Cancel",
+        "confirm": "Accept",
+        "groupName": "Companion: {{source}} → {{destination}}",
+        "groupDescription": "Group created to coordinate the shared trip. Members: {{creator}} and {{companion}}",
+        "errorUserIds": "User IDs required to create group",
+        "error": {
+          "title": "Error",
+          "message": "Could not accept request"
+        }
+      },
+      "reject": {
+        "title": "Reject request",
+        "message": "Are you sure you want to reject this user?",
+        "cancel": "Cancel",
+        "confirm": "Reject",
+        "success": {
+          "title": "Request rejected",
+          "message": "You have rejected the applicant"
+        },
+        "error": {
+          "title": "Error",
+          "message": "Could not reject request"
+        }
+      },
+      "finish": {
+        "title": "Finish request",
+        "message": "Are you sure you want to finish this request? No more changes can be made.",
+        "cancel": "Cancel",
+        "confirm": "Finish",
+        "success": {
+          "title": "Request finished",
+          "message": "You have finished the request"
+        },
+        "error": {
+          "title": "Error",
+          "message": "Could not finish request"
+        }
+      },
+      "loadError": {
+        "title": "Error",
+        "message": "Could not load request data"
+      }
+    },
+    "request": {
+      "title": "Request to join",
+      "tripDetails": "Trip details",
+      "yourRequest": "Your request",
+      "subtitle": "Complete the information so the creator can know you better",
+      "departurePoint": {
+        "label": "Where are you leaving from?",
+        "placeholder": "E.g: \"Sants area\", \"near Glòries\", \"Hospitalet center\"",
+        "required": "REQUIRED"
+      },
+      "departureTime": {
+        "label": "At what approximate time?",
+        "placeholder": "E.g: \"around 7:00 PM\", \"before 10:00 PM\", \"at 6:30 PM\"",
+        "required": "REQUIRED"
+      },
+      "destinationDetail": {
+        "label": "Your specific destination",
+        "placeholder": "E.g: \"also UPC Nord\", \"near Diagonal Mar\", \"the same area\"",
+        "required": "REQUIRED",
+        "hint": "Is it the same destination or close to the creator's?"
+      },
+      "trustInfo": {
+        "label": "Tell them about yourself",
+        "placeholder": "E.g: \"I'm an engineering student at UPC\", \"I work in an office in the area\"...",
+        "required": "REQUIRED",
+        "hint": "Share information that builds trust (studies, work, interests...)"
+      },
+      "preview": {
+        "title": "Message preview",
+        "greeting": "Hello",
+        "from": "I'm leaving from {{point}}",
+        "time": "{{time}}",
+        "destination": "My destination is {{destination}}",
+        "info": "{{info}}"
+      },
+      "characterCount": "{{current}}/{{max}}",
+      "send": "Send request",
+      "sending": "Sending...",
+      "from": "From",
+      "to": "To",
+      "time": "Time",
+      "createdBy": "Created by {{name}}",
+      "validation": {
+        "departurePoint": {
+          "title": "Required field",
+          "message": "Please indicate where you are leaving from"
+        },
+        "departureTime": {
+          "title": "Required field",
+          "message": "Please indicate at what approximate time you are leaving"
+        },
+        "destinationDetail": {
+          "title": "Required field",
+          "message": "Please indicate your specific destination"
+        },
+        "trustInfo": {
+          "title": "Required field",
+          "message": "Please share something about yourself that builds trust"
+        }
+      },
+      "confirm": {
+        "title": "Confirm request",
+        "message": "Are you sure you want to send your request to join this trip?",
+        "cancel": "Cancel",
+        "send": "Send"
+      },
+      "success": {
+        "title": "Request sent!",
+        "message": "Your request has been sent to the trip creator. We'll notify you when they respond."
+      },
+      "error": {
+        "title": "Error",
+        "message": "Could not send request. Please try again."
+      },
+      "locationUnavailable": "Location unavailable"
+    }
   }
 }

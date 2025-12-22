@@ -1121,5 +1121,200 @@
   "alertModal": {
     "defaultConfirm": "Aceptar",
     "defaultCancel": "Cancelar"
+  },
+  "companion": {
+    "tabs": {
+      "explore": "Explorar",
+      "mine": "Mis Solicitudes"
+    },
+    "list": {
+      "searchPlaceholder": "Buscar por descripción, ubicación o usuario...",
+      "locationUnavailable": "Ubicación no disponible",
+      "locationUnnamed": "Ubicación sin nombre",
+      "states": {
+        "created": "Creada",
+        "pending": "Pendiente",
+        "matched": "Emparejada",
+        "inProgress": "En progreso",
+        "finished": "Finalizada",
+        "expired": "Expirada",
+        "cancelled": "Cancelada"
+      },
+      "chat": "Chat",
+      "manage": "Gestionar",
+      "join": "Unirme",
+      "emptyTitle": "No se encontraron solicitudes",
+      "emptySubtitle": "Intenta ajustar los filtros o crea una nueva solicitud"
+    },
+    "create": {
+      "title": "Nueva solicitud",
+      "titleLong": "Nueva solicitud de acompañamiento",
+      "originLabel": "Origen *",
+      "originPlaceholder": "Selecciona el origen",
+      "destinationLabel": "Destino *",
+      "destinationPlaceholder": "Selecciona el destino",
+      "timeLabel": "Hora aproximada de quedada",
+      "timePlaceholder": "Selecciona la hora (opcional)",
+      "descriptionLabel": "Descripción (opcional)",
+      "descriptionPlaceholder": "Añade detalles sobre el trayecto...",
+      "infoText": "Tu solicitud será visible para otros usuarios que puedan acompañarte en tu trayecto.",
+      "creating": "Creando...",
+      "createButton": "Crear solicitud",
+      "customLocation": "Ubicación personalizada",
+      "selectOrigin": "Selecciona el origen",
+      "selectDestination": "Selecciona el destino",
+      "done": "Listo",
+      "selectTime": "Seleccionar hora",
+      "alerts": {
+        "missingFields": {
+          "title": "Error",
+          "message": "Por favor completa origen y destino"
+        },
+        "sourceError": "No se pudo crear la ubicación de origen",
+        "destinationError": "No se pudo crear la ubicación de destino",
+        "success": {
+          "title": "Éxito",
+          "message": "Solicitud de acompañamiento creada"
+        },
+        "error": {
+          "title": "Error",
+          "message": "No se pudo crear la solicitud"
+        }
+      }
+    },
+    "manage": {
+      "title": "Gestionar solicitud",
+      "applicantTitle": "Solicitante",
+      "loading": "Cargando...",
+      "loadingInfo": "Cargando información...",
+      "emptyTitle": "Sin solicitantes",
+      "emptySubtitle": "Aún no hay nadie interesado en acompañarte.",
+      "tripDetails": "Detalles del viaje",
+      "from": "Desde",
+      "to": "Hasta",
+      "time": "Hora aproximada",
+      "description": "Descripción",
+      "accept": {
+        "title": "Aceptar solicitud",
+        "message": "¿Estás seguro de que quieres aceptar a este usuario como tu acompañante? Se creará automáticamente un grupo para coordinar el viaje.",
+        "cancel": "Cancelar",
+        "confirm": "Aceptar",
+        "groupName": "Acompañamiento: {{source}} → {{destination}}",
+        "groupDescription": "Grupo creado para coordinar el viaje compartido. Miembros: {{creator}} y {{companion}}",
+        "errorUserIds": "IDs de usuario requeridos para crear el grupo",
+        "error": {
+          "title": "Error",
+          "message": "No se pudo aceptar la solicitud"
+        }
+      },
+      "reject": {
+        "title": "Rechazar solicitud",
+        "message": "¿Estás seguro de que quieres rechazar a este usuario?",
+        "cancel": "Cancelar",
+        "confirm": "Rechazar",
+        "success": {
+          "title": "Solicitud rechazada",
+          "message": "Has rechazado al solicitante"
+        },
+        "error": {
+          "title": "Error",
+          "message": "No se pudo rechazar la solicitud"
+        }
+      },
+      "finish": {
+        "title": "Finalizar solicitud",
+        "message": "¿Estás seguro de que quieres finalizar esta solicitud? No se podrán hacer más cambios.",
+        "cancel": "Cancelar",
+        "confirm": "Finalizar",
+        "success": {
+          "title": "Solicitud finalizada",
+          "message": "Has finalizado la solicitud"
+        },
+        "error": {
+          "title": "Error",
+          "message": "No se pudo finalizar la solicitud"
+        }
+      },
+      "loadError": {
+        "title": "Error",
+        "message": "No se pudieron cargar los datos de la solicitud"
+      }
+    },
+    "request": {
+      "title": "Solicitar acompañar",
+      "tripDetails": "Detalles del viaje",
+      "yourRequest": "Tu solicitud",
+      "subtitle": "Completa la información para que el creador pueda conocerte mejor",
+      "departurePoint": {
+        "label": "¿Desde dónde sales?",
+        "placeholder": "Ej: \"la zona de Sants\", \"cerca de Glòries\", \"Hospitalet centro\"",
+        "required": "OBLIGATORIO"
+      },
+      "departureTime": {
+        "label": "¿A qué hora aproximada?",
+        "placeholder": "Ej: \"sobre las 19:00\", \"antes de las 22:00\", \"a las 18:30\"",
+        "required": "OBLIGATORIO"
+      },
+      "destinationDetail": {
+        "label": "Tu destino específico",
+        "placeholder": "Ej: \"también la UPC Nord\", \"cerca de Diagonal Mar\", \"la misma zona\"",
+        "required": "OBLIGATORIO",
+        "hint": "¿Es el mismo destino o cercano al del creador?"
+      },
+      "trustInfo": {
+        "label": "Cuéntale algo sobre ti",
+        "placeholder": "Ej: \"Soy estudiante de ingeniería en la UPC\", \"Trabajo en una oficina por la zona\"...",
+        "required": "OBLIGATORIO",
+        "hint": "Comparte información que genere confianza (estudios, trabajo, intereses...)"
+      },
+      "preview": {
+        "title": "Vista previa del mensaje",
+        "greeting": "Hola",
+        "from": "Salgo desde {{point}}",
+        "time": "{{time}}",
+        "destination": "Mi destino es {{destination}}",
+        "info": "{{info}}"
+      },
+      "characterCount": "{{current}}/{{max}}",
+      "send": "Enviar solicitud",
+      "sending": "Enviando...",
+      "from": "Desde",
+      "to": "Hasta",
+      "time": "Hora",
+      "createdBy": "Creado por {{name}}",
+      "validation": {
+        "departurePoint": {
+          "title": "Campo requerido",
+          "message": "Por favor, indica desde dónde sales"
+        },
+        "departureTime": {
+          "title": "Campo requerido",
+          "message": "Por favor, indica a qué hora aproximada sales"
+        },
+        "destinationDetail": {
+          "title": "Campo requerido",
+          "message": "Por favor, indica tu destino específico"
+        },
+        "trustInfo": {
+          "title": "Campo requerido",
+          "message": "Por favor, comparte algo sobre ti que genere confianza"
+        }
+      },
+      "confirm": {
+        "title": "Confirmar solicitud",
+        "message": "¿Estás seguro de que quieres enviar tu solicitud para unirte a este viaje?",
+        "cancel": "Cancelar",
+        "send": "Enviar"
+      },
+      "success": {
+        "title": "¡Solicitud enviada!",
+        "message": "Tu solicitud ha sido enviada al creador del viaje. Te notificaremos cuando responda."
+      },
+      "error": {
+        "title": "Error",
+        "message": "No se pudo enviar la solicitud. Inténtalo de nuevo."
+      },
+      "locationUnavailable": "Ubicación no disponible"
+    }
   }
 }
