@@ -334,5 +334,48 @@
       "title": "Unir-se amb Codi",
       "description": "Introdueix un codi de 8 dígits per unir-te a un grup existent"
     }
+  },
+  "groups": {
+    "layout": {
+      "confianza": "Confiança",
+      "temporal": "Temporal",
+      "companion": "Companion",
+      "search": "Cercar"
+    },
+    "confianza": {
+      "emptyTitle": "Encara no tens grups de confiança",
+      "emptySubtitle": "Crea'n un amb el botó +",
+      "noteText": "Aquests grups són permanents"
+    },
+    "temporal": {
+      "emptyTitle": "Encara no tens grups temporals",
+      "emptySubtitle": "Crea'n un amb el botó +",
+      "noteText": "Tots els grups s'eliminaran 24h després de finalitzar 🗑️"
+    },
+    "companion": {
+      "loading": "Carregant...",
+      "verification": {
+        "pending": {
+          "title": "Verificació Pendent",
+          "message": "El teu compte està en procés de verificació. Podràs accedir a les sol·licituds d'acompanyament un cop la teva verificació sigui aprovada."
+        }
+      },
+      "alerts": {
+        "cannotCreateTitle": "No pots crear una altra sol·licitud",
+        "cannotCreateMessage": "Ja tens una sol·licitud d'acompanyament en estat \"Creada\". Cancel·la-la o edita-la abans de crear-ne una de nova.",
+        "errorCreatingTitle": "Error en crear",
+        "deleteRequestTitle": "Eliminar sol·licitud",
+        "deleteRequestMessage": "Estàs segur que vols eliminar aquesta sol·licitud d'acompanyament?",
+        "cancel": "Cancel·lar",
+        "delete": "Eliminar",
+        "successTitle": "Èxit",
+        "requestDeleted": "Sol·licitud eliminada correctament",
+        "errorTitle": "Error",
+        "couldNotDelete": "No s'ha pogut eliminar la sol·licitud",
+        "groupNotFound": "No s'ha trobat el grup associat a aquesta sol·licitud",
+        "noGroupId": "Aquesta sol·licitud no té un grup associat",
+        "couldNotOpenChat": "No s'ha pogut obrir el xat del grup"
+      }
+    }
   }
 }

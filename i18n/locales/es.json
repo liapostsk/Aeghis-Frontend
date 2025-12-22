@@ -334,5 +334,48 @@
       "title": "Unirse con Código",
       "description": "Ingresa un código de 8 dígitos para unirte a un grupo existente"
     }
+  },
+  "groups": {
+    "layout": {
+      "confianza": "Confianza",
+      "temporal": "Temporal",
+      "companion": "Companion",
+      "search": "Buscar"
+    },
+    "confianza": {
+      "emptyTitle": "Aún no tienes grupos de confianza",
+      "emptySubtitle": "Crea uno con el botón +",
+      "noteText": "Estos grupos son permanentes"
+    },
+    "temporal": {
+      "emptyTitle": "Aún no tienes grupos temporales",
+      "emptySubtitle": "Crea uno con el botón +",
+      "noteText": "Todos los grupos se eliminarán 24h después de finalizar 🗑️"
+    },
+    "companion": {
+      "loading": "Cargando...",
+      "verification": {
+        "pending": {
+          "title": "Verificación Pendiente",
+          "message": "Tu cuenta está en proceso de verificación. Podrás acceder a las solicitudes de acompañamiento una vez que tu verificación sea aprobada."
+        }
+      },
+      "alerts": {
+        "cannotCreateTitle": "No puedes crear otra solicitud",
+        "cannotCreateMessage": "Ya tienes una solicitud de acompañamiento en estado \"Creada\". Cancélala o edítala antes de crear una nueva.",
+        "errorCreatingTitle": "Error al crear",
+        "deleteRequestTitle": "Eliminar solicitud",
+        "deleteRequestMessage": "¿Estás seguro de que quieres eliminar esta solicitud de acompañamiento?",
+        "cancel": "Cancelar",
+        "delete": "Eliminar",
+        "successTitle": "Éxito",
+        "requestDeleted": "Solicitud eliminada correctamente",
+        "errorTitle": "Error",
+        "couldNotDelete": "No se pudo eliminar la solicitud",
+        "groupNotFound": "No se encontró el grupo asociado a esta solicitud",
+        "noGroupId": "Esta solicitud no tiene un grupo asociado",
+        "couldNotOpenChat": "No se pudo abrir el chat del grupo"
+      }
+    }
   }
 }

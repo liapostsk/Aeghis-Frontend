@@ -334,5 +334,48 @@
       "title": "Join with Code",
       "description": "Enter an 8-digit code to join an existing group"
     }
+  },
+  "groups": {
+    "layout": {
+      "confianza": "Trusted",
+      "temporal": "Temporary",
+      "companion": "Companion",
+      "search": "Search"
+    },
+    "confianza": {
+      "emptyTitle": "No trusted groups yet",
+      "emptySubtitle": "Create one with the + button",
+      "noteText": "These groups are permanent"
+    },
+    "temporal": {
+      "emptyTitle": "No temporary groups yet",
+      "emptySubtitle": "Create one with the + button",
+      "noteText": "All groups will be deleted 24h after finishing 🗑️"
+    },
+    "companion": {
+      "loading": "Loading...",
+      "verification": {
+        "pending": {
+          "title": "Verification Pending",
+          "message": "Your account is being verified. You will be able to access companion requests once your verification is approved."
+        }
+      },
+      "alerts": {
+        "cannotCreateTitle": "Cannot create another request",
+        "cannotCreateMessage": "You already have a companion request in \"Created\" state. Cancel or edit it before creating a new one.",
+        "errorCreatingTitle": "Error creating",
+        "deleteRequestTitle": "Delete request",
+        "deleteRequestMessage": "Are you sure you want to delete this companion request?",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "successTitle": "Success",
+        "requestDeleted": "Request deleted successfully",
+        "errorTitle": "Error",
+        "couldNotDelete": "Could not delete the request",
+        "groupNotFound": "Group associated with this request not found",
+        "noGroupId": "This request has no associated group",
+        "couldNotOpenChat": "Could not open group chat"
+      }
+    }
   }
 }

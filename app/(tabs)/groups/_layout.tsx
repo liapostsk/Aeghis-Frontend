@@ -3,6 +3,7 @@ import { Stack, Slot, Link, usePathname, Href } from 'expo-router';
 import { View, Text, Pressable, TextInput, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 type context = {
   search: String;
@@ -12,13 +13,14 @@ type context = {
 const SearchContext = createContext<context | null>(null);
 export const useGroupSeach = () => useContext(SearchContext)!;
 
-const tabs: Array<{id: string; label: string; href: Href; }> = [
-  { id: 'confianza', label: 'Confianza', href: '/(tabs)/groups' },
-  { id: 'temporal', label: 'Temporal', href: '/(tabs)/groups/temporal' },
-  { id: 'companion', label: 'Companion', href: '/(tabs)/groups/companion' },
-];
-
 export default function GroupsLayout() {
+  const { t } = useTranslation();
+
+  const tabs: Array<{id: string; label: string; href: Href; }> = [
+    { id: 'confianza', label: t('groups.layout.confianza'), href: '/(tabs)/groups' },
+    { id: 'temporal', label: t('groups.layout.temporal'), href: '/(tabs)/groups/temporal' },
+    { id: 'companion', label: t('groups.layout.companion'), href: '/(tabs)/groups/companion' },
+  ];
 
   const [search, setSearch] = useState('');
   const pathname = usePathname();
@@ -52,7 +54,7 @@ export default function GroupsLayout() {
           <View style={styles.searchBar}>
             <Ionicons name="search" size={20} color="#7A33CC" style={styles.searchIcon} />
             <TextInput
-              placeholder="Search"
+              placeholder={t('groups.layout.search')}
               placeholderTextColor="#999"
               style={styles.searchInput}
               value={search}

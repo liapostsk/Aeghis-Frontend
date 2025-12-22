@@ -2,8 +2,10 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import GroupsList from '@/components/groups/GroupsList';
 import GroupsButton from '@/components/groups/GrupsButton';
+import { useTranslation } from 'react-i18next';
 
 export default function TrustedScreen() {
+  const { t } = useTranslation();
   const load = () => {
     // Esta función se pasa al botón para recargar cuando se cree un grupo
     console.log('Recargando grupos de confianza...');
@@ -13,9 +15,9 @@ export default function TrustedScreen() {
     <View style={styles.container}>
       <GroupsList
         groupType="CONFIANZA"
-        emptyTitle="No trusted groups yet"
-        emptySubtitle="Create one with the + button"
-        noteText="This groups are permanent"
+        emptyTitle={t('groups.confianza.emptyTitle')}
+        emptySubtitle={t('groups.confianza.emptySubtitle')}
+        noteText={t('groups.confianza.noteText')}
       />
       <GroupsButton
         kind="CONFIANZA"

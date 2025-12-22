@@ -25,11 +25,13 @@ import RequestJoinCompanion from '@/components/groups/companion/RequestJoinCompa
 import CompanionTabs from '@/components/groups/companion/CompanionTabs';
 import { router } from 'expo-router';
 import { getGroupById } from '@/api/backend/group/groupApi';
+import { useTranslation } from 'react-i18next';
 
 
 type CompanionRequest = CompanionRequestDto;
 
 export default function CompanionsGroups() {
+  const { t } = useTranslation();
   const { user } = useUserStore();
   const { getToken } = useAuth();
   const setToken = useTokenStore((state) => state.setToken);
@@ -115,8 +117,8 @@ export default function CompanionsGroups() {
     const alreadyCreated = myRequests.some(r => r.state === 'CREATED');
     if (alreadyCreated) {
       Alert.alert(
-        'No puedes crear otra solicitud',
-        'Ya tienes una solicitud de acompañamiento en estado "Creada". Cancélala o edítala antes de crear una nueva.'
+        t('groups.companion.alerts.cannotCreateTitle'),
+        t('groups.companion.alerts.cannotCreateMessage')
       );
       return;
     }
@@ -142,7 +144,7 @@ export default function CompanionsGroups() {
         error?.response?.data?.message ||
         'No se pudo crear la solicitud. Revisa que no tengas otra en estado "Creada".';
 
-      Alert.alert('Error al crear', backendMessage);
+      Alert.alert(t('groups.companion.alerts.errorCreatingTitle'), backendMessage);
     }
   };
 
@@ -161,12 +163,12 @@ export default function CompanionsGroups() {
 
   const handleDeleteRequest = async (requestId: number) => {
     Alert.alert(
-      'Eliminar solicitud',
-      '¿Estás seguro de que quieres eliminar esta solicitud de acompañamiento?',
+      t('groups.companion.alerts.deleteRequestTitle'),
+      t('groups.companion.alerts.deleteRequestMessage'),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('groups.companion.alerts.cancel'), style: 'cancel' },
         {
-          text: 'Eliminar',
+          text: t('groups.companion.alerts.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -176,10 +178,10 @@ export default function CompanionsGroups() {
               await deleteCompanionRequest(requestId);
               console.log('Solicitud eliminada:', requestId);
               await loadRequests();
-              Alert.alert('Éxito', 'Solicitud eliminada correctamente');
+              Alert.alert(t('groups.companion.alerts.successTitle'), t('groups.companion.alerts.requestDeleted'));
             } catch (error) {
               console.error('Error eliminando solicitud:', error);
-              Alert.alert('Error', 'No se pudo eliminar la solicitud');
+              Alert.alert(t('groups.companion.alerts.errorTitle'), t('groups.companion.alerts.couldNotDelete'));
             }
           },
         },
@@ -194,8 +196,8 @@ export default function CompanionsGroups() {
       // Verificar que existe el companionGroupId
       if (!request.companionGroupId) {
         Alert.alert(
-          'Chat no disponible', 
-          'El grupo asociado a esta solicitud aún no se ha creado.'
+          t('groups.companion.alerts.errorTitle'),
+          t('groups.companion.alerts.noGroupId')
         );
         return;
       }
@@ -213,13 +215,13 @@ export default function CompanionsGroups() {
         router.push(`/chat?groupId=${group.id}`);
       } else {
         Alert.alert(
-          'Chat no encontrado', 
-          'No se pudo encontrar el grupo asociado a esta solicitud.'
+          t('groups.companion.alerts.errorTitle'),
+          t('groups.companion.alerts.groupNotFound')
         );
       }
     } catch (error) {
       console.error('❌ Error abriendo chat:', error);
-      Alert.alert('Error', 'No se pudo abrir el chat del grupo');
+      Alert.alert(t('groups.companion.alerts.errorTitle'), t('groups.companion.alerts.couldNotOpenChat'));
     } finally {
       setRefreshing(false);
     }
@@ -228,7 +230,7 @@ export default function CompanionsGroups() {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>Cargando...</Text>
+        <Text style={styles.loadingText}>{t('groups.companion.loading')}</Text>
       </View>
     );
   }
@@ -238,9 +240,9 @@ export default function CompanionsGroups() {
       return (
         <View style={styles.pendingContainer}>
           <Ionicons name="shield-checkmark" size={64} color="#7A33CC" style={{ marginBottom: 24 }} />
-          <Text style={styles.pendingTitle}>Verificación en proceso</Text>
+          <Text style={styles.pendingTitle}>{t('groups.companion.verification.pending.title')}</Text>
           <Text style={styles.pendingText}>
-            Tus fotos han sido enviadas correctamente. Un administrador revisará tu identidad en breve.
+            {t('groups.companion.verification.pending.message')}
           </Text>
         </View>
       );
