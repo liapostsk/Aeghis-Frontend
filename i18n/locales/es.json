@@ -335,6 +335,50 @@
       "description": "Ingresa un código de 8 dígitos para unirte a un grupo existente"
     }
   },
+  "admin": {
+    "title": "Panel Admin",
+    "subtitle": "Verificaciones Pendientes",
+    "loading": "Cargando verificaciones...",
+    "pendingUsers": "usuarios pendientes de verificación",
+    "stats": {
+      "pending": "Pendientes:"
+    },
+    "status": {
+      "verified": "Verificado",
+      "rejected": "Rechazado",
+      "pending": "Pendiente de revisión"
+    },
+    "empty": "No hay verificaciones pendientes",
+    "modal": {
+      "title": "Revisar Verificación",
+      "selfie": "📸 Selfie",
+      "document": "🪪 Documento",
+      "noPhoto": "No disponible"
+    },
+    "actions": {
+      "approve": "Aprobar",
+      "reject": "Rechazar",
+      "cancel": "Cancelar",
+      "exit": "Salir"
+    },
+    "alerts": {
+      "approveTitle": "Aprobar Verificación",
+      "approveMessage": "¿Estás seguro de que quieres aprobar a {{name}}?",
+      "approveSuccess": "✅ Aprobado",
+      "approveSuccessMessage": "{{name}} ha sido verificado correctamente",
+      "approveError": "No se pudo aprobar la verificación",
+      "rejectTitle": "Rechazar Verificación",
+      "rejectMessage": "¿Estás seguro de que quieres rechazar a {{name}}?",
+      "rejectSuccess": "❌ Rechazado",
+      "rejectSuccessMessage": "La verificación de {{name}} ha sido rechazada",
+      "rejectError": "No se pudo rechazar la verificación",
+      "signOutTitle": "Cerrar Sesión",
+      "signOutMessage": "¿Estás seguro de que quieres cerrar sesión?",
+      "signOutError": "No se pudo cerrar sesión",
+      "loadError": "No se pudieron cargar los usuarios pendientes",
+      "error": "Error"
+    }
+  },
   "groups": {
     "layout": {
       "confianza": "Confianza",

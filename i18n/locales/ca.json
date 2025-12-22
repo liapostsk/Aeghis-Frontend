@@ -335,6 +335,50 @@
       "description": "Introdueix un codi de 8 dígits per unir-te a un grup existent"
     }
   },
+  "admin": {
+    "title": "Panell Admin",
+    "subtitle": "Verificacions Pendents",
+    "loading": "Carregant verificacions...",
+    "pendingUsers": "usuaris pendents de verificació",
+    "stats": {
+      "pending": "Pendents:"
+    },
+    "status": {
+      "verified": "Verificat",
+      "rejected": "Rebutjat",
+      "pending": "Pendent de revisió"
+    },
+    "empty": "No hi ha verificacions pendents",
+    "modal": {
+      "title": "Revisar Verificació",
+      "selfie": "📸 Selfie",
+      "document": "🪪 Document",
+      "noPhoto": "No disponible"
+    },
+    "actions": {
+      "approve": "Aprovar",
+      "reject": "Rebutjar",
+      "cancel": "Cancel·lar",
+      "exit": "Sortir"
+    },
+    "alerts": {
+      "approveTitle": "Aprovar Verificació",
+      "approveMessage": "Estàs segur que vols aprovar {{name}}?",
+      "approveSuccess": "✅ Aprovat",
+      "approveSuccessMessage": "{{name}} ha estat verificat correctament",
+      "approveError": "No s'ha pogut aprovar la verificació",
+      "rejectTitle": "Rebutjar Verificació",
+      "rejectMessage": "Estàs segur que vols rebutjar {{name}}?",
+      "rejectSuccess": "❌ Rebutjat",
+      "rejectSuccessMessage": "La verificació de {{name}} ha estat rebutjada",
+      "rejectError": "No s'ha pogut rebutjar la verificació",
+      "signOutTitle": "Tancar Sessió",
+      "signOutMessage": "Estàs segur que vols tancar la sessió?",
+      "signOutError": "No s'ha pogut tancar la sessió",
+      "loadError": "No s'han pogut carregar els usuaris pendents",
+      "error": "Error"
+    }
+  },
   "groups": {
     "layout": {
       "confianza": "Confiança",

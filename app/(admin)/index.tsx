@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useSessionState } from '@/lib/hooks/useSessionState';
 import {
   View,
@@ -21,6 +21,7 @@ import { getVerificationPhotos } from '@/api/firebase/storage/photoService';
 import { UserDto } from '@/api/backend/types';
 import { useUserStore, ValidationStatus } from '@/lib/storage/useUserStorage';
 import { useTokenStore } from '@/lib/auth/tokenStore';
+import { useTranslation } from 'react-i18next';
 
 interface UserWithPhotos extends UserDto {
   selfieUrl?: string;
@@ -29,6 +30,7 @@ interface UserWithPhotos extends UserDto {
 }
 
 export default function AdminVerificationScreen() {
+  const { t } = useTranslation();
   const { state } = useSessionState();
   const { signOut, getToken } = useAuth();
   const [users, setUsers] = useState<UserWithPhotos[]>([]);
@@ -51,7 +53,7 @@ export default function AdminVerificationScreen() {
       const token = await getToken();
       setToken(token);
       const pendingUsers = await getUsersPendingVerification();
-      console.log(`📋 ${pendingUsers.length} usuarios pendientesr de verificación`);
+      console.log(`📋 ${pendingUsers.length} ${t('admin.pendingUsers')}`);
 
       const usersWithPhotos = await Promise.all(
         pendingUsers.map(async (user) => {
@@ -94,7 +96,7 @@ export default function AdminVerificationScreen() {
       setUsers(usersWithBothPhotos);
     } catch (error) {
       console.log('Error cargando usuarios:', error);
-      Alert.alert('Error', 'No se pudieron cargar los usuarios pendientes');
+      Alert.alert(t('admin.alerts.error'), t('admin.alerts.loadError'));
     } finally {
       if (isRefreshing) {
         setRefreshing(false);
@@ -122,30 +124,30 @@ export default function AdminVerificationScreen() {
     return (
       <SafeAreaView style={styles.loadingContainer} edges={['top']}>
         <ActivityIndicator size="large" color="#3B82F6" />
-        <Text style={styles.loadingText}>Cargando verificaciones...</Text>
+        <Text style={styles.loadingText}>{t('admin.loading')}</Text>
       </SafeAreaView>
     );
   }
 
   const handleApprove = async (user: UserWithPhotos) => {
     Alert.alert(
-      'Aprobar Verificación',
-      `¿Estás seguro de que quieres aprobar a ${user.name}?`,
+      t('admin.alerts.approveTitle'),
+      t('admin.alerts.approveMessage', { name: user.name }),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('admin.actions.cancel'), style: 'cancel' },
         {
-          text: 'Aprobar',
+          text: t('admin.actions.approve'),
           onPress: async () => {
             setProcessing(true);
             try {
                 const token = await getToken();
                 setToken(token);
                 await updateUserVerificationStatus(user.id, ValidationStatus.VERIFIED);
-                Alert.alert('✅ Aprobado', `${user.name} ha sido verificado correctamente`);
+                Alert.alert(t('admin.alerts.approveSuccess'), t('admin.alerts.approveSuccessMessage', { name: user.name }));
                 loadPendingUsers();
                 setModalVisible(false);
             } catch (error) {
-                Alert.alert('Error', 'No se pudo aprobar la verificación');
+                Alert.alert(t('admin.alerts.error'), t('admin.alerts.approveError'));
             } finally {
               setProcessing(false);
             }
@@ -157,12 +159,12 @@ export default function AdminVerificationScreen() {
 
   const handleReject = async (user: UserWithPhotos) => {
     Alert.alert(
-      'Rechazar Verificación',
-      `¿Estás seguro de que quieres rechazar a ${user.name}?`,
+      t('admin.alerts.rejectTitle'),
+      t('admin.alerts.rejectMessage', { name: user.name }),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('admin.actions.cancel'), style: 'cancel' },
         {
-          text: 'Rechazar',
+          text: t('admin.actions.reject'),
           style: 'destructive',
           onPress: async () => {
             setProcessing(true);
@@ -170,11 +172,11 @@ export default function AdminVerificationScreen() {
                 const token = await getToken();
                 setToken(token);
               await updateUserVerificationStatus(user.id, ValidationStatus.REJECTED);
-              Alert.alert('❌ Rechazado', `La verificación de ${user.name} ha sido rechazada`);
+              Alert.alert(t('admin.alerts.rejectSuccess'), t('admin.alerts.rejectSuccessMessage', { name: user.name }));
               loadPendingUsers();
               setModalVisible(false);
             } catch (error) {
-              Alert.alert('Error', 'No se pudo rechazar la verificación');
+              Alert.alert(t('admin.alerts.error'), t('admin.alerts.rejectError'));
             } finally {
               setProcessing(false);
             }
@@ -186,12 +188,12 @@ export default function AdminVerificationScreen() {
 
   const handleSignOut = async () => {
     Alert.alert(
-      'Cerrar Sesión',
-      '¿Estás seguro de que quieres cerrar sesión?',
+      t('admin.alerts.signOutTitle'),
+      t('admin.alerts.signOutMessage'),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('admin.actions.cancel'), style: 'cancel' },
         {
-          text: 'Salir',
+          text: t('admin.actions.exit'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -202,7 +204,7 @@ export default function AdminVerificationScreen() {
               setToken(null);
               router.replace('/(auth)');
             } catch (error) {
-              Alert.alert('Error', 'No se pudo cerrar sesión');
+              Alert.alert(t('admin.alerts.error'), t('admin.alerts.signOutError'));
             }
           },
         },
@@ -216,20 +218,20 @@ export default function AdminVerificationScreen() {
       switch (item.verify) {
         case ValidationStatus.VERIFIED:
           return {
-            text: 'Verificado',
+            text: t('admin.status.verified'),
             color: '#10B981',
             icon: 'checkmark-circle' as const,
           };
         case ValidationStatus.REJECTED:
           return {
-            text: 'Rechazado',
+            text: t('admin.status.rejected'),
             color: '#EF4444',
             icon: 'close-circle' as const,
           };
         case ValidationStatus.PENDING:
         default:
           return {
-            text: 'Pendiente de revisión',
+            text: t('admin.status.pending'),
             color: '#F59E0B',
             icon: 'time' as const,
           };
@@ -278,8 +280,8 @@ export default function AdminVerificationScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Text style={styles.title}>Panel Admin</Text>
-          <Text style={styles.subtitle}>Verificaciones Pendientes</Text>
+          <Text style={styles.title}>{t('admin.title')}</Text>
+          <Text style={styles.subtitle}>{t('admin.subtitle')}</Text>
         </View>
         <View style={styles.headerActions}>
           <Pressable 
@@ -302,7 +304,7 @@ export default function AdminVerificationScreen() {
       <View style={styles.statsBar}>
         <View style={styles.statItem}>
           <Ionicons name="time-outline" size={18} color="#F59E0B" />
-          <Text style={styles.statLabel}>Pendientes:</Text>
+          <Text style={styles.statLabel}>{t('admin.stats.pending')}</Text>
           <Text style={styles.statValue}>{users.length}</Text>
         </View>
       </View>
@@ -310,7 +312,7 @@ export default function AdminVerificationScreen() {
       {users.length === 0 ? (
         <View style={styles.emptyState}>
           <Ionicons name="checkmark-circle-outline" size={64} color="#D1D5DB" />
-          <Text style={styles.emptyText}>No hay verificaciones pendientes</Text>
+          <Text style={styles.emptyText}>{t('admin.empty')}</Text>
         </View>
       ) : (
         <FlatList
@@ -332,7 +334,7 @@ export default function AdminVerificationScreen() {
             <ScrollView contentContainerStyle={styles.modalScrollContent}>
               <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Revisar Verificación</Text>
+                <Text style={styles.modalTitle}>{t('admin.modal.title')}</Text>
                 <Pressable onPress={() => setModalVisible(false)}>
                   <Ionicons name="close" size={24} color="#6B7280" />
                 </Pressable>
@@ -352,7 +354,7 @@ export default function AdminVerificationScreen() {
                   </View>
 
                   <View style={styles.photoSection}>
-                    <Text style={styles.photoLabel}>📸 Selfie</Text>
+                    <Text style={styles.photoLabel}>{t('admin.modal.selfie')}</Text>
                     {selectedUser.selfieUrl ? (
                       <Image 
                         source={{ uri: selectedUser.selfieUrl }} 
@@ -362,13 +364,13 @@ export default function AdminVerificationScreen() {
                     ) : (
                       <View style={styles.noPhoto}>
                         <Ionicons name="image-outline" size={40} color="#D1D5DB" />
-                        <Text style={styles.noPhotoText}>No disponible</Text>
+                        <Text style={styles.noPhotoText}>{t('admin.modal.noPhoto')}</Text>
                       </View>
                     )}
                   </View>
 
                   <View style={styles.photoSection}>
-                    <Text style={styles.photoLabel}>🪪 Documento</Text>
+                    <Text style={styles.photoLabel}>{t('admin.modal.document')}</Text>
                     {selectedUser.documentUrl ? (
                       <Image 
                         source={{ uri: selectedUser.documentUrl }} 
@@ -378,7 +380,7 @@ export default function AdminVerificationScreen() {
                     ) : (
                       <View style={styles.noPhoto}>
                         <Ionicons name="image-outline" size={40} color="#D1D5DB" />
-                        <Text style={styles.noPhotoText}>No disponible</Text>
+                        <Text style={styles.noPhotoText}>{t('admin.modal.noPhoto')}</Text>
                       </View>
                     )}
                   </View>
@@ -394,7 +396,7 @@ export default function AdminVerificationScreen() {
                       ) : (
                         <>
                           <Ionicons name="close-circle" size={20} color="#FFF" />
-                          <Text style={styles.actionButtonText}>Rechazar</Text>
+                          <Text style={styles.actionButtonText}>{t('admin.actions.reject')}</Text>
                         </>
                       )}
                     </Pressable>
@@ -409,7 +411,7 @@ export default function AdminVerificationScreen() {
                       ) : (
                         <>
                           <Ionicons name="checkmark-circle" size={20} color="#FFF" />
-                          <Text style={styles.actionButtonText}>Aprobar</Text>
+                          <Text style={styles.actionButtonText}>{t('admin.actions.approve')}</Text>
                         </>
                       )}
                     </Pressable>

@@ -335,6 +335,50 @@
       "description": "Enter an 8-digit code to join an existing group"
     }
   },
+  "admin": {
+    "title": "Admin Panel",
+    "subtitle": "Pending Verifications",
+    "loading": "Loading verifications...",
+    "pendingUsers": "pending users for verification",
+    "stats": {
+      "pending": "Pending:"
+    },
+    "status": {
+      "verified": "Verified",
+      "rejected": "Rejected",
+      "pending": "Pending review"
+    },
+    "empty": "No pending verifications",
+    "modal": {
+      "title": "Review Verification",
+      "selfie": "📸 Selfie",
+      "document": "🪪 Document",
+      "noPhoto": "Not available"
+    },
+    "actions": {
+      "approve": "Approve",
+      "reject": "Reject",
+      "cancel": "Cancel",
+      "exit": "Exit"
+    },
+    "alerts": {
+      "approveTitle": "Approve Verification",
+      "approveMessage": "Are you sure you want to approve {{name}}?",
+      "approveSuccess": "✅ Approved",
+      "approveSuccessMessage": "{{name}} has been successfully verified",
+      "approveError": "Could not approve verification",
+      "rejectTitle": "Reject Verification",
+      "rejectMessage": "Are you sure you want to reject {{name}}?",
+      "rejectSuccess": "❌ Rejected",
+      "rejectSuccessMessage": "{{name}}'s verification has been rejected",
+      "rejectError": "Could not reject verification",
+      "signOutTitle": "Sign Out",
+      "signOutMessage": "Are you sure you want to sign out?",
+      "signOutError": "Could not sign out",
+      "loadError": "Could not load pending users",
+      "error": "Error"
+    }
+  },
   "groups": {
     "layout": {
       "confianza": "Trusted",
