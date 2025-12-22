@@ -421,5 +421,64 @@
         "couldNotOpenChat": "No s'ha pogut obrir el xat del grup"
       }
     }
+  },
+  "account": {
+    "title": "Informació del Compte",
+    "name": "Nom complet",
+    "namePlaceholder": "Introdueix el teu nom complet",
+    "email": "Correu Electrònic",
+    "emailPlaceholder": "exemple@correu.com",
+    "phone": "Telèfon",
+    "phonePlaceholder": "+1 234 567 8900",
+    "saveChanges": "Desar Canvis",
+    "cancel": "Cancel·lar",
+    "editProfile": "Editar Informació",
+    "dangerZone": "Zona de Perill",
+    "deleteAccount": "Eliminar compte",
+    "deleteAccountWarning": "Aquesta acció no es pot desfer",
+    "validation": {
+      "nameRequired": "El nom és requerit.",
+      "emailRequired": "El correu electrònic és requerit.",
+      "validEmail": "Si us plau, introdueix un correu electrònic vàlid.",
+      "phoneRequired": "El telèfon és requerit.",
+      "validPhone": "Si us plau, introdueix un número de telèfon vàlid.",
+      "noChanges": "No hi ha canvis per desar.",
+      "userIdUndefined": "No s'ha pogut actualitzar l'usuari: ID no definit.",
+      "updateError": "No s'ha pogut actualitzar la informació. Torna-ho a provar."
+    },
+    "deleteWarning": {
+      "title": "Atenció!",
+      "message": "Estàs a punt d'eliminar el teu compte permanentment. Aquesta acció no es pot desfer.",
+      "willLose": "S'eliminaran totes les teves dades, incloent:",
+      "personalInfo": "Informació personal",
+      "activity": "Historial d'activitat",
+      "settings": "Configuracions desades",
+      "confirmPrompt": "Per confirmar, escriu \"eliminar\" al camp de sota:",
+      "confirmPlaceholder": "Escriu 'eliminar' per confirmar",
+      "confirmError": "Si us plau, escriu \"eliminar\" per confirmar."
+    },
+    "verification": {
+      "title": "Verifica el teu {{type}}",
+      "email": "correu",
+      "phone": "telèfon",
+      "message": "Introdueix el codi que has rebut per {{method}}.",
+      "emailMethod": "correu electrònic",
+      "smsMethod": "SMS",
+      "codePlaceholder": "Codi de verificació",
+      "verify": "Verificar",
+      "emailSuccess": "Correu verificat i actualitzat correctament.",
+      "phoneSuccess": "Telèfon verificat i actualitzat correctament.",
+      "invalidCode": "Codi invàlid o caducat. Torna-ho a intentar."
+    },
+    "alerts": {
+      "error": "Error",
+      "info": "Informació",
+      "success": "Èxit"
+    }
+  },
+  "profile": {
+    "refreshing": "Refrescant estat de l'usuari des del backend...",
+    "userUpdated": "Usuari actualitzat des del backend",
+    "updateError": "No s'ha pogut actualitzar l'usuari:"
   }
 }

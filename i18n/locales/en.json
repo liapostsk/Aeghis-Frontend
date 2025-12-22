@@ -421,5 +421,64 @@
         "couldNotOpenChat": "Could not open group chat"
       }
     }
+  },
+  "account": {
+    "title": "Account Information",
+    "name": "Full name",
+    "namePlaceholder": "Enter your full name",
+    "email": "Email Address",
+    "emailPlaceholder": "example@email.com",
+    "phone": "Phone",
+    "phonePlaceholder": "+1 234 567 8900",
+    "saveChanges": "Save Changes",
+    "cancel": "Cancel",
+    "editProfile": "Edit Information",
+    "dangerZone": "Danger Zone",
+    "deleteAccount": "Delete account",
+    "deleteAccountWarning": "This action cannot be undone",
+    "validation": {
+      "nameRequired": "Name is required.",
+      "emailRequired": "Email address is required.",
+      "validEmail": "Please enter a valid email address.",
+      "phoneRequired": "Phone number is required.",
+      "validPhone": "Please enter a valid phone number.",
+      "noChanges": "No changes to save.",
+      "userIdUndefined": "Could not update user: ID undefined.",
+      "updateError": "Could not update information. Please try again."
+    },
+    "deleteWarning": {
+      "title": "Warning!",
+      "message": "You are about to permanently delete your account. This action cannot be undone.",
+      "willLose": "All your data will be deleted, including:",
+      "personalInfo": "Personal information",
+      "activity": "Activity history",
+      "settings": "Saved settings",
+      "confirmPrompt": "To confirm, type \"delete\" in the field below:",
+      "confirmPlaceholder": "Type 'delete' to confirm",
+      "confirmError": "Please type \"delete\" to confirm."
+    },
+    "verification": {
+      "title": "Verify your {{type}}",
+      "email": "email",
+      "phone": "phone",
+      "message": "Enter the code you received via {{method}}.",
+      "emailMethod": "email",
+      "smsMethod": "SMS",
+      "codePlaceholder": "Verification code",
+      "verify": "Verify",
+      "emailSuccess": "Email verified and updated successfully.",
+      "phoneSuccess": "Phone verified and updated successfully.",
+      "invalidCode": "Invalid or expired code. Please try again."
+    },
+    "alerts": {
+      "error": "Error",
+      "info": "Information",
+      "success": "Success"
+    }
+  },
+  "profile": {
+    "refreshing": "Refreshing user state from backend...",
+    "userUpdated": "User updated from backend",
+    "updateError": "Could not update user:"
   }
 }

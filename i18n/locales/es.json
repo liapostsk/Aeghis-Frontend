@@ -421,5 +421,64 @@
         "couldNotOpenChat": "No se pudo abrir el chat del grupo"
       }
     }
+  },
+  "account": {
+    "title": "Información de Cuenta",
+    "name": "Nombre completo",
+    "namePlaceholder": "Ingresa tu nombre completo",
+    "email": "Correo Electrónico",
+    "emailPlaceholder": "ejemplo@correo.com",
+    "phone": "Teléfono",
+    "phonePlaceholder": "+1 234 567 8900",
+    "saveChanges": "Guardar Cambios",
+    "cancel": "Cancelar",
+    "editProfile": "Editar Información",
+    "dangerZone": "Zona de Peligro",
+    "deleteAccount": "Eliminar cuenta",
+    "deleteAccountWarning": "Esta acción no se puede deshacer",
+    "validation": {
+      "nameRequired": "El nombre es requerido.",
+      "emailRequired": "El correo electrónico es requerido.",
+      "validEmail": "Por favor ingresa un correo electrónico válido.",
+      "phoneRequired": "El teléfono es requerido.",
+      "validPhone": "Por favor ingresa un número de teléfono válido.",
+      "noChanges": "No hay cambios para guardar.",
+      "userIdUndefined": "No se pudo actualizar el usuario: ID no definido.",
+      "updateError": "No se pudo actualizar la información. Intenta nuevamente."
+    },
+    "deleteWarning": {
+      "title": "¡Atención!",
+      "message": "Estás a punto de eliminar tu cuenta permanentemente. Esta acción no se puede deshacer.",
+      "willLose": "Se eliminarán todos tus datos, incluyendo:",
+      "personalInfo": "Información personal",
+      "activity": "Historial de actividad",
+      "settings": "Configuraciones guardadas",
+      "confirmPrompt": "Para confirmar, escribe \"eliminar\" en el campo de abajo:",
+      "confirmPlaceholder": "Escribe 'eliminar' para confirmar",
+      "confirmError": "Por favor escribe \"eliminar\" para confirmar."
+    },
+    "verification": {
+      "title": "Verifica tu {{type}}",
+      "email": "correo",
+      "phone": "teléfono",
+      "message": "Ingresa el código que recibiste por {{method}}.",
+      "emailMethod": "correo electrónico",
+      "smsMethod": "SMS",
+      "codePlaceholder": "Código de verificación",
+      "verify": "Verificar",
+      "emailSuccess": "Correo verificado y actualizado correctamente.",
+      "phoneSuccess": "Teléfono verificado y actualizado correctamente.",
+      "invalidCode": "Código inválido o expirado. Intenta de nuevo."
+    },
+    "alerts": {
+      "error": "Error",
+      "info": "Información",
+      "success": "Éxito"
+    }
+  },
+  "profile": {
+    "refreshing": "Refrescando estado del usuario desde backend...",
+    "userUpdated": "Usuario actualizado desde backend",
+    "updateError": "No se pudo actualizar el usuario:"
   }
 }

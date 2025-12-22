@@ -9,12 +9,14 @@ import { mapUserToDto } from '@/api/backend/user/mapper';
 import { useAuth } from '@clerk/clerk-expo';
 import { useUser } from '@clerk/clerk-expo';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface profileHeaderProps {
   onDelete: () => void;
 }
 
 export default function AccountSettingsScreen({onDelete}: profileHeaderProps) {
+  const { t } = useTranslation();
   const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
   const { user: clerkUser } = useUser(); // Clerk user actual
@@ -61,34 +63,34 @@ export default function AccountSettingsScreen({onDelete}: profileHeaderProps) {
       setDeleteConfirmText('');
       onDelete();
     } else {
-      Alert.alert('Error', 'Por favor escribe "eliminar" para confirmar.');
+      Alert.alert(t('account.alerts.error'), t('account.deleteWarning.confirmError'));
     }
   };
 
   const handleSave = async () => {
     // Validaciones
     if (!name.trim()) {
-      Alert.alert('Error', 'El nombre es requerido.');
+      Alert.alert(t('account.alerts.error'), t('account.validation.nameRequired'));
       return;
     }
 
     if (!email.trim()) {
-      Alert.alert('Error', 'El correo electrónico es requerido.');
+      Alert.alert(t('account.alerts.error'), t('account.validation.emailRequired'));
       return;
     }
 
     if (!isValidEmail(email)) {
-      Alert.alert('Error', 'Por favor ingresa un correo electrónico válido.');
+      Alert.alert(t('account.alerts.error'), t('account.validation.validEmail'));
       return;
     }
 
     if (!phone.trim()) {
-      Alert.alert('Error', 'El teléfono es requerido.');
+      Alert.alert(t('account.alerts.error'), t('account.validation.phoneRequired'));
       return;
     }
 
     if (!isValidPhone(phone)) {
-      Alert.alert('Error', 'Por favor ingresa un número de teléfono válido.');
+      Alert.alert(t('account.alerts.error'), t('account.validation.validPhone'));
       return;
     }
 
@@ -98,13 +100,13 @@ export default function AccountSettingsScreen({onDelete}: profileHeaderProps) {
       phone.trim() !== user?.phone;
 
     if (!hasChanges) {
-      Alert.alert('Información', 'No hay cambios para guardar.');
+      Alert.alert(t('account.alerts.info'), t('account.validation.noChanges'));
       setEditable(false);
       return;
     }
 
     if (!user || user.id === undefined) {
-      Alert.alert('Error', 'No se pudo actualizar el usuario: ID no definido.');
+      Alert.alert(t('account.alerts.error'), t('account.validation.userIdUndefined'));
       return;
     }
 
@@ -151,7 +153,7 @@ export default function AccountSettingsScreen({onDelete}: profileHeaderProps) {
       }
     } catch (error) {
       console.error('Error actualizando usuario:', error);
-      Alert.alert('Error', 'No se pudo actualizar la información. Intenta nuevamente.');
+      Alert.alert(t('account.alerts.error'), t('account.validation.updateError'));
     }
 
     setEditable(false);
@@ -203,7 +205,7 @@ export default function AccountSettingsScreen({onDelete}: profileHeaderProps) {
 
         }
 
-        Alert.alert('Éxito', 'Correo verificado y actualizado correctamente.');
+        Alert.alert(t('account.alerts.success'), t('account.verification.emailSuccess'));
       }
 
       if (pendingVerification?.type === 'phone') {
@@ -244,14 +246,14 @@ export default function AccountSettingsScreen({onDelete}: profileHeaderProps) {
           }
         }
 
-        Alert.alert('Éxito', 'Teléfono verificado y actualizado correctamente.');
+        Alert.alert(t('account.alerts.success'), t('account.verification.phoneSuccess'));
       }
 
       setPendingVerification(null);
       setVerificationCode('');
     } catch (err) {
       console.error('Error al verificar:', err);
-      Alert.alert('Error', 'Código inválido o expirado. Intenta de nuevo.');
+      Alert.alert(t('account.alerts.error'), t('account.verification.invalidCode'));
     }
   };
 
@@ -273,32 +275,32 @@ export default function AccountSettingsScreen({onDelete}: profileHeaderProps) {
         <View style={styles.modalContent}>
           <View style={styles.warningHeader}>
             <Ionicons name="warning" size={50} color="#FF6B6B" />
-            <Text style={styles.warningTitle}>¡Atención!</Text>
+            <Text style={styles.warningTitle}>{t('account.deleteWarning.title')}</Text>
           </View>
           
           <Text style={styles.warningText}>
-            Estás a punto de eliminar tu cuenta permanentemente. Esta acción no se puede deshacer.
+            {t('account.deleteWarning.message')}
           </Text>
           
           <Text style={styles.warningSubtext}>
-            Se eliminarán todos tus datos, incluyendo:
+            {t('account.deleteWarning.willLose')}
           </Text>
           
           <View style={styles.warningList}>
-            <Text style={styles.warningListItem}>• Información personal</Text>
-            <Text style={styles.warningListItem}>• Historial de actividad</Text>
-            <Text style={styles.warningListItem}>• Configuraciones guardadas</Text>
+            <Text style={styles.warningListItem}>• {t('account.deleteWarning.personalInfo')}</Text>
+            <Text style={styles.warningListItem}>• {t('account.deleteWarning.activity')}</Text>
+            <Text style={styles.warningListItem}>• {t('account.deleteWarning.settings')}</Text>
           </View>
           
           <Text style={styles.confirmationText}>
-            Para confirmar, escribe "eliminar" en el campo de abajo:
+            {t('account.deleteWarning.confirmPrompt')}
           </Text>
           
           <TextInput
             style={styles.confirmationInput}
             value={deleteConfirmText}
             onChangeText={setDeleteConfirmText}
-            placeholder="Escribe 'eliminar' para confirmar"
+            placeholder={t('account.deleteWarning.confirmPlaceholder')}
             placeholderTextColor="#999"
             autoCapitalize="none"
           />
@@ -311,7 +313,7 @@ export default function AccountSettingsScreen({onDelete}: profileHeaderProps) {
                 setDeleteConfirmText('');
               }}
             >
-              <Text style={styles.cancelModalButtonText}>Cancelar</Text>
+              <Text style={styles.cancelModalButtonText}>{t('account.cancel')}</Text>
             </TouchableOpacity>
             
             <TouchableOpacity
@@ -322,7 +324,7 @@ export default function AccountSettingsScreen({onDelete}: profileHeaderProps) {
               onPress={handleDeleteAccount}
               disabled={deleteConfirmText.toLowerCase() !== 'eliminar'}
             >
-              <Text style={styles.deleteModalButtonText}>Eliminar Cuenta</Text>
+              <Text style={styles.deleteModalButtonText}>{t('account.deleteAccount')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -333,23 +335,23 @@ export default function AccountSettingsScreen({onDelete}: profileHeaderProps) {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        <Text style={styles.title}>Información de Cuenta</Text>
+        <Text style={styles.title}>{t('account.title')}</Text>
 
         <View style={styles.formContainer}>
           <View style={styles.field}>
-            <Text style={styles.label}>Nombre completo</Text>
+            <Text style={styles.label}>{t('account.name')}</Text>
             <TextInput
               style={[styles.input, !editable && styles.disabledInput]}
               value={name}
               onChangeText={setName}
               editable={editable}
-              placeholder="Ingresa tu nombre completo"
+              placeholder={t('account.namePlaceholder')}
               placeholderTextColor="#999"
             />
           </View>
 
           <View style={styles.field}>
-            <Text style={styles.label}>Correo Electrónico</Text>
+            <Text style={styles.label}>{t('account.email')}</Text>
             <TextInput
               style={[styles.input, !editable && styles.disabledInput]}
               value={email}
@@ -357,20 +359,20 @@ export default function AccountSettingsScreen({onDelete}: profileHeaderProps) {
               editable={editable}
               keyboardType="email-address"
               autoCapitalize="none"
-              placeholder="ejemplo@correo.com"
+              placeholder={t('account.emailPlaceholder')}
               placeholderTextColor="#999"
             />
           </View>
 
           <View style={styles.field}>
-            <Text style={styles.label}>Teléfono</Text>
+            <Text style={styles.label}>{t('account.phone')}</Text>
             <TextInput
               style={[styles.input, !editable && styles.disabledInput]}
               value={phone}
               onChangeText={setPhone}
               editable={editable}
               keyboardType="phone-pad"
-              placeholder="+1 234 567 8900"
+              placeholder={t('account.phonePlaceholder')}
               placeholderTextColor="#999"
             />
           </View>
@@ -380,33 +382,33 @@ export default function AccountSettingsScreen({onDelete}: profileHeaderProps) {
               <>
                 <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
                   <Ionicons name="checkmark" size={20} color="white" />
-                  <Text style={styles.buttonText}>Guardar Cambios</Text>
+                  <Text style={styles.buttonText}>{t('account.saveChanges')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.cancelButton}
                   onPress={handleCancel}
                 >
                   <Ionicons name="close" size={20} color="#7A33CC" />
-                  <Text style={styles.cancelButtonText}>Cancelar</Text>
+                  <Text style={styles.cancelButtonText}>{t('account.cancel')}</Text>
                 </TouchableOpacity>
               </>
             ) : (
               <TouchableOpacity style={styles.editButton} onPress={() => setEditable(true)}>
                 <Ionicons name="create-outline" size={20} color="white" />
-                <Text style={styles.buttonText}>Editar Información</Text>
+                <Text style={styles.buttonText}>{t('account.editProfile')}</Text>
               </TouchableOpacity>
             )}
           </View>
         </View>
 
         <View style={styles.dangerZone}>
-          <Text style={styles.dangerZoneTitle}>Zona de Peligro</Text>
+          <Text style={styles.dangerZoneTitle}>{t('account.dangerZone')}</Text>
           <Pressable style={styles.deleteAccountButton} onPress={handleConfirmDeleteAccount}>
             <Ionicons name="trash-outline" size={24} color="#FF6B6B" />
             <View style={styles.deleteAccountContent}>
-              <Text style={styles.deleteAccountText}>Eliminar cuenta</Text>
+              <Text style={styles.deleteAccountText}>{t('account.deleteAccount')}</Text>
               <Text style={styles.deleteAccountSubtext}>
-                Esta acción no se puede deshacer
+                {t('account.deleteAccountWarning')}
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#FF6B6B" />
@@ -424,9 +426,19 @@ export default function AccountSettingsScreen({onDelete}: profileHeaderProps) {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.warningTitle}>Verifica tu {pendingVerification?.type === 'email' ? 'correo' : 'teléfono'}</Text>
+            <Text style={styles.warningTitle}>
+              {t('account.verification.title', { 
+                type: pendingVerification?.type === 'email' 
+                  ? t('account.verification.email') 
+                  : t('account.verification.phone') 
+              })}
+            </Text>
             <Text style={styles.warningText}>
-              Ingresa el código que recibiste por {pendingVerification?.type === 'email' ? 'correo electrónico' : 'SMS'}.
+              {t('account.verification.message', { 
+                method: pendingVerification?.type === 'email' 
+                  ? t('account.verification.emailMethod') 
+                  : t('account.verification.smsMethod') 
+              })}
             </Text>
 
             <TextInput
@@ -434,7 +446,7 @@ export default function AccountSettingsScreen({onDelete}: profileHeaderProps) {
               value={verificationCode}
               onChangeText={setVerificationCode}
               keyboardType="number-pad"
-              placeholder="Código de verificación"
+              placeholder={t('account.verification.codePlaceholder')}
               placeholderTextColor="#999"
               autoCapitalize="none"
             />
@@ -447,7 +459,7 @@ export default function AccountSettingsScreen({onDelete}: profileHeaderProps) {
                   setPendingVerification(null);
                 }}
               >
-                <Text style={styles.cancelModalButtonText}>Cancelar</Text>
+                <Text style={styles.cancelModalButtonText}>{t('account.cancel')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -455,7 +467,7 @@ export default function AccountSettingsScreen({onDelete}: profileHeaderProps) {
                 onPress={handleVerifyCode}
                 disabled={!verificationCode.trim() || verificationCode.length < 6}
               >
-                <Text style={styles.deleteModalButtonText}>Verificar</Text>
+                <Text style={styles.deleteModalButtonText}>{t('account.verification.verify')}</Text>
               </TouchableOpacity>
             </View>
           </View>

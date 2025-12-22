@@ -15,8 +15,10 @@ import { updateUserProfileOnLogout } from '@/api/firebase/users/userService';
 import { unlinkFirebaseSession } from '@/api/firebase/auth/firebase';
 import { addPhotoToUser } from '@/api/backend/user/userApi';
 import { useTokenStore } from '@/lib/auth/tokenStore';
+import { useTranslation } from 'react-i18next';
 
 export default function ProfileScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { user, clearUser, setUser, refreshUserFromBackend } = useUserStore();
   const { signOut } = useAuth();
@@ -26,18 +28,17 @@ export default function ProfileScreen() {
   const { getToken } = useAuth();
   const setToken = useTokenStore((state) => state.setToken);
 
-  // ✅ Refrescar usuario cada vez que se enfoca la pantalla
   useFocusEffect(
     useCallback(() => {
       const refreshUser = async () => {
         try {
-          console.log('🔄 Refrescando estado del usuario desde backend...');
+          console.log(t('profile.refreshing'));
           const token = await getToken();
           setToken(token);
           await refreshUserFromBackend();
-          console.log('✅ Usuario actualizado desde backend');
+          console.log(t('profile.userUpdated'));
         } catch (error) {
-          console.warn('⚠️ No se pudo actualizar el usuario:', error);
+          console.warn(t('profile.updateError'), error);
         }
       };
 
@@ -52,11 +53,15 @@ export default function ProfileScreen() {
 
   const handleUpdateProfileImage = async (imageUrl: string | null) => {
     try {
-      await addPhotoToUser(user.id, imageUrl);
+      if (!user?.id) {
+        console.error('Usuario no disponible');
+        return;
+      }
+      await addPhotoToUser(user.id, imageUrl || '');
       setUser({ ...user, image: imageUrl || '' });
-      console.log('✅ Imagen de perfil actualizada en el store:', imageUrl);
+      console.log('Imagen de perfil actualizada en el store:', imageUrl);
     } catch (error) {
-      console.error('❌ Error actualizando foto:', error);
+      console.error('Error actualizando foto:', error);
     }
   };
 
