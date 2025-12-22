@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import { sendMessageFirebase, listenGroupMessages, markAllMessagesAsRead} from '
 import { auth } from '@/firebaseconfig';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import InviteModal from '@/components/groups/InviteModal';
+import { useTranslation } from 'react-i18next';
 import { getCurrentJourneyForGroup } from '@/api/backend/journeys/journeyApi';
 import { JourneyDto } from '@/api/backend/journeys/journeyType';
 import { getParticipation } from '@/api/backend/participations/participationApi';
@@ -48,6 +49,7 @@ interface Message {
 }
 
 export default function ChatScreen() {
+  const { t } = useTranslation();
   const { groupId } = useLocalSearchParams<{ groupId: string }>();
 
   const [inputText, setInputText] = useState('');
@@ -245,7 +247,7 @@ export default function ChatScreen() {
     return (
       <View style={styles.center}>
         <ActivityIndicator />
-        <Text style={styles.muted}>Cargando grupo…</Text>
+        <Text style={styles.muted}>{t('chat.loading')}</Text>
       </View>
     );
   }
@@ -253,7 +255,7 @@ export default function ChatScreen() {
   if (error || !group) {
     return (
       <View style={styles.center}>
-        <Text style={styles.error}>{error ?? 'Group not found'}</Text>
+        <Text style={styles.error}>{error ?? t('chat.error')}</Text>
       </View>
     );
   }

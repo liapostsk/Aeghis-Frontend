@@ -1,7 +1,7 @@
 import { Tabs } from "expo-router";
 import { useAuth } from "@clerk/clerk-expo";
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { useUserStore } from "@/lib/storage/useUserStorage";
 import { useChatNotifications } from "@/lib/hooks/useChatNotifications";
 
@@ -15,7 +15,6 @@ export default function HomeLayout() {
   const refreshUser = useUserStore((state) => state.refreshUserFromBackend);
   
   useEffect(() => {
-    // Cargar grupos al entrar a tabs
     refreshUser();
   }, []);
 
@@ -31,14 +30,13 @@ export default function HomeLayout() {
             borderTopColor: '#eee',
             position: 'absolute',
             bottom: 0,
-            elevation: 0, // Para Android
-            shadowOpacity: 0, // Para iOS
+            elevation: 0,
+            shadowOpacity: 0,
           },
           tabBarLabelStyle: {
             fontSize: 12,
             fontWeight: '500',
           },
-          // Efecto al seleccionar un tab
           tabBarItemStyle: {
             padding: 5,
           },

@@ -480,5 +480,106 @@
     "refreshing": "Refrescant estat de l'usuari des del backend...",
     "userUpdated": "Usuari actualitzat des del backend",
     "updateError": "No s'ha pogut actualitzar l'usuari:"
+  },
+  "chat": {
+    "loading": "Carregant grup…",
+    "error": "Grup no trobat",
+    "emptyTitle": "Encara no hi ha missatges",
+    "emptySubtitle": "Sigues el primer a enviar un missatge",
+    "placeholder": "Escriu un missatge..."
+  },
+  "chatInfo": {
+    "loading": "Carregant grup…",
+    "error": "Grup no trobat",
+    "members": "Membres",
+    "groupActions": "Accions del grup",
+    "inviteMembers": "Convidar membres",
+    "editGroup": "Editar grup",
+    "exitGroup": "Sortir del grup",
+    "companion": {
+      "notice": "Grup d'acompanyament",
+      "description": "Aquest és un grup temporal creat per acompanyar-te. Un cop completat l'acompanyament, pots finalitzar-lo des d'aquí.",
+      "noticeTitle": "Grup d'acompanyament",
+      "noticeText": "Aquest grup està dissenyat per coordinar acompanyaments. Per crear trajectes grupals, uneix-te a un grup de confiança o temporal.",
+      "createJourney": "Crear trajecte individual",
+      "finishButton": "Finalitzar acompanyament",
+      "finishTitle": "Finalitzar acompanyament",
+      "finishMessage": "Estàs segur que vols finalitzar aquest acompanyament? Es tancarà la sol·licitud i s'eliminarà el grup.",
+      "finishConfirm": "Finalitzar",
+      "finishCancel": "Cancel·lar",
+      "finishSuccess": "Acompanyament finalitzat",
+      "finishSuccessMessage": "L'acompanyament s'ha finalitzat correctament",
+      "finishError": "No s'ha pogut finalitzar l'acompanyament"
+    },
+    "modals": {
+      "removeMember": {
+        "title": "Eliminar membre",
+        "message": "Estàs segur que vols eliminar a {{name}} del grup? Aquesta acció no es pot desfer.",
+        "confirm": "Eliminar",
+        "cancel": "Cancel·lar",
+        "success": "{{name}} ha estat eliminat del grup",
+        "error": "No s'ha pogut eliminar el membre"
+      },
+      "promoteAdmin": {
+        "title": "Fer administrador",
+        "message": "Vols promocionar a {{name}} com a administrador del grup?",
+        "confirm": "Promocionar",
+        "cancel": "Cancel·lar",
+        "success": "{{name}} ara és administrador",
+        "error": "No s'ha pogut promocionar l'usuari"
+      },
+      "demoteMember": {
+        "success": "{{name}} ja no és administrador",
+        "error": "No s'han pogut eliminar els permisos d'administrador"
+      },
+      "exitGroup": {
+        "titleExit": "Sortir del grup",
+        "titleDelete": "Eliminar grup",
+        "messageExit": "Estàs segur que vols sortir d'aquest grup?",
+        "messageDelete": "Ets l'últim membre. Vols eliminar aquest grup? Aquesta acció no es pot desfer.",
+        "confirmExit": "Sortir",
+        "confirmDelete": "Eliminar",
+        "cancel": "Cancel·lar",
+        "successExit": "Has sortit del grup correctament",
+        "successDelete": "Grup eliminat correctament",
+        "error": "No s'ha pogut completar l'operació"
+      }
+    }
+  },
+  "journey": {
+    "invalidGroup": {
+      "title": "Error",
+      "message": "No s'ha especificat un grup vàlid",
+      "back": "Tornar"
+    },
+    "companion": {
+      "info": "Crearàs un trajecte individual. Selecciona on compartir la teva ubicació.",
+      "namePlaceholder": "Ex: El meu trajecte a la feina",
+      "typeLabel": "Tipus de trajecte",
+      "typeIndividual": "Individual",
+      "groupsRequired": {
+        "title": "Grups requerits",
+        "message": "Per crear un trajecte des d'un grup d'acompanyament, necessites tenir almenys un grup de confiança o temporal on compartir la teva ubicació.",
+        "createGroup": "Crear grup",
+        "cancel": "Cancel·lar"
+      },
+      "confirmCreate": {
+        "title": "Confirmar trajecte individual",
+        "message": "Crearàs un trajecte individual compartint la teva ubicació a \"{{groupName}}\". Els membres d'aquest grup podran veure la teva ubicació durant el trajecte.",
+        "confirm": "Crear",
+        "cancel": "Cancel·lar"
+      },
+      "selector": {
+        "title": "Compartir ubicació a:",
+        "trustType": "Confiança",
+        "temporalType": "Temporal",
+        "confirm": "Crear trajecte"
+      }
+    },
+    "errors": {
+      "noType": "Selecciona un tipus de trajecte",
+      "noGroup": "Selecciona un grup on compartir la teva ubicació"
+    },
+    "namePlaceholder": "Ex: Trajecte a la feina"
   }
 }

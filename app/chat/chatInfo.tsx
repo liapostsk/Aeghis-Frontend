@@ -44,8 +44,10 @@ import {
     ExitGroupButton 
 } from '@/components/chat';
 import { fetchActiveJourneyForGroup } from '@/api/backend/journeys/fetchActiveJourneyForGroup';
+import { useTranslation } from 'react-i18next';
 
 export default function GroupInfoScreen() {
+    const { t } = useTranslation();
     const { groupId } = useLocalSearchParams<{ groupId: string }>();
     const { getToken } = useAuth();
     const setToken = useTokenStore((state) => state.setToken);
@@ -197,11 +199,11 @@ export default function GroupInfoScreen() {
                     adminsIds: group.adminsIds.filter(id => id !== selectedMember.id),
                 });
                 
-                Alert.alert('Éxito', `${selectedMember.name} ha sido eliminado del grupo`);
+                Alert.alert(t('chatInfo.modals.removeMember.success', { name: selectedMember.name }));
                 
             } catch (error) {
                 console.error('Error eliminando miembro:', error);
-                Alert.alert('Error', 'No se pudo eliminar el miembro');
+                Alert.alert(t('account.alerts.error'), t('chatInfo.modals.removeMember.error'));
             }
         }
         setShowRemoveModal(false);
@@ -235,11 +237,11 @@ export default function GroupInfoScreen() {
                 setGroup(updatedGroup);
                 setMemberRoles(prev => ({ ...prev, [selectedMember.id]: 'admin' }));
                 
-                Alert.alert('Éxito', `${selectedMember.name} ahora es administrador`);
+                Alert.alert(t('chatInfo.modals.promoteAdmin.success', { name: selectedMember.name }));
                 
             } catch (error) {
                 console.error('Error promoviendo miembro:', error);
-                Alert.alert('Error', 'No se pudo promover el miembro');
+                Alert.alert(t('account.alerts.error'), t('chatInfo.modals.promoteAdmin.error'));
             }
         }
         setShowPromoteModal(false);
@@ -267,26 +269,26 @@ export default function GroupInfoScreen() {
             setGroup(updatedGroup);
             setMemberRoles(prev => ({ ...prev, [member.id]: 'member' }));
             
-            Alert.alert('Éxito', `${member.name} ya no es administrador`);
+            Alert.alert(t('chatInfo.modals.demoteMember.success', { name: member.name }));
             
         } catch (error) {
             console.error('Error degradando admin:', error);
-            Alert.alert('Error', 'No se pudo remover los permisos de administrador');
+            Alert.alert(t('account.alerts.error'), t('chatInfo.modals.demoteMember.error'));
         }
     };
 
     // Manejar finalización de acompañamiento (solo para grupos COMPANION)
     const handleFinishCompanionship = () => {
         Alert.alert(
-            'Finalizar acompañamiento',
-            '¿Estás seguro de que quieres finalizar este acompañamiento? Se cerrará la solicitud y se eliminará el grupo.',
+            t('chatInfo.companion.finishTitle'),
+            t('chatInfo.companion.finishMessage'),
             [
                 {
-                    text: 'Finalizar',
+                    text: t('chatInfo.companion.finishConfirm'),
                     style: 'destructive',
                     onPress: confirmFinishCompanionship
                 },
-                { text: 'Cancelar', style: 'cancel' }
+                { text: t('chatInfo.companion.finishCancel'), style: 'cancel' }
             ]
         );
     };
@@ -308,13 +310,13 @@ export default function GroupInfoScreen() {
             await deleteGroup(group.id);
             
             Alert.alert(
-                'Acompañamiento finalizado', 
-                'El acompañamiento ha sido finalizado exitosamente',
+                t('chatInfo.companion.finishSuccess'), 
+                t('chatInfo.companion.finishSuccessMessage'),
                 [{ text: 'OK', onPress: () => router.replace('/groups') }]
             );
         } catch (error: any) {
             console.error('Error finalizando acompañamiento:', error);
-            Alert.alert('Error', 'No se pudo finalizar el acompañamiento');
+            Alert.alert(t('account.alerts.error'), t('chatInfo.companion.finishError'));
         }
     };
 
@@ -335,7 +337,7 @@ export default function GroupInfoScreen() {
                 await deleteGroupFirebase(group.id.toString());
                 await deleteGroup(group.id);
                 
-                Alert.alert('Grupo eliminado', 'El grupo ha sido eliminado exitosamente');
+                Alert.alert(t('chatInfo.modals.exitGroup.successDelete'));
                 router.replace('/groups');
             } else {
                 // Salir del grupo
@@ -346,12 +348,12 @@ export default function GroupInfoScreen() {
                     await removeMemberFromGroupFirebase(group.id.toString(), currentUser.clerkId);
                 }
                 
-                Alert.alert('Has salido del grupo', 'Has abandonado el grupo exitosamente');
+                Alert.alert(t('chatInfo.modals.exitGroup.successExit'));
                 router.replace('/chat');
             }
         } catch (error: any) {
             console.error('Error al salir/eliminar grupo:', error);
-            Alert.alert('Error', 'No se pudo completar la operación');
+            Alert.alert(t('account.alerts.error'), t('chatInfo.modals.exitGroup.error'));
         }
         
         setShowExitGroupModal(false);
@@ -436,9 +438,9 @@ export default function GroupInfoScreen() {
                         <View style={styles.companionNotice}>
                             <Ionicons name="people-outline" size={24} color="#7A33CC" />
                             <View style={styles.companionNoticeContent}>
-                                <Text style={styles.companionNoticeTitle}>Grupo de acompañamiento</Text>
+                                <Text style={styles.companionNoticeTitle}>{t('chatInfo.companion.noticeTitle')}</Text>
                                 <Text style={styles.companionNoticeText}>
-                                    Este grupo está diseñado para coordinar acompañamientos. Para crear trayectos grupales, únete a un grupo de confianza o temporal.
+                                    {t('chatInfo.companion.noticeText')}
                                 </Text>
                             </View>
                         </View>
@@ -452,14 +454,14 @@ export default function GroupInfoScreen() {
                                 onPress={() => router.push(`/chat/journey?groupId=${groupId}`)}
                             >
                                 <Ionicons name="location-outline" size={20} color="#7A33CC" />
-                                <Text style={styles.companionJourneyText}>Crear trayecto individual</Text>
+                                <Text style={styles.companionJourneyText}>{t('chatInfo.companion.createJourney')}</Text>
                             </Pressable>
                         </View>
                     )}
 
                     {/* Lista de miembros */}
                     <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>Miembros</Text>
+                        <Text style={styles.sectionTitle}>{t('chatInfo.members')}</Text>
                     </View>
                     
                     {/* Invitar miembros solo para grupos no-COMPANION */}
@@ -517,7 +519,7 @@ export default function GroupInfoScreen() {
                         onPress={handleFinishCompanionship}
                     >
                         <Ionicons name="close-circle-outline" size={20} color="#FFFFFF" />
-                        <Text style={styles.finishCompanionshipText}>Finalizar acompañamiento</Text>
+                        <Text style={styles.finishCompanionshipText}>{t('chatInfo.companion.finishButton')}</Text>
                     </Pressable>
                 ) : (
                     <ExitGroupButton
@@ -529,15 +531,15 @@ export default function GroupInfoScreen() {
                 {/* Modal de confirmación para salir/eliminar grupo */}
                 <AlertModal
                     visible={showExitGroupModal}
-                    title={members.length <= 1 ? "Eliminar grupo" : "Salir del grupo"}
+                    title={members.length <= 1 ? t('chatInfo.modals.exitGroup.titleDelete') : t('chatInfo.modals.exitGroup.titleExit')}
                     message={
                         members.length <= 1 
-                            ? "Eres el último miembro. ¿Quieres eliminar este grupo? Esta acción no se puede deshacer."
-                            : "¿Estás seguro de que quieres salir de este grupo?"
+                            ? t('chatInfo.modals.exitGroup.messageDelete')
+                            : t('chatInfo.modals.exitGroup.messageExit')
                     }
                     type="danger"
-                    confirmText={members.length <= 1 ? "Eliminar" : "Salir"}
-                    cancelText="Cancelar"
+                    confirmText={members.length <= 1 ? t('chatInfo.modals.exitGroup.confirmDelete') : t('chatInfo.modals.exitGroup.confirmExit')}
+                    cancelText={t('chatInfo.modals.exitGroup.cancel')}
                     onConfirm={confirmExitGroup}
                     onCancel={() => setShowExitGroupModal(false)}
                 />
@@ -566,8 +568,6 @@ const styles = StyleSheet.create({
   },
   muted: { color: '#888', marginTop: 8 },
   error: { color: '#c00' },
-
-  // Header
   header: {
     paddingHorizontal: 16,
     flexDirection: 'row',
@@ -581,19 +581,13 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: 15,
   },
-
-  // List
   listContent: { paddingBottom: 20 },
-
-  // Section
   sectionHeader: { paddingHorizontal: 16, marginBottom: 12 },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '700',
     color: '#1F2937',
   },
-
-  // Companion Notice
   companionNotice: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -619,8 +613,6 @@ const styles = StyleSheet.create({
     color: '#6B21A8',
     lineHeight: 18,
   },
-
-  // Companion Actions
   companionActions: {
     margin: 16,
   },
@@ -640,8 +632,6 @@ const styles = StyleSheet.create({
     color: '#7A33CC',
     marginLeft: 8,
   },
-
-  // Finish Companionship Button
   finishCompanionshipButton: {
     flexDirection: 'row',
     alignItems: 'center',

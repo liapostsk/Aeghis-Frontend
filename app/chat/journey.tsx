@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView, StatusBar, Alert, Text, Pressable } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
+import { useTranslation } from 'react-i18next';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 import { Ionicons } from '@expo/vector-icons';
 import { getUserGroupsByType } from '@/api/backend/group/groupApi';
@@ -21,6 +22,7 @@ import {
 } from '@/components/journey';
 
 export default function journey() {
+    const { t } = useTranslation();
     const params = useLocalSearchParams<{ groupId: string }>();
     const { getToken } = useAuth();
     const setToken = useTokenStore((state) => state.setToken);
@@ -37,11 +39,11 @@ export default function journey() {
         if (!groupId || groupId === 'undefined' || groupId === 'null') {
             console.error('[Journey Screen] GroupId inválido:', groupId);
             Alert.alert(
-                'Error',
-                'No se especificó un grupo válido',
+                t('journey.invalidGroup.title'),
+                t('journey.invalidGroup.message'),
                 [
                     {
-                        text: 'Volver',
+                        text: t('journey.invalidGroup.back'),
                         onPress: () => router.back()
                     }
                 ]
@@ -100,7 +102,7 @@ export default function journey() {
         if (selectedTargetGroup && availableGroups.length > 0) {
             const stillExists = availableGroups.find(g => g.id === selectedTargetGroup.id);
             if (!stillExists) {
-                console.log('⚠️ [Journey] Grupo seleccionado ya no está disponible, reseteando selección');
+                console.log('[Journey] Grupo seleccionado ya no está disponible, reseteando selección');
                 setSelectedTargetGroup(null);
             }
         }
@@ -134,14 +136,14 @@ export default function journey() {
         if (group?.type === 'COMPANION') {
             if (availableGroups.length === 0) {
                 Alert.alert(
-                    'Grupos requeridos',
-                    'Para crear un trayecto desde un grupo de acompañamiento, necesitas tener al menos un grupo de confianza o temporal donde compartir tu ubicación.',
+                    t('journey.companion.groupsRequired.title'),
+                    t('journey.companion.groupsRequired.message'),
                     [
                         {
-                            text: 'Crear grupo',
+                            text: t('journey.companion.groupsRequired.createGroup'),
                             onPress: () => router.push('/groups')
                         },
-                        { text: 'Cancelar', style: 'cancel' }
+                        { text: t('journey.companion.groupsRequired.cancel'), style: 'cancel' }
                     ]
                 );
                 return;
@@ -157,30 +159,30 @@ export default function journey() {
         if (journeyType) {
             createJourneyFlow(journeyType, journeyName, [], selectedDestination);
         } else {
-            Alert.alert('Error', 'Selecciona un tipo de trayecto');
+            Alert.alert(t('journey.invalidGroup.title'), t('journey.errors.noType'));
         }
     };
 
     // Crear journey individual con grupo objetivo
     const handleCreateIndividualJourney = () => {
         if (!selectedTargetGroup) {
-            Alert.alert('Error', 'Selecciona un grupo donde compartir tu ubicación');
+            Alert.alert(t('journey.invalidGroup.title'), t('journey.errors.noGroup'));
             return;
         }
 
         Alert.alert(
-            'Confirmar trayecto individual',
-            `Crearás un trayecto individual compartiendo tu ubicación en "${selectedTargetGroup.name}". Los miembros de ese grupo podrán ver tu ubicación durante el trayecto.`,
+            t('journey.companion.confirmCreate.title'),
+            t('journey.companion.confirmCreate.message', { groupName: selectedTargetGroup.name }),
             [
                 {
-                    text: 'Crear',
+                    text: t('journey.companion.confirmCreate.confirm'),
                     onPress: () => {
                         // Usar el groupId del grupo objetivo y pasar el groupId COMPANION para notificación
                         createJourneyFlow('individual', journeyName, [], selectedDestination, selectedTargetGroup.id.toString(), groupId);
                         setShowGroupSelector(false);
                     }
                 },
-                { text: 'Cancelar', style: 'cancel' }
+                { text: t('journey.companion.confirmCreate.cancel'), style: 'cancel' }
             ]
         );
     };
@@ -220,7 +222,7 @@ export default function journey() {
                         <View style={styles.companionInfo}>
                             <Ionicons name="information-circle" size={20} color="#7A33CC" />
                             <Text style={styles.companionInfoText}>
-                                Crearás un trayecto individual. Selecciona dónde compartir tu ubicación.
+                                {t('journey.companion.info')}
                             </Text>
                         </View>
                     )}
@@ -230,18 +232,18 @@ export default function journey() {
                         onChangeText={setJourneyName}
                         placeholder={
                             group?.type === 'COMPANION' 
-                                ? "Ej: Mi trayecto al trabajo" 
-                                : "Ej: Trayecto al trabajo"
+                                ? t('journey.companion.namePlaceholder') 
+                                : t('journey.namePlaceholder')
                         }
                     />
 
                     {/* Solo trayecto individual para COMPANION */}
                     {group?.type === 'COMPANION' ? (
                         <View style={styles.journeyTypeFixed}>
-                            <Text style={styles.journeyTypeLabel}>Tipo de trayecto</Text>
+                            <Text style={styles.journeyTypeLabel}>{t('journey.companion.typeLabel')}</Text>
                             <View style={styles.journeyTypeCard}>
                                 <Ionicons name="person-outline" size={24} color="#7A33CC" />
-                                <Text style={styles.journeyTypeText}>Individual</Text>
+                                <Text style={styles.journeyTypeText}>{t('journey.companion.typeIndividual')}</Text>
                             </View>
                         </View>
                     ) : (
@@ -279,7 +281,7 @@ export default function journey() {
                 <View style={styles.modalOverlay}>
                     <View style={styles.groupSelectorModal}>
                         <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>Compartir ubicación en:</Text>
+                            <Text style={styles.modalTitle}>{t('journey.companion.selector.title')}</Text>
                             <Pressable onPress={closeGroupSelector}>
                                 <Ionicons name="close" size={24} color="#6B7280" />
                             </Pressable>
@@ -303,7 +305,7 @@ export default function journey() {
                                     <View style={styles.groupOptionContent}>
                                         <Text style={styles.groupOptionName}>{targetGroup.name}</Text>
                                         <Text style={styles.groupOptionType}>
-                                            {targetGroup.type === 'CONFIANZA' ? 'Confianza' : 'Temporal'}
+                                            {targetGroup.type === 'CONFIANZA' ? t('journey.companion.selector.trustType') : t('journey.companion.selector.temporalType')}
                                         </Text>
                                     </View>
                                 </Pressable>
@@ -318,7 +320,7 @@ export default function journey() {
                             onPress={handleCreateIndividualJourney}
                             disabled={!selectedTargetGroup}
                         >
-                            <Text style={styles.confirmButtonText}>Crear trayecto</Text>
+                            <Text style={styles.confirmButtonText}>{t('journey.companion.selector.confirm')}</Text>
                         </Pressable>
                     </View>
                 </View>
@@ -351,8 +353,6 @@ const styles = StyleSheet.create({
     scrollContent: {
         paddingBottom: 120,
     },
-    
-    // Estilos para grupos COMPANION
     companionInfo: {
         flexDirection: 'row',
         alignItems: 'center',

@@ -480,5 +480,106 @@
     "refreshing": "Refrescando estado del usuario desde backend...",
     "userUpdated": "Usuario actualizado desde backend",
     "updateError": "No se pudo actualizar el usuario:"
+  },
+  "chat": {
+    "loading": "Cargando grupo…",
+    "error": "Group not found",
+    "emptyTitle": "No hay mensajes aún",
+    "emptySubtitle": "Sé el primero en enviar un mensaje",
+    "placeholder": "Escribe un mensaje..."
+  },
+  "chatInfo": {
+    "loading": "Cargando grupo…",
+    "error": "Grupo no encontrado",
+    "members": "Miembros",
+    "groupActions": "Acciones del grupo",
+    "inviteMembers": "Invitar miembros",
+    "editGroup": "Editar grupo",
+    "exitGroup": "Salir del grupo",
+    "companion": {
+      "notice": "Grupo de acompañamiento",
+      "description": "Este es un grupo temporal creado para acompañarte. Una vez completado el acompañamiento, puedes finalizarlo desde aquí.",
+      "noticeTitle": "Grupo de acompañamiento",
+      "noticeText": "Este grupo está diseñado para coordinar acompañamientos. Para crear trayectos grupales, únete a un grupo de confianza o temporal.",
+      "createJourney": "Crear trayecto individual",
+      "finishButton": "Finalizar acompañamiento",
+      "finishTitle": "Finalizar acompañamiento",
+      "finishMessage": "¿Estás seguro de que quieres finalizar este acompañamiento? Se cerrará la solicitud y se eliminará el grupo.",
+      "finishConfirm": "Finalizar",
+      "finishCancel": "Cancelar",
+      "finishSuccess": "Acompañamiento finalizado",
+      "finishSuccessMessage": "El acompañamiento ha sido finalizado exitosamente",
+      "finishError": "No se pudo finalizar el acompañamiento"
+    },
+    "modals": {
+      "removeMember": {
+        "title": "Eliminar miembro",
+        "message": "¿Estás seguro de que quieres eliminar a {{name}} del grupo? Esta acción no se puede deshacer.",
+        "confirm": "Eliminar",
+        "cancel": "Cancelar",
+        "success": "{{name}} ha sido eliminado del grupo",
+        "error": "No se pudo eliminar el miembro"
+      },
+      "promoteAdmin": {
+        "title": "Hacer administrador",
+        "message": "¿Quieres promover a {{name}} como administrador del grupo?",
+        "confirm": "Promover",
+        "cancel": "Cancelar",
+        "success": "{{name}} es ahora administrador",
+        "error": "No se pudo promover al usuario"
+      },
+      "demoteMember": {
+        "success": "{{name}} ya no es administrador",
+        "error": "No se pudo remover los permisos de administrador"
+      },
+      "exitGroup": {
+        "titleExit": "Salir del grupo",
+        "titleDelete": "Eliminar grupo",
+        "messageExit": "¿Estás seguro de que quieres salir de este grupo?",
+        "messageDelete": "Eres el último miembro. ¿Quieres eliminar este grupo? Esta acción no se puede deshacer.",
+        "confirmExit": "Salir",
+        "confirmDelete": "Eliminar",
+        "cancel": "Cancelar",
+        "successExit": "Has salido del grupo exitosamente",
+        "successDelete": "Grupo eliminado exitosamente",
+        "error": "No se pudo completar la operación"
+      }
+    }
+  },
+  "journey": {
+    "invalidGroup": {
+      "title": "Error",
+      "message": "No se especificó un grupo válido",
+      "back": "Volver"
+    },
+    "companion": {
+      "info": "Crearás un trayecto individual. Selecciona dónde compartir tu ubicación.",
+      "namePlaceholder": "Ej: Mi trayecto al trabajo",
+      "typeLabel": "Tipo de trayecto",
+      "typeIndividual": "Individual",
+      "groupsRequired": {
+        "title": "Grupos requeridos",
+        "message": "Para crear un trayecto desde un grupo de acompañamiento, necesitas tener al menos un grupo de confianza o temporal donde compartir tu ubicación.",
+        "createGroup": "Crear grupo",
+        "cancel": "Cancelar"
+      },
+      "confirmCreate": {
+        "title": "Confirmar trayecto individual",
+        "message": "Crearás un trayecto individual compartiendo tu ubicación en \"{{groupName}}\". Los miembros de ese grupo podrán ver tu ubicación durante el trayecto.",
+        "confirm": "Crear",
+        "cancel": "Cancelar"
+      },
+      "selector": {
+        "title": "Compartir ubicación en:",
+        "trustType": "Confianza",
+        "temporalType": "Temporal",
+        "confirm": "Crear trayecto"
+      }
+    },
+    "errors": {
+      "noType": "Selecciona un tipo de trayecto",
+      "noGroup": "Selecciona un grupo donde compartir tu ubicación"
+    },
+    "namePlaceholder": "Ej: Trayecto al trabajo"
   }
 }
