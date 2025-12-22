@@ -715,6 +715,48 @@
           "message": "{{error}}\n\nSi us plau, intenta-ho de nou en uns minuts."
         }
       }
-    }
-  }
+    }  },
+  "login": {
+    "title": "Benvingut de nou, t'hem trobat a faltar! 👋",
+    "phone": {
+      "placeholder": "Número de telèfon",
+      "sendCode": "Enviar Codi de Verificació",
+      "codeSent": "Hem enviat un codi de 6 dígits a {{phone}}",
+      "checkMessages": "Si us plau, revisa els teus missatges 📱",
+      "wrongNumber": "Número incorrecte?",
+      "changeHere": "Canvia'l aquí",
+      "preferEmail": "Prefereixes utilitzar el teu correu?",
+      "startWithEmail": "Iniciar amb correu"
+    },
+    "email": {
+      "instruction": "Introdueix la teva adreça de correu electrònic per rebre un codi de verificació.",
+      "placeholder": "Correu Electrònic",
+      "sendCode": "Enviar Codi",
+      "codeSent": "Hem enviat un codi de 6 dígits a {{email}}",
+      "checkInbox": "Si us plau, revisa la teva safata d'entrada 📧",
+      "wrongEmail": "Correu incorrecte?",
+      "changeHere": "Canvia'l aquí"
+    },
+    "verification": {
+      "verifyCode": "Verificar Codi",
+      "resendCode": "Reenviar codi",
+      "resendAvailable": "Reenviament disponible en {{timer}}s"
+    },
+    "loadingSteps": {
+      "verifying": "Verificant codi...",
+      "credentials": "Obtenint credencials...",
+      "profile": "Carregant el teu perfil...",
+      "realtime": "Configurant serveis en temps real...",
+      "syncing": "Sincronitzant perfil...",
+      "welcome": "Benvingut de nou!"
+    },
+    "errors": {
+      "phoneIdNotFound": "ID de número de telèfon no trobat.",
+      "emailIdNotFound": "ID de correu electrònic no trobat.",
+      "sendCodeFailed": "No s'ha pogut enviar el codi de verificació.",
+      "noToken": "No s'ha rebut cap token de Clerk.",
+      "noUserData": "No s'ha pogut recuperar la informació del teu compte. Si us plau, torna-ho a provar.",
+      "incompleteVerification": "Verificació incompleta.",
+      "invalidCode": "Codi de verificació invàlid."
+    }  }
 }

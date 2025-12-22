@@ -22,11 +22,13 @@ import { useUserStore } from '@/lib/storage/useUserStorage';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 import { linkFirebaseSession } from '@/api/firebase/auth/firebase';
 import { ensureCurrentUserProfile } from '@/api/firebase/users/userService';
+import { useTranslation } from 'react-i18next';
 
 export default function LoginScreen() {
   const { signIn, setActive, isLoaded } = useSignIn();
   const { user: clerkUser } = useUser();
   const router = useRouter();
+  const { t } = useTranslation();
 
   const [phone, setPhone] = useState('');
   const [countryCode, setCountryCode] = useState<'ES' | string>('ES');
@@ -57,7 +59,7 @@ export default function LoginScreen() {
       );
 
       if (!phoneCodeFactor || !('phoneNumberId' in phoneCodeFactor)) {
-        Alert.alert("Error", "Phone number ID not found.");
+        Alert.alert(t('error'), t('login.errors.phoneIdNotFound'));
         return;
       }
 
@@ -72,7 +74,7 @@ export default function LoginScreen() {
       setCode('');
     } catch (error: any) {
       console.error("Send code error:", error);
-      Alert.alert("Could not send verification code.");
+      Alert.alert(t('error'), t('login.errors.sendCodeFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -83,7 +85,7 @@ export default function LoginScreen() {
 
     try {
       setIsLoading(true);
-      setLoadingMessage('Verificando código...');
+      setLoadingMessage(t('login.loadingSteps.verifying'));
 
       const attempt = await signIn.attemptFirstFactor({
         strategy: 'phone_code',
@@ -93,21 +95,21 @@ export default function LoginScreen() {
       if (attempt.status === 'complete') {
         await setActive({ session: attempt.createdSessionId });
         
-        setLoadingMessage('Obteniendo credenciales...');
+        setLoadingMessage(t('login.loadingSteps.credentials'));
         const token = await getToken();
 
         if (!token) {
-          Alert.alert("Error", "No token received from Clerk.");
+          Alert.alert(t('error'), t('login.errors.noToken'));
           return;
         }
 
         setToken(token);
 
-        setLoadingMessage('Cargando tu perfil...');
+        setLoadingMessage(t('login.loadingSteps.profile'));
         const userData = await getCurrentUser();
 
         if (!userData || !userData.id) {
-          Alert.alert("Error", "We couldn't retrieve your account. Please try again.");
+          Alert.alert(t('error'), t('login.errors.noUserData'));
           await signOut();
           return;
         }
@@ -116,11 +118,11 @@ export default function LoginScreen() {
 
         // VINCULAR CON FIREBASE
         try {
-          setLoadingMessage('Configurando servicios en tiempo real...');
+          setLoadingMessage(t('login.loadingSteps.realtime'));
           console.log("Vinculando sesión de Firebase...");
           await linkFirebaseSession();
 
-          setLoadingMessage('Sincronizando perfil...');
+          setLoadingMessage(t('login.loadingSteps.syncing'));
           await ensureCurrentUserProfile({
             displayName: userData?.name || undefined,
             photoURL: clerkUser?.imageUrl || undefined,
@@ -135,7 +137,7 @@ export default function LoginScreen() {
           console.warn("⚠️ Continuando sin Firebase - Funcionalidades de chat limitadas");
         }
 
-        setLoadingMessage('¡Bienvenido de vuelta!');
+        setLoadingMessage(t('login.loadingSteps.welcome'));
         
         // Pequeña pausa para mostrar mensaje final
         setTimeout(() => {
@@ -143,11 +145,11 @@ export default function LoginScreen() {
         }, 800);
 
       } else {
-        Alert.alert("Error", "Incomplete verification.");
+        Alert.alert(t('error'), t('login.errors.incompleteVerification'));
       }
     } catch (error: any) {
       console.error("Verification error:", error);
-      Alert.alert("Error", error?.errors?.[0]?.message || "Invalid verification code.");
+      Alert.alert(t('error'), error?.errors?.[0]?.message || t('login.errors.invalidCode'));
     } finally {
       setIsLoading(false);
       setLoadingMessage('');
@@ -179,7 +181,7 @@ export default function LoginScreen() {
     >
       <View style={styles.container}>
         <View style={styles.titleContainer}>
-          <Text style={styles.title}>Welcome back, we missed you! 👋</Text>
+          <Text style={styles.title}>{t('login.title')}</Text>
         </View>
 
         {!codeSent ? (
@@ -198,7 +200,7 @@ export default function LoginScreen() {
                   setIsValid(text.length >= 6);
                 }}
                 keyboardType="phone-pad"
-                placeholder="Phone number"
+                placeholder={t('login.phone.placeholder')}
                 placeholderTextColor="#aaa"
                 style={styles.phoneInput}
               />
@@ -207,7 +209,7 @@ export default function LoginScreen() {
             <View style={styles.buttonSpacing}>
               <ContinueButton
                 onPress={handleSendCode}
-                text="Send Verification Code"
+                text={t('login.phone.sendCode')}
                 disabled={!isValid || isLoading}
               />
             </View>
@@ -215,10 +217,10 @@ export default function LoginScreen() {
         ) : (
           <View style={styles.verificationContainer}>
             <Text style={styles.subtitle}>
-              We've sent a 6-digit code to {fullPhone}
+              {t('login.phone.codeSent', { phone: fullPhone })}
             </Text>
             <Text style={styles.helpText}>
-              Please check your messages 📱
+              {t('login.phone.checkMessages')}
             </Text>
             
             <View style={styles.codeFieldContainer}>
@@ -243,7 +245,7 @@ export default function LoginScreen() {
               {isLoading ? (
                 <ActivityIndicator color="#7A33CC" />
               ) : (
-                <Text style={styles.verifyButtonText}>Verify Code</Text>
+                <Text style={styles.verifyButtonText}>{t('login.verification.verifyCode')}</Text>
               )}
             </Pressable>
 
@@ -251,29 +253,29 @@ export default function LoginScreen() {
             <View style={styles.resendSection}>
               {canResend ? (
                 <Pressable onPress={handleSendCode} style={styles.resendButton}>
-                  <Text style={styles.resendText}> Resend code</Text>
+                  <Text style={styles.resendText}>{t('login.verification.resendCode')}</Text>
                 </Pressable>
               ) : (
                 <Text style={styles.timerText}>
-                  Resend available in {timer}s
+                  {t('login.verification.resendAvailable', { timer })}
                 </Text>
               )}
             </View>
 
             {/* Sección separada para cambiar número */}
             <View style={styles.changeNumberSection}>
-              <Text style={styles.wrongNumberText}>Wrong number?</Text>
+              <Text style={styles.wrongNumberText}>{t('login.phone.wrongNumber')}</Text>
               <Pressable onPress={() => setCodeSent(false)}>
-                <Text style={styles.changeNumberText}>Change it here</Text>
+                <Text style={styles.changeNumberText}>{t('login.phone.changeHere')}</Text>
               </Pressable>
             </View>
           </View>
         )}
         <View style={{ marginTop: 30 }}>
-          <Text style={{ color: '#E8D5FF', textAlign: 'center' }}>¿Prefieres usar tu correo?</Text>
+          <Text style={{ color: '#E8D5FF', textAlign: 'center' }}>{t('login.phone.preferEmail')}</Text>
           <Pressable onPress={() => router.push('./emailCase')}>
             <Text style={{ color: '#FFFFFF', textAlign: 'center', textDecorationLine: 'underline', marginTop: 8 }}>
-              Iniciar con correo
+              {t('login.phone.startWithEmail')}
             </Text>
           </Pressable>
         </View>

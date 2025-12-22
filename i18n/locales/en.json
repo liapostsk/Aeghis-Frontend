@@ -716,5 +716,49 @@
         }
       }
     }
+  },
+  "login": {
+    "title": "Welcome back, we missed you! 👋",
+    "phone": {
+      "placeholder": "Phone number",
+      "sendCode": "Send Verification Code",
+      "codeSent": "We've sent a 6-digit code to {{phone}}",
+      "checkMessages": "Please check your messages 📱",
+      "wrongNumber": "Wrong number?",
+      "changeHere": "Change it here",
+      "preferEmail": "Prefer to use your email?",
+      "startWithEmail": "Sign in with email"
+    },
+    "email": {
+      "instruction": "Enter your email address to receive a verification code.",
+      "placeholder": "Email Address",
+      "sendCode": "Send Code",
+      "codeSent": "We've sent a 6-digit code to {{email}}",
+      "checkInbox": "Please check your inbox 📧",
+      "wrongEmail": "Wrong email?",
+      "changeHere": "Change it here"
+    },
+    "verification": {
+      "verifyCode": "Verify Code",
+      "resendCode": "Resend code",
+      "resendAvailable": "Resend available in {{timer}}s"
+    },
+    "loadingSteps": {
+      "verifying": "Verifying code...",
+      "credentials": "Getting credentials...",
+      "profile": "Loading your profile...",
+      "realtime": "Setting up real-time services...",
+      "syncing": "Syncing profile...",
+      "welcome": "Welcome back!"
+    },
+    "errors": {
+      "phoneIdNotFound": "Phone number ID not found.",
+      "emailIdNotFound": "Email ID not found.",
+      "sendCodeFailed": "Could not send verification code.",
+      "noToken": "No token received from Clerk.",
+      "noUserData": "We couldn't retrieve your account. Please try again.",
+      "incompleteVerification": "Incomplete verification.",
+      "invalidCode": "Invalid verification code."
+    }
   }
 }

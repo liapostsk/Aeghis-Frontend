@@ -716,5 +716,49 @@
         }
       }
     }
+  },
+  "login": {
+    "title": "¡Bienvenido de vuelta, te extrañamos! 👋",
+    "phone": {
+      "placeholder": "Número de teléfono",
+      "sendCode": "Enviar Código de Verificación",
+      "codeSent": "Hemos enviado un código de 6 dígitos a {{phone}}",
+      "checkMessages": "Por favor, revisa tus mensajes 📱",
+      "wrongNumber": "¿Número incorrecto?",
+      "changeHere": "Cámbialo aquí",
+      "preferEmail": "¿Prefieres usar tu correo?",
+      "startWithEmail": "Iniciar con correo"
+    },
+    "email": {
+      "instruction": "Ingresa tu dirección de correo electrónico para recibir un código de verificación.",
+      "placeholder": "Correo Electrónico",
+      "sendCode": "Enviar Código",
+      "codeSent": "Hemos enviado un código de 6 dígitos a {{email}}",
+      "checkInbox": "Por favor, revisa tu bandeja de entrada 📧",
+      "wrongEmail": "¿Correo incorrecto?",
+      "changeHere": "Cámbialo aquí"
+    },
+    "verification": {
+      "verifyCode": "Verificar Código",
+      "resendCode": "Reenviar código",
+      "resendAvailable": "Reenvío disponible en {{timer}}s"
+    },
+    "loadingSteps": {
+      "verifying": "Verificando código...",
+      "credentials": "Obteniendo credenciales...",
+      "profile": "Cargando tu perfil...",
+      "realtime": "Configurando servicios en tiempo real...",
+      "syncing": "Sincronizando perfil...",
+      "welcome": "¡Bienvenido de vuelta!"
+    },
+    "errors": {
+      "phoneIdNotFound": "ID de número de teléfono no encontrado.",
+      "emailIdNotFound": "ID de correo electrónico no encontrado.",
+      "sendCodeFailed": "No se pudo enviar el código de verificación.",
+      "noToken": "No se recibió token de Clerk.",
+      "noUserData": "No se pudo recuperar la información de tu cuenta. Por favor, intenta nuevamente.",
+      "incompleteVerification": "Verificación incompleta.",
+      "invalidCode": "Código de verificación inválido."
+    }
   }
 }

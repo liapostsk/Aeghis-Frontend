@@ -21,10 +21,12 @@ import { useUserStore } from '@/lib/storage/useUserStorage';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 import { linkFirebaseSession } from '@/api/firebase/auth/firebase';
 import { ensureCurrentUserProfile } from '@/api/firebase/users/userService';
+import { useTranslation } from 'react-i18next';
 
 export default function EmailCaseScreen() {
   const { signIn, setActive, isLoaded } = useSignIn();
   const router = useRouter();
+  const { t } = useTranslation();
 
   const [email, setEmail] = useState('');
   const [isValid, setIsValid] = useState(false);
@@ -62,7 +64,7 @@ export default function EmailCaseScreen() {
       );
 
       if (!emailFactor || !('emailAddressId' in emailFactor)) {
-        Alert.alert("Error", "Email ID not found.");
+        Alert.alert(t('error'), t('login.errors.emailIdNotFound'));
         return;
       }
 
@@ -78,7 +80,7 @@ export default function EmailCaseScreen() {
       setCode('');
     } catch (error: any) {
       console.error("Send code error:", error);
-      Alert.alert("Error", error?.errors?.[0]?.message || "Could not send verification code.");
+      Alert.alert(t('error'), error?.errors?.[0]?.message || t('login.errors.sendCodeFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -89,7 +91,7 @@ export default function EmailCaseScreen() {
 
     try {
       setIsLoading(true);
-      setLoadingMessage('Verificando código...');
+      setLoadingMessage(t('login.loadingSteps.verifying'));
 
       const attempt = await signIn.attemptFirstFactor({
         strategy: 'email_code',
@@ -99,19 +101,19 @@ export default function EmailCaseScreen() {
       if (attempt.status === 'complete') {
         await setActive({ session: attempt.createdSessionId });
 
-        setLoadingMessage('Obteniendo credenciales...');
+        setLoadingMessage(t('login.loadingSteps.credentials'));
         const token = await getToken();
         if (!token) {
-          Alert.alert("Error", "No token received from Clerk.");
+          Alert.alert(t('error'), t('login.errors.noToken'));
           return;
         }
 
         setToken(token);
 
-        setLoadingMessage('Cargando tu perfil...');
+        setLoadingMessage(t('login.loadingSteps.profile'));
         const userData = await getCurrentUser();
         if (!userData || !userData.id) {
-          Alert.alert("Error", "Could not retrieve your user data.");
+          Alert.alert(t('error'), t('login.errors.noUserData'));
           await signOut();
           return;
         }
@@ -120,11 +122,11 @@ export default function EmailCaseScreen() {
 
         // VINCULAR CON FIREBASE
         try {
-          setLoadingMessage('Configurando servicios en tiempo real...');
+          setLoadingMessage(t('login.loadingSteps.realtime'));
           console.log("Vinculando sesión de Firebase...");
           await linkFirebaseSession();
 
-          setLoadingMessage('Sincronizando perfil...');
+          setLoadingMessage(t('login.loadingSteps.syncing'));
           await ensureCurrentUserProfile({
             displayName: userData?.name || undefined,
             photoURL: clerkUser?.imageUrl || undefined,
@@ -139,7 +141,7 @@ export default function EmailCaseScreen() {
           console.warn("⚠️ Continuando sin Firebase - Funcionalidades de chat limitadas");
         }
 
-        setLoadingMessage('¡Bienvenido de vuelta!');
+        setLoadingMessage(t('login.loadingSteps.welcome'));
         
         // Pequeña pausa para mostrar mensaje final
         setTimeout(() => {
@@ -147,11 +149,11 @@ export default function EmailCaseScreen() {
         }, 800);
 
       } else {
-        Alert.alert("Error", "Incomplete verification.");
+        Alert.alert(t('error'), t('login.errors.incompleteVerification'));
       }
     } catch (error: any) {
       console.error("Verification error:", error);
-      Alert.alert("Error", error?.errors?.[0]?.message || "Invalid verification code.");
+      Alert.alert(t('error'), error?.errors?.[0]?.message || t('login.errors.invalidCode'));
     } finally {
       setIsLoading(false);
       setLoadingMessage('');
@@ -188,18 +190,18 @@ export default function EmailCaseScreen() {
         >
           <View style={styles.container}>
             <View style={styles.titleContainer}>
-              <Text style={styles.title}>Welcome back, we missed you! 👋</Text>
+              <Text style={styles.title}>{t('login.title')}</Text>
             </View>
 
             {!codeSent ? (
               <View style={styles.contentContainer}>
                 <Text style={styles.instruction}>
-                  Enter your email address to receive a verification code.
+                  {t('login.email.instruction')}
                 </Text>
                 <View style={styles.inputSection}>
                   <TextInput
                     style={styles.input}
-                    placeholder="Email Address"
+                    placeholder={t('login.email.placeholder')}
                     placeholderTextColor="#7A33CC80"
                     value={email}
                     onChangeText={handleEmailChange}
@@ -217,16 +219,16 @@ export default function EmailCaseScreen() {
                     style={[styles.continueButton, !isValid && styles.disabledButton]}
                     disabled={!isValid}
                   >
-                    <Text style={styles.continueButtonText}>Send Code</Text>
+                    <Text style={styles.continueButtonText}>{t('login.email.sendCode')}</Text>
                   </Pressable>
                 </View>
               </View>
             ) : (
               <View style={styles.verificationContainer}>
                 <Text style={styles.subtitle}>
-                  We've sent a 6-digit code to {email}
+                  {t('login.email.codeSent', { email })}
                 </Text>
-                <Text style={styles.helpText}>Please check your inbox 📧</Text>
+                <Text style={styles.helpText}>{t('login.email.checkInbox')}</Text>
 
                 <View style={styles.codeFieldContainer}>
                   <VerificationCodeField value={code} setValue={setCode} />
@@ -250,26 +252,26 @@ export default function EmailCaseScreen() {
                   {isLoading ? (
                     <ActivityIndicator color="#7A33CC" />
                   ) : (
-                    <Text style={styles.verifyButtonText}>Verify Code</Text>
+                    <Text style={styles.verifyButtonText}>{t('login.verification.verifyCode')}</Text>
                   )}
                 </Pressable>
 
                 <View style={styles.resendSection}>
                   {canResend ? (
                     <Pressable onPress={handleSendCode} style={styles.resendButton}>
-                      <Text style={styles.resendText}>Resend code</Text>
+                      <Text style={styles.resendText}>{t('login.verification.resendCode')}</Text>
                     </Pressable>
                   ) : (
                     <Text style={styles.timerText}>
-                      Resend available in {timer}s
+                      {t('login.verification.resendAvailable', { timer })}
                     </Text>
                   )}
                 </View>
 
                 <View style={styles.changeSection}>
-                  <Text style={styles.wrongText}>Wrong email?</Text>
+                  <Text style={styles.wrongText}>{t('login.email.wrongEmail')}</Text>
                   <Pressable onPress={() => setCodeSent(false)}>
-                    <Text style={styles.changeText}>Change it here</Text>
+                    <Text style={styles.changeText}>{t('login.email.changeHere')}</Text>
                   </Pressable>
                 </View>
               </View>
