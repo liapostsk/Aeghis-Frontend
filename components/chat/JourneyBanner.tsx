@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   View,
   Text,
@@ -9,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { JourneyDto } from '@/api/backend/journeys/journeyType';
 import { ParticipationDto } from '@/api/backend/participations/participationType';
+import { useTranslation } from 'react-i18next';
 
 interface JourneyBannerProps {
   activeJourney: JourneyDto;
@@ -21,6 +21,7 @@ export default function JourneyBanner({
   userParticipation, 
   onJoinJourney 
 }: JourneyBannerProps) {
+  const { t } = useTranslation();
   
   const isInProgress = activeJourney.state === 'IN_PROGRESS';
   const isPending = activeJourney.state === 'PENDING';
@@ -50,53 +51,54 @@ export default function JourneyBanner({
   };
 
   const getJourneyDisplayInfo = () => {
-    const typeDisplayName = {
-      'INDIVIDUAL': 'Individual',
-      'COMMON_DESTINATION': 'Grupal',
-      'PERSONALIZED': 'Grupal personalizado'
-    }[activeJourney.journeyType] || 'Desconocido';
+    const typeKey = {
+      'INDIVIDUAL': 'individual',
+      'COMMON_DESTINATION': 'common',
+      'PERSONALIZED': 'personalized'
+    }[activeJourney.journeyType] || 'individual';
+    
+    const typeDisplayName = t(`chatComponents.journeyBanner.types.${typeKey}`);
 
     // Si el usuario ya está participando
     if (userParticipation) {
       if (isInProgress) {
         return {
           icon: 'navigate-circle' as const,
-          title: `Tu trayecto ${typeDisplayName.toLowerCase()} está activo`,
-          subtitle: 'Trayecto en progreso. Toca para ver el mapa',
+          title: t('chatComponents.journeyBanner.participating.inProgress.title', { type: typeDisplayName }),
+          subtitle: t('chatComponents.journeyBanner.participating.inProgress.subtitle'),
           color: '#10B981',
           bgColor: '#ECFDF5',
-          buttonText: 'Ver en mapa'
+          buttonText: t('chatComponents.journeyBanner.buttons.viewMap')
         };
       } else {
         return {
           icon: 'time' as const,
-          title: `Estás en el trayecto ${typeDisplayName.toLowerCase()}`,
-          subtitle: 'Esperando a que más miembros se unan',
+          title: t('chatComponents.journeyBanner.participating.pending.title', { type: typeDisplayName }),
+          subtitle: t('chatComponents.journeyBanner.participating.pending.subtitle'),
           color: '#7A33CC',
           bgColor: '#F3E8FF',
-          buttonText: 'Ver en mapa'
+          buttonText: t('chatComponents.journeyBanner.buttons.viewMap')
         };
       }
     }
 
-    // Si el usuario no está participando
     if (isInProgress) {
       return {
         icon: 'navigate-circle' as const,
-        title: `Trayecto ${typeDisplayName.toLowerCase()} en progreso`,
-        subtitle: 'El trayecto ha comenzado. ¡Únete ahora!',
+        title: t('chatComponents.journeyBanner.notParticipating.inProgress.title', { type: typeDisplayName }),
+        subtitle: t('chatComponents.journeyBanner.notParticipating.inProgress.subtitle'),
         color: '#10B981',
         bgColor: '#ECFDF5',
-        buttonText: 'Unirse al trayecto'
+        buttonText: t('chatComponents.journeyBanner.buttons.join')
       };
     } else {
       return {
         icon: 'time' as const,
-        title: `Trayecto ${typeDisplayName.toLowerCase()} pendiente`,
-        subtitle: 'Esperando a que más miembros se unan',
+        title: t('chatComponents.journeyBanner.notParticipating.pending.title', { type: typeDisplayName }),
+        subtitle: t('chatComponents.journeyBanner.notParticipating.pending.subtitle'),
         color: '#F59E0B',
         bgColor: '#FFFBEB',
-        buttonText: 'Unirse al trayecto'
+        buttonText: t('chatComponents.journeyBanner.buttons.join')
       };
     }
   };

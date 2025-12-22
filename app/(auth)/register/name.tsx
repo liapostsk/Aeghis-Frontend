@@ -14,26 +14,27 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import React, { useState } from "react";
 import { router } from "expo-router";
 import { useUserStore } from "../../../lib/storage/useUserStorage";
+import { useTranslation } from 'react-i18next';
 
-const validateName = (name: string) => {
+const validateName = (name: string, t: any) => {
   const trimmedName = name.trim();
   
   if (trimmedName === "") {
-    return { isValid: false, message: "Please enter your name before continuing." };
+    return { isValid: false, message: t('register.name.validation.empty') };
   }
   
   if (trimmedName.length < 2) {
-    return { isValid: false, message: "Name must be at least 2 characters long." };
+    return { isValid: false, message: t('register.name.validation.tooShort') };
   }
   
   if (trimmedName.length > 25) {
-    return { isValid: false, message: "Name cannot exceed 50 characters." };
+    return { isValid: false, message: t('register.name.validation.tooLong') };
   }
   
   // Basic regex to allow letters, spaces, hyphens, and apostrophes
   const nameRegex = /^[a-zA-ZÀ-ÿ\s'-]+$/;
   if (!nameRegex.test(trimmedName)) {
-    return { isValid: false, message: "Name can only contain letters, spaces, hyphens, and apostrophes." };
+    return { isValid: false, message: t('register.name.validation.invalidChars') };
   }
   
   return { isValid: true, message: "" };
@@ -43,9 +44,10 @@ export default function NameScreen() {
   // State
   const { user, setUser } = useUserStore();
   const [name, setName] = useState("");
+  const { t } = useTranslation();
 
   // Computed values
-  const validation = validateName(name);
+  const validation = validateName(name, t);
   const canContinue = validation.isValid;
 
   // Event handlers
@@ -58,7 +60,7 @@ export default function NameScreen() {
     if (canContinue) {
       router.push("/(auth)/register/phone");
     } else {
-      Alert.alert("Invalid Name", validation.message);
+      Alert.alert(t('register.name.alerts.invalidName'), validation.message);
     }
   };
 
@@ -74,7 +76,7 @@ export default function NameScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.containerTitle}>
-            <Text style={styles.textTitle}>Great, Let's {"\n"}Continue!</Text>
+            <Text style={styles.textTitle}>{t('register.name.title')}</Text>
           </View>
 
           <View style={styles.imageContainer}>
@@ -85,10 +87,10 @@ export default function NameScreen() {
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={styles.textSubtitle}>What's the best way to call you?</Text>
+            <Text style={styles.textSubtitle}>{t('register.name.subtitle')}</Text>
 
             <TextInput
-                placeholder="Enter your name"
+                placeholder={t('register.name.placeholder')}
                 placeholderTextColor="#11182766"
                 style={styles.textInput}
                 value={name}
@@ -107,7 +109,7 @@ export default function NameScreen() {
               onPress={handleContinue}
               disabled={!canContinue}
             >
-              <Text style={styles.continueButtonText}>Continue</Text>
+              <Text style={styles.continueButtonText}>{t('register.name.button')}</Text>
             </Pressable>
           </View>
         </ScrollView>

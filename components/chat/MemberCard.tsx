@@ -1,7 +1,7 @@
-import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { UserDto } from '@/api/backend/types';
+import { useTranslation } from 'react-i18next';
 
 interface MemberCardProps {
   user: UserDto;
@@ -26,13 +26,21 @@ export default function MemberCard({
   onDemote,
   onRemove,
 }: MemberCardProps) {
+  const { t } = useTranslation();
+  
   const initials = user.name
     .split(' ')
     .map(n => n[0])
     .join('')
     .toUpperCase();
 
-  const displayName = isCurrentUser ? 'Tú' : user.name;
+  const displayName = isCurrentUser ? t('chatComponents.memberCard.you') : user.name;
+  
+  const getStatusText = () => {
+    if (isOnline) return t('chatComponents.memberCard.status.online');
+    if (lastSeen) return t('chatComponents.memberCard.status.lastSeen', { date: lastSeen.toLocaleDateString() });
+    return t('chatComponents.memberCard.status.offline');
+  };
 
   return (
     <View style={styles.memberCard}>
@@ -52,11 +60,11 @@ export default function MemberCard({
         <View style={styles.memberMeta}>
           <View style={styles.roleBadge}>
             <Text style={styles.roleBadgeText}>
-              {role === 'admin' ? 'Administrador' : 'Miembro'}
+              {role === 'admin' ? t('chatComponents.memberCard.roles.admin') : t('chatComponents.memberCard.roles.member')}
             </Text>
           </View>
           <Text style={[styles.memberDate, !isOnline && styles.offlineText]}>
-            {isOnline ? 'En línea' : lastSeen ? `Visto ${lastSeen.toLocaleDateString()}` : 'Desconectado'}
+            {getStatusText()}
           </Text>
         </View>
       </View>

@@ -717,6 +717,13 @@
       }
     }
   },
+  "welcome": {
+    "title": "¡Bienvenido a Aegis!",
+    "signUp": "Registrarse",
+    "alreadyHaveAccount": "¿Ya tienes una cuenta?",
+    "logIn": "Iniciar Sesión",
+    "debugLogout": "Cerrar sesión"
+  },
   "login": {
     "title": "¡Bienvenido de vuelta, te extrañamos! 👋",
     "phone": {
@@ -759,6 +766,312 @@
       "noUserData": "No se pudo recuperar la información de tu cuenta. Por favor, intenta nuevamente.",
       "incompleteVerification": "Verificación incompleta.",
       "invalidCode": "Código de verificación inválido."
+    }
+  },
+  "register": {
+    "age": {
+      "title": "Antes de empezar necesitamos saber tu Edad",
+      "placeholder": "Selecciona tu fecha de nacimiento",
+      "button": "Continuar",
+      "alerts": {
+        "ageRestriction": {
+          "title": "Restricción de Edad",
+          "message": "Debes tener al menos 18 años para crear una cuenta."
+        },
+        "invalidDate": {
+          "title": "Fecha Inválida",
+          "message": "Por favor, selecciona una fecha de nacimiento válida."
+        }
+      }
+    },
+    "name": {
+      "title": "¡Genial, Continuemos!",
+      "subtitle": "¿Cuál es la mejor forma de llamarte?",
+      "placeholder": "Ingresa tu nombre",
+      "button": "Continuar",
+      "validation": {
+        "empty": "Por favor, ingresa tu nombre antes de continuar.",
+        "tooShort": "El nombre debe tener al menos 2 caracteres.",
+        "tooLong": "El nombre no puede exceder los 50 caracteres.",
+        "invalidChars": "El nombre solo puede contener letras, espacios, guiones y apóstrofes."
+      },
+      "alerts": {
+        "invalidName": "Nombre Inválido"
+      }
+    },
+    "email": {
+      "title": "Hola {{name}}, ¡vamos a\nverificar tu correo!",
+      "instruction": "Ingresa tu dirección de correo electrónico para recibir un código de verificación.",
+      "placeholder": "Ingresa tu dirección de correo",
+      "button": {
+        "send": "Enviar Código",
+        "sending": "Enviando..."
+      },
+      "validation": {
+        "empty": "Por favor, ingresa tu dirección de correo.",
+        "invalid": "Por favor, ingresa una dirección de correo válida.",
+        "tooLong": "La dirección de correo es demasiado larga."
+      },
+      "errors": {
+        "sendFailed": "No se pudo enviar el código de verificación."
+      }
+    },
+    "emailVerification": {
+      "title": "¡Casi listo! 🎉",
+      "subtitle": "Vamos a verificar tu correo",
+      "instruction": "Hemos enviado un código de 6 dígitos a\n{{email}}",
+      "helpText": "Por favor, revisa tu bandeja de entrada 📧",
+      "button": {
+        "verify": "Verificar Código",
+        "enterMore": "Ingresa {{count}} dígitos más"
+      },
+      "validation": {
+        "empty": "Por favor, ingresa el código de verificación.",
+        "invalidLength": "El código debe tener 6 dígitos.",
+        "onlyDigits": "El código solo puede contener dígitos."
+      },
+      "alerts": {
+        "success": {
+          "title": "Éxito",
+          "message": "¡Correo verificado exitosamente!"
+        },
+        "codeSent": {
+          "title": "Código Enviado",
+          "message": "Se ha enviado un nuevo código de verificación a tu correo."
+        },
+        "missingRequirements": "Verificación de teléfono o correo incompleta.",
+        "unexpectedStatus": "Estado de verificación inesperado: {{status}}",
+        "authNotReady": "Autenticación no lista.",
+        "phoneRequired": "Debes verificar tu número de teléfono antes de continuar.",
+        "resendFailed": "No se pudo reenviar el código. Por favor, intenta nuevamente."
+      },
+      "resend": {
+        "button": "📨 Reenviar código",
+        "timer": "Reenvío disponible en {{time}}"
+      },
+      "wrongEmail": {
+        "text": "¿Correo incorrecto?",
+        "link": "Volver para cambiarlo"
+      }
+    },
+    "phone": {
+      "title": "Hola {{name}}, ¡vamos a\nverificar tu número de teléfono!",
+      "placeholder": "Número de teléfono",
+      "button": {
+        "send": "Enviar Código",
+        "sending": "Enviando..."
+      },
+      "validation": {
+        "empty": "Por favor, ingresa tu número de teléfono.",
+        "tooShort": "El número de teléfono debe tener al menos {{min}} dígitos.",
+        "tooLong": "El número de teléfono no puede exceder los {{max}} dígitos.",
+        "onlyDigits": "El número de teléfono solo puede contener dígitos."
+      },
+      "errors": {
+        "sendFailed": "No se pudo enviar el SMS. Por favor, intenta nuevamente."
+      }
+    },
+    "phoneVerification": {
+      "title": "¡Casi listo! 🎉",
+      "subtitle": "Vamos a verificar tu número de teléfono",
+      "instruction": "Hemos enviado un código de 6 dígitos a\n{{phone}}",
+      "helpText": "Por favor, revisa tus mensajes 📱",
+      "button": {
+        "verify": "Verificar Código",
+        "enterMore": "Ingresa {{count}} dígitos más"
+      },
+      "validation": {
+        "empty": "Por favor, ingresa el código de verificación.",
+        "invalidLength": "El código debe tener 6 dígitos.",
+        "onlyDigits": "El código solo puede contener dígitos."
+      },
+      "alerts": {
+        "success": {
+          "title": "Éxito",
+          "message": "¡Código enviado nuevamente!"
+        },
+        "authNotReady": "Autenticación no lista.",
+        "verificationFailed": "La verificación falló. Por favor, intenta nuevamente.",
+        "invalidCode": "Código de verificación inválido.",
+        "resendFailed": "No se pudo reenviar el código."
+      },
+      "resend": {
+        "button": "📨 Reenviar código",
+        "timer": "Reenvío disponible en {{time}}"
+      },
+      "wrongNumber": {
+        "text": "¿Número incorrecto?",
+        "link": "Volver para cambiarlo"
+      }
+    }
+  },
+  "chatComponents": {
+    "header": {
+      "noName": "Grupo sin nombre",
+      "members_one": "{{count}} miembro",
+      "members_other": "{{count}} miembros",
+      "active_one": "{{count}} activo",
+      "active_other": "{{count}} activos"
+    },
+    "input": {
+      "placeholder": "Escribe un mensaje..."
+    },
+    "empty": {
+      "title": "No hay mensajes aún",
+      "subtitle": "¡Envía el primer mensaje!"
+    },
+    "exitButton": {
+      "delete": "Eliminar grupo",
+      "leave": "Salir del grupo"
+    },
+    "actions": {
+      "startJourney": "Empezar trayecto"
+    },
+    "groupInfo": {
+      "edit": "Editar",
+      "members_one": "{{count}} miembro",
+      "members_other": "{{count}} miembros",
+      "stats": {
+        "participants": "Participantes",
+        "online": "En línea",
+        "admins": "Administradores"
+      },
+      "type": {
+        "family": "Familia",
+        "friends": "Amigos",
+        "work": "Trabajo",
+        "other": "Otro"
+      }
+    },
+    "invitation": {
+      "title": "¡Invita a más personas!",
+      "subtitle": "Necesitas al menos 2 miembros para usar este grupo de {{groupType}}",
+      "button": "Generar invitación",
+      "help": "Comparte el enlace de invitación con las personas que quieres añadir al grupo"
+    },
+    "inviteMember": {
+      "text": "Invitar miembros"
+    },
+    "journeyBanner": {
+      "types": {
+        "individual": "Individual",
+        "common": "Grupal",
+        "personalized": "Grupal personalizado"
+      },
+      "participating": {
+        "inProgress": {
+          "title": "Tu trayecto {{type}} está activo",
+          "subtitle": "Trayecto en progreso. Toca para ver el mapa"
+        },
+        "pending": {
+          "title": "Estás en el trayecto {{type}}",
+          "subtitle": "Esperando a que más miembros se unan"
+        }
+      },
+      "notParticipating": {
+        "inProgress": {
+          "title": "Trayecto {{type}} en progreso",
+          "subtitle": "El trayecto ha comenzado. ¡Únete ahora!"
+        },
+        "pending": {
+          "title": "Trayecto {{type}} pendiente",
+          "subtitle": "Esperando a que más miembros se unan"
+        }
+      },
+      "buttons": {
+        "viewMap": "Ver en mapa",
+        "join": "Unirse al trayecto"
+      }
+    },
+    "joinModal": {
+      "title": "Unirse al trayecto",
+      "journeyTypes": {
+        "INDIVIDUAL": "Individual",
+        "COMMON_DESTINATION": "Grupal con destino común",
+        "PERSONALIZED": "Grupal personalizado"
+      },
+      "state": {
+        "label": "Estado:",
+        "IN_PROGRESS": "En progreso",
+        "PENDING": "Pendiente"
+      },
+      "created": "Creado:",
+      "instructions": {
+        "personalizedTitle": "Selecciona tu destino",
+        "personalizedText": "En un trayecto personalizado, cada participante puede tener su propio destino. Selecciona el tuyo a continuación.",
+        "commonTitle": "Información del trayecto",
+        "commonText": "En este trayecto grupal, todos los participantes comparten el mismo destino. Al unirte, seguirás la ruta común del grupo."
+      },
+      "destination": {
+        "title": "Tu destino",
+        "placeholder": "Selecciona tu destino",
+        "selected": "{{name}}"
+      },
+      "warning": "Tu ubicación actual será usada como punto de partida y se compartirá con los demás participantes del trayecto.",
+      "buttons": {
+        "cancel": "Cancelar",
+        "join": "Unirse al trayecto"
+      },
+      "alerts": {
+        "noUser": "No se pudo obtener la información del usuario",
+        "destinationRequired": {
+          "title": "Destino requerido",
+          "message": "Para trayectos personalizados debes seleccionar tu destino"
+        },
+        "noLocation": "No se pudo obtener tu ubicación",
+        "locationError": "Error al crear el registro de ubicación",
+        "success": {
+          "title": "¡Te has unido al trayecto!",
+          "personalized": "Te has unido al trayecto con destino a {{destination}}.",
+          "common": "Te has unido al trayecto grupal."
+        },
+        "error": {
+          "title": "Error",
+          "message": "No se pudo unir al trayecto. Verifica tu conexión e inténtalo de nuevo."
+        },
+        "permissions": {
+          "title": "Permisos requeridos",
+          "message": "Necesitamos acceso a tu ubicación para unirte al trayecto"
+        },
+        "locationFailed": "No se pudo obtener tu ubicación actual"
+      }
+    },
+    "journeyRequest": {
+      "invites": "{{creator}} te invita a unirte al trayecto",
+      "journeyName": "{{name}}",
+      "destination": "Destino: {{destination}}",
+      "id": "ID: {{id}}",
+      "buttons": {
+        "decline": "Declinar",
+        "join": "Unirse"
+      },
+      "joined": "Ya te has unido a este trayecto",
+      "alerts": {
+        "decline": {
+          "title": "Declinar trayecto",
+          "message": "¿Estás seguro de que no quieres participar en \"{{name}}\"?"
+        },
+        "success": {
+          "title": "¡Te has unido al trayecto!",
+          "message": "Te has unido exitosamente al trayecto \"{{name}}\". Tu destino: {{destination}}"
+        },
+        "error": "No se pudo unir al trayecto. Inténtalo de nuevo.",
+        "permissions": "Necesitamos acceso a tu ubicación para unirte al trayecto",
+        "locationError": "No se pudo obtener tu ubicación actual"
+      },
+      "selectDestination": "Selecciona tu destino para el trayecto"
+    },
+    "memberCard": {
+      "you": "Tú",
+      "roles": {
+        "admin": "Administrador",
+        "member": "Miembro"
+      },
+      "status": {
+        "online": "En línea",
+        "offline": "Desconectado",
+        "lastSeen": "Visto {{date}}"
+      }
     }
   }
 }

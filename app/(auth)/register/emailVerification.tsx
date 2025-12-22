@@ -16,18 +16,19 @@ import { useSignUp, useAuth, useUser as useClerkUser } from "@clerk/clerk-expo";
 import VerificationCodeField from "@/components/ui/VerificationCodeField";
 import ContinueButton from "../../../components/ui/ContinueButton";
 import { useTokenStore } from "@/lib/auth/tokenStore";
+import { useTranslation } from 'react-i18next';
 
-const validateCode = (code: string) => {
+const validateCode = (code: string, t: any) => {
   if (!code || code.trim() === '') {
-    return { isValid: false, message: "Please enter the verification code." };
+    return { isValid: false, message: t('register.emailVerification.validation.empty') };
   }
   
   if (code.length !== 6) {
-    return { isValid: false, message: "Code must be 6 digits." };
+    return { isValid: false, message: t('register.emailVerification.validation.invalidLength') };
   }
   
   if (!/^\d{6}$/.test(code)) {
-    return { isValid: false, message: "Code can only contain digits." };
+    return { isValid: false, message: t('register.emailVerification.validation.onlyDigits') };
   }
   
   return { isValid: true, message: "" };
@@ -43,12 +44,12 @@ export default function EmailVerificationScreen() {
   // Router and context
   const router = useRouter();
   const { user, setUser } = useUserStore();
+  const { t } = useTranslation();
 
   // Clerk authentication
   const { signUp, setActive, isLoaded } = useSignUp();
   const { getToken, signOut } = useAuth();
   const setToken = useTokenStore((state) => state.setToken);
-  const { user: clerkUser } = useClerkUser();
 
   // Local state
   const [isLoading, setIsLoading] = useState(false);
@@ -57,20 +58,20 @@ export default function EmailVerificationScreen() {
   const [canResend, setCanResend] = useState(false);
 
   // Valores computados
-  const validation = validateCode(verificationCode);
+  const validation = validateCode(verificationCode, t);
   const canVerify = validation.isValid && !isLoading;
 
   const handleVerifyCode = async () => {
     if (!isLoaded || !signUp) {
-      return Alert.alert("Error", "Auth not ready.");
+      return Alert.alert(t('error'), t('register.emailVerification.alerts.authNotReady'));
     }
 
     if (!validation.isValid) {
-      return Alert.alert("Invalid Code", validation.message);
+      return Alert.alert(t('register.name.alerts.invalidName'), validation.message);
     }
 
     if (!user?.phone) {
-      return Alert.alert("Error", "You must verify your phone number before continuing.");
+      return Alert.alert(t('error'), t('register.emailVerification.alerts.phoneRequired'));
     }
 
     try {
@@ -93,7 +94,7 @@ export default function EmailVerificationScreen() {
           // Guardar el email en el store local
           setUser({ ...user, email: user?.email || "No email available" });
           
-          Alert.alert("Success", "Email verified successfully!");
+          Alert.alert(t('register.emailVerification.alerts.success.title'), t('register.emailVerification.alerts.success.message'));
           router.push('/(auth)/infoForm');
           
         } catch (navigationError: any) {
@@ -101,15 +102,15 @@ export default function EmailVerificationScreen() {
         }
         
       } else if (result.status === "missing_requirements") {
-        Alert.alert("Error", "Phone number or email verification incomplete.");
+        Alert.alert(t('error'), t('register.emailVerification.alerts.missingRequirements'));
       } else {
-        Alert.alert("Error", `Unexpected verification status: ${result.status}`);
+        Alert.alert(t('error'), t('register.emailVerification.alerts.unexpectedStatus', { status: result.status }));
       }
 
     } catch (error: any) {
       console.error("Verification error:", error);
-      const errorMessage = error?.errors?.[0]?.message || error?.message || "Failed to verify email.";
-      Alert.alert("Error", errorMessage);
+      const errorMessage = error?.errors?.[0]?.message || error?.message || t('register.email.errors.sendFailed');
+      Alert.alert(t('error'), errorMessage);
       // NOTA: Aquí NO hacemos rollback porque el error es de verificación,
       // el usuario todavía no se ha creado completamente en Clerk
     } finally {
@@ -126,10 +127,10 @@ export default function EmailVerificationScreen() {
       setTimer(60);
       setCanResend(false);
       setVerificationCode('');
-      Alert.alert("Code Sent", "A new verification code has been sent to your email.");
+      Alert.alert(t('register.emailVerification.alerts.codeSent.title'), t('register.emailVerification.alerts.codeSent.message'));
     } catch (error: any) {
       console.error("Resend error:", error);
-      Alert.alert("Error", "Failed to resend code. Please try again.");
+      Alert.alert(t('error'), t('register.emailVerification.alerts.resendFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -173,16 +174,16 @@ export default function EmailVerificationScreen() {
         >
           <View style={styles.content}>
             <View style={styles.titleContainer}>
-              <Text style={styles.textTitle}>Almost there! 🎉</Text>
-              <Text style={styles.subtitle}>Let's verify your email</Text>
+              <Text style={styles.textTitle}>{t('register.emailVerification.title')}</Text>
+              <Text style={styles.subtitle}>{t('register.emailVerification.subtitle')}</Text>
             </View>
 
             <View style={styles.verificationContainer}>
               <Text style={styles.instruction}>
-                We've sent a 6-digit code to{"\n"}{user?.email || "No email available"}
+                {t('register.emailVerification.instruction', { email: user?.email || "No email available" })}
               </Text>
               <Text style={styles.helpText}>
-                Please check your inbox 📧
+                {t('register.emailVerification.helpText')}
               </Text>
 
               <View style={styles.codeFieldContainer}>
@@ -200,7 +201,7 @@ export default function EmailVerificationScreen() {
               <View style={styles.buttonContainer}>
                 <ContinueButton
                   onPress={handleVerifyCode}
-                  text={verificationCode.length === 6 ? "Verify Code" : `Enter ${6 - verificationCode.length} more digits`}
+                  text={verificationCode.length === 6 ? t('register.emailVerification.button.verify') : t('register.emailVerification.button.enterMore', { count: 6 - verificationCode.length })}
                   disabled={!canVerify}
                   loading={isLoading}
                 />
@@ -210,20 +211,20 @@ export default function EmailVerificationScreen() {
               <View style={styles.resendSection}>
                 {canResend ? (
                   <Pressable onPress={handleResendCode} style={styles.resendButton}>
-                    <Text style={styles.resendText}>📨 Resend code</Text>
+                    <Text style={styles.resendText}>{t('register.emailVerification.resend.button')}</Text>
                   </Pressable>
                 ) : (
                   <Text style={styles.timerText}>
-                    Resend available in {formatTime(timer)}
+                    {t('register.emailVerification.resend.timer', { time: formatTime(timer) })}
                   </Text>
                 )}
               </View>
 
               {/* Sección para ir atrás */}
               <View style={styles.backSection}>
-                <Text style={styles.wrongEmailText}>Wrong email?</Text>
+                <Text style={styles.wrongEmailText}>{t('register.emailVerification.wrongEmail.text')}</Text>
                 <Pressable onPress={() => router.back()}>
-                  <Text style={styles.backText}>Go back to change it</Text>
+                  <Text style={styles.backText}>{t('register.emailVerification.wrongEmail.link')}</Text>
                 </Pressable>
               </View>
             </View>

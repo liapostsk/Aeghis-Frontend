@@ -1,7 +1,7 @@
-import React from 'react';
 import { View, Text, StyleSheet, Pressable, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Group } from '@/api/backend/group/groupType';
+import { useTranslation } from 'react-i18next';
 
 interface GroupInfoCardProps {
   group: Group;
@@ -18,6 +18,13 @@ export default function GroupInfoCard({
   adminsCount,
   onEdit,
 }: GroupInfoCardProps) {
+  const { t } = useTranslation();
+  
+  const getGroupType = (type: string) => {
+    const typeKey = type?.toLowerCase() || 'other';
+    return t(`chatComponents.groupInfo.type.${typeKey}`, { defaultValue: type });
+  };
+
   return (
     <View style={styles.groupCard}>
       <View style={styles.groupHeader}>
@@ -35,14 +42,14 @@ export default function GroupInfoCard({
         <View style={styles.groupDetails}>
           <Text style={styles.groupName}>{group.name}</Text>
           <Text style={styles.groupType}>
-            {group.type?.charAt(0).toUpperCase() + group.type?.slice(1).toLowerCase()}
+            {getGroupType(group.type || 'other')}
           </Text>
           <Text style={styles.groupMembers}>
-            {membersCount} miembro{membersCount !== 1 ? 's' : ''}
+            {t('chatComponents.groupInfo.members', { count: membersCount })}
           </Text>
         </View>
         <Pressable style={styles.editButton} onPress={onEdit}>
-          <Text style={styles.editButtonText}>Editar</Text>
+          <Text style={styles.editButtonText}>{t('chatComponents.groupInfo.edit')}</Text>
         </Pressable>
       </View>
 
@@ -53,15 +60,15 @@ export default function GroupInfoCard({
       <View style={styles.groupStats}>
         <View style={styles.stat}>
           <Text style={styles.statValue}>{membersCount}</Text>
-          <Text style={styles.statLabel}>Participantes</Text>
+          <Text style={styles.statLabel}>{t('chatComponents.groupInfo.stats.participants')}</Text>
         </View>
         <View style={[styles.stat, styles.statBorder]}>
           <Text style={styles.statValue}>{onlineCount}</Text>
-          <Text style={styles.statLabel}>En línea</Text>
+          <Text style={styles.statLabel}>{t('chatComponents.groupInfo.stats.online')}</Text>
         </View>
         <View style={styles.stat}>
           <Text style={styles.statValue}>{adminsCount}</Text>
-          <Text style={styles.statLabel}>Administradores</Text>
+          <Text style={styles.statLabel}>{t('chatComponents.groupInfo.stats.admins')}</Text>
         </View>
       </View>
     </View>

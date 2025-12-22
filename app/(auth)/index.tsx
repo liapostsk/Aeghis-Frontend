@@ -4,19 +4,20 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@clerk/clerk-expo";
 import { unlinkFirebaseSession } from "@/api/firebase/auth/firebase";
 import { useUserStore } from "@/lib/storage/useUserStorage";
+import { useTranslation } from 'react-i18next';
 
 export default function Index() {
   const router = useRouter();
   const { signOut } = useAuth();
   const { clearUser } = useUserStore();
+  const { t } = useTranslation();
 
-  // Debug logout handler (opcional - solo para desarrollo)
   const handleLogout = async () => {
     try {
       await unlinkFirebaseSession();
       await signOut();
       clearUser();
-      console.log("🔒 Sesión cerrada manualmente");
+      console.log("Sesión cerrada manualmente");
       router.replace("/(auth)");
     } catch (error) {
       console.error("Error cerrando sesión:", error);
@@ -25,17 +26,16 @@ export default function Index() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Botón de cerrar sesión (solo para debug - opcional en producción) */}
       {__DEV__ && (
         <Pressable 
           style={styles.debugLogoutButton} 
           onPress={handleLogout}
         >
-          <Text style={styles.debugLogoutText}>🔒 Cerrar sesión</Text>
+          <Text style={styles.debugLogoutText}>{t('welcome.debugLogout')}</Text>
         </Pressable>
       )}
       
-      <Text style={styles.textTitle}>Welcome to Aegis!</Text>
+      <Text style={styles.textTitle}>{t('welcome.title')}</Text>
       <Image
         source={require("../../assets/images/welcomePage.png")}
         style={styles.image}
@@ -45,16 +45,16 @@ export default function Index() {
         style={styles.buttonSignUp}
         onPress={() => router.push("/(auth)/register")}
       >
-        <Text style={styles.textSignUp}>Sign Up</Text>
+        <Text style={styles.textSignUp}>{t('welcome.signUp')}</Text>
       </Pressable>
 
       <View style={{ flexDirection: 'row', marginTop: 20, alignItems: 'center', position: 'absolute', bottom: '15%' }}>
         <Text style={{ color: 'white', fontSize: 18 }}>
-          Already have an account?{'  '}
+          {t('welcome.alreadyHaveAccount')}{'  '}
         </Text>
         <Pressable onPress={() => router.push("/(auth)/login")}>
           <Text style={{ color: "#0003B2", fontSize: 18, fontWeight: 'bold' }}>
-            Log In
+            {t('welcome.logIn')}
           </Text>
         </Pressable>
       </View>

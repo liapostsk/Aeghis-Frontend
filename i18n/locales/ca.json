@@ -716,6 +716,13 @@
         }
       }
     }  },
+  "welcome": {
+    "title": "Benvingut a Aegis!",
+    "signUp": "Registrar-se",
+    "alreadyHaveAccount": "Ja tens un compte?",
+    "logIn": "Iniciar Sessió",
+    "debugLogout": "Tancar sessió"
+  },
   "login": {
     "title": "Benvingut de nou, t'hem trobat a faltar! 👋",
     "phone": {
@@ -758,5 +765,311 @@
       "noUserData": "No s'ha pogut recuperar la informació del teu compte. Si us plau, torna-ho a provar.",
       "incompleteVerification": "Verificació incompleta.",
       "invalidCode": "Codi de verificació invàlid."
-    }  }
+    }
+  },
+  "register": {
+    "age": {
+      "title": "Abans de començar necessitem saber la teva Edat",
+      "placeholder": "Selecciona la teva data de naixement",
+      "button": "Continuar",
+      "alerts": {
+        "ageRestriction": {
+          "title": "Restricció d'Edat",
+          "message": "Has de tenir almenys 18 anys per crear un compte."
+        },
+        "invalidDate": {
+          "title": "Data Invàlida",
+          "message": "Si us plau, selecciona una data de naixement vàlida."
+        }
+      }
+    },
+    "name": {
+      "title": "Genial, Continuem!",
+      "subtitle": "Quina és la millor forma de cridar-te?",
+      "placeholder": "Introdueix el teu nom",
+      "button": "Continuar",
+      "validation": {
+        "empty": "Si us plau, introdueix el teu nom abans de continuar.",
+        "tooShort": "El nom ha de tenir almenys 2 caràcters.",
+        "tooLong": "El nom no pot superar els 50 caràcters.",
+        "invalidChars": "El nom només pot contenir lletres, espais, guions i apòstrofs."
+      },
+      "alerts": {
+        "invalidName": "Nom Invàlid"
+      }
+    },
+    "email": {
+      "title": "Hola {{name}}, anem a\nverificar el teu correu!",
+      "instruction": "Introdueix la teva adreça de correu electrònic per rebre un codi de verificació.",
+      "placeholder": "Introdueix la teva adreça de correu",
+      "button": {
+        "send": "Enviar Codi",
+        "sending": "Enviant..."
+      },
+      "validation": {
+        "empty": "Si us plau, introdueix la teva adreça de correu.",
+        "invalid": "Si us plau, introdueix una adreça de correu vàlida.",
+        "tooLong": "L'adreça de correu és massa llarga."
+      },
+      "errors": {
+        "sendFailed": "No s'ha pogut enviar el codi de verificació."
+      }
+    },
+    "emailVerification": {
+      "title": "Gairebé enllestit! 🎉",
+      "subtitle": "Anem a verificar el teu correu",
+      "instruction": "Hem enviat un codi de 6 dígits a\n{{email}}",
+      "helpText": "Si us plau, revisa la teva safata d'entrada 📧",
+      "button": {
+        "verify": "Verificar Codi",
+        "enterMore": "Introdueix {{count}} dígits més"
+      },
+      "validation": {
+        "empty": "Si us plau, introdueix el codi de verificació.",
+        "invalidLength": "El codi ha de tenir 6 dígits.",
+        "onlyDigits": "El codi només pot contenir dígits."
+      },
+      "alerts": {
+        "success": {
+          "title": "Èxit",
+          "message": "Correu verificat amb èxit!"
+        },
+        "codeSent": {
+          "title": "Codi Enviat",
+          "message": "S'ha enviat un nou codi de verificació al teu correu."
+        },
+        "missingRequirements": "Verificació de telèfon o correu incompleta.",
+        "unexpectedStatus": "Estat de verificació inesperat: {{status}}",
+        "authNotReady": "Autenticació no llesta.",
+        "phoneRequired": "Has de verificar el teu número de telèfon abans de continuar.",
+        "resendFailed": "No s'ha pogut reenviar el codi. Si us plau, torna-ho a provar."
+      },
+      "resend": {
+        "button": "📨 Reenviar codi",
+        "timer": "Reenviament disponible en {{time}}"
+      },
+      "wrongEmail": {
+        "text": "Correu incorrecte?",
+        "link": "Torna per canviar-lo"
+      }
+    },
+    "phone": {
+      "title": "Hola {{name}}, anem a\nverificar el teu número de telèfon!",
+      "placeholder": "Número de telèfon",
+      "button": {
+        "send": "Enviar Codi",
+        "sending": "Enviant..."
+      },
+      "validation": {
+        "empty": "Si us plau, introdueix el teu número de telèfon.",
+        "tooShort": "El número de telèfon ha de tenir almenys {{min}} dígits.",
+        "tooLong": "El número de telèfon no pot superar els {{max}} dígits.",
+        "onlyDigits": "El número de telèfon només pot contenir dígits."
+      },
+      "errors": {
+        "sendFailed": "No s'ha pogut enviar l'SMS. Si us plau, torna-ho a provar."
+      }
+    },
+    "phoneVerification": {
+      "title": "Gairebé enllestit! 🎉",
+      "subtitle": "Anem a verificar el teu número de telèfon",
+      "instruction": "Hem enviat un codi de 6 dígits a\n{{phone}}",
+      "helpText": "Si us plau, revisa els teus missatges 📱",
+      "button": {
+        "verify": "Verificar Codi",
+        "enterMore": "Introdueix {{count}} dígits més"
+      },
+      "validation": {
+        "empty": "Si us plau, introdueix el codi de verificació.",
+        "invalidLength": "El codi ha de tenir 6 dígits.",
+        "onlyDigits": "El codi només pot contenir dígits."
+      },
+      "alerts": {
+        "success": {
+          "title": "Èxit",
+          "message": "Codi enviat novament!"
+        },
+        "authNotReady": "Autenticació no llesta.",
+        "verificationFailed": "La verificació ha fallat. Si us plau, torna-ho a provar.",
+        "invalidCode": "Codi de verificació invàlid.",
+        "resendFailed": "No s'ha pogut reenviar el codi."
+      },
+      "resend": {
+        "button": "📨 Reenviar codi",
+        "timer": "Reenviament disponible en {{time}}"
+      },
+      "wrongNumber": {
+        "text": "Número incorrecte?",
+        "link": "Torna per canviar-lo"
+      }
+    }  },
+  "chatComponents": {
+    "header": {
+      "noName": "Grup sense nom",
+      "members_one": "{{count}} membre",
+      "members_other": "{{count}} membres",
+      "active_one": "{{count}} actiu",
+      "active_other": "{{count}} actius"
+    },
+    "input": {
+      "placeholder": "Escriu un missatge..."
+    },
+    "empty": {
+      "title": "Encara no hi ha missatges",
+      "subtitle": "Envia el primer missatge!"
+    },
+    "exitButton": {
+      "delete": "Eliminar grup",
+      "leave": "Sortir del grup"
+    },
+    "actions": {
+      "startJourney": "Començar trajecte"
+    },
+    "groupInfo": {
+      "edit": "Editar",
+      "members_one": "{{count}} membre",
+      "members_other": "{{count}} membres",
+      "stats": {
+        "participants": "Participants",
+        "online": "En línia",
+        "admins": "Administradors"
+      },
+      "type": {
+        "family": "Família",
+        "friends": "Amics",
+        "work": "Feina",
+        "other": "Altre"
+      }
+    },
+    "invitation": {
+      "title": "Convida més persones!",
+      "subtitle": "Necessites almenys 2 membres per utilitzar aquest grup de {{groupType}}",
+      "button": "Generar invitació",
+      "help": "Comparteix l'enllaç d'invitació amb les persones que vols afegir al grup"
+    },
+    "inviteMember": {
+      "text": "Convidar membres"
+    },
+    "journeyBanner": {
+      "types": {
+        "individual": "individual",
+        "common": "grupal",
+        "personalized": "grupal personalitzat"
+      },
+      "participating": {
+        "inProgress": {
+          "title": "El teu trajecte {{type}} està actiu",
+          "subtitle": "Trajecte en curs. Toca per veure el mapa"
+        },
+        "pending": {
+          "title": "Estàs al trajecte {{type}}",
+          "subtitle": "Esperant que més membres s'uneixin"
+        }
+      },
+      "notParticipating": {
+        "inProgress": {
+          "title": "Trajecte {{type}} en curs",
+          "subtitle": "El trajecte ha començat. Uneix-te ara!"
+        },
+        "pending": {
+          "title": "Trajecte {{type}} pendent",
+          "subtitle": "Esperant que més membres s'uneixin"
+        }
+      },
+      "buttons": {
+        "viewMap": "Veure al mapa",
+        "join": "Unir-se al trajecte"
+      }
+    },
+    "joinModal": {
+      "title": "Unir-se al trajecte",
+      "journeyTypes": {
+        "INDIVIDUAL": "Individual",
+        "COMMON_DESTINATION": "Grupal amb destí comú",
+        "PERSONALIZED": "Grupal personalitzat"
+      },
+      "state": {
+        "label": "Estat:",
+        "IN_PROGRESS": "En curs",
+        "PENDING": "Pendent"
+      },
+      "created": "Creat:",
+      "instructions": {
+        "personalizedTitle": "Selecciona el teu destí",
+        "personalizedText": "En un trajecte personalitzat, cada participant pot tenir el seu propi destí. Selecciona el teu a continuació.",
+        "commonTitle": "Informació del trajecte",
+        "commonText": "En aquest trajecte grupal, tots els participants comparteixen el mateix destí. En unir-te, seguiràs la ruta comuna del grup."
+      },
+      "destination": {
+        "title": "El teu destí",
+        "placeholder": "Selecciona el teu destí",
+        "selected": "{{name}}"
+      },
+      "warning": "La teva ubicació actual s'utilitzarà com a punt de partida i es compartirà amb els altres participants del trajecte.",
+      "buttons": {
+        "cancel": "Cancel·lar",
+        "join": "Unir-se al trajecte"
+      },
+      "alerts": {
+        "noUser": "No s'ha pogut obtenir la informació de l'usuari",
+        "destinationRequired": {
+          "title": "Destí requerit",
+          "message": "Per a trajectes personalitzats has de seleccionar el teu destí"
+        },
+        "noLocation": "No s'ha pogut obtenir la teva ubicació",
+        "locationError": "Error en crear el registre d'ubicació",
+        "success": {
+          "title": "T'has unit al trajecte!",
+          "personalized": "T'has unit al trajecte amb destí a {{destination}}.",
+          "common": "T'has unit al trajecte grupal."
+        },
+        "error": {
+          "title": "Error",
+          "message": "No s'ha pogut unir al trajecte. Verifica la teva connexió i torna-ho a intentar."
+        },
+        "permissions": {
+          "title": "Permisos requerits",
+          "message": "Necessitem accés a la teva ubicació per unir-te al trajecte"
+        },
+        "locationFailed": "No s'ha pogut obtenir la teva ubicació actual"
+      }
+    },
+    "journeyRequest": {
+      "invites": "{{creator}} et convida a unir-te al trajecte",
+      "journeyName": "{{name}}",
+      "destination": "Destí: {{destination}}",
+      "id": "ID: {{id}}",
+      "buttons": {
+        "decline": "Declinar",
+        "join": "Unir-se"
+      },
+      "joined": "Ja t'has unit a aquest trajecte",
+      "alerts": {
+        "decline": {
+          "title": "Declinar trajecte",
+          "message": "Estàs segur que no vols participar a \"{{name}}\"?"
+        },
+        "success": {
+          "title": "T'has unit al trajecte!",
+          "message": "T'has unit amb èxit al trajecte \"{{name}}\". El teu destí: {{destination}}"
+        },
+        "error": "No s'ha pogut unir al trajecte. Torna-ho a intentar.",
+        "permissions": "Necessitem accés a la teva ubicació per unir-te al trajecte",
+        "locationError": "No s'ha pogut obtenir la teva ubicació actual"
+      },
+      "selectDestination": "Selecciona el teu destí per al trajecte"
+    },
+    "memberCard": {
+      "you": "Tu",
+      "roles": {
+        "admin": "Administrador",
+        "member": "Membre"
+      },
+      "status": {
+        "online": "En línia",
+        "offline": "Desconnectat",
+        "lastSeen": "Vist {{date}}"
+      }
+    }
+  }
 }

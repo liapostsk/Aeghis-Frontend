@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
     View,
     Text,
@@ -18,6 +18,7 @@ import { ParticipationDto } from '@/api/backend/participations/participationType
 import { useAuth } from '@clerk/clerk-expo';
 import { getCurrentUser } from '@/api/backend/user/userApi';
 import * as ExpoLocation from 'expo-location';
+import { useTranslation } from 'react-i18next';
 
 interface JourneyRequestMessageProps {
     journeyId: number;
@@ -38,6 +39,7 @@ export default function JourneyRequestMessage({
     onDecline,
     hasUserJoined = false
 }: JourneyRequestMessageProps) {
+    const { t } = useTranslation();
     const [joining, setJoining] = useState(false);
     const [showDestinationModal, setShowDestinationModal] = useState(false);
     const { getToken } = useAuth();
@@ -46,7 +48,7 @@ export default function JourneyRequestMessage({
         try {
             const { status } = await ExpoLocation.requestForegroundPermissionsAsync();
             if (status !== 'granted') {
-                Alert.alert('Permisos requeridos', 'Necesitamos acceso a tu ubicación para unirte al trayecto');
+                Alert.alert(t('error'), t('chatComponents.journeyRequest.alerts.permissions'));
                 return null;
             }
 
@@ -56,7 +58,7 @@ export default function JourneyRequestMessage({
             return location;
         } catch (error) {
             console.error('Error getting location:', error);
-            Alert.alert('Error', 'No se pudo obtener tu ubicación actual');
+            Alert.alert(t('error'), t('chatComponents.journeyRequest.alerts.locationError'));
             return null;
         }
     };
@@ -128,16 +130,18 @@ export default function JourneyRequestMessage({
         console.log('Participación sincronizada con Firebaseeeeeeee');
 
             Alert.alert(
-                '¡Te has unido al trayecto!',
-                `Te has unido exitosamente al trayecto "${journeyName}". ` +
-                `Tu destino: ${selectedDestination.name}`,
+                t('chatComponents.journeyRequest.alerts.success.title'),
+                t('chatComponents.journeyRequest.alerts.success.message', { 
+                    name: journeyName, 
+                    destination: selectedDestination.name 
+                }),
                 [{ text: 'OK' }]
             );
 
             onJoinSuccess?.(journeyId);
 
         } catch (error) {
-            Alert.alert('Error', 'No se pudo unir al trayecto. Inténtalo de nuevo.');
+            Alert.alert(t('error'), t('chatComponents.journeyRequest.alerts.error'));
         } finally {
             setJoining(false);
             setShowDestinationModal(false);
@@ -146,12 +150,12 @@ export default function JourneyRequestMessage({
 
     const handleDecline = () => {
         Alert.alert(
-            'Declinar trayecto',
-            `¿Estás seguro de que no quieres participar en "${journeyName}"?`,
+            t('chatComponents.journeyRequest.alerts.decline.title'),
+            t('chatComponents.journeyRequest.alerts.decline.message', { name: journeyName }),
             [
-                { text: 'Cancelar', style: 'cancel' },
+                { text: t('chatComponents.joinModal.buttons.cancel'), style: 'cancel' },
                 { 
-                    text: 'Declinar', 
+                    text: t('chatComponents.journeyRequest.buttons.decline'), 
                     style: 'destructive',
                     onPress: () => onDecline?.(journeyId)
                 }

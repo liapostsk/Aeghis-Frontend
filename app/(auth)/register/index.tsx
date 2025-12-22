@@ -14,8 +14,9 @@ import Icon from '@expo/vector-icons/Ionicons';
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { router } from "expo-router";
 import { useUserStore } from "../../../lib/storage/useUserStorage";
+import { useTranslation } from 'react-i18next';
 
-const MINIMUM_AGE = 18; // Minimum age requirement
+const MINIMUM_AGE = 18;
 const DATE_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
     day: '2-digit',
     month: 'long',
@@ -30,6 +31,7 @@ export default function AgeScreen() {
     const [isValidAge, setIsValidAge] = useState<boolean>(true);
     const [dateOfBirth, setDateOfBirth] = useState("");
     const { user, setUser } = useUserStore();
+    const { t } = useTranslation();
 
     // Handlers para el DatePicker
     const showDatePicker = () => setDatePickerVisibility(true);
@@ -54,8 +56,8 @@ export default function AgeScreen() {
             // Show alert for underage users
             if (validation.isUnder18) {
                 Alert.alert(
-                    "Age Restriction",
-                    "You must be at least 18 years old to create an account.",
+                    t('register.age.alerts.ageRestriction.title'),
+                    t('register.age.alerts.ageRestriction.message'),
                     [{ text: "OK", onPress: () => console.log("Age restriction alert closed") }],
                     { cancelable: false }
                 );
@@ -64,8 +66,8 @@ export default function AgeScreen() {
             // Show alert for invalid date
             else {
                 Alert.alert(
-                    "Invalid Date",
-                    "Please select a valid date of birth.",
+                    t('register.age.alerts.invalidDate.title'),
+                    t('register.age.alerts.invalidDate.message'),
                     [{ text: "OK", onPress: () => console.log("Invalid date alert closed") }],
                     { cancelable: false }
                 );
@@ -109,13 +111,13 @@ export default function AgeScreen() {
     return (
         <SafeAreaView style={styles.container}>
 
-            <Text style={styles.textTitle}>Before starting we have to know your Age</Text>
+            <Text style={styles.textTitle}>{t('register.age.title')}</Text>
 
             <View style={styles.inputContainer}>
                 <TouchableOpacity onPress={showDatePicker} style={styles.inputWrapper}>
                 <TextInput
                     style={styles.textInput}
-                    placeholder="Select your date of birth"
+                    placeholder={t('register.age.placeholder')}
                     value={dateOfBirth}
                     placeholderTextColor="#11182766"
                     editable={false}
@@ -146,11 +148,11 @@ export default function AgeScreen() {
                     router.push("/(auth)/register/name");
                 }}
             >
-                <Text style={styles.continueButtonText}>Continue</Text>
+                <Text style={styles.continueButtonText}>{t('register.age.button')}</Text>
             </Pressable>
             ) : (
             <Pressable style={[styles.continueButton, styles.disabledButton]} onPress={() => handleConfirm(selectedDate)}>
-                <Text style={styles.continueButtonText}>Continue</Text>
+                <Text style={styles.continueButtonText}>{t('register.age.button')}</Text>
             </Pressable>
             )}
 

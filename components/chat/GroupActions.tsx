@@ -1,7 +1,6 @@
-import React from 'react';
 import { View, StyleSheet, Pressable, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-
+import { useTranslation } from 'react-i18next';
 
 interface GroupActionsProps {
   groupId: number;
@@ -10,6 +9,8 @@ interface GroupActionsProps {
 }
 
 export default function GroupActions({ groupId, onStartJourney, hasActiveJourney }: GroupActionsProps) {
+  const { t } = useTranslation();
+  
   return (
     <View style={styles.actionsContainer}>
       <Pressable
@@ -18,7 +19,7 @@ export default function GroupActions({ groupId, onStartJourney, hasActiveJourney
         disabled={hasActiveJourney}
       >
         <Ionicons name="location-outline" size={20} color="#7A33CC" />
-        <Text style={styles.actionButtonText}>Empezar trayecto</Text>
+        <Text style={styles.actionButtonText}>{t('chatComponents.actions.startJourney')}</Text>
       </Pressable>
     </View>
   );

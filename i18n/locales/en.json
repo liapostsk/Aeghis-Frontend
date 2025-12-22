@@ -717,6 +717,13 @@
       }
     }
   },
+  "welcome": {
+    "title": "Welcome to Aegis!",
+    "signUp": "Sign Up",
+    "alreadyHaveAccount": "Already have an account?",
+    "logIn": "Log In",
+    "debugLogout": "Log out"
+  },
   "login": {
     "title": "Welcome back, we missed you! 👋",
     "phone": {
@@ -759,6 +766,312 @@
       "noUserData": "We couldn't retrieve your account. Please try again.",
       "incompleteVerification": "Incomplete verification.",
       "invalidCode": "Invalid verification code."
+    }
+  },
+  "register": {
+    "age": {
+      "title": "Before starting we have to know your Age",
+      "placeholder": "Select your date of birth",
+      "button": "Continue",
+      "alerts": {
+        "ageRestriction": {
+          "title": "Age Restriction",
+          "message": "You must be at least 18 years old to create an account."
+        },
+        "invalidDate": {
+          "title": "Invalid Date",
+          "message": "Please select a valid date of birth."
+        }
+      }
+    },
+    "name": {
+      "title": "Great, Let's\nContinue!",
+      "subtitle": "What's the best way to call you?",
+      "placeholder": "Enter your name",
+      "button": "Continue",
+      "validation": {
+        "empty": "Please enter your name before continuing.",
+        "tooShort": "Name must be at least 2 characters long.",
+        "tooLong": "Name cannot exceed 50 characters.",
+        "invalidChars": "Name can only contain letters, spaces, hyphens, and apostrophes."
+      },
+      "alerts": {
+        "invalidName": "Invalid Name"
+      }
+    },
+    "email": {
+      "title": "Hey {{name}}, let's\nverify your email!",
+      "instruction": "Enter your email address to receive a verification code.",
+      "placeholder": "Enter your email address",
+      "button": {
+        "send": "Send Code",
+        "sending": "Sending..."
+      },
+      "validation": {
+        "empty": "Please enter your email address.",
+        "invalid": "Please enter a valid email address.",
+        "tooLong": "Email address is too long."
+      },
+      "errors": {
+        "sendFailed": "Failed to send verification code."
+      }
+    },
+    "emailVerification": {
+      "title": "Almost there! 🎉",
+      "subtitle": "Let's verify your email",
+      "instruction": "We've sent a 6-digit code to\n{{email}}",
+      "helpText": "Please check your inbox 📧",
+      "button": {
+        "verify": "Verify Code",
+        "enterMore": "Enter {{count}} more digits"
+      },
+      "validation": {
+        "empty": "Please enter the verification code.",
+        "invalidLength": "Code must be 6 digits.",
+        "onlyDigits": "Code can only contain digits."
+      },
+      "alerts": {
+        "success": {
+          "title": "Success",
+          "message": "Email verified successfully!"
+        },
+        "codeSent": {
+          "title": "Code Sent",
+          "message": "A new verification code has been sent to your email."
+        },
+        "missingRequirements": "Phone number or email verification incomplete.",
+        "unexpectedStatus": "Unexpected verification status: {{status}}",
+        "authNotReady": "Auth not ready.",
+        "phoneRequired": "You must verify your phone number before continuing.",
+        "resendFailed": "Failed to resend code. Please try again."
+      },
+      "resend": {
+        "button": "📨 Resend code",
+        "timer": "Resend available in {{time}}"
+      },
+      "wrongEmail": {
+        "text": "Wrong email?",
+        "link": "Go back to change it"
+      }
+    },
+    "phone": {
+      "title": "Hey {{name}}, let's\nverify your phone number!",
+      "placeholder": "Phone number",
+      "button": {
+        "send": "Send Code",
+        "sending": "Sending..."
+      },
+      "validation": {
+        "empty": "Please enter your phone number.",
+        "tooShort": "Phone number must be at least {{min}} digits.",
+        "tooLong": "Phone number cannot exceed {{max}} digits.",
+        "onlyDigits": "Phone number can only contain digits."
+      },
+      "errors": {
+        "sendFailed": "Failed to send SMS. Please try again."
+      }
+    },
+    "phoneVerification": {
+      "title": "Almost there! 🎉",
+      "subtitle": "Let's verify your phone number",
+      "instruction": "We've sent a 6-digit code to\n{{phone}}",
+      "helpText": "Please check your messages 📱",
+      "button": {
+        "verify": "Verify Code",
+        "enterMore": "Enter {{count}} more digits"
+      },
+      "validation": {
+        "empty": "Please enter the verification code.",
+        "invalidLength": "Code must be 6 digits.",
+        "onlyDigits": "Code can only contain digits."
+      },
+      "alerts": {
+        "success": {
+          "title": "Success",
+          "message": "Code sent again!"
+        },
+        "authNotReady": "Auth not ready.",
+        "verificationFailed": "Verification failed. Please try again.",
+        "invalidCode": "Invalid verification code.",
+        "resendFailed": "Could not resend code."
+      },
+      "resend": {
+        "button": "📨 Resend code",
+        "timer": "Resend available in {{time}}"
+      },
+      "wrongNumber": {
+        "text": "Wrong number?",
+        "link": "Go back to change it"
+      }
+    }
+  },
+  "chatComponents": {
+    "header": {
+      "noName": "Group without name",
+      "members_one": "{{count}} member",
+      "members_other": "{{count}} members",
+      "active_one": "{{count}} active",
+      "active_other": "{{count}} active"
+    },
+    "input": {
+      "placeholder": "Type a message..."
+    },
+    "empty": {
+      "title": "No messages yet",
+      "subtitle": "Send the first message!"
+    },
+    "exitButton": {
+      "delete": "Delete group",
+      "leave": "Leave group"
+    },
+    "actions": {
+      "startJourney": "Start journey"
+    },
+    "groupInfo": {
+      "edit": "Edit",
+      "members_one": "{{count}} member",
+      "members_other": "{{count}} members",
+      "stats": {
+        "participants": "Participants",
+        "online": "Online",
+        "admins": "Administrators"
+      },
+      "type": {
+        "family": "Family",
+        "friends": "Friends",
+        "work": "Work",
+        "other": "Other"
+      }
+    },
+    "invitation": {
+      "title": "Invite more people!",
+      "subtitle": "You need at least 2 members to use this {{groupType}} group",
+      "button": "Generate invitation",
+      "help": "Share the invitation link with the people you want to add to the group"
+    },
+    "inviteMember": {
+      "text": "Invite members"
+    },
+    "journeyBanner": {
+      "types": {
+        "individual": "individual",
+        "common": "group",
+        "personalized": "personalized group"
+      },
+      "participating": {
+        "inProgress": {
+          "title": "Your {{type}} journey is active",
+          "subtitle": "Journey in progress. Tap to view map"
+        },
+        "pending": {
+          "title": "You're in the {{type}} journey",
+          "subtitle": "Waiting for more members to join"
+        }
+      },
+      "notParticipating": {
+        "inProgress": {
+          "title": "{{type}} journey in progress",
+          "subtitle": "The journey has started. Join now!"
+        },
+        "pending": {
+          "title": "{{type}} journey pending",
+          "subtitle": "Waiting for more members to join"
+        }
+      },
+      "buttons": {
+        "viewMap": "View on map",
+        "join": "Join journey"
+      }
+    },
+    "joinModal": {
+      "title": "Join journey",
+      "journeyTypes": {
+        "INDIVIDUAL": "Individual",
+        "COMMON_DESTINATION": "Group with common destination",
+        "PERSONALIZED": "Personalized group"
+      },
+      "state": {
+        "label": "Status:",
+        "IN_PROGRESS": "In progress",
+        "PENDING": "Pending"
+      },
+      "created": "Created:",
+      "instructions": {
+        "personalizedTitle": "Select your destination",
+        "personalizedText": "In a personalized journey, each participant can have their own destination. Select yours below.",
+        "commonTitle": "Journey information",
+        "commonText": "In this group journey, all participants share the same destination. By joining, you'll follow the group's common route."
+      },
+      "destination": {
+        "title": "Your destination",
+        "placeholder": "Select your destination",
+        "selected": "{{name}}"
+      },
+      "warning": "Your current location will be used as starting point and will be shared with other journey participants.",
+      "buttons": {
+        "cancel": "Cancel",
+        "join": "Join journey"
+      },
+      "alerts": {
+        "noUser": "Could not get user information",
+        "destinationRequired": {
+          "title": "Destination required",
+          "message": "For personalized journeys you must select your destination"
+        },
+        "noLocation": "Could not get your location",
+        "locationError": "Error creating location record",
+        "success": {
+          "title": "You've joined the journey!",
+          "personalized": "You've joined the journey to {{destination}}.",
+          "common": "You've joined the group journey."
+        },
+        "error": {
+          "title": "Error",
+          "message": "Could not join journey. Check your connection and try again."
+        },
+        "permissions": {
+          "title": "Permissions required",
+          "message": "We need access to your location to join the journey"
+        },
+        "locationFailed": "Could not get your current location"
+      }
+    },
+    "journeyRequest": {
+      "invites": "{{creator}} invites you to join the journey",
+      "journeyName": "{{name}}",
+      "destination": "Destination: {{destination}}",
+      "id": "ID: {{id}}",
+      "buttons": {
+        "decline": "Decline",
+        "join": "Join"
+      },
+      "joined": "You've already joined this journey",
+      "alerts": {
+        "decline": {
+          "title": "Decline journey",
+          "message": "Are you sure you don't want to participate in \"{{name}}\"?"
+        },
+        "success": {
+          "title": "You've joined the journey!",
+          "message": "You've successfully joined the journey \"{{name}}\". Your destination: {{destination}}"
+        },
+        "error": "Could not join journey. Try again.",
+        "permissions": "We need access to your location to join the journey",
+        "locationError": "Could not get your current location"
+      },
+      "selectDestination": "Select your destination for the journey"
+    },
+    "memberCard": {
+      "you": "You",
+      "roles": {
+        "admin": "Administrator",
+        "member": "Member"
+      },
+      "status": {
+        "online": "Online",
+        "offline": "Offline",
+        "lastSeen": "Seen {{date}}"
+      }
     }
   }
 }

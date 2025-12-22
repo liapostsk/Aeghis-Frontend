@@ -15,18 +15,19 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useUserStore } from "../../../lib/storage/useUserStorage";
 import { useSignUp } from "@clerk/clerk-expo";
 import VerificationCodeField from "@/components/ui/VerificationCodeField";
+import { useTranslation } from 'react-i18next';
 
-const validateCode = (code: string) => {
+const validateCode = (code: string, t: any) => {
   if (!code || code.trim() === '') {
-    return { isValid: false, message: "Please enter the verification code." };
+    return { isValid: false, message: t('register.phoneVerification.validation.empty') };
   }
   
   if (code.length !== 6) {
-    return { isValid: false, message: "Code must be 6 digits." };
+    return { isValid: false, message: t('register.phoneVerification.validation.invalidLength') };
   }
   
   if (!/^\d{6}$/.test(code)) {
-    return { isValid: false, message: "Code can only contain digits." };
+    return { isValid: false, message: t('register.phoneVerification.validation.onlyDigits') };
   }
   
   return { isValid: true, message: "" };
@@ -43,6 +44,7 @@ export default function PhoneVerificationScreen() {
   const { user, setUser } = useUserStore();
   const { signUp, isLoaded } = useSignUp();
   const router = useRouter();
+  const { t } = useTranslation();
 
   // Estados
   const [isLoading, setIsLoading] = useState(false);
@@ -51,17 +53,17 @@ export default function PhoneVerificationScreen() {
   const [canResend, setCanResend] = useState(false);
 
   // Valores computados
-  const validation = validateCode(value);
+  const validation = validateCode(value, t);
   const canVerify = validation.isValid && !isLoading;
 
   const handleVerifyCode = async () => {
     if (!isLoaded || !signUp) {
-      Alert.alert("Error", "Auth not ready.");
+      Alert.alert(t('error'), t('register.phoneVerification.alerts.authNotReady'));
       return;
     }
 
     if (!validation.isValid) {
-      Alert.alert("Invalid Code", validation.message);
+      Alert.alert(t('register.name.alerts.invalidName'), validation.message);
       return;
     }
 
@@ -72,12 +74,12 @@ export default function PhoneVerificationScreen() {
       if (result.status === "complete" || result.status === "missing_requirements") {
         router.push("/(auth)/register/email");
       } else {
-        Alert.alert("Error", "Verification failed. Please try again.");
+        Alert.alert(t('error'), t('register.phoneVerification.alerts.verificationFailed'));
       }
     } catch (error: any) {
       console.error(error);
-      const errorMessage = error?.errors?.[0]?.message || "Invalid verification code.";
-      Alert.alert("Error", errorMessage);
+      const errorMessage = error?.errors?.[0]?.message || t('register.phoneVerification.alerts.invalidCode');
+      Alert.alert(t('error'), errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -92,10 +94,10 @@ export default function PhoneVerificationScreen() {
       setTimer(60);
       setCanResend(false);
       setValue('');
-      Alert.alert("Success", "Code sent again!");
+      Alert.alert(t('register.phoneVerification.alerts.success.title'), t('register.phoneVerification.alerts.success.message'));
     } catch (error: any) {
       console.error(error);
-      Alert.alert("Error", error?.errors?.[0]?.message || "Could not resend code.");
+      Alert.alert(t('error'), error?.errors?.[0]?.message || t('register.phoneVerification.alerts.resendFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -142,16 +144,16 @@ export default function PhoneVerificationScreen() {
         >
           <View style={styles.content}>
             <View style={styles.titleContainer}>
-              <Text style={styles.textTitle}>Almost there! 🎉</Text>
-              <Text style={styles.subtitle}>Let's verify your phone number</Text>
+              <Text style={styles.textTitle}>{t('register.phoneVerification.title')}</Text>
+              <Text style={styles.subtitle}>{t('register.phoneVerification.subtitle')}</Text>
             </View>
 
             <View style={styles.verificationContainer}>
               <Text style={styles.instruction}>
-                We've sent a 6-digit code to{"\n"}{user?.phone || "+error"}
+                {t('register.phoneVerification.instruction', { phone: user?.phone || "+error" })}
               </Text>
               <Text style={styles.helpText}>
-                Please check your messages 📱
+                {t('register.phoneVerification.helpText')}
               </Text>
 
               <View style={styles.codeFieldContainer}>
@@ -170,7 +172,7 @@ export default function PhoneVerificationScreen() {
                   <ActivityIndicator color="#7A33CC" />
                 ) : (
                   <Text style={styles.verifyButtonText}>
-                    {value.length === 6 ? "Verify Code" : `Enter ${6 - value.length} more digits`}
+                    {value.length === 6 ? t('register.phoneVerification.button.verify') : t('register.phoneVerification.button.enterMore', { count: 6 - value.length })}
                   </Text>
                 )}
               </Pressable>
@@ -179,20 +181,20 @@ export default function PhoneVerificationScreen() {
               <View style={styles.resendSection}>
                 {canResend ? (
                   <Pressable onPress={handleResendCode} style={styles.resendButton}>
-                    <Text style={styles.resendText}>📨 Resend code</Text>
+                    <Text style={styles.resendText}>{t('register.phoneVerification.resend.button')}</Text>
                   </Pressable>
                 ) : (
                   <Text style={styles.timerText}>
-                    Resend available in {formatTime(timer)}
+                    {t('register.phoneVerification.resend.timer', { time: formatTime(timer) })}
                   </Text>
                 )}
               </View>
 
               {/* Sección para ir atrás */}
               <View style={styles.backSection}>
-                <Text style={styles.wrongNumberText}>Wrong number?</Text>
+                <Text style={styles.wrongNumberText}>{t('register.phoneVerification.wrongNumber.text')}</Text>
                 <Pressable onPress={() => router.back()}>
-                  <Text style={styles.backText}>Go back to change it</Text>
+                  <Text style={styles.backText}>{t('register.phoneVerification.wrongNumber.link')}</Text>
                 </Pressable>
               </View>
             </View>

@@ -1,6 +1,6 @@
-import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 
 interface InvitationScreenProps {
   groupType?: string;
@@ -11,24 +11,26 @@ export default function InvitationScreen({
   groupType = 'confianza', 
   onInvite 
 }: InvitationScreenProps) {
+  const { t } = useTranslation();
+  
   return (
     <View style={styles.invitationContainer}>
       <View style={styles.invitationIcon}>
         <Ionicons name="people-outline" size={64} color="#7A33CC" />
       </View>
 
-      <Text style={styles.invitationTitle}>¡Invita a más personas!</Text>
+      <Text style={styles.invitationTitle}>{t('chatComponents.invitation.title')}</Text>
       <Text style={styles.invitationSubtitle}>
-        Necesitas al menos 2 miembros para usar este grupo de {groupType.toLowerCase()}
+        {t('chatComponents.invitation.subtitle', { groupType: groupType.toLowerCase() })}
       </Text>
 
       <Pressable style={styles.invitationButton} onPress={onInvite}>
         <Ionicons name="share-outline" size={20} color="#FFFFFF" style={styles.buttonIcon} />
-        <Text style={styles.invitationButtonText}>Generar invitación</Text>
+        <Text style={styles.invitationButtonText}>{t('chatComponents.invitation.button')}</Text>
       </Pressable>
 
       <Text style={styles.invitationHelp}>
-        Comparte el enlace de invitación con las personas que quieres añadir al grupo
+        {t('chatComponents.invitation.help')}
       </Text>
     </View>
   );

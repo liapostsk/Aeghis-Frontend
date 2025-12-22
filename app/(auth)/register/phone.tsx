@@ -15,54 +15,50 @@ import { useSignUp } from '@clerk/clerk-expo';
 import ContinueButton from "../../../components/ui/ContinueButton";
 import { useUserStore } from "../../../lib/storage/useUserStorage";
 import PhoneNumberPicker from '@/components/ui/PhoneNumberPicker';
+import { useTranslation } from 'react-i18next';
 
-const validatePhoneNumber = (phone: string, countryCode: string) => {
+const validatePhoneNumber = (phone: string, countryCode: string, t: any) => {
   const cleanPhone = phone.replace(/\s/g, '');
   
   if (cleanPhone === "") {
-    return { isValid: false, message: "Please enter your phone number." };
+    return { isValid: false, message: t('register.phone.validation.empty') };
   }
   
-  // Validación básica por longitud según país
   const minLength = countryCode === 'ES' ? 9 : 6;
   const maxLength = countryCode === 'ES' ? 9 : 15;
   
   if (cleanPhone.length < minLength) {
-    return { isValid: false, message: `Phone number must be at least ${minLength} digits.` };
+    return { isValid: false, message: t('register.phone.validation.tooShort', { min: minLength }) };
   }
   
   if (cleanPhone.length > maxLength) {
-    return { isValid: false, message: `Phone number cannot exceed ${maxLength} digits.` };
+    return { isValid: false, message: t('register.phone.validation.tooLong', { max: maxLength }) };
   }
   
   // Regex básica para números (solo dígitos)
   const phoneRegex = /^\d+$/;
   if (!phoneRegex.test(cleanPhone)) {
-    return { isValid: false, message: "Phone number can only contain digits." };
+    return { isValid: false, message: t('register.phone.validation.onlyDigits') };
   }
   
   return { isValid: true, message: "" };
 };
 
 export default function PhoneScreen() {
-  // Store y router
   const { user, setUser } = useUserStore();
   const router = useRouter();
   const { signUp } = useSignUp();
+  const { t } = useTranslation();
 
-  // Estados
   const [phone, setPhone] = useState('');
   const [countryCode, setCountryCode] = useState<'ES' | string>('ES');
   const [callingCode, setCallingCode] = useState('+34');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Valores computados
-  const validation = validatePhoneNumber(phone, countryCode);
+  const validation = validatePhoneNumber(phone, countryCode, t);
   const canContinue = validation.isValid && !isLoading;
 
-  // Event handlers
   const handlePhoneChange = (text: string) => {
-    // Solo permitir números y espacios
     const formattedText = text.replace(/[^\d\s]/g, '');
     setPhone(formattedText);
   };
@@ -80,8 +76,8 @@ export default function PhoneScreen() {
       router.push("/(auth)/register/phoneVerification");
     } catch (error: any) {
       console.error("Error sending SMS:", error);
-      const errorMessage = error?.errors?.[0]?.message || "Failed to send SMS. Please try again.";
-      Alert.alert("Error", errorMessage);
+      const errorMessage = error?.errors?.[0]?.message || t('register.phone.errors.sendFailed');
+      Alert.alert(t('error'), errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -96,7 +92,7 @@ export default function PhoneScreen() {
         <View style={styles.content}>
           <View style={styles.titleContainer}>
             <Text style={styles.textTitle}>
-              Hey {user?.name || "User"}, let's{"\n"}verify your phone number!
+              {t('register.phone.title', { name: user?.name || "User" })}
             </Text>
           </View>
 
@@ -113,7 +109,7 @@ export default function PhoneScreen() {
               onChangeText={handlePhoneChange}
               keyboardType="number-pad"
               inputMode="numeric"
-              placeholder="Phone number"
+              placeholder={t('register.phone.placeholder')}
               placeholderTextColor="#aaa"
               style={[
                 styles.phoneInput,
@@ -134,7 +130,7 @@ export default function PhoneScreen() {
         <View style={styles.buttonContainer}>
           <ContinueButton
             onPress={sendCode}
-            text={isLoading ? "Sending..." : "Send Code"}
+            text={isLoading ? t('register.phone.button.sending') : t('register.phone.button.send')}
             disabled={!canContinue}
             loading={isLoading}
           />

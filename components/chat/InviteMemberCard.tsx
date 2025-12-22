@@ -1,19 +1,21 @@
-import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 
 interface InviteMemberCardProps {
   onPress: () => void;
 }
 
 export default function InviteMemberCard({ onPress }: InviteMemberCardProps) {
+  const { t } = useTranslation();
+  
   return (
     <Pressable style={styles.inviteMemberCard} onPress={onPress}>
       <View style={styles.inviteMemberAvatar}>
         <Ionicons name="share-outline" size={20} color="#7A33CC" />
       </View>
       <View style={styles.inviteMemberInfo}>
-        <Text style={styles.inviteMemberText}>Invitar miembros</Text>
+        <Text style={styles.inviteMemberText}>{t('chatComponents.inviteMember.text')}</Text>
       </View>
     </Pressable>
   );

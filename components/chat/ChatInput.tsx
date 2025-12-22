@@ -1,6 +1,6 @@
-import React from 'react';
 import { View, TextInput, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 
 interface ChatInputProps {
   value: string;
@@ -13,8 +13,10 @@ export default function ChatInput({
   value,
   onChangeText,
   onSend,
-  placeholder = "Escribe un mensaje...",
+  placeholder,
 }: ChatInputProps) {
+  const { t } = useTranslation();
+  
   return (
     <View style={styles.inputContainer}>
       <View style={styles.inputWrapper}>
@@ -22,7 +24,7 @@ export default function ChatInput({
           style={styles.textInput}
           value={value}
           onChangeText={onChangeText}
-          placeholder={placeholder}
+          placeholder={placeholder || t('chatComponents.input.placeholder')}
           multiline
         />
         {value.trim().length > 0 && (

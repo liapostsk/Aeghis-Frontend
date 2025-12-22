@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -22,6 +22,7 @@ import { useTokenStore } from '@/lib/auth/tokenStore';
 import { joinJourneyParticipation } from '@/api/firebase/journey/participationsService';
 import { addUserPosition } from '@/api/firebase/journey/positionsService';
 import { auth } from '@/firebaseconfig';
+import { useTranslation } from 'react-i18next';
 
 interface JoinJourneyModalProps {
   visible: boolean;
@@ -40,6 +41,7 @@ export default function JoinJourneyModal({
   onJoinSuccess,
   chatId
 }: JoinJourneyModalProps) {
+  const { t } = useTranslation();
   
   const [loading, setLoading] = useState(false);
   const [selectedDestination, setSelectedDestination] = useState<SafeLocation | null>(null);
@@ -57,7 +59,10 @@ export default function JoinJourneyModal({
       // Verificar permisos
       const { status } = await ExpoLocation.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permisos requeridos', 'Necesitamos acceso a tu ubicación para unirte al trayecto');
+        Alert.alert(
+          t('chatComponents.joinModal.alerts.permissions.title'), 
+          t('chatComponents.joinModal.alerts.permissions.message')
+        );
         return null;
       }
 
@@ -68,7 +73,7 @@ export default function JoinJourneyModal({
       return location;
     } catch (error) {
       console.error('Error getting location:', error);
-      Alert.alert('Error', 'No se pudo obtener tu ubicación actual');
+      Alert.alert(t('error'), t('chatComponents.joinModal.alerts.locationFailed'));
       return null;
     }
   };
@@ -94,13 +99,16 @@ export default function JoinJourneyModal({
 
   const handleJoinJourney = async () => {
     if (!currentUser) {
-      Alert.alert('Error', 'No se pudo obtener la información del usuario');
+      Alert.alert(t('error'), t('chatComponents.joinModal.alerts.noUser'));
       return;
     }
 
     // Validar que para journeys personalizados se haya seleccionado destino
     if (isPersonalizedJourney && !selectedDestination) {
-      Alert.alert('Destino requerido', 'Para trayectos personalizados debes seleccionar tu destino');
+      Alert.alert(
+        t('chatComponents.joinModal.alerts.destinationRequired.title'),
+        t('chatComponents.joinModal.alerts.destinationRequired.message')
+      );
       return;
     }
 
@@ -202,18 +210,18 @@ export default function JoinJourneyModal({
       onJoinSuccess(createdParticipation);
       
       Alert.alert(
-        '¡Te has unido al trayecto!',
+        t('chatComponents.joinModal.alerts.success.title'),
         isPersonalizedJourney 
-          ? `Te has unido al trayecto con destino a ${selectedDestination?.name || 'tu ubicación seleccionada'}.`
-          : 'Te has unido al trayecto grupal.',
+          ? t('chatComponents.joinModal.alerts.success.personalized', { destination: selectedDestination?.name || 'tu ubicación seleccionada' })
+          : t('chatComponents.joinModal.alerts.success.common'),
         [{ text: 'OK', onPress: onClose }]
       );
 
     } catch (error) {
       console.error('Error joining journey:', error);
       Alert.alert(
-        'Error', 
-        'No se pudo unir al trayecto. Verifica tu conexión e inténtalo de nuevo.'
+        t('chatComponents.joinModal.alerts.error.title'), 
+        t('chatComponents.joinModal.alerts.error.message')
       );
     } finally {
       setLoading(false);
@@ -238,9 +246,9 @@ export default function JoinJourneyModal({
 
   const getJourneyTypeDisplayName = () => {
     const typeNames = {
-      'INDIVIDUAL': 'Individual',
-      'COMMON_DESTINATION': 'Grupal con destino común',
-      'PERSONALIZED': 'Grupal personalizado'
+      'INDIVIDUAL': t('chatComponents.joinModal.journeyTypes.INDIVIDUAL'),
+      'COMMON_DESTINATION': t('chatComponents.joinModal.journeyTypes.COMMON_DESTINATION'),
+      'PERSONALIZED': t('chatComponents.joinModal.journeyTypes.PERSONALIZED')
     };
     return typeNames[journey.journeyType] || 'Desconocido';
   };
@@ -259,7 +267,7 @@ export default function JoinJourneyModal({
             <Pressable onPress={onClose} style={styles.closeButton}>
               <Ionicons name="close" size={24} color="#6B7280" />
             </Pressable>
-            <Text style={styles.headerTitle}>Unirse al trayecto</Text>
+            <Text style={styles.headerTitle}>{t('chatComponents.joinModal.title')}</Text>
             <View style={styles.placeholder} />
           </View>
 
@@ -280,24 +288,24 @@ export default function JoinJourneyModal({
               </Text>
               
               <Text style={styles.journeyState}>
-                Estado: {journey.state === 'IN_PROGRESS' ? 'En progreso' : 'Pendiente'}
+                {t('chatComponents.joinModal.state.label')} {journey.state === 'IN_PROGRESS' ? t('chatComponents.joinModal.state.IN_PROGRESS') : t('chatComponents.joinModal.state.PENDING')}
               </Text>
               
               <Text style={styles.journeyDate}>
-                Creado: {new Date(journey.iniDate).toLocaleDateString()}
+                {t('chatComponents.joinModal.created')} {new Date(journey.iniDate).toLocaleDateString()}
               </Text>
             </View>
 
             {/* Instructions */}
             <View style={styles.instructionsContainer}>
               <Text style={styles.instructionsTitle}>
-                {isPersonalizedJourney ? 'Selecciona tu destino' : 'Información del trayecto'}
+                {isPersonalizedJourney ? t('chatComponents.joinModal.instructions.personalizedTitle') : t('chatComponents.joinModal.instructions.commonTitle')}
               </Text>
               
               <Text style={styles.instructionsText}>
                 {isPersonalizedJourney 
-                  ? 'En un trayecto personalizado, cada participante puede tener su propio destino. Selecciona el tuyo a continuación.'
-                  : 'En este trayecto grupal, todos los participantes comparten el mismo destino. Al unirte, seguirás la ruta común del grupo.'
+                  ? t('chatComponents.joinModal.instructions.personalizedText')
+                  : t('chatComponents.joinModal.instructions.commonText')
                 }
               </Text>
             </View>

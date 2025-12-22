@@ -1,6 +1,6 @@
-import React from 'react';
 import { View, StyleSheet, Pressable, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 
 interface ExitGroupButtonProps {
   isLastMember: boolean;
@@ -8,6 +8,8 @@ interface ExitGroupButtonProps {
 }
 
 export default function ExitGroupButton({ isLastMember, onPress }: ExitGroupButtonProps) {
+  const { t } = useTranslation();
+  
   return (
     <View style={styles.exitButtonContainer}>
       <Pressable style={styles.exitButton} onPress={onPress}>
@@ -17,7 +19,7 @@ export default function ExitGroupButton({ isLastMember, onPress }: ExitGroupButt
           color="#FFFFFF" 
         />
         <Text style={styles.exitButtonText}>
-          {isLastMember ? "Eliminar grupo" : "Salir del grupo"}
+          {isLastMember ? t('chatComponents.exitButton.delete') : t('chatComponents.exitButton.leave')}
         </Text>
       </Pressable>
     </View>

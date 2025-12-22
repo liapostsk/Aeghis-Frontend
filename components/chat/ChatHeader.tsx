@@ -1,7 +1,7 @@
-import React from 'react';
-import { View, Text, StyleSheet, Pressable, Image } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 
 interface ChatHeaderProps {
   groupName: string;
@@ -20,6 +20,7 @@ export default function ChatHeader({
   activeMembersCount = 0,
   onBack,
 }: ChatHeaderProps) {
+  const { t } = useTranslation();
   const hasEnoughMembers = totalMembers >= 2;
 
   return (
@@ -32,17 +33,17 @@ export default function ChatHeader({
       </Pressable>
 
       <View style={styles.headerCenter}>
-        <Text style={styles.headerTitle}>{groupName || 'Grupo sin nombre'}</Text>
+        <Text style={styles.headerTitle}>{groupName || t('chatComponents.header.noName')}</Text>
         <View style={styles.headerSubtitle}>
           <Text style={styles.headerSubtitleText}>
-            {totalMembers} miembro{totalMembers !== 1 ? 's' : ''}
+            {t('chatComponents.header.members', { count: totalMembers })}
           </Text>
           {hasEnoughMembers && activeMembersCount > 0 && (
             <>
               <Text style={styles.headerDot}> • </Text>
               <View style={styles.activeIndicator} />
               <Text style={styles.headerSubtitleText}>
-                {activeMembersCount} activo{activeMembersCount !== 1 ? 's' : ''}
+                {t('chatComponents.header.active', { count: activeMembersCount })}
               </Text>
             </>
           )}

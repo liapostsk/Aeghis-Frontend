@@ -1,58 +1,53 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   Text,
   StyleSheet,
-  Pressable,
   Alert,
   TextInput,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   View,
-  ActivityIndicator
 } from 'react-native';
 import { useUserStore } from "../../../lib/storage/useUserStorage";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from "expo-router";
 import { useSignUp } from '@clerk/clerk-expo';
 import ContinueButton from "../../../components/ui/ContinueButton";
+import { useTranslation } from 'react-i18next';
 
-const validateEmail = (email: string) => {
+const validateEmail = (email: string, t: any) => {
   const trimmedEmail = email.trim();
   
   if (trimmedEmail === "") {
-    return { isValid: false, message: "Please enter your email address." };
+    return { isValid: false, message: t('register.email.validation.empty') };
   }
   
-  // Regex más robusta para email
   const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
   
   if (!emailRegex.test(trimmedEmail)) {
-    return { isValid: false, message: "Please enter a valid email address." };
+    return { isValid: false, message: t('register.email.validation.invalid') };
   }
   
   if (trimmedEmail.length > 254) {
-    return { isValid: false, message: "Email address is too long." };
+    return { isValid: false, message: t('register.email.validation.tooLong') };
   }
   
   return { isValid: true, message: "" };
 };
 
 export default function EmailScreen() {
-  // Store y router
   const { user, setUser } = useUserStore();
   const router = useRouter();
   const { signUp } = useSignUp();
+  const { t } = useTranslation();
 
-  // Estados
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Valores computados
-  const validation = validateEmail(email);
+  const validation = validateEmail(email, t);
   const canContinue = validation.isValid && !isLoading;
 
-  // Event handlers
   const handleEmailChange = (text: string) => {
     setEmail(text);
   };
@@ -70,8 +65,8 @@ export default function EmailScreen() {
       router.push("/(auth)/register/emailVerification");
     } catch (error: any) {
       console.error("Error sending verification code:", error);
-      const errorMessage = error?.errors?.[0]?.message || "Failed to send verification code.";
-      Alert.alert("Error", errorMessage);
+      const errorMessage = error?.errors?.[0]?.message || t('register.email.errors.sendFailed');
+      Alert.alert(t('error'), errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -91,13 +86,13 @@ export default function EmailScreen() {
             <View style={styles.contentContainer}>
               <View style={styles.titleContainer}>
                 <Text style={styles.textTitle}>
-                  Hey {user?.name}, let's{"\n"}verify your email!
+                  {t('register.email.title', { name: user?.name })}
                 </Text>
               </View>
 
               <View style={styles.inputSection}>
                 <Text style={styles.instruction}>
-                  Enter your email address to receive a verification code.
+                  {t('register.email.instruction')}
                 </Text>
 
                 <TextInput
@@ -105,7 +100,7 @@ export default function EmailScreen() {
                     styles.input,
                     email && !validation.isValid && styles.inputError
                   ]}
-                  placeholder="Enter your email address"
+                  placeholder={t('register.email.placeholder')}
                   placeholderTextColor="#7A33CC80"
                   value={email}
                   onChangeText={handleEmailChange}
@@ -127,7 +122,7 @@ export default function EmailScreen() {
               <View style={styles.buttonContainer}>
                 <ContinueButton
                   onPress={sendCode}
-                  text={isLoading ? "Sending..." : "Send Code"}
+                  text={isLoading ? t('register.email.button.sending') : t('register.email.button.send')}
                   disabled={!canContinue}
                   loading={isLoading}
                 />
