@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Dimensions, Image, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { useUser } from '@clerk/clerk-expo';
 import { useUserStore } from '@/lib/storage/useUserStorage';
 import { uploadUserPhotoAsync } from '@/api/firebase/storage/photoService';
+import { useTranslation } from 'react-i18next';
 
 export default function ProfileImageStep({
   onNext,
@@ -14,7 +15,8 @@ export default function ProfileImageStep({
   onBack: () => void;
 }){
 
-  const { user: clerkUser } = useUser(); // ✅ Hook en nivel de componente
+  const { t } = useTranslation();
+  const { user: clerkUser } = useUser();
   const { user, setUser } = useUserStore();
   const [selectedImageUri, setSelectedImageUri] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
@@ -31,7 +33,7 @@ export default function ProfileImageStep({
     console.log('ProfileImageStep montado. Estado actual de user.image:', user?.image);
     
     if (user?.image && user.image !== '') {
-      console.log('⚠️ Imagen detectada sin selección manual:', user.image);
+      console.log('Imagen detectada sin selección manual:', user.image);
       setUser({ ...user, image: '' });
     }
   }, []);
@@ -41,7 +43,7 @@ export default function ProfileImageStep({
       // Request media library permissions
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission Required', 'Sorry, we need photo library permissions to select an image!');
+        Alert.alert(t('infoForm.profileImage.permissions.title'), t('infoForm.profileImage.permissions.message'));
         return;
       }
 
@@ -57,30 +59,30 @@ export default function ProfileImageStep({
         setSelectedImageUri(localUri);
         
         // Upload to Firebase Storage
-        console.log('📤 Iniciando subida de imagen de perfil a Firebase...');
+        console.log('Iniciando subida de imagen de perfil a Firebase...');
         setIsUploading(true);
 
         try {
-          // ✅ Verificar que tenemos el UID de Clerk
+          // Verificar que tenemos el UID de Clerk
           if (!clerkUser?.id) {
             throw new Error('No se pudo obtener el ID del usuario de Clerk');
           }
 
-          // ✅ Subir usando el UID de Clerk
+          // Subir usando el UID de Clerk
           const downloadURL = await uploadUserPhotoAsync(
             localUri,
             clerkUser.id,
             'profile'
           );
 
-          console.log('✅ Foto de perfil subida exitosamente');
-          console.log('🔗 URL de descarga:', downloadURL);
+          console.log('Foto de perfil subida exitosamente');
+          console.log('URL de descarga:', downloadURL);
 
           // Save the Firebase URL instead of local URI
           setUser({ ...user, image: downloadURL });
         } catch (uploadError) {
-          console.error('❌ Error al subir la foto:', uploadError);
-          Alert.alert('Error', 'No se pudo subir la foto. Por favor, intenta de nuevo.');
+          console.error('Error al subir la foto:', uploadError);
+          Alert.alert(t('infoForm.index.error'), t('infoForm.profileImage.errors.upload'));
           setSelectedImageUri('');
         } finally {
           setIsUploading(false);
@@ -90,15 +92,15 @@ export default function ProfileImageStep({
       }
     } catch (error) {
       console.error('Error al seleccionar imagen:', error);
-      Alert.alert('Error', 'Hubo un problema al seleccionar la imagen. Por favor, intenta de nuevo.');
+      Alert.alert(t('infoForm.index.error'), t('infoForm.profileImage.errors.selection'));
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.textContainer}>
-        <Text style={styles.title}>Add your profile photo</Text>
-        <Text style={styles.text}>This helps your mutuals to find you{"\n"}easily in the map</Text>
+        <Text style={styles.title}>{t('infoForm.profileImage.title')}</Text>
+        <Text style={styles.text}>{t('infoForm.profileImage.subtitle')}</Text>
       </View>
 
       <View style={styles.imageContainer}>
@@ -123,7 +125,7 @@ export default function ProfileImageStep({
             <ActivityIndicator color="#7A33CC" size="small" />
           ) : (
             <Text style={styles.addPictureText}>
-              {selectedImageUri ? 'Change photo' : 'Add your photo'}
+              {selectedImageUri ? t('infoForm.profileImage.buttons.change') : t('infoForm.profileImage.buttons.add')}
             </Text>
           )}
         </Pressable>
@@ -132,14 +134,14 @@ export default function ProfileImageStep({
       {/* Bottom Navigation */}
       <View style={styles.buttonContainer}>
         <Pressable onPress={onBack} style={styles.backButton}>
-          <Text style={styles.backButtonText}>Atrás</Text>
+          <Text style={styles.backButtonText}>{t('infoForm.profileImage.buttons.back')}</Text>
         </Pressable>
         
         <Pressable 
           onPress={onNext} 
           style={styles.continueButton}
         >
-          <Text style={styles.continueButtonText}>Continuar</Text>
+          <Text style={styles.continueButtonText}>{t('infoForm.profileImage.buttons.continue')}</Text>
         </Pressable>
       </View>
   

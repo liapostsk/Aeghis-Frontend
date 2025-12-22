@@ -16,12 +16,14 @@ import { useAuth } from '@clerk/clerk-expo';
 import privacyPolicyContent from '@/privacyPolicy.json';
 import { useUserStore } from '@/lib/storage/useUserStorage';
 import { useSessionState } from '@/lib/hooks/useSessionState';
+import { useTranslation } from 'react-i18next';
 
 type PrivacyPolicyScreenProps = {
   onNext?: () => void;
 };
 
 export default function PrivacyPolicyScreen({ onNext }: PrivacyPolicyScreenProps) {
+  const { t } = useTranslation();
   const [scrolledToBottom, setScrolledToBottom] = useState(false);
   const [accepted, setAccepted] = useState(false);
   const fadeAnim = useState(new Animated.Value(0))[0]; // Animación de opacidad
@@ -44,15 +46,15 @@ export default function PrivacyPolicyScreen({ onNext }: PrivacyPolicyScreenProps
 
   const handleCancel = () => {
     Alert.alert(
-      "¿Cancelar registro?",
-      "Si cancelas ahora, se eliminará tu cuenta y deberás registrarte nuevamente. ¿Estás seguro?",
+      t('infoForm.privacy.cancelTitle'),
+      t('infoForm.privacy.cancelMessage'),
       [
         {
-          text: "No, continuar",
+          text: t('infoForm.privacy.cancelNo'),
           style: "cancel",
         },
         {
-          text: "Sí, cancelar",
+          text: t('infoForm.privacy.cancelYes'),
           style: "destructive",
           onPress: async () => {
             try {
@@ -66,7 +68,7 @@ export default function PrivacyPolicyScreen({ onNext }: PrivacyPolicyScreenProps
               router.replace('/(auth)');
             } catch (error) {
               console.error('Error al cancelar el registro:', error);
-              Alert.alert('Error', 'No se pudo cancelar el registro. Intenta nuevamente.');
+              Alert.alert(t('infoForm.index.error'), t('infoForm.privacy.cancelError'));
             }
           },
         },
@@ -108,8 +110,8 @@ export default function PrivacyPolicyScreen({ onNext }: PrivacyPolicyScreenProps
           <View style={styles.headerContainer}>
             <View style={styles.headerTop}>
               <View style={styles.headerTitleContainer}>
-                <Text style={styles.title}>Política de Privacidad</Text>
-                <Text style={styles.subtitle}>Última actualización: {privacyPolicyContent.lastUpdated}</Text>
+                <Text style={styles.title}>{t('infoForm.privacy.title')}</Text>
+                <Text style={styles.subtitle}>{t('infoForm.privacy.lastUpdated')} {privacyPolicyContent.lastUpdated}</Text>
               </View>
               <Pressable onPress={handleCancel} style={styles.cancelButton}>
                 <Ionicons name="close" size={24} color="#EF4444" />
@@ -152,7 +154,7 @@ export default function PrivacyPolicyScreen({ onNext }: PrivacyPolicyScreenProps
                 scrolledToBottom ? styles.statusIndicatorActive : {}
               ]} />
               <Text style={styles.statusText}>
-                {scrolledToBottom ? 'Has revisado la política completa' : 'Por favor lee la política completa'}
+                {scrolledToBottom ? t('infoForm.privacy.statusReviewed') : t('infoForm.privacy.statusPending')}
               </Text>
             </View>
             
@@ -165,12 +167,12 @@ export default function PrivacyPolicyScreen({ onNext }: PrivacyPolicyScreenProps
               disabled={!scrolledToBottom}
             >
               <Text style={styles.buttonText}>
-                {scrolledToBottom ? 'Aceptar y Continuar' : 'Desplázate hasta el final para aceptar'}
+                {scrolledToBottom ? t('infoForm.privacy.acceptButton') : t('infoForm.privacy.scrollButton')}
               </Text>
             </Pressable>
             
             <Text style={styles.footerText}>
-              Al aceptar, confirmas que has leído y comprendido nuestra política de privacidad.
+              {t('infoForm.privacy.footerText')}
             </Text>
           </View>
         </View>
@@ -198,8 +200,8 @@ export default function PrivacyPolicyScreen({ onNext }: PrivacyPolicyScreenProps
             <View style={styles.checkmarkCircle}>
               <Text style={styles.checkmark}>✓</Text>
             </View>
-            <Text style={styles.confirmationTitle}>¡Política aceptada!</Text>
-            <Text style={styles.confirmationText}>Continuando con la aplicación...</Text>
+            <Text style={styles.confirmationTitle}>{t('infoForm.privacy.acceptedTitle')}</Text>
+            <Text style={styles.confirmationText}>{t('infoForm.privacy.acceptedText')}</Text>
           </Animated.View>
         </Animated.View>
       )}

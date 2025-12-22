@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import SafeLocationModal from '@/components/safeLocations/SafeLocationModal';
 import { SafeLocation, Location } from '@/api/backend/locations/locationType';
 import { useUserStore } from '@/lib/storage/useUserStorage';
+import { useTranslation } from 'react-i18next';
 
 export default function SafeLocationStep({
   onNext,
@@ -19,6 +20,7 @@ export default function SafeLocationStep({
   onNext: () => void;
   onBack: () => void;
 }) {
+  const { t } = useTranslation();
   const [modalVisible, setModalVisible] = useState(false);
   const { user, setUser } = useUserStore();
   
@@ -51,8 +53,8 @@ export default function SafeLocationStep({
     }
     
     const currentLocations = user.safeLocations || [];
-    console.log("📍 Intentando añadir ubicación:", safeLocation.name, "externalId:", safeLocation.externalId);
-    console.log("📍 Ubicaciones actuales:", currentLocations.map(loc => ({ name: loc.name, externalId: loc.externalId, id: loc.id })));
+    console.log("Intentando añadir ubicación:", safeLocation.name, "externalId:", safeLocation.externalId);
+    console.log("Ubicaciones actuales:", currentLocations.map(loc => ({ name: loc.name, externalId: loc.externalId, id: loc.id })));
     
     // Verificar duplicados solo por externalId (place_id de Google) que es único
     const exists = currentLocations.find(
@@ -60,7 +62,7 @@ export default function SafeLocationStep({
     );
     
     if (exists) {
-      Alert.alert("Ubicación duplicada", "Esta ubicación ya ha sido añadida.");
+      Alert.alert(t('infoForm.safeLocation.alerts.duplicate'));
       return;
     }
 
@@ -74,7 +76,7 @@ export default function SafeLocationStep({
     if (!user) return;
     
     const currentLocations = user.safeLocations || [];
-    console.log("🗑️ Intentando eliminar ubicación:", locationToRemove.name);
+    console.log("Intentando eliminar ubicación:", locationToRemove.name);
     
     const updated = currentLocations.filter((loc) => {
       if (locationToRemove.externalId && loc.externalId) {
@@ -90,13 +92,13 @@ export default function SafeLocationStep({
     
     setUser({ ...user, safeLocations: updated });
     console.log("Ubicación eliminada:", locationToRemove.name);
-    console.log("📍 Total ubicaciones ahora:", updated.length);
+    console.log("Total ubicaciones ahora:", updated.length);
   };
 
   const handleContinue = () => {
     const currentLocations = user?.safeLocations || [];
     if (currentLocations.length === 0) {
-      Alert.alert("Atención", "Selecciona al menos una ubicación segura para continuar.");
+      Alert.alert(t('infoForm.safeLocation.alerts.required.title'), t('infoForm.safeLocation.alerts.required.message'));
       return;
     }
     onNext();
@@ -105,9 +107,9 @@ export default function SafeLocationStep({
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Ubicaciones Seguras</Text>
+        <Text style={styles.title}>{t('infoForm.safeLocation.title')}</Text>
         <Text style={styles.subtitle}>
-          Selecciona lugares donde te sientes seguro para indicar tu estado a tus contactos.
+          {t('infoForm.safeLocation.subtitle')}
         </Text>
       </View>
 
@@ -115,14 +117,14 @@ export default function SafeLocationStep({
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Ionicons name="location" size={18} color="#7A33CC" />
-            <Text style={styles.sectionTitle}>Mis Ubicaciones Seguras</Text>
+            <Text style={styles.sectionTitle}>{t('infoForm.safeLocation.sectionTitle')}</Text>
           </View>
 
           {selectedLocations.length === 0 ? (
             <View style={styles.emptyState}>
               <Ionicons name="location-outline" size={48} color="#ccc" />
-              <Text style={styles.emptyText}>No has seleccionado ubicaciones aún</Text>
-              <Text style={styles.emptySubtext}>Toca el botón de abajo para añadir ubicaciones seguras</Text>
+              <Text style={styles.emptyText}>{t('infoForm.safeLocation.empty.title')}</Text>
+              <Text style={styles.emptySubtext}>{t('infoForm.safeLocation.empty.subtitle')}</Text>
             </View>
           ) : (
             selectedLocations.map((location, index) => (
@@ -155,7 +157,7 @@ export default function SafeLocationStep({
           <TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)}>
             <Ionicons name="add-circle" size={24} color="#7A33CC" />
             <Text style={styles.addButtonText}>
-              {selectedLocations.length === 0 ? 'Añadir primera ubicación' : 'Añadir otra ubicación'}
+              {selectedLocations.length === 0 ? t('infoForm.safeLocation.buttons.addFirst') : t('infoForm.safeLocation.buttons.addAnother')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -163,7 +165,7 @@ export default function SafeLocationStep({
 
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
-          <Text style={styles.backButtonText}>Atrás</Text>
+          <Text style={styles.backButtonText}>{t('infoForm.safeLocation.buttons.back')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity 
@@ -171,7 +173,10 @@ export default function SafeLocationStep({
           onPress={handleContinue}
         >
           <Text style={styles.continueButtonText}>
-            Continuar {selectedLocations.length > 0 && `(${selectedLocations.length})`}
+            {selectedLocations.length > 0 
+              ? t('infoForm.safeLocation.buttons.continueWithCount', { count: selectedLocations.length })
+              : t('infoForm.safeLocation.buttons.continue')
+            }
           </Text>
         </TouchableOpacity>
       </View>

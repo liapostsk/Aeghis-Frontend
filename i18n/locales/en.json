@@ -581,5 +581,140 @@
       "noGroup": "Select a group to share your location"
     },
     "namePlaceholder": "Ex: Commute to work"
+  },
+  "infoForm": {
+    "index": {
+      "tokenError": "Could not obtain token. Please sign in again.",
+      "tokenSessionError": "Error obtaining session token.",
+      "error": "Error"
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "lastUpdated": "Last updated:",
+      "cancelTitle": "Cancel registration?",
+      "cancelMessage": "If you cancel now, your account will be deleted and you will need to register again. Are you sure?",
+      "cancelNo": "No, continue",
+      "cancelYes": "Yes, cancel",
+      "cancelError": "Could not cancel registration. Try again.",
+      "statusReviewed": "You have reviewed the complete policy",
+      "statusPending": "Please read the complete policy",
+      "acceptButton": "Accept and Continue",
+      "scrollButton": "Scroll to the end to accept",
+      "footerText": "By accepting, you confirm that you have read and understood our privacy policy.",
+      "acceptedTitle": "Policy accepted!",
+      "acceptedText": "Continuing with the application..."
+    },
+    "emergencyContact": {
+      "title": "Emergency Contacts",
+      "validation": {
+        "phoneRequired": "Phone number is required.",
+        "userInfoMissing": "User information missing.",
+        "cannotAddSelf": "You cannot add yourself.",
+        "alreadyExists": "This contact is already in your list.",
+        "addError": "Could not add the contact."
+      },
+      "backAlert": {
+        "title": "Contacts added",
+        "message": "What do you want to do with the added contacts?",
+        "keep": "Keep",
+        "delete": "Delete",
+        "cancel": "Cancel"
+      },
+      "contactCount": {
+        "single": "{{count}} contact added",
+        "multiple": "{{count}} contacts added",
+        "breakdown": "{{emergencyCount}} in app • {{externalCount}} external"
+      },
+      "buttons": {
+        "verifying": "Verifying...",
+        "addAnother": "+ Add another contact",
+        "addFirst": "+ Add contact",
+        "clear": "Clear contacts",
+        "back": "Back",
+        "continue": "Continue"
+      },
+      "info": "💡 Your contacts will only be notified in emergencies and don't need to download the app"
+    },
+    "profileImage": {
+      "title": "Add your profile photo",
+      "subtitle": "This helps your mutuals to find you\neasily in the map",
+      "permissions": {
+        "title": "Permission Required",
+        "message": "Sorry, we need photo library permissions to select an image!"
+      },
+      "errors": {
+        "upload": "Could not upload the photo. Please try again.",
+        "selection": "There was a problem selecting the image. Please try again."
+      },
+      "buttons": {
+        "change": "Change photo",
+        "add": "Add your photo",
+        "back": "Back",
+        "continue": "Continue"
+      }
+    },
+    "safeLocation": {
+      "title": "Safe Locations",
+      "subtitle": "Select places where you feel safe to indicate your status to your contacts.",
+      "sectionTitle": "My Safe Locations",
+      "empty": {
+        "title": "You haven't selected any locations yet",
+        "subtitle": "Tap the button below to add safe locations"
+      },
+      "buttons": {
+        "addFirst": "Add first location",
+        "addAnother": "Add another location",
+        "back": "Back",
+        "continue": "Continue",
+        "continueWithCount": "Continue ({{count}})"
+      },
+      "alerts": {
+        "duplicate": "This location has already been added.",
+        "required": {
+          "title": "Attention",
+          "message": "Select at least one safe location to continue."
+        }
+      }
+    },
+    "summary": {
+      "title": "Welcome to Aegis!",
+      "subtitle": "Your account has been successfully created",
+      "description": "You are ready to start enjoying all the features that Aegis has to offer.",
+      "buttons": {
+        "start": "Start Experience",
+        "loading": "Setting up...",
+        "back": "← Go Back"
+      },
+      "loadingSteps": {
+        "creatingAccount": "Creating your account...",
+        "configuringProfile": "Setting up your profile...",
+        "syncing": "Syncing data...",
+        "notifications": "Setting up notifications...",
+        "realtime": "Setting up real-time services...",
+        "finalizing": "Finalizing setup...",
+        "welcome": "Welcome to Aegis!"
+      },
+      "errors": {
+        "noUserData": "No user data available.",
+        "conflict": "An account with this information already exists. Please try logging in.",
+        "unauthorized": "Invalid session. Please try registering again.",
+        "network": "Connection error. Check your internet and try again.",
+        "server": "Server error. Try again later.",
+        "rollback": {
+          "title": "Registration Error",
+          "message": "{{error}}\n\nYour credentials have been released. You can try registering again.",
+          "button": "Back to Registration"
+        },
+        "critical": {
+          "title": "Critical Error",
+          "message": "Could not revert registration. Please contact support.",
+          "button": "Go to Login"
+        },
+        "temporary": {
+          "title": "Temporary Error",
+          "message": "{{error}}\n\nPlease try again in a few minutes."
+        }
+      }
+    }
   }
 }

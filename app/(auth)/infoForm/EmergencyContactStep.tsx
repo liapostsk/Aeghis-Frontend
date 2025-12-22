@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import EmergencyContactAddModal from '@/components/emergencyContact/EmergencyCon
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 import { checkIfUserExists } from '@/api/backend/user/userApi';
+import { useTranslation } from 'react-i18next';
 
 export default function EmergencyContactStep({
   onNext,
@@ -23,6 +24,7 @@ export default function EmergencyContactStep({
   onNext: () => void;
   onBack: () => void;
 }) {
+  const { t } = useTranslation();
   const [modalVisible, setModalVisible] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
 
@@ -35,7 +37,7 @@ export default function EmergencyContactStep({
     return value == null || value === "" || value === "null" || value === "undefined";
   };
   
-  // 🔥 Función para limpiar contactos
+  // Función para limpiar contactos
   const clearContacts = () => {
     if (user) {
       setUser({
@@ -53,14 +55,14 @@ export default function EmergencyContactStep({
 
   // Validaciones de contacto
   const validateContact = (contactData: Contact): string | null => {
-    if (!contactData.phone) return 'Falta teléfono.';
-    if (!user) return 'Información de usuario faltante.';
-    if (contactData.phone === user.phone) return 'No puedes agregarte a ti mismo.';
+    if (!contactData.phone) return t('infoForm.emergencyContact.validation.phoneRequired');
+    if (!user) return t('infoForm.emergencyContact.validation.userInfoMissing');
+    if (contactData.phone === user.phone) return t('infoForm.emergencyContact.validation.cannotAddSelf');
     
     const alreadyExists = 
       (user.emergencyContacts ?? []).some(c => c.phone === contactData.phone) ||
       (user.externalContacts ?? []).some(c => c.phone === contactData.phone);
-    if (alreadyExists) return 'Este contacto ya está en tu lista.';
+    if (alreadyExists) return t('infoForm.emergencyContact.validation.alreadyExists');
     
     return null;
   };
@@ -107,7 +109,7 @@ export default function EmergencyContactStep({
       setModalVisible(false);
     } catch (e) {
       console.error('Error al agregar contacto:', e);
-      Alert.alert('Error', 'No se pudo agregar el contacto.');
+      Alert.alert(t('infoForm.index.error'), t('infoForm.emergencyContact.validation.addError'));
     } finally {
       setIsSearching(false);
     }
@@ -117,12 +119,12 @@ export default function EmergencyContactStep({
   const handleBackPress = () => {
     if (totalContactCount > 0) {
       Alert.alert(
-        'Contactos agregados',
-        '¿Qué quieres hacer con los contactos agregados?',
+        t('infoForm.emergencyContact.backAlert.title'),
+        t('infoForm.emergencyContact.backAlert.message'),
         [
-          { text: 'Mantener', onPress: onBack },
-          { text: 'Eliminar', onPress: () => { clearContacts(); onBack(); }, style: 'destructive' },
-          { text: 'Cancelar', style: 'cancel' }
+          { text: t('infoForm.emergencyContact.backAlert.keep'), onPress: onBack },
+          { text: t('infoForm.emergencyContact.backAlert.delete'), onPress: () => { clearContacts(); onBack(); }, style: 'destructive' },
+          { text: t('infoForm.emergencyContact.backAlert.cancel'), style: 'cancel' }
         ]
       );
     } else {
@@ -133,7 +135,7 @@ export default function EmergencyContactStep({
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Contactos de Emergencia</Text>
+        <Text style={styles.title}>{t('infoForm.emergencyContact.title')}</Text>
       </View>
 
       <View style={styles.mainContent}>
@@ -148,12 +150,18 @@ export default function EmergencyContactStep({
         {totalContactCount > 0 && (
           <View style={styles.contactCountContainer}>
             <Text style={styles.contactCountText}>
-              {totalContactCount} contacto{totalContactCount > 1 ? 's' : ''} agregado{totalContactCount > 1 ? 's' : ''}
+              {totalContactCount === 1 
+                ? t('infoForm.emergencyContact.contactCount.single', { count: totalContactCount })
+                : t('infoForm.emergencyContact.contactCount.multiple', { count: totalContactCount })
+              }
             </Text>
             {/* Mostrar desglose si hay ambos tipos */}
             {emergencyContactCount > 0 && externalContactCount > 0 && (
               <Text style={styles.contactBreakdownText}>
-                {emergencyContactCount} en app • {externalContactCount} externos
+                {t('infoForm.emergencyContact.contactCount.breakdown', { 
+                  emergencyCount: emergencyContactCount, 
+                  externalCount: externalContactCount 
+                })}
               </Text>
             )}
           </View>
@@ -167,10 +175,10 @@ export default function EmergencyContactStep({
         >
           <Text style={styles.addButtonText}>
             {isSearching 
-              ? 'Verificando...' 
+              ? t('infoForm.emergencyContact.buttons.verifying') 
               : totalContactCount > 0 
-                ? '+ Agregar otro contacto' 
-                : '+ Agregar contacto'
+                ? t('infoForm.emergencyContact.buttons.addAnother') 
+                : t('infoForm.emergencyContact.buttons.addFirst')
             }
           </Text>
         </Pressable>
@@ -178,13 +186,13 @@ export default function EmergencyContactStep({
         {/* Clear Contacts Button - Solo mostrar si hay contactos */}
         {totalContactCount > 0 && (
           <Pressable onPress={clearContacts} style={styles.clearButton}>
-            <Text style={styles.clearButtonText}>Limpiar contactos</Text>
+            <Text style={styles.clearButtonText}>{t('infoForm.emergencyContact.buttons.clear')}</Text>
           </Pressable>
         )}
 
         <View style={styles.infoContainer}>
           <Text style={styles.infoText}>
-            💡 Tus contactos solo serán notificados en emergencias y no necesitan descargar la app
+            {t('infoForm.emergencyContact.info')}
           </Text>
         </View>
 
@@ -193,7 +201,7 @@ export default function EmergencyContactStep({
       {/* Bottom Navigation */}
       <View style={styles.buttonContainer}>
         <Pressable onPress={handleBackPress} style={styles.backButton}>
-          <Text style={styles.backButtonText}>Atrás</Text>
+          <Text style={styles.backButtonText}>{t('infoForm.emergencyContact.buttons.back')}</Text>
         </Pressable>
         
         <Pressable 
@@ -208,7 +216,7 @@ export default function EmergencyContactStep({
             styles.continueButtonText,
             totalContactCount === 0 && styles.continueButtonTextDisabled
           ]}>
-            Continuar
+            {t('infoForm.emergencyContact.buttons.continue')}
           </Text>
         </Pressable>
       </View>

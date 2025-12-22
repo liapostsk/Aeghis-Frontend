@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable, StyleSheet, Animated, Dimensions, Alert, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth, useUser } from '@clerk/clerk-expo';
@@ -11,10 +11,12 @@ import { ensureCurrentUserProfile } from '@/api/firebase/users/userService';
 import { registerToken } from '@/api/notifications/notificationsApi';
 import { useNotification } from '@/api/notifications/NotificationContext';
 import { useSessionState } from '@/lib/hooks/useSessionState';
+import { useTranslation } from 'react-i18next';
 
 const { height } = Dimensions.get('window');
 
 export default function SummaryStep({ onBack }: { onBack: () => void }) {
+  const { t } = useTranslation();
   const { user, setUser, clearUser } = useUserStore();
   const { getToken } = useAuth();
   const { user: clerkUser } = useUser();
@@ -54,12 +56,12 @@ export default function SummaryStep({ onBack }: { onBack: () => void }) {
     if (isLoading) return;
 
     if (!user) {
-      Alert.alert("Error", "No hay datos de usuario disponibles.");
+      Alert.alert(t('infoForm.index.error'), t('infoForm.summary.errors.noUserData'));
       return;
     }
 
     setIsLoading(true);
-    setLoadingMessage('Creando tu cuenta...');
+    setLoadingMessage(t('infoForm.summary.loadingSteps.creatingAccount'));
     
     try {
       // 1. Obtener token de Clerk
@@ -67,7 +69,7 @@ export default function SummaryStep({ onBack }: { onBack: () => void }) {
       setToken(token);
       
       // 2. Crear usuario en el backend CON las ubicaciones y contactos del formulario
-      setLoadingMessage('Configurando tu perfil...');
+      setLoadingMessage(t('infoForm.summary.loadingSteps.configuringProfile'));
       
       // Crear DTO con datos del formulario
       const baseDto = mapUserToDto(user);
@@ -81,7 +83,7 @@ export default function SummaryStep({ onBack }: { onBack: () => void }) {
       const userId = await createUser(baseDto as any);
       console.log(" Usuario creado con ID:", userId);
       
-      setLoadingMessage('Sincronizando datos...');
+      setLoadingMessage(t('infoForm.summary.loadingSteps.syncing'));
       const userData = await getCurrentUser();
       
       // 4. Actualizar estado local con todos los datos del backend
@@ -96,7 +98,7 @@ export default function SummaryStep({ onBack }: { onBack: () => void }) {
       // 5. REGISTRAR NOTIFICACIONES PUSH (ahora que tenemos userId válido)
       if (expoPushToken) {
         try {
-          setLoadingMessage('Configurando notificaciones...');
+          setLoadingMessage(t('infoForm.summary.loadingSteps.notifications'));
           console.log(" Registrando token de notificaciones en backend...");
           
           await registerToken(userId, {
@@ -116,11 +118,11 @@ export default function SummaryStep({ onBack }: { onBack: () => void }) {
 
       // 6. VINCULAR CON FIREBASE
       try {
-        setLoadingMessage('Configurando servicios en tiempo real...');
+        setLoadingMessage(t('infoForm.summary.loadingSteps.realtime'));
         console.log("Vinculando sesión de Firebase...");
         await linkFirebaseSession();
 
-        setLoadingMessage('Finalizando configuración...');
+        setLoadingMessage(t('infoForm.summary.loadingSteps.finalizing'));
         await ensureCurrentUserProfile({
           displayName: user?.name || undefined,
           photoURL: clerkUser?.imageUrl || undefined,
@@ -146,10 +148,10 @@ export default function SummaryStep({ onBack }: { onBack: () => void }) {
       });
 
       console.log("Usuario creado exitosamente");
-      console.log("👤 Rol asignado por backend:", userData.role);
+      console.log("Rol asignado por backend:", userData.role);
 
       // 8. Navegación final
-      setLoadingMessage('¡Bienvenido a Aegis!');
+      setLoadingMessage(t('infoForm.summary.loadingSteps.welcome'));
       
       // Esperar más tiempo para que useSessionState detecte el cambio de rol
       await new Promise(resolve => setTimeout(resolve, 1200));
@@ -159,26 +161,26 @@ export default function SummaryStep({ onBack }: { onBack: () => void }) {
       console.error("Error creando usuario en backend:", error);
       
       // ROLLBACK: Borrar usuario de Clerk para permitir reintentar
-      let errorMessage = "No se pudo crear el usuario.";
+      let errorMessage = t('infoForm.summary.errors.noUserData');
       let shouldRollback = true;
       
       if (error?.response?.status === 409) {
-        errorMessage = "Ya existe una cuenta con estos datos. Por favor, intenta iniciar sesión.";
+        errorMessage = t('infoForm.summary.errors.conflict');
         shouldRollback = true; // Borrar Clerk para liberar credenciales
       } else if (error?.response?.status === 401) {
-        errorMessage = "Sesión inválida. Por favor, intenta registrarte nuevamente.";
+        errorMessage = t('infoForm.summary.errors.unauthorized');
         shouldRollback = true;
       } else if (error?.message?.includes('network') || error?.code === 'ECONNABORTED') {
-        errorMessage = "Error de conexión. Verifica tu internet e intenta nuevamente.";
+        errorMessage = t('infoForm.summary.errors.network');
         shouldRollback = true;
       } else if (error?.response?.status >= 500) {
-        errorMessage = "Error del servidor. Intenta más tarde.";
+        errorMessage = t('infoForm.summary.errors.server');
         shouldRollback = false; // No borrar Clerk por error del servidor
       }
 
       if (shouldRollback) {
         try {
-          setLoadingMessage('Limpiando datos...');
+          setLoadingMessage(t('infoForm.summary.loadingSteps.finalizing'));
           
           // Ejecutar rollback completo
           await cleanupClerkUser(`Error en backend: ${error?.response?.status || error?.message}`);
@@ -188,11 +190,11 @@ export default function SummaryStep({ onBack }: { onBack: () => void }) {
           setToken(null);
           
           Alert.alert(
-            "Error de Registro",
-            `${errorMessage}\n\nTus credenciales han sido liberadas. Puedes intentar registrarte nuevamente.`,
+            t('infoForm.summary.errors.rollback.title'),
+            t('infoForm.summary.errors.rollback.message', { error: errorMessage }),
             [
               {
-                text: "Volver al Registro",
+                text: t('infoForm.summary.errors.rollback.button'),
                 onPress: () => router.replace("/(auth)/register"),
               },
             ]
@@ -201,11 +203,11 @@ export default function SummaryStep({ onBack }: { onBack: () => void }) {
         } catch (rollbackError) {
           console.error(" Error durante rollback:", rollbackError);
           Alert.alert(
-            "Error Crítico",
-            "No se pudo revertir el registro. Por favor, contacta soporte.",
+            t('infoForm.summary.errors.critical.title'),
+            t('infoForm.summary.errors.critical.message'),
             [
               {
-                text: "Ir a Login",
+                text: t('infoForm.summary.errors.critical.button'),
                 onPress: () => router.replace("/(auth)/login"),
               },
             ]
@@ -213,7 +215,7 @@ export default function SummaryStep({ onBack }: { onBack: () => void }) {
         }
       } else {
         // Error temporal - mostrar mensaje sin rollback
-        Alert.alert("Error Temporal", `${errorMessage}\n\nPor favor, intenta nuevamente en unos minutos.`);
+        Alert.alert(t('infoForm.summary.errors.temporary.title'), t('infoForm.summary.errors.temporary.message', { error: errorMessage }));
       }
       
     } finally {
@@ -248,10 +250,10 @@ export default function SummaryStep({ onBack }: { onBack: () => void }) {
           <Text style={styles.iconText}>🎉</Text>
         </View>
 
-        <Text style={styles.title}>¡Bienvenido a Aegis!</Text>
-        <Text style={styles.subtitle}>Tu cuenta ha sido creada exitosamente</Text>
+        <Text style={styles.title}>{t('infoForm.summary.title')}</Text>
+        <Text style={styles.subtitle}>{t('infoForm.summary.subtitle')}</Text>
         <Text style={styles.description}>
-          Estás listo para comenzar a disfrutar de todas las funcionalidades que Aegis tiene para ofrecerte.
+          {t('infoForm.summary.description')}
         </Text>
 
         {/* Mostrar mensaje de carga específico */}
@@ -270,7 +272,7 @@ export default function SummaryStep({ onBack }: { onBack: () => void }) {
               disabled={isLoading}
             >
               <Text style={[styles.primaryButtonText, isLoading && styles.buttonTextDisabled]}>
-                {isLoading ? 'Configurando...' : 'Comenzar Experiencia'}
+                {isLoading ? t('infoForm.summary.buttons.loading') : t('infoForm.summary.buttons.start')}
               </Text>
               {!isLoading && <Text style={styles.buttonIcon}>→</Text>}
               {isLoading && <Text style={styles.loadingSpinner}>⏳</Text>}
@@ -283,7 +285,7 @@ export default function SummaryStep({ onBack }: { onBack: () => void }) {
             disabled={isLoading}
           >
             <Text style={[styles.secondaryButtonText, isLoading && styles.buttonTextDisabled]}>
-              ← Volver Atrás
+              {t('infoForm.summary.buttons.back')}
             </Text>
           </Pressable>
         </View>

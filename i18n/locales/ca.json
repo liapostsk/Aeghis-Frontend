@@ -581,5 +581,140 @@
       "noGroup": "Selecciona un grup on compartir la teva ubicació"
     },
     "namePlaceholder": "Ex: Trajecte a la feina"
+  },
+  "infoForm": {
+    "index": {
+      "tokenError": "No s'ha pogut obtenir el token. Inicia sessió de nou.",
+      "tokenSessionError": "Error obtenint el token de sessió.",
+      "error": "Error"
+    },
+    "privacy": {
+      "title": "Política de Privacitat",
+      "lastUpdated": "Última actualització:",
+      "cancelTitle": "Cancel·lar registre?",
+      "cancelMessage": "Si cancel·les ara, s'eliminarà el teu compte i hauràs de registrar-te de nou. Estàs segur?",
+      "cancelNo": "No, continuar",
+      "cancelYes": "Sí, cancel·lar",
+      "cancelError": "No s'ha pogut cancel·lar el registre. Intenta-ho de nou.",
+      "statusReviewed": "Has revisat la política completa",
+      "statusPending": "Si us plau llegeix la política completa",
+      "acceptButton": "Acceptar i Continuar",
+      "scrollButton": "Desplaça't fins al final per acceptar",
+      "footerText": "En acceptar, confirmes que has llegit i comprès la nostra política de privacitat.",
+      "acceptedTitle": "Política acceptada!",
+      "acceptedText": "Continuant amb l'aplicació..."
+    },
+    "emergencyContact": {
+      "title": "Contactes d'Emergència",
+      "validation": {
+        "phoneRequired": "Falta el telèfon.",
+        "userInfoMissing": "Informació d'usuari faltant.",
+        "cannotAddSelf": "No pots afegir-te a tu mateix.",
+        "alreadyExists": "Aquest contacte ja està a la teva llista.",
+        "addError": "No s'ha pogut afegir el contacte."
+      },
+      "backAlert": {
+        "title": "Contactes afegits",
+        "message": "Què vols fer amb els contactes afegits?",
+        "keep": "Mantenir",
+        "delete": "Eliminar",
+        "cancel": "Cancel·lar"
+      },
+      "contactCount": {
+        "single": "{{count}} contacte afegit",
+        "multiple": "{{count}} contactes afegits",
+        "breakdown": "{{emergencyCount}} a l'app • {{externalCount}} externs"
+      },
+      "buttons": {
+        "verifying": "Verificant...",
+        "addAnother": "+ Afegir un altre contacte",
+        "addFirst": "+ Afegir contacte",
+        "clear": "Netejar contactes",
+        "back": "Enrere",
+        "continue": "Continuar"
+      },
+      "info": "💡 Els teus contactes només seran notificats en emergències i no necessiten descarregar l'app"
+    },
+    "profileImage": {
+      "title": "Afegeix la teva foto de perfil",
+      "subtitle": "Això ajuda als teus contactes a trobar-te\nfàcilment al mapa",
+      "permissions": {
+        "title": "Permís Requerit",
+        "message": "Ho sentim, necessitem permisos de la galeria per seleccionar una imatge!"
+      },
+      "errors": {
+        "upload": "No s'ha pogut pujar la foto. Si us plau, intenta-ho de nou.",
+        "selection": "Hi ha hagut un problema en seleccionar la imatge. Si us plau, intenta-ho de nou."
+      },
+      "buttons": {
+        "change": "Canviar foto",
+        "add": "Afegir la teva foto",
+        "back": "Enrere",
+        "continue": "Continuar"
+      }
+    },
+    "safeLocation": {
+      "title": "Ubicacions Segures",
+      "subtitle": "Selecciona llocs on et sents segur per indicar el teu estat als teus contactes.",
+      "sectionTitle": "Les Meves Ubicacions Segures",
+      "empty": {
+        "title": "Encara no has seleccionat ubicacions",
+        "subtitle": "Toca el botó de baix per afegir ubicacions segures"
+      },
+      "buttons": {
+        "addFirst": "Afegir primera ubicació",
+        "addAnother": "Afegir una altra ubicació",
+        "back": "Enrere",
+        "continue": "Continuar",
+        "continueWithCount": "Continuar ({{count}})"
+      },
+      "alerts": {
+        "duplicate": "Aquesta ubicació ja s'ha afegit.",
+        "required": {
+          "title": "Atenció",
+          "message": "Selecciona almenys una ubicació segura per continuar."
+        }
+      }
+    },
+    "summary": {
+      "title": "Benvingut a Aegis!",
+      "subtitle": "El teu compte s'ha creat correctament",
+      "description": "Estàs preparat per començar a gaudir de totes les funcionalitats que Aegis té per oferir-te.",
+      "buttons": {
+        "start": "Començar Experiència",
+        "loading": "Configurant...",
+        "back": "← Tornar Enrere"
+      },
+      "loadingSteps": {
+        "creatingAccount": "Creant el teu compte...",
+        "configuringProfile": "Configurant el teu perfil...",
+        "syncing": "Sincronitzant dades...",
+        "notifications": "Configurant notificacions...",
+        "realtime": "Configurant serveis en temps real...",
+        "finalizing": "Finalitzant configuració...",
+        "welcome": "Benvingut a Aegis!"
+      },
+      "errors": {
+        "noUserData": "No hi ha dades d'usuari disponibles.",
+        "conflict": "Ja existeix un compte amb aquestes dades. Si us plau, intenta iniciar sessió.",
+        "unauthorized": "Sessió invàlida. Si us plau, intenta registrar-te de nou.",
+        "network": "Error de connexió. Verifica el teu internet i intenta de nou.",
+        "server": "Error del servidor. Intenta-ho més tard.",
+        "rollback": {
+          "title": "Error de Registre",
+          "message": "{{error}}\n\nLes teves credencials han estat alliberades. Pots intentar registrar-te de nou.",
+          "button": "Tornar al Registre"
+        },
+        "critical": {
+          "title": "Error Crític",
+          "message": "No s'ha pogut revertir el registre. Si us plau, contacta amb suport.",
+          "button": "Anar a Login"
+        },
+        "temporary": {
+          "title": "Error Temporal",
+          "message": "{{error}}\n\nSi us plau, intenta-ho de nou en uns minuts."
+        }
+      }
+    }
   }
 }

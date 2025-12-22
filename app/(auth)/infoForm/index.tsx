@@ -3,6 +3,7 @@ import { StyleSheet, ActivityIndicator, Alert, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
+import { useTranslation } from 'react-i18next';
 import ProgressBar from '@/components/ui/ProgressBar';
 import PrivacyStep from './PrivacyStep';
 import ProfileImageStep from './ProfileImageStep';
@@ -13,6 +14,7 @@ import SummaryStep from './SummaryStep';
 const TOTAL_STEPS = 5;
 
 export default function InformationScreen() {
+  const { t } = useTranslation();
   const [step, setStep] = useState(0);
   const [loadingToken, setLoadingToken] = useState(false);
 
@@ -24,14 +26,14 @@ export default function InformationScreen() {
       try {
         const freshToken = await getToken();
         if (!freshToken) {
-          Alert.alert("Error", "No se pudo obtener el token. Inicia sesión de nuevo.");
+          Alert.alert(t('infoForm.index.error'), t('infoForm.index.tokenError'));
           return;
         }
         setToken(freshToken);
         setLoadingToken(false);
       } catch (error) {
         console.error("Error obteniendo token:", error);
-        Alert.alert("Error", "Error obteniendo token de sesión.");
+        Alert.alert(t('infoForm.index.error'), t('infoForm.index.tokenSessionError'));
       }
     };
 
