@@ -51,7 +51,7 @@ export default function InfoFormLayout() {
         }}
       >
         {/* 
-          📋 FLUJO DE ONBOARDING - CONFIGURACIÓN INICIAL
+          FLUJO DE ONBOARDING - CONFIGURACIÓN INICIAL
           
           Este layout maneja el flujo de configuración inicial del usuario
           después del registro. Incluye 5 pasos obligatorios:

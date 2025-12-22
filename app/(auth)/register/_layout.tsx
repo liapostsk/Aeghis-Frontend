@@ -1,6 +1,5 @@
 import { useAuth } from "@clerk/clerk-expo";
 import { router, Stack } from "expo-router";
-import React from "react";
 import { Pressable } from "react-native";
 import Icon from '@expo/vector-icons/Ionicons';
 
