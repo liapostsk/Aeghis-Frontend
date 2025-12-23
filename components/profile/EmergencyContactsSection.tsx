@@ -99,6 +99,8 @@ export default function EmergencyContactsSection() {
 
   // Handlers para ambos tipos de contacto
   const handleEditContact = async (updatedContact: Contact) => {
+    if (!selectedContact) return;
+    
     try {
       const token = await getToken();
       setToken(token);
@@ -181,7 +183,7 @@ export default function EmergencyContactsSection() {
         const newEmergencyContact: Partial<EmergencyContact> = {
           name: contactData.name || '',
           phone: contactData.phone,
-          contactId: existsUserId,
+          contactId: existsUserId ?? undefined,
           relation: contactData.relation || '',
           status: 'PENDING',
         };

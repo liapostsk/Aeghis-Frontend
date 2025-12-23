@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import { useUserStore } from '@/lib/storage/useUserStorage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { uploadVerificationSelfie, uploadVerificationDocument } from '@/api/firebase/storage/photoService';
 import { useAuth } from '@clerk/clerk-expo';
+import { useTranslation } from 'react-i18next';
 
 interface ProfileVerificationScreenProps {
   onVerificationComplete: () => void;
@@ -28,6 +29,7 @@ export default function ProfileVerificationScreen({
 }: ProfileVerificationScreenProps) {
   const { user } = useUserStore();
   const { userId } = useAuth();
+  const { t } = useTranslation();
   
   const [profileImage, setProfileImage] = useState<string | null>(user?.image || null);
   const [livePhoto, setLivePhoto] = useState<string | null>(null);
@@ -38,8 +40,8 @@ export default function ProfileVerificationScreen({
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert(
-        'Permiso requerido',
-        'Necesitamos acceso a tu cámara para verificar tu identidad.'
+        t('profile.verificationScreen.permissions.camera.title'),
+        t('profile.verificationScreen.permissions.camera.message')
       );
       return false;
     }
@@ -51,8 +53,8 @@ export default function ProfileVerificationScreen({
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert(
-        'Permiso requerido',
-        'Necesitamos acceso a tu galería para seleccionar tu foto de perfil.'
+        t('profile.verificationScreen.permissions.gallery.title'),
+        t('profile.verificationScreen.permissions.gallery.message')
       );
       return false;
     }
@@ -76,8 +78,7 @@ export default function ProfileVerificationScreen({
         setProfileImage(result.assets[0].uri);
       }
     } catch (error) {
-      console.error('Error picking image:', error);
-      Alert.alert('Error', 'No se pudo seleccionar la imagen');
+      Alert.alert(t('profile.verificationScreen.alerts.imageError.title'), t('profile.verificationScreen.alerts.imageError.message'));
     }
   };
 
@@ -100,7 +101,7 @@ export default function ProfileVerificationScreen({
       }
     } catch (error) {
       console.error('Error taking photo:', error);
-      Alert.alert('Error', 'No se pudo tomar la foto');
+      Alert.alert(t('profile.verificationScreen.alerts.photoError.title'), t('profile.verificationScreen.alerts.photoError.message'));
     }
   };
 
@@ -108,14 +109,14 @@ export default function ProfileVerificationScreen({
   const handleSubmitVerification = async () => {
     if (!profileImage || !livePhoto) {
       Alert.alert(
-        'Fotos incompletas',
-        'Por favor, proporciona ambas fotos para continuar con la verificación.'
+        t('profile.verificationScreen.alerts.incomplete.title'),
+        t('profile.verificationScreen.alerts.incomplete.message')
       );
       return;
     }
 
     if (!userId) {
-      Alert.alert('Error', 'No se pudo identificar al usuario');
+      Alert.alert(t('profile.verificationScreen.alerts.userError.title'), t('profile.verificationScreen.alerts.userError.message'));
       return;
     }
 
@@ -135,11 +136,11 @@ export default function ProfileVerificationScreen({
       console.log('Selfie:', selfieUrl);
 
       Alert.alert(
-        'Fotos enviadas',
-        'Tus fotos han sido enviadas correctamente. Un administrador las revisará pronto.',
+        t('profile.verificationScreen.alerts.success.title'),
+        t('profile.verificationScreen.alerts.success.message'),
         [
           {
-            text: 'Entendido',
+            text: t('profile.verificationScreen.alerts.success.confirm'),
             onPress: onVerificationComplete,
           },
         ]
@@ -147,8 +148,8 @@ export default function ProfileVerificationScreen({
     } catch (error) {
       console.error('Error subiendo fotos de verificación:', error);
       Alert.alert(
-        'Error',
-        'No se pudieron subir las fotos. Por favor, intenta de nuevo.'
+        t('profile.verificationScreen.alerts.error.title'),
+        t('profile.verificationScreen.alerts.error.message')
       );
     } finally {
       setIsSubmitting(false);
@@ -164,7 +165,7 @@ export default function ProfileVerificationScreen({
             <Pressable style={styles.backButton} onPress={onBack}>
               <Ionicons name="arrow-back" size={24} color="#1F2937" />
             </Pressable>
-            <Text style={styles.headerBarTitle}>Verificación</Text>
+            <Text style={styles.headerBarTitle}>{t('profile.verificationScreen.header')}</Text>
             <View style={styles.headerBarSpacer} />
           </View>
         )}
@@ -172,31 +173,31 @@ export default function ProfileVerificationScreen({
         {/* Header */}
         <View style={styles.header}>
         <Ionicons name="shield-checkmark" size={64} color="#7A33CC" />
-        <Text style={styles.title}>Verificación de Perfil</Text>
+        <Text style={styles.title}>{t('profile.verificationScreen.title')}</Text>
         <Text style={styles.subtitle}>
-          Para acceder a grupos de acompañamiento, necesitamos verificar tu identidad
+          {t('profile.verificationScreen.subtitle')}
         </Text>
       </View>
 
       {/* Instrucciones */}
       <View style={styles.instructionsCard}>
-        <Text style={styles.instructionsTitle}>¿Cómo funciona?</Text>
+        <Text style={styles.instructionsTitle}>{t('profile.verificationScreen.howItWorks.title')}</Text>
         <View style={styles.instructionItem}>
           <Ionicons name="image" size={20} color="#7A33CC" />
           <Text style={styles.instructionText}>
-            1. Selecciona tu foto de perfil (o usa la actual)
+            {t('profile.verificationScreen.howItWorks.step1')}
           </Text>
         </View>
         <View style={styles.instructionItem}>
           <Ionicons name="camera" size={20} color="#7A33CC" />
           <Text style={styles.instructionText}>
-            2. Toma una selfie en tiempo real
+            {t('profile.verificationScreen.howItWorks.step2')}
           </Text>
         </View>
         <View style={styles.instructionItem}>
           <Ionicons name="shield-checkmark" size={20} color="#7A33CC" />
           <Text style={styles.instructionText}>
-            3. Nuestro sistema verificará que coincidan
+            {t('profile.verificationScreen.howItWorks.step3')}
           </Text>
         </View>
       </View>
@@ -204,7 +205,7 @@ export default function ProfileVerificationScreen({
       {/* Foto de perfil */}
       <View style={styles.photoSection}>
         <Text style={styles.sectionTitle}>
-          1. Foto de perfil
+          {t('profile.verificationScreen.profilePhoto.title')}
         </Text>
         <Pressable
           style={[styles.photoCard, profileImage && styles.photoCardFilled]}
@@ -215,14 +216,14 @@ export default function ProfileVerificationScreen({
               <Image source={{ uri: profileImage }} style={styles.photoPreview} />
               <Pressable style={styles.changeButton} onPress={pickProfileImage}>
                 <Ionicons name="pencil" size={16} color="#FFF" />
-                <Text style={styles.changeButtonText}>Cambiar</Text>
+                <Text style={styles.changeButtonText}>{t('profile.verificationScreen.profilePhoto.change')}</Text>
               </Pressable>
             </>
           ) : (
             <View style={styles.photoPlaceholder}>
               <Ionicons name="image-outline" size={48} color="#9CA3AF" />
               <Text style={styles.photoPlaceholderText}>
-                Seleccionar de galería
+                {t('profile.verificationScreen.profilePhoto.selectFromGallery')}
               </Text>
             </View>
           )}
@@ -230,7 +231,7 @@ export default function ProfileVerificationScreen({
         {profileImage && (
           <View style={styles.checkmark}>
             <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
-            <Text style={styles.checkmarkText}>Foto seleccionada</Text>
+            <Text style={styles.checkmarkText}>{t('profile.verificationScreen.profilePhoto.selected')}</Text>
           </View>
         )}
       </View>
@@ -238,7 +239,7 @@ export default function ProfileVerificationScreen({
       {/* Foto en vivo */}
       <View style={styles.photoSection}>
         <Text style={styles.sectionTitle}>
-          2. Selfie en vivo
+          {t('profile.verificationScreen.livePhoto.title')}
         </Text>
         <Pressable
           style={[styles.photoCard, livePhoto && styles.photoCardFilled]}
@@ -249,14 +250,14 @@ export default function ProfileVerificationScreen({
               <Image source={{ uri: livePhoto }} style={styles.photoPreview} />
               <Pressable style={styles.changeButton} onPress={takeLivePhoto}>
                 <Ionicons name="camera" size={16} color="#FFF" />
-                <Text style={styles.changeButtonText}>Retomar</Text>
+                <Text style={styles.changeButtonText}>{t('profile.verificationScreen.livePhoto.retake')}</Text>
               </Pressable>
             </>
           ) : (
             <View style={styles.photoPlaceholder}>
               <Ionicons name="camera-outline" size={48} color="#9CA3AF" />
               <Text style={styles.photoPlaceholderText}>
-                Tomar selfie ahora
+                {t('profile.verificationScreen.livePhoto.takeSelfie')}
               </Text>
             </View>
           )}
@@ -264,7 +265,7 @@ export default function ProfileVerificationScreen({
         {livePhoto && (
           <View style={styles.checkmark}>
             <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
-            <Text style={styles.checkmarkText}>Selfie capturada</Text>
+            <Text style={styles.checkmarkText}>{t('profile.verificationScreen.livePhoto.captured')}</Text>
           </View>
         )}
       </View>
@@ -273,7 +274,7 @@ export default function ProfileVerificationScreen({
       <View style={styles.tipsCard}>
         <Ionicons name="information-circle" size={20} color="#FF9800" />
         <Text style={styles.tipsText}>
-          Asegúrate de que tu rostro esté bien iluminado y visible en ambas fotos
+          {t('profile.verificationScreen.tips.message')}
         </Text>
       </View>
 
@@ -292,14 +293,14 @@ export default function ProfileVerificationScreen({
           ) : (
             <>
               <Ionicons name="shield-checkmark" size={20} color="#FFF" />
-              <Text style={styles.submitButtonText}>Enviar Verificación</Text>
+              <Text style={styles.submitButtonText}>{t('profile.verificationScreen.submit')}</Text>
             </>
           )}
         </Pressable>
       </View>
 
       <Text style={styles.privacyNote}>
-        🔒 Tus fotos se utilizan únicamente para verificación de identidad y se procesan de forma segura
+        {t('profile.verificationScreen.privacyNote')}
       </Text>
     </ScrollView>
     </SafeAreaView>

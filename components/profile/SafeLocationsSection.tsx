@@ -11,9 +11,10 @@ import { useAuth } from "@clerk/clerk-expo";
 import { useUserStore } from '@/lib/storage/useUserStorage';
 import { editSafeLocation } from '@/api/backend/locations/safeLocations/safeLocationApi';
 import LocationEditorModal from '../safeLocations/LocationEditorModal';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
-  locations: SafeLocation[]; // Lista de ubicaciones seguras
+  locations: SafeLocation[];
   onAddLocation?: (location: SafeLocation) => void; // Para pasar al padre si se desea
 }
 
@@ -25,6 +26,7 @@ export default function SafeLocationsSection({ locations, onAddLocation }: Props
 
   const { getToken } = useAuth();
   const setToken = useTokenStore((state) => state.setToken);
+  const { t } = useTranslation();
 
   useFocusEffect(
     React.useCallback(() => {
@@ -47,11 +49,11 @@ export default function SafeLocationsSection({ locations, onAddLocation }: Props
   };
 
   const handleLocationAdded = async (location: SafeLocation) => {
-    console.log("🧪 Nueva ubicación añadida desde modal:", location);
+    console.log("Nueva ubicación añadida desde modal:", location);
     try {
       const token = await getToken();
       if (!token) {
-        return Alert.alert("Error", "Failed to get token.");
+        return Alert.alert(t('profile.safeLocations.alerts.tokenError.title'), t('profile.safeLocations.alerts.tokenError.message'));
       }
       setToken(token);
       
@@ -62,21 +64,21 @@ export default function SafeLocationsSection({ locations, onAddLocation }: Props
       onAddLocation?.(location);
     } catch (error) {
       console.error("Error al guardar ubicación:", error);
-      Alert.alert("Error", "No se pudo guardar la ubicación");
+      Alert.alert(t('profile.safeLocations.alerts.saveError.title'), t('profile.safeLocations.alerts.saveError.message'));
     }
   };
 
   const handleDeleteSafeLocation = async (location: SafeLocation) => {
     Alert.alert(
-      "Eliminar Ubicación",
-      `¿Estás seguro de que quieres eliminar "${location.name}"?`,
+      t('profile.safeLocations.delete.title'),
+      t('profile.safeLocations.delete.message', { name: location.name }),
       [
         {
-          text: "Cancelar",
+          text: t('profile.safeLocations.delete.cancel'),
           style: "cancel",
         },
         {
-          text: "Eliminar",
+          text: t('profile.safeLocations.delete.confirm'),
           onPress: async () => {
             const token = await getToken();
             setToken(token);
@@ -100,9 +102,9 @@ export default function SafeLocationsSection({ locations, onAddLocation }: Props
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
         <Ionicons name="location" size={18} color="#7A33CC" />
-        <Text style={styles.sectionTitle}>Ubicaciones Seguras</Text>
+        <Text style={styles.sectionTitle}>{t('profile.safeLocations.title')}</Text>
           <Pressable style={styles.editButton} onPress={() => setEditable(!editable)}>
-            <Text style={{ color: '#7A33CC' }}>Editar</Text>
+            <Text style={{ color: '#7A33CC' }}>{t('profile.safeLocations.edit')}</Text>
           </Pressable>
       </View>
 
@@ -125,7 +127,7 @@ export default function SafeLocationsSection({ locations, onAddLocation }: Props
             <Text style={styles.locationName}>{location.name}</Text>
             <Text style={styles.locationType}>{location.type}</Text>
             <Text style={styles.locationAddress}>{location.address}</Text>
-            <Text style={{ fontSize: 12, color: '#999', marginTop: 4 }}>ID: {location.id}</Text>
+            <Text style={{ fontSize: 12, color: '#999', marginTop: 4 }}>{t('profile.safeLocations.idLabel')}: {location.id}</Text>
           </View>
           {editable && (
             <View style={styles.actionButtons}>
@@ -156,7 +158,7 @@ export default function SafeLocationsSection({ locations, onAddLocation }: Props
 
       <TouchableOpacity style={styles.addButton} onPress={() => setModalAddSaveLocationVisible(true)}>
         <Ionicons name="add-circle" size={24} color="#7A33CC" />
-        <Text style={styles.addButtonText}>Añadir ubicación</Text>
+        <Text style={styles.addButtonText}>{t('profile.safeLocations.add')}</Text>
       </TouchableOpacity>
 
       <SafeLocationModal
@@ -168,7 +170,7 @@ export default function SafeLocationsSection({ locations, onAddLocation }: Props
             id: location.id,
             name: location.name || `Ubicación (${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)})`,
             description: ('description' in location) ? location.description : undefined,
-            address: location.address || 'Coordenadas personalizadas',
+            address: location.address || t('profile.safeLocations.customAddress'),
             type: location.type || 'custom',
             distance: location.distance,
             latitude: location.latitude,
@@ -180,7 +182,7 @@ export default function SafeLocationsSection({ locations, onAddLocation }: Props
         }}
       />
 
-      {/* ✅ Solo mostrar modal si hay ubicación seleccionada */}
+      {/* Solo mostrar modal si hay ubicación seleccionada */}
       {selectedLocation && (
         <LocationEditorModal
           visible={modalEditorVisible}

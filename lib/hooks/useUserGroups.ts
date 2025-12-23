@@ -3,7 +3,6 @@ import { getUserGroups } from '@/api/backend/group/groupApi';
 import { Group } from '@/api/backend/group/groupType';
 import { useUserStore } from '@/lib/storage/useUserStorage';
 
-// ✅ Caché global para evitar llamadas duplicadas
 let cachedGroups: Group[] | null = null;
 let lastFetch: number = 0;
 let activePromise: Promise<Group[]> | null = null;
@@ -20,7 +19,7 @@ export function useUserGroups() {
   const user = useUserStore((state) => state.user);
 
   const fetchGroups = useCallback(async (forceRefresh = false) => {
-    // ✅ Si hay una petición activa, esperar a que termine (evita duplicados)
+    // Si hay una petición activa, esperar a que termine (evita duplicados)
     if (activePromise && !forceRefresh) {
       console.log('⏳ [useUserGroups] Ya hay una carga en progreso, esperando...');
       try {
@@ -33,7 +32,7 @@ export function useUserGroups() {
       }
     }
 
-    // ✅ Si hay caché válido y no es forzado, usar caché
+    // Si hay caché válido y no es forzado, usar caché
     const now = Date.now();
     if (!forceRefresh && cachedGroups && (now - lastFetch) < CACHE_DURATION) {
       console.log('📦 [useUserGroups] Usando grupos cacheados:', cachedGroups.length);
@@ -42,26 +41,25 @@ export function useUserGroups() {
     }
 
     if (!user?.id) {
-      console.warn('⚠️ [useUserGroups] No hay usuario logueado');
+      console.warn('[useUserGroups] No hay usuario logueado');
       return [];
     }
 
     setLoading(true);
     setError(null);
 
-    // ✅ Crear promesa única compartida
     activePromise = getUserGroups();
 
     try {
-      console.log('🔄 [useUserGroups] Cargando grupos del backend...');
+      console.log('[useUserGroups] Cargando grupos del backend...');
       const userGroups = await activePromise;
       
-      // ✅ Actualizar caché
+      // Actualizar caché
       cachedGroups = userGroups;
       lastFetch = Date.now();
       
       setGroups(userGroups);
-      console.log(`✅ [useUserGroups] ${userGroups.length} grupos cargados`);
+      console.log(`[useUserGroups] ${userGroups.length} grupos cargados`);
       
       return userGroups;
     } catch (err) {
@@ -74,20 +72,20 @@ export function useUserGroups() {
     }
   }, [user?.id]);
 
-  // ✅ Cargar al montar (solo si no hay caché válido)
+  // Cargar al montar (solo si no hay caché válido)
   useEffect(() => {
     fetchGroups();
   }, [fetchGroups]);
 
-  // ✅ Función para forzar recarga
+  // Función para forzar recarga
   const refresh = useCallback(() => {
-    console.log('🔄 [useUserGroups] Forzando recarga de grupos...');
+    console.log('[useUserGroups] Forzando recarga de grupos...');
     return fetchGroups(true);
   }, [fetchGroups]);
 
-  // ✅ Función para limpiar caché
+  // Función para limpiar caché
   const clearCache = useCallback(() => {
-    console.log('🗑️ [useUserGroups] Limpiando caché de grupos');
+    console.log('[useUserGroups] Limpiando caché de grupos');
     cachedGroups = null;
     lastFetch = 0;
   }, []);
@@ -106,7 +104,7 @@ export function useUserGroups() {
  * Usar después de crear/editar/eliminar/salir de un grupo
  */
 export function invalidateGroupsCache() {
-  console.log('🗑️ [useUserGroups] Invalidando caché global de grupos');
+  console.log('[useUserGroups] Invalidando caché global de grupos');
   cachedGroups = null;
   lastFetch = 0;
   activePromise = null;

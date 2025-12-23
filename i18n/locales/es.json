@@ -52,7 +52,7 @@
     "loading": "Cargando..."
   },
   "journeySimple": {
-    "noTripMessage": "Actualmente no estás en un viaje. Activa uno si quieres que alguien te vigile 😊",
+    "noTripMessage": "Actualmente no estás en un viaje. Activa uno si quieres que alguien este pendiente 😊",
     "startJourney": "Iniciar un trayecto"
   },
   "mapHeader": {
@@ -479,7 +479,133 @@
   "profile": {
     "refreshing": "Refrescando estado del usuario desde backend...",
     "userUpdated": "Usuario actualizado desde backend",
-    "updateError": "No se pudo actualizar el usuario:"
+    "updateError": "No se pudo actualizar el usuario:",
+    "verificationBanner": {
+      "verified": {
+        "title": "Perfil Verificado",
+        "subtitle": "Tu cuenta ha sido verificada. Tienes acceso completo a grupos de acompañamiento."
+      },
+      "rejected": {
+        "title": "Verificación Rechazada",
+        "subtitle": "Tu solicitud de verificación fue rechazada. Por favor, contacta con soporte."
+      },
+      "pending": {
+        "title": "Verificación en proceso",
+        "description": "Tu solicitud está siendo revisada. Te notificaremos cuando esté lista."
+      },
+      "notVerified": {
+        "title": "Verifica tu perfil",
+        "description": "Completa la verificación para acceder a grupos de acompañamiento y más funciones"
+      }
+    },
+    "verificationScreen": {
+      "header": "Verificación",
+      "title": "Verificación de Perfil",
+      "subtitle": "Para acceder a grupos de acompañamiento, necesitamos verificar tu identidad",
+      "howItWorks": {
+        "title": "¿Cómo funciona?",
+        "step1": "1. Selecciona tu foto de perfil (o usa la actual)",
+        "step2": "2. Toma una selfie en tiempo real",
+        "step3": "3. Nuestro sistema verificará que coincidan"
+      },
+      "profilePhoto": {
+        "title": "1. Foto de perfil",
+        "selectFromGallery": "Seleccionar de galería",
+        "change": "Cambiar",
+        "selected": "Foto seleccionada"
+      },
+      "livePhoto": {
+        "title": "2. Selfie en vivo",
+        "takeSelfie": "Tomar selfie ahora",
+        "retake": "Retomar",
+        "captured": "Selfie capturada"
+      },
+      "tips": {
+        "message": "Asegúrate de que tu rostro esté bien iluminado y visible en ambas fotos"
+      },
+      "submit": "Enviar Verificación",
+      "submitting": "Enviando...",
+      "privacyNote": "🔒 Tus fotos se utilizan únicamente para verificación de identidad y se procesan de forma segura",
+      "permissions": {
+        "camera": {
+          "title": "Permiso requerido",
+          "message": "Necesitamos acceso a tu cámara para verificar tu identidad."
+        },
+        "gallery": {
+          "title": "Permiso requerido",
+          "message": "Necesitamos acceso a tu galería para seleccionar tu foto de perfil."
+        }
+      },
+      "alerts": {
+        "incomplete": {
+          "title": "Fotos incompletas",
+          "message": "Por favor, proporciona ambas fotos para continuar con la verificación."
+        },
+        "userError": {
+          "title": "Error",
+          "message": "No se pudo identificar al usuario"
+        },
+        "success": {
+          "title": "Fotos enviadas",
+          "message": "Tus fotos han sido enviadas correctamente. Un administrador las revisará pronto.",
+          "confirm": "Entendido"
+        },
+        "error": {
+          "title": "Error",
+          "message": "No se pudieron subir las fotos. Por favor, intenta de nuevo."
+        },
+        "imageError": {
+          "title": "Error",
+          "message": "No se pudo seleccionar la imagen"
+        },
+        "photoError": {
+          "title": "Error",
+          "message": "No se pudo tomar la foto"
+        }
+      }
+    },
+    "settings": {
+      "title": "Configuración",
+      "notifications": "Notificaciones",
+      "account": "Cuenta",
+      "privacy": "Privacidad y Seguridad",
+      "help": "Ayuda y Soporte",
+      "logout": "Cerrar Sesión",
+      "logoutModal": {
+        "title": "¿Estás segura?",
+        "message": "Asegúrate de que tu correo electrónico y número de teléfono sean correctos. Si no están actualizados, podrías perder el acceso a tu cuenta.",
+        "reviewData": "Revisar datos",
+        "confirm": "Cerrar sesión"
+      }
+    },
+    "safeLocations": {
+      "title": "Ubicaciones Seguras",
+      "edit": "Editar",
+      "add": "Añadir ubicación",
+      "types": {
+        "home": "Hogar",
+        "work": "Trabajo",
+        "custom": "Ubicación personalizada"
+      },
+      "customAddress": "Coordenadas personalizadas",
+      "idLabel": "ID",
+      "delete": {
+        "title": "Eliminar Ubicación",
+        "message": "¿Estás seguro de que quieres eliminar \"{{name}}\"?",
+        "confirm": "Eliminar",
+        "cancel": "Cancelar"
+      },
+      "alerts": {
+        "saveError": {
+          "title": "Error",
+          "message": "No se pudo guardar la ubicación"
+        },
+        "tokenError": {
+          "title": "Error",
+          "message": "Failed to get token."
+        }
+      }
+    }
   },
   "chat": {
     "loading": "Cargando grupo…",

@@ -52,7 +52,7 @@
     "loading": "Carregant..."
   },
   "journeySimple": {
-    "noTripMessage": "Actualment no estàs en un viatge. Activa'n un si vols que algú et vigili 😊",
+    "noTripMessage": "Actualment no estàs en un viatge. Activa'n un si vols que algú estigui pendent 😊",
     "startJourney": "Iniciar un trajecte"
   },
   "mapHeader": {
@@ -479,7 +479,133 @@
   "profile": {
     "refreshing": "Refrescant estat de l'usuari des del backend...",
     "userUpdated": "Usuari actualitzat des del backend",
-    "updateError": "No s'ha pogut actualitzar l'usuari:"
+    "updateError": "No s'ha pogut actualitzar l'usuari:",
+    "verificationBanner": {
+      "verified": {
+        "title": "Perfil Verificat",
+        "subtitle": "El teu compte ha estat verificat. Tens accés complet a grups d'acompanyament."
+      },
+      "rejected": {
+        "title": "Verificació Rebutjada",
+        "subtitle": "La teva sol·licitud de verificació ha estat rebutjada. Si us plau, contacta amb suport."
+      },
+      "pending": {
+        "title": "Verificació en procés",
+        "description": "La teva sol·licitud està sent revisada. T'avisarem quan estigui llesta."
+      },
+      "notVerified": {
+        "title": "Verifica el teu perfil",
+        "description": "Completa la verificació per accedir a grups d'acompanyament i més funcions"
+      }
+    },
+    "verificationScreen": {
+      "header": "Verificació",
+      "title": "Verificació de Perfil",
+      "subtitle": "Per accedir a grups d'acompanyament, necessitem verificar la teva identitat",
+      "howItWorks": {
+        "title": "Com funciona?",
+        "step1": "1. Selecciona la teva foto de perfil (o utilitza l'actual)",
+        "step2": "2. Fes-te una selfie en temps real",
+        "step3": "3. El nostre sistema verificarà que coincideixin"
+      },
+      "profilePhoto": {
+        "title": "1. Foto de perfil",
+        "selectFromGallery": "Seleccionar de la galeria",
+        "change": "Canviar",
+        "selected": "Foto seleccionada"
+      },
+      "livePhoto": {
+        "title": "2. Selfie en viu",
+        "takeSelfie": "Fer selfie ara",
+        "retake": "Tornar a fer",
+        "captured": "Selfie capturada"
+      },
+      "tips": {
+        "message": "Assegura't que el teu rostre estigui ben il·luminat i visible en ambdues fotos"
+      },
+      "submit": "Enviar Verificació",
+      "submitting": "Enviant...",
+      "privacyNote": "🔒 Les teves fotos s'utilitzen únicament per verificar la identitat i es processen de forma segura",
+      "permissions": {
+        "camera": {
+          "title": "Permís requerit",
+          "message": "Necessitem accés a la teva càmera per verificar la teva identitat."
+        },
+        "gallery": {
+          "title": "Permís requerit",
+          "message": "Necessitem accés a la teva galeria per seleccionar la teva foto de perfil."
+        }
+      },
+      "alerts": {
+        "incomplete": {
+          "title": "Fotos incompletes",
+          "message": "Si us plau, proporciona ambdues fotos per continuar amb la verificació."
+        },
+        "userError": {
+          "title": "Error",
+          "message": "No s'ha pogut identificar l'usuari"
+        },
+        "success": {
+          "title": "Fotos enviades",
+          "message": "Les teves fotos han estat enviades correctament. Un administrador les revisarà aviat.",
+          "confirm": "Entesos"
+        },
+        "error": {
+          "title": "Error",
+          "message": "No s'han pogut pujar les fotos. Si us plau, torna-ho a intentar."
+        },
+        "imageError": {
+          "title": "Error",
+          "message": "No s'ha pogut seleccionar la imatge"
+        },
+        "photoError": {
+          "title": "Error",
+          "message": "No s'ha pogut fer la foto"
+        }
+      }
+    },
+    "settings": {
+      "title": "Configuració",
+      "notifications": "Notificacions",
+      "account": "Compte",
+      "privacy": "Privacitat i Seguretat",
+      "help": "Ajuda i Suport",
+      "logout": "Tancar Sessió",
+      "logoutModal": {
+        "title": "Estàs segura?",
+        "message": "Assegura't que el teu correu electrònic i número de telèfon siguin correctes. Si no estan actualitzats, podries perdre l'accés al teu compte.",
+        "reviewData": "Revisar dades",
+        "confirm": "Tancar sessió"
+      }
+    },
+    "safeLocations": {
+      "title": "Ubicacions Segures",
+      "edit": "Editar",
+      "add": "Afegir ubicació",
+      "types": {
+        "home": "Casa",
+        "work": "Feina",
+        "custom": "Ubicació personalitzada"
+      },
+      "customAddress": "Coordenades personalitzades",
+      "idLabel": "ID",
+      "delete": {
+        "title": "Eliminar Ubicació",
+        "message": "Estàs segur que vols eliminar \"{{name}}\"?",
+        "confirm": "Eliminar",
+        "cancel": "Cancel·lar"
+      },
+      "alerts": {
+        "saveError": {
+          "title": "Error",
+          "message": "No s'ha pogut desar la ubicació"
+        },
+        "tokenError": {
+          "title": "Error",
+          "message": "No s'ha pogut obtenir el token."
+        }
+      }
+    }
   },
   "chat": {
     "loading": "Carregant grup…",

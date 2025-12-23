@@ -479,7 +479,133 @@
   "profile": {
     "refreshing": "Refreshing user state from backend...",
     "userUpdated": "User updated from backend",
-    "updateError": "Could not update user:"
+    "updateError": "Could not update user:",
+    "verificationBanner": {
+      "verified": {
+        "title": "Verified Profile",
+        "subtitle": "Your account has been verified. You have full access to companion groups."
+      },
+      "rejected": {
+        "title": "Verification Rejected",
+        "subtitle": "Your verification request was rejected. Please contact support."
+      },
+      "pending": {
+        "title": "Verification in process",
+        "description": "Your request is being reviewed. We'll notify you when it's ready."
+      },
+      "notVerified": {
+        "title": "Verify your profile",
+        "description": "Complete verification to access companion groups and more features"
+      }
+    },
+    "verificationScreen": {
+      "header": "Verification",
+      "title": "Profile Verification",
+      "subtitle": "To access companion groups, we need to verify your identity",
+      "howItWorks": {
+        "title": "How does it work?",
+        "step1": "1. Select your profile picture (or use the current one)",
+        "step2": "2. Take a live selfie",
+        "step3": "3. Our system will verify they match"
+      },
+      "profilePhoto": {
+        "title": "1. Profile picture",
+        "selectFromGallery": "Select from gallery",
+        "change": "Change",
+        "selected": "Photo selected"
+      },
+      "livePhoto": {
+        "title": "2. Live selfie",
+        "takeSelfie": "Take selfie now",
+        "retake": "Retake",
+        "captured": "Selfie captured"
+      },
+      "tips": {
+        "message": "Make sure your face is well-lit and visible in both photos"
+      },
+      "submit": "Submit Verification",
+      "submitting": "Submitting...",
+      "privacyNote": "🔒 Your photos are only used for identity verification and are processed securely",
+      "permissions": {
+        "camera": {
+          "title": "Permission required",
+          "message": "We need access to your camera to verify your identity."
+        },
+        "gallery": {
+          "title": "Permission required",
+          "message": "We need access to your gallery to select your profile picture."
+        }
+      },
+      "alerts": {
+        "incomplete": {
+          "title": "Incomplete photos",
+          "message": "Please provide both photos to continue with verification."
+        },
+        "userError": {
+          "title": "Error",
+          "message": "Could not identify user"
+        },
+        "success": {
+          "title": "Photos sent",
+          "message": "Your photos have been sent successfully. An admin will review them soon.",
+          "confirm": "Understood"
+        },
+        "error": {
+          "title": "Error",
+          "message": "Could not upload photos. Please try again."
+        },
+        "imageError": {
+          "title": "Error",
+          "message": "Could not select image"
+        },
+        "photoError": {
+          "title": "Error",
+          "message": "Could not take photo"
+        }
+      }
+    },
+    "settings": {
+      "title": "Settings",
+      "notifications": "Notifications",
+      "account": "Account",
+      "privacy": "Privacy and Security",
+      "help": "Help and Support",
+      "logout": "Log Out",
+      "logoutModal": {
+        "title": "Are you sure?",
+        "message": "Make sure your email and phone number are correct. If they're not updated, you could lose access to your account.",
+        "reviewData": "Review data",
+        "confirm": "Log out"
+      }
+    },
+    "safeLocations": {
+      "title": "Safe Locations",
+      "edit": "Edit",
+      "add": "Add location",
+      "types": {
+        "home": "Home",
+        "work": "Work",
+        "custom": "Custom location"
+      },
+      "customAddress": "Custom coordinates",
+      "idLabel": "ID",
+      "delete": {
+        "title": "Delete Location",
+        "message": "Are you sure you want to delete \"{{name}}\"?",
+        "confirm": "Delete",
+        "cancel": "Cancel"
+      },
+      "alerts": {
+        "saveError": {
+          "title": "Error",
+          "message": "Could not save location"
+        },
+        "tokenError": {
+          "title": "Error",
+          "message": "Failed to get token."
+        }
+      }
+    }
   },
   "chat": {
     "loading": "Loading group…",

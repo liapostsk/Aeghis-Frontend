@@ -1,9 +1,9 @@
-// File: components/profile/SettingsSection.tsx
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Modal } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 
 interface settingsSectionProps {
   onDelete: () => void;
@@ -14,6 +14,7 @@ export default function SettingsSection({onDelete, onLogout}: settingsSectionPro
 
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showUserInfo, setShowUserInfo] = useState(false);
+  const { t } = useTranslation();
   
   const handleConfirmDeleteAccount = () => {
     onDelete();
@@ -35,12 +36,12 @@ export default function SettingsSection({onDelete, onLogout}: settingsSectionPro
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Ionicons name="settings" size={18} color="#7A33CC" />
-          <Text style={styles.sectionTitle}>Configuración</Text>
+          <Text style={styles.sectionTitle}>{t('profile.settings.title')}</Text>
         </View>
 
         <Pressable style={styles.settingItem}>
           <Ionicons name="notifications" size={24} color="#7A33CC" />
-          <Text style={styles.settingText}>Notificaciones</Text>
+          <Text style={styles.settingText}>{t('profile.settings.notifications')}</Text>
           <Ionicons name="chevron-forward" size={24} color="#7A33CC" style={styles.chevron} />
         </Pressable>
 
@@ -49,26 +50,26 @@ export default function SettingsSection({onDelete, onLogout}: settingsSectionPro
           onPress={() => router.push('/(tabs)/profile/account')}
         >
           <Ionicons name="person-circle" size={24} color="#7A33CC" />
-          <Text style={styles.settingText}>Cuenta</Text>
+          <Text style={styles.settingText}>{t('profile.settings.account')}</Text>
           <Ionicons name="chevron-forward" size={24} color="#7A33CC" />
         </Pressable>
 
         <Pressable style={styles.settingItem}>
           <Ionicons name="shield" size={24} color="#7A33CC" />
-          <Text style={styles.settingText}>Privacidad y Seguridad</Text>
+          <Text style={styles.settingText}>{t('profile.settings.privacy')}</Text>
           <Ionicons name="chevron-forward" size={24} color="#7A33CC" style={styles.chevron} />
         </Pressable>
 
         <Pressable style={styles.settingItem}>
           <Ionicons name="help-circle" size={24} color="#7A33CC" />
-          <Text style={styles.settingText}>Ayuda y Soporte</Text>
+          <Text style={styles.settingText}>{t('profile.settings.help')}</Text>
           <Ionicons name="chevron-forward" size={24} color="#7A33CC" style={styles.chevron} />
         </Pressable>
       </View>
       <View style={styles.section}>
         <Pressable style={styles.logOut} onPress={() => setShowLogoutModal(true)}>
           <Ionicons name="help-circle" size={24} color="#7A33CC" />
-          <Text style={styles.settingText}>Cerrar Sessión</Text>
+          <Text style={styles.settingText}>{t('profile.settings.logout')}</Text>
         </Pressable>
       </View>
       {/* Modal de confirmación */}
@@ -83,24 +84,22 @@ export default function SettingsSection({onDelete, onLogout}: settingsSectionPro
           onPress={() => setShowLogoutModal(false)}
         >
           <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
-            <Text style={styles.modalTitle}>¿Estás segura?</Text>
+            <Text style={styles.modalTitle}>{t('profile.settings.logoutModal.title')}</Text>
             <Text style={styles.modalMessage}>
-              Asegúrate de que tu correo electrónico y número de teléfono sean
-              correctos. Si no están actualizados, podrías perder el acceso a
-              tu cuenta.
+              {t('profile.settings.logoutModal.message')}
             </Text>
             <View style={styles.modalButtons}>
               <Pressable
                 style={styles.cancelButton}
                 onPress={handleShowUserInfo}
               >
-                <Text style={styles.cancelButtonText}>Revisar datos</Text>
+                <Text style={styles.cancelButtonText}>{t('profile.settings.logoutModal.reviewData')}</Text>
               </Pressable>
               <Pressable
                 style={styles.confirmButton}
                 onPress={handleConfirmLogout}
               >
-                <Text style={styles.confirmButtonText}>Cerrar sesión</Text>
+                <Text style={styles.confirmButtonText}>{t('profile.settings.logoutModal.confirm')}</Text>
               </Pressable>
             </View>
           </Pressable>
