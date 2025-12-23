@@ -570,12 +570,24 @@
       "account": "Account",
       "privacy": "Privacy and Security",
       "help": "Help and Support",
+      "language": "Language",
       "logout": "Log Out",
       "logoutModal": {
         "title": "Are you sure?",
         "message": "Make sure your email and phone number are correct. If they're not updated, you could lose access to your account.",
         "reviewData": "Review data",
         "confirm": "Log out"
+      },
+      "languageModal": {
+        "title": "Select Language",
+        "subtitle": "Choose the app language",
+        "languages": {
+          "es": "Español",
+          "en": "English",
+          "ca": "Català"
+        },
+        "cancel": "Cancel",
+        "currentLanguage": "Current language"
       }
     },
     "safeLocations": {

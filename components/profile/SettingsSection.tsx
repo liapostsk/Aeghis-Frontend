@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import LanguageSelectorModal from './LanguageSelectorModal';
 
 interface settingsSectionProps {
   onDelete: () => void;
@@ -14,6 +15,7 @@ export default function SettingsSection({onDelete, onLogout}: settingsSectionPro
 
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showUserInfo, setShowUserInfo] = useState(false);
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
   const { t } = useTranslation();
   
   const handleConfirmDeleteAccount = () => {
@@ -57,6 +59,12 @@ export default function SettingsSection({onDelete, onLogout}: settingsSectionPro
         <Pressable style={styles.settingItem}>
           <Ionicons name="shield" size={24} color="#7A33CC" />
           <Text style={styles.settingText}>{t('profile.settings.privacy')}</Text>
+          <Ionicons name="chevron-forward" size={24} color="#7A33CC" style={styles.chevron} />
+        </Pressable>
+
+        <Pressable style={styles.settingItem} onPress={() => setShowLanguageModal(true)}>
+          <Ionicons name="language" size={24} color="#7A33CC" />
+          <Text style={styles.settingText}>{t('profile.settings.language')}</Text>
           <Ionicons name="chevron-forward" size={24} color="#7A33CC" style={styles.chevron} />
         </Pressable>
 
@@ -105,6 +113,13 @@ export default function SettingsSection({onDelete, onLogout}: settingsSectionPro
           </Pressable>
         </Pressable>
       </Modal>
+      
+      {/* Modal de selección de idioma */}
+      <LanguageSelectorModal
+        visible={showLanguageModal}
+        onClose={() => setShowLanguageModal(false)}
+      />
+      
       <View style={{ height: 20 }} />
     </SafeAreaView>
   );

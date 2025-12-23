@@ -138,12 +138,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignContent: "center",
     alignItems: "center",
-    marginTop: 60,
+    top: "10%",
   },
   imageContainer: {
     alignContent: "center",
     alignItems: "center",
-    marginVertical: 20,
+    top: "5%",
   },
   inputContainer: {
     alignContent: "center",

@@ -5,12 +5,16 @@ import { useAuth } from "@clerk/clerk-expo";
 import { unlinkFirebaseSession } from "@/api/firebase/auth/firebase";
 import { useUserStore } from "@/lib/storage/useUserStorage";
 import { useTranslation } from 'react-i18next';
+import { Ionicons } from '@expo/vector-icons';
+import { useState } from 'react';
+import LanguageSelectorModal from '@/components/profile/LanguageSelectorModal';
 
 export default function Index() {
   const router = useRouter();
   const { signOut } = useAuth();
   const { clearUser } = useUserStore();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -24,9 +28,8 @@ export default function Index() {
     }
   };
 
-  return (
-    <SafeAreaView style={styles.container}>
-      {__DEV__ && (
+  /*
+  {__DEV__ && (
         <Pressable 
           style={styles.debugLogoutButton} 
           onPress={handleLogout}
@@ -34,7 +37,18 @@ export default function Index() {
           <Text style={styles.debugLogoutText}>{t('welcome.debugLogout')}</Text>
         </Pressable>
       )}
-      
+  */
+
+  return (
+    <SafeAreaView style={styles.container}>
+      {/* Botón de selección de idioma */}
+      <Pressable 
+        style={styles.languageButton} 
+        onPress={() => setShowLanguageModal(true)}
+      >
+        <Ionicons name="language" size={32} color="#FFFFFF" />
+      </Pressable>
+
       <Text style={styles.textTitle}>{t('welcome.title')}</Text>
       <Image
         source={require("../../assets/images/welcomePage.png")}
@@ -58,6 +72,12 @@ export default function Index() {
           </Text>
         </Pressable>
       </View>
+
+      {/* Modal de selección de idioma */}
+      <LanguageSelectorModal
+        visible={showLanguageModal}
+        onClose={() => setShowLanguageModal(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -72,6 +92,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#7A33CC",
     paddingBottom: 70,
+  },
+  languageButton: {
+    position: "absolute",
+    top: 60,
+    right: 20,
+    padding: 8,
   },
   debugLogoutButton: {
     position: "absolute",
@@ -118,6 +144,6 @@ const styles = StyleSheet.create({
     fontSize: 36,
     fontWeight: "bold",
     position: "absolute",
-    top: "15%",
+    top: "19%",
   },
 });

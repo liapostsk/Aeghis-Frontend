@@ -570,12 +570,24 @@
       "account": "Compte",
       "privacy": "Privacitat i Seguretat",
       "help": "Ajuda i Suport",
+      "language": "Idioma",
       "logout": "Tancar Sessió",
       "logoutModal": {
         "title": "Estàs segura?",
         "message": "Assegura't que el teu correu electrònic i número de telèfon siguin correctes. Si no estan actualitzats, podries perdre l'accés al teu compte.",
         "reviewData": "Revisar dades",
         "confirm": "Tancar sessió"
+      },
+      "languageModal": {
+        "title": "Seleccionar Idioma",
+        "subtitle": "Tria l'idioma de l'aplicació",
+        "languages": {
+          "es": "Español",
+          "en": "English",
+          "ca": "Català"
+        },
+        "cancel": "Cancel·lar",
+        "currentLanguage": "Idioma actual"
       }
     },
     "safeLocations": {

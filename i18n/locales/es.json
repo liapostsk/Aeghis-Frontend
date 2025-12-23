@@ -570,12 +570,24 @@
       "account": "Cuenta",
       "privacy": "Privacidad y Seguridad",
       "help": "Ayuda y Soporte",
+      "language": "Idioma",
       "logout": "Cerrar Sesión",
       "logoutModal": {
         "title": "¿Estás segura?",
         "message": "Asegúrate de que tu correo electrónico y número de teléfono sean correctos. Si no están actualizados, podrías perder el acceso a tu cuenta.",
         "reviewData": "Revisar datos",
         "confirm": "Cerrar sesión"
+      },
+      "languageModal": {
+        "title": "Seleccionar Idioma",
+        "subtitle": "Elige el idioma de la aplicación",
+        "languages": {
+          "es": "Español",
+          "en": "English",
+          "ca": "Català"
+        },
+        "cancel": "Cancelar",
+        "currentLanguage": "Idioma actual"
       }
     },
     "safeLocations": {
@@ -851,7 +863,7 @@
     "debugLogout": "Cerrar sesión"
   },
   "login": {
-    "title": "¡Bienvenido de vuelta, te extrañamos! 👋",
+    "title": "¡Bienvenido, te hemos extrañado!😊",
     "phone": {
       "placeholder": "Número de teléfono",
       "sendCode": "Enviar Código de Verificación",
@@ -911,8 +923,8 @@
       }
     },
     "name": {
-      "title": "¡Genial, Continuemos!",
-      "subtitle": "¿Cuál es la mejor forma de llamarte?",
+      "title": "¡Continuemos!",
+      "subtitle": "¿Cómo podemos referirnos a ti?",
       "placeholder": "Ingresa tu nombre",
       "button": "Continuar",
       "validation": {
@@ -926,7 +938,7 @@
       }
     },
     "email": {
-      "title": "Hola {{name}}, ¡vamos a\nverificar tu correo!",
+      "title": "Hola {{name}}, ¡Vamos a\nverificar tu correo!",
       "instruction": "Ingresa tu dirección de correo electrónico para recibir un código de verificación.",
       "placeholder": "Ingresa tu dirección de correo",
       "button": {
@@ -981,7 +993,7 @@
       }
     },
     "phone": {
-      "title": "Hola {{name}}, ¡vamos a\nverificar tu número de teléfono!",
+      "title": "Hola {{name}}, ¡Vamos a\nverificar tu número de teléfono!",
       "placeholder": "Número de teléfono",
       "button": {
         "send": "Enviar Código",
