@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   Text,
   StyleSheet,
-  Pressable,
   Alert,
   TextInput,
   View,
@@ -35,7 +34,6 @@ const validatePhoneNumber = (phone: string, countryCode: string, t: any) => {
     return { isValid: false, message: t('register.phone.validation.tooLong', { max: maxLength }) };
   }
   
-  // Regex básica para números (solo dígitos)
   const phoneRegex = /^\d+$/;
   if (!phoneRegex.test(cleanPhone)) {
     return { isValid: false, message: t('register.phone.validation.onlyDigits') };

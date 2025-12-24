@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#7A33CC",
-    paddingBottom: 70,
+    paddingVertical: 5,
   },
   overlay: {
     position: 'absolute',
@@ -270,8 +270,8 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
-    margin: 15,
-    marginTop: 24,
+    marginHorizontal: 15,
+    marginVertical: 10,
     borderRadius: 16,
     backgroundColor: '#FFFFFF',
     overflow: 'hidden',

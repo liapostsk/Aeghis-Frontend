@@ -86,13 +86,13 @@ export default function EmailScreen() {
             <View style={styles.contentContainer}>
               <View style={styles.titleContainer}>
                 <Text style={styles.textTitle}>
-                  {t('register.email.title', { name: user?.name })}
+                  {t('register.email.title')}
                 </Text>
               </View>
 
               <View style={styles.inputSection}>
                 <Text style={styles.instruction}>
-                  {t('register.email.instruction')}
+                  {t('register.email.instruction', { name: user?.name })}
                 </Text>
 
                 <TextInput

@@ -100,7 +100,6 @@ export default function ProfileImageStep({
     <SafeAreaView style={styles.container}>
       <View style={styles.textContainer}>
         <Text style={styles.title}>{t('infoForm.profileImage.title')}</Text>
-        <Text style={styles.text}>{t('infoForm.profileImage.subtitle')}</Text>
       </View>
 
       <View style={styles.imageContainer}>

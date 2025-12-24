@@ -190,7 +190,7 @@ export default function EmailCaseScreen() {
         >
           <View style={styles.container}>
             <View style={styles.titleContainer}>
-              <Text style={styles.title}>{t('login.title')}</Text>
+              <Text style={styles.title}>{t('login.title2')}</Text>
             </View>
 
             {!codeSent ? (

@@ -771,7 +771,7 @@
         "back": "Atrás",
         "continue": "Continuar"
       },
-      "info": "💡 Tus contactos solo serán notificados en emergencias y no necesitan descargar la app"
+      "info": "💡 Si tus contactos ya usan la app, recibirán notificaciones en caso de emergencia. Los que no, se guardarán como contactos de emergencia dentro de la aplicación."
     },
     "profileImage": {
       "title": "Añade tu foto de perfil",
@@ -864,6 +864,7 @@
   },
   "login": {
     "title": "¡Bienvenido, te hemos extrañado!😊",
+    "title2": "Antes de empezar, verifiquemos tu identidad",
     "phone": {
       "placeholder": "Número de teléfono",
       "sendCode": "Enviar Código de Verificación",
@@ -1248,11 +1249,14 @@
       }
     },
     "manualForm": {
-      "title": "Agregar contacto manualmente",
-      "namePlaceholder": "Nombre completo",
-      "phonePlaceholder": "Número de teléfono",
-      "relationPlaceholder": "Relación (opcional)",
-      "save": "Guardar",
+      "title": "Agregar Contacto Manualmente",
+      "nameLabel": "Nombre Completo",
+      "namePlaceholder": "Ingresa el nombre completo",
+      "relationLabel": "Relación",
+      "relationPlaceholder": "ej., Padre, Madre, Amigo",
+      "phoneLabel": "Número de Teléfono",
+      "phonePlaceholder": "Ingresa el número de teléfono",
+      "save": "Guardar Contacto",
       "cancel": "Cancelar"
     }
   },

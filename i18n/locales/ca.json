@@ -1246,11 +1246,14 @@
       }
     },
     "manualForm": {
-      "title": "Afegir contacte manualment",
-      "namePlaceholder": "Nom complet",
-      "phonePlaceholder": "Número de telèfon",
-      "relationPlaceholder": "Relació (opcional)",
-      "save": "Desar",
+      "title": "Afegir Contacte Manualment",
+      "nameLabel": "Nom Complet",
+      "namePlaceholder": "Introdueix el nom complet",
+      "relationLabel": "Relació",
+      "relationPlaceholder": "p. ex., Pare, Mare, Amic",
+      "phoneLabel": "Número de Telèfon",
+      "phonePlaceholder": "Introdueix el número de telèfon",
+      "save": "Desar Contacte",
       "cancel": "Cancel·lar"
     }
   },
