@@ -65,7 +65,7 @@ export function useNotificationSender() {
   const sendWelcomeNotification = async (userId: number) => {
     return sendNotification({
       userId,
-      title: 'Bienvenido a Aegis 🗺️',
+      title: 'Bienvenido a Aeghis 🗺️',
       body: '¡Aegis está listo para protegerte! Tus notificaciones funcionan correctamente.',
       data: {
         type: 'welcome',

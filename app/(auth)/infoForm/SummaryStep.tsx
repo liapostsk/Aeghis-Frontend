@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Text, Pressable, StyleSheet, Animated, Dimensions, Alert, Platform } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Animated, Dimensions, Alert, Platform, Image } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { useUserStore } from '@/lib/storage/useUserStorage';
@@ -247,7 +247,11 @@ export default function SummaryStep({ onBack }: { onBack: () => void }) {
       >
         {/* Icono de éxito */}
         <View style={styles.successIcon}>
-          <Text style={styles.iconText}>🎉</Text>
+          <Image 
+            source={require('@/assets/images/aegis.png')} 
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
         </View>
 
         <Text style={styles.title}>{t('infoForm.summary.title')}</Text>
@@ -348,8 +352,10 @@ const styles = StyleSheet.create({
     shadowRadius: 20,
     elevation: 10,
   },
-  iconText: {
-    fontSize: 48,
+  logoImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
   },
   title: {
     fontSize: 32,

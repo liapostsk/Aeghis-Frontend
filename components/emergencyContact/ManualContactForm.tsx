@@ -5,6 +5,9 @@ import {
     Pressable,
     StyleSheet,
     TextInput,
+    ScrollView,
+    KeyboardAvoidingView,
+    Platform,
 } from 'react-native';
 import PhoneNumberPicker from '@/components/ui/PhoneNumberPicker';
 import { Contact } from '@/api/backend/types';
@@ -42,77 +45,94 @@ export default function ManualContactForm({ onSave, onCancel }: Props) {
     };
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.modalTitle}>{t('emergencyContact.manualForm.title')}</Text>
-            
-            <View style={styles.formContainer}>
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>{t('emergencyContact.manualForm.nameLabel')}</Text>
-                    <TextInput
-                        placeholder={t('emergencyContact.manualForm.namePlaceholder')}
-                        placeholderTextColor="#9CA3AF"
-                        value={name}
-                        onChangeText={setName}
-                        style={styles.input}
-                    />
-                </View>
+        <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.keyboardView}
+        >
+            <ScrollView 
+                contentContainerStyle={styles.scrollContent}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+            >
+                <View style={styles.container}>
+                    <Text style={styles.modalTitle}>{t('emergencyContact.manualForm.title')}</Text>
+                    
+                    <View style={styles.formContainer}>
+                        <View style={styles.inputGroup}>
+                            <Text style={styles.label}>{t('emergencyContact.manualForm.nameLabel')}</Text>
+                            <TextInput
+                                placeholder={t('emergencyContact.manualForm.namePlaceholder')}
+                                placeholderTextColor="#9CA3AF"
+                                value={name}
+                                onChangeText={setName}
+                                style={styles.input}
+                            />
+                        </View>
 
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>{t('emergencyContact.manualForm.relationLabel')}</Text>
-                    <TextInput
-                        placeholder={t('emergencyContact.manualForm.relationPlaceholder')}
-                        placeholderTextColor="#9CA3AF"
-                        value={relation}
-                        onChangeText={setRelation}
-                        style={styles.input}
-                    />
-                </View>
-                
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>{t('emergencyContact.manualForm.phoneLabel')}</Text>
-                    <View style={styles.phoneContainer}>
-                        <PhoneNumberPicker
-                            onChange={({ countryCode, callingCode }) => {
-                                setCountryCode(countryCode);
-                                setCallingCode(callingCode);
-                            }}
-                        />
+                        <View style={styles.inputGroup}>
+                            <Text style={styles.label}>{t('emergencyContact.manualForm.relationLabel')}</Text>
+                            <TextInput
+                                placeholder={t('emergencyContact.manualForm.relationPlaceholder')}
+                                placeholderTextColor="#9CA3AF"
+                                value={relation}
+                                onChangeText={setRelation}
+                                style={styles.input}
+                            />
+                        </View>
+                        
+                        <View style={styles.inputGroup}>
+                            <Text style={styles.label}>{t('emergencyContact.manualForm.phoneLabel')}</Text>
+                            <View style={styles.phoneContainer}>
+                                <PhoneNumberPicker
+                                    onChange={({ countryCode, callingCode }) => {
+                                        setCountryCode(countryCode);
+                                        setCallingCode(callingCode);
+                                    }}
+                                />
 
-                        <TextInput
-                            placeholder={t('emergencyContact.manualForm.phonePlaceholder')}
-                            placeholderTextColor="#9CA3AF"
-                            keyboardType="phone-pad"
-                            value={phoneNumber}
-                            onChangeText={setPhoneNumber}
-                            style={styles.phoneInput}
-                        />
+                                <TextInput
+                                    placeholder={t('emergencyContact.manualForm.phonePlaceholder')}
+                                    placeholderTextColor="#9CA3AF"
+                                    keyboardType="phone-pad"
+                                    value={phoneNumber}
+                                    onChangeText={setPhoneNumber}
+                                    style={styles.phoneInput}
+                                />
+                            </View>
+                        </View>
+                    </View>
+                    
+                    <View style={styles.buttonContainer}>
+                        <Pressable 
+                            style={[
+                                styles.saveButton, 
+                                (!name.trim() || !phoneNumber.trim()) && styles.saveButtonDisabled
+                            ]} 
+                            onPress={handleSave}
+                            disabled={!name.trim() || !phoneNumber.trim()}
+                        >
+                            <Text style={styles.saveText}>
+                                {t('emergencyContact.manualForm.save')}
+                            </Text>
+                        </Pressable>
+                        
+                        <Pressable onPress={onCancel} style={styles.cancelButton}>
+                            <Text style={styles.cancelText}>{t('emergencyContact.manualForm.cancel')}</Text>
+                        </Pressable>
                     </View>
                 </View>
-            </View>
-            
-            <View style={styles.buttonContainer}>
-                <Pressable 
-                    style={[
-                        styles.saveButton, 
-                        (!name.trim() || !phoneNumber.trim()) && styles.saveButtonDisabled
-                    ]} 
-                    onPress={handleSave}
-                    disabled={!name.trim() || !phoneNumber.trim()}
-                >
-                    <Text style={styles.saveText}>
-                        {t('emergencyContact.manualForm.save')}
-                    </Text>
-                </Pressable>
-                
-                <Pressable onPress={onCancel} style={styles.cancelButton}>
-                    <Text style={styles.cancelText}>{t('emergencyContact.manualForm.cancel')}</Text>
-                </Pressable>
-            </View>
-        </View>
+            </ScrollView>
+        </KeyboardAvoidingView>
     );
 }
 
 const styles = StyleSheet.create({
+    keyboardView: {
+        flex: 1,
+    },
+    scrollContent: {
+        flexGrow: 1,
+    },
     container: {
         paddingVertical: 10,
     },
