@@ -189,14 +189,6 @@ export default function PhoneVerificationScreen() {
                   </Text>
                 )}
               </View>
-
-              {/* Sección para ir atrás */}
-              <View style={styles.backSection}>
-                <Text style={styles.wrongNumberText}>{t('register.phoneVerification.wrongNumber.text')}</Text>
-                <Pressable onPress={() => router.back()}>
-                  <Text style={styles.backText}>{t('register.phoneVerification.wrongNumber.link')}</Text>
-                </Pressable>
-              </View>
             </View>
           </View>
         </ScrollView>
@@ -304,24 +296,5 @@ const styles = StyleSheet.create({
     color: '#CCCCCC',
     fontSize: 14,
     fontStyle: 'italic',
-  },
-  backSection: {
-    alignItems: 'center',
-    marginTop: 25,
-    paddingTop: 20,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.2)',
-    width: '80%',
-  },
-  wrongNumberText: {
-    color: '#E8D5FF',
-    fontSize: 14,
-    marginBottom: 5,
-  },
-  backText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: '600',
-    textDecorationLine: "underline",
   },
 });

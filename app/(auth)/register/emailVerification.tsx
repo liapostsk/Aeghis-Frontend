@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useUserStore } from "../../../lib/storage/useUserStorage";
-import { useSignUp, useAuth, useUser as useClerkUser } from "@clerk/clerk-expo";
+import { useSignUp, useAuth } from "@clerk/clerk-expo";
 import VerificationCodeField from "@/components/ui/VerificationCodeField";
 import ContinueButton from "../../../components/ui/ContinueButton";
 import { useTokenStore } from "@/lib/auth/tokenStore";
@@ -111,8 +111,6 @@ export default function EmailVerificationScreen() {
       console.error("Verification error:", error);
       const errorMessage = error?.errors?.[0]?.message || error?.message || t('register.email.errors.sendFailed');
       Alert.alert(t('error'), errorMessage);
-      // NOTA: Aquí NO hacemos rollback porque el error es de verificación,
-      // el usuario todavía no se ha creado completamente en Clerk
     } finally {
       setIsLoading(false);
     }
@@ -219,14 +217,6 @@ export default function EmailVerificationScreen() {
                   </Text>
                 )}
               </View>
-
-              {/* Sección para ir atrás */}
-              <View style={styles.backSection}>
-                <Text style={styles.wrongEmailText}>{t('register.emailVerification.wrongEmail.text')}</Text>
-                <Pressable onPress={() => router.back()}>
-                  <Text style={styles.backText}>{t('register.emailVerification.wrongEmail.link')}</Text>
-                </Pressable>
-              </View>
             </View>
           </View>
         </ScrollView>
@@ -323,24 +313,5 @@ const styles = StyleSheet.create({
     color: '#CCCCCC',
     fontSize: 14,
     fontStyle: 'italic',
-  },
-  backSection: {
-    alignItems: 'center',
-    marginTop: 25,
-    paddingTop: 20,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.2)',
-    width: '80%',
-  },
-  wrongEmailText: {
-    color: '#E8D5FF',
-    fontSize: 14,
-    marginBottom: 5,
-  },
-  backText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: '600',
-    textDecorationLine: "underline",
   },
 });

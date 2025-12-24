@@ -1,37 +1,57 @@
 {
-  "lastUpdated": "Mayo 2025",
+  "lastUpdated": "Diciembre 2025",
   "sections": [
     {
       "title": "1. Introducción",
-      "content": "Gracias por utilizar nuestra aplicación. Esta política de privacidad explica cómo recopilamos, utilizamos, divulgamos, transferimos y almacenamos su información. Por favor, tómese un momento para familiarizarse con nuestras prácticas de privacidad."
+      "content": "La presente Política de Privacidad describe cómo se recopilan, utilizan y protegen los datos personales de los usuarios de la aplicación. Esta aplicación ha sido desarrollada en el marco de un Trabajo de Fin de Grado con el objetivo de mejorar la seguridad y la sensación de acompañamiento durante los desplazamientos, respetando en todo momento la privacidad de las personas usuarias."
     },
     {
-      "title": "2. Recopilación y uso de información",
-      "content": "Podemos recopilar diversos tipos de información para proporcionar y mejorar nuestros servicios. Los datos que podemos recopilar incluyen, pero no se limitan a: información personal como nombre, dirección de correo electrónico, y datos de uso de la aplicación."
+      "title": "2. Responsable del tratamiento",
+      "content": "La responsable del tratamiento de los datos es la autora del proyecto académico. Los datos recogidos se utilizan exclusivamente con fines funcionales de la aplicación y no se destinan a usos comerciales."
     },
     {
-      "title": "3. Protección de datos",
-      "content": "Tomamos la seguridad de sus datos muy en serio. Implementamos medidas técnicas y organizativas para proteger su información personal contra acceso no autorizado, alteración, divulgación o destrucción."
+      "title": "3. Datos personales recopilados",
+      "content": "La aplicación puede recopilar los siguientes datos personales: información de identificación (nombre, correo electrónico, número de teléfono, fecha de nacimiento y fotografía de perfil), datos de geolocalización durante trayectos iniciados voluntariamente por el usuario, imágenes utilizadas para la verificación de identidad, contactos de emergencia definidos por el usuario, mensajes intercambiados en los chats y tokens de notificación necesarios para el envío de alertas."
     },
     {
-      "title": "4. Compartir información",
-      "content": "No vendemos su información personal a terceros. Podemos compartir información con terceros que nos ayudan a operar, proporcionar, mejorar, integrar, personalizar, respaldar y comercializar nuestros servicios."
+      "title": "4. Uso de la información",
+      "content": "Los datos personales se utilizan únicamente para proporcionar las funcionalidades de la aplicación, como la autenticación de usuarios, la compartición selectiva de ubicación durante trayectos, la comunicación mediante chat, el emparejamiento de trayectos, el envío de notificaciones y la activación de alertas de emergencia. En ningún caso los datos se utilizan con fines publicitarios ni se venden a terceros."
     },
     {
-      "title": "5. Sus derechos",
-      "content": "Usted tiene derecho a acceder, corregir, actualizar o solicitar la eliminación de su información personal. También puede oponerse al procesamiento de su información personal, pedirnos que restrinjamos el procesamiento o solicitar la portabilidad de su información."
+      "title": "5. Geolocalización",
+      "content": "La geolocalización del usuario solo se activa cuando este inicia voluntariamente un trayecto. La ubicación se comparte exclusivamente con los usuarios autorizados o contactos seleccionados y se detiene automáticamente al finalizar el trayecto. La aplicación no realiza un seguimiento continuo en segundo plano fuera de estos casos."
     },
     {
-      "title": "6. Cambios a esta política",
-      "content": "Podemos actualizar esta política de privacidad periódicamente. Le notificaremos cualquier cambio publicando la nueva política de privacidad en esta página y actualizando la fecha de \"última actualización\"."
+      "title": "6. Imágenes y verificación de identidad",
+      "content": "Las imágenes de perfil se utilizan únicamente para personalizar la experiencia del usuario. Las imágenes capturadas para la verificación de identidad se emplean exclusivamente para validar el acceso a la funcionalidad de emparejamiento de trayectos y se eliminan una vez finalizado el proceso de verificación."
     },
     {
-      "title": "7. Contacto",
-      "content": "Si tiene alguna pregunta sobre esta política de privacidad, por favor contáctenos a través de privacy@miapp.com."
+      "title": "7. Almacenamiento y servicios externos",
+      "content": "Los datos estructurados se almacenan en una base de datos segura. Las funcionalidades de mensajería en tiempo real, almacenamiento de imágenes y notificaciones push se apoyan en servicios externos que cumplen con estándares de seguridad y protección de datos. La autenticación de usuarios se gestiona mediante un proveedor externo especializado."
+    },
+    {
+      "title": "8. Conservación de los datos",
+      "content": "Los datos personales se conservan únicamente durante el tiempo necesario para el correcto funcionamiento de la aplicación. El usuario puede modificar o eliminar su información personal desde su perfil en cualquier momento."
+    },
+    {
+      "title": "9. Derechos de las personas usuarias",
+      "content": "El usuario tiene derecho a acceder, rectificar y eliminar sus datos personales, así como a limitar u oponerse a su tratamiento. Asimismo, puede retirar su consentimiento en cualquier momento eliminando su cuenta o dejando de utilizar la aplicación."
+    },
+    {
+      "title": "10. Seguridad de la información",
+      "content": "Se aplican medidas técnicas y organizativas para proteger los datos personales frente a accesos no autorizados, pérdida o alteración. La comunicación entre cliente y servidor se realiza mediante canales cifrados."
+    },
+    {
+      "title": "11. Cambios en la política de privacidad",
+      "content": "Esta política de privacidad puede actualizarse para reflejar mejoras en la aplicación o cambios normativos. En caso de modificaciones relevantes, se actualizará la fecha de última revisión."
+    },
+    {
+      "title": "12. Contacto",
+      "content": "Para cualquier consulta relacionada con esta política de privacidad o con el tratamiento de datos personales, el usuario puede ponerse en contacto con la responsable del proyecto a través de los canales indicados en la documentación académica."
     }
   ],
   "footerText": [
-    "Al utilizar nuestra aplicación, usted acepta los términos y condiciones establecidos en esta política. Si no está de acuerdo con esta política, por favor no utilice nuestra aplicación o servicios.",
-    "Gracias por tomarse el tiempo de leer nuestra política de privacidad. Valoramos su confianza al proporcionarnos su información personal, y nos esforzamos por utilizarla de manera responsable."
+    "El uso de la aplicación implica la aceptación expresa de esta Política de Privacidad.",
+    "La aplicación ha sido diseñada siguiendo los principios de privacidad desde el diseño y privacidad por defecto, garantizando que el usuario mantiene el control de su información en todo momento."
   ]
 }

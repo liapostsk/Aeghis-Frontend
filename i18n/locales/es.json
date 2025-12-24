@@ -938,8 +938,8 @@
       }
     },
     "email": {
-      "title": "Hola {{name}}, ¡Vamos a\nverificar tu correo!",
-      "instruction": "Ingresa tu dirección de correo electrónico para recibir un código de verificación.",
+      "title": "¡Vamos a\nverificar tu correo!",
+      "instruction": "{{name}}, Ingresa tu dirección de correo electrónico para recibir un código de verificación.",
       "placeholder": "Ingresa tu dirección de correo",
       "button": {
         "send": "Enviar Código",
@@ -958,7 +958,7 @@
       "title": "¡Casi listo! 🎉",
       "subtitle": "Vamos a verificar tu correo",
       "instruction": "Hemos enviado un código de 6 dígitos a\n{{email}}",
-      "helpText": "Por favor, revisa tu bandeja de entrada 📧",
+      "helpText": "Por favor, revisa tu bandeja de entrada",
       "button": {
         "verify": "Verificar Código",
         "enterMore": "Ingresa {{count}} dígitos más"
@@ -1013,7 +1013,7 @@
       "title": "¡Casi listo! 🎉",
       "subtitle": "Vamos a verificar tu número de teléfono",
       "instruction": "Hemos enviado un código de 6 dígitos a\n{{phone}}",
-      "helpText": "Por favor, revisa tus mensajes 📱",
+      "helpText": "Por favor, revisa tus mensajes",
       "button": {
         "verify": "Verificar Código",
         "enterMore": "Ingresa {{count}} dígitos más"

@@ -28,7 +28,7 @@ export default function InfoFormLayout() {
             },
           ]
         );
-        return true; // Previene la acción por defecto
+        return true;
       };
 
       const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
@@ -46,29 +46,9 @@ export default function InfoFormLayout() {
             backgroundColor: '#7A33CC' 
           },
           animation: 'slide_from_right',
-          // Prevenir swipe back en iOS durante el onboarding
           gestureEnabled: false,
         }}
-      >
-        {/* 
-          FLUJO DE ONBOARDING - CONFIGURACIÓN INICIAL
-          
-          Este layout maneja el flujo de configuración inicial del usuario
-          después del registro. Incluye 5 pasos obligatorios:
-          
-          1. PrivacyStep - Aceptación de política de privacidad
-          2. ProfileImageStep - Selección de foto de perfil (opcional)
-          3. EmergencyContactStep - Configuración de contacto de emergencia
-          4. SafeLocationStep - Configuración de ubicación segura
-          5. SummaryStep - Resumen y creación final del usuario
-          
-          CARACTERÍSTICAS:
-          - Navegación controlada (no se puede salir accidentalmente)
-          - Progreso guardado en cada paso
-          - Validación obligatoria antes de continuar
-          - Integración con Firebase y backend
-        */}
-        
+      > 
         {/* Pantalla principal del flujo de información */}
         <Stack.Screen 
           name="index" 

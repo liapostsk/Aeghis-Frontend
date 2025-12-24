@@ -29,6 +29,11 @@ export default function OnboardingLayout() {
       <Stack.Screen 
         name="name"
         options={{
+          headerLeft: () => (
+            <Pressable onPress={() => router.back()}>
+              <Icon name="arrow-back" size={24} color="#FFFF" />
+            </Pressable>
+          ),
           headerShown: true,
           title: "",
           headerTransparent: true,
@@ -38,6 +43,11 @@ export default function OnboardingLayout() {
       <Stack.Screen 
         name="phone"
         options={{
+          headerLeft: () => (
+            <Pressable onPress={() => router.back()}>
+              <Icon name="arrow-back" size={24} color="#FFFF" />
+            </Pressable>
+          ),
           headerShown: true,
           title: "",
           headerTransparent: true,
@@ -47,6 +57,11 @@ export default function OnboardingLayout() {
       <Stack.Screen 
         name="phoneVerification"
         options={{
+          headerLeft: () => (
+            <Pressable onPress={() => router.back()}>
+              <Icon name="arrow-back" size={24} color="#FFFF" />
+            </Pressable>
+          ),
           headerShown: true,
           title: "",
           headerTransparent: true,
@@ -56,6 +71,11 @@ export default function OnboardingLayout() {
       <Stack.Screen 
         name="email"
         options={{
+          headerLeft: () => (
+            <Pressable onPress={() => router.back()}>
+              <Icon name="arrow-back" size={24} color="#FFFF" />
+            </Pressable>
+          ),
           headerShown: true,
           title: "",
           headerTransparent: true,
@@ -65,6 +85,11 @@ export default function OnboardingLayout() {
       <Stack.Screen 
         name="emailVerification"
         options={{
+          headerLeft: () => (
+            <Pressable onPress={() => router.back()}>
+              <Icon name="arrow-back" size={24} color="#FFFF" />
+            </Pressable>
+          ),
           headerShown: true,
           title: "",
           headerTransparent: true,

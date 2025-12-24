@@ -9,11 +9,11 @@ import {
   ScrollView,
   View,
 } from 'react-native';
-import { useUserStore } from "../../../lib/storage/useUserStorage";
+import { useUserStore } from "@/lib/storage/useUserStorage";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from "expo-router";
 import { useSignUp } from '@clerk/clerk-expo';
-import ContinueButton from "../../../components/ui/ContinueButton";
+import ContinueButton from "@/components/ui/ContinueButton";
 import { useTranslation } from 'react-i18next';
 
 const validateEmail = (email: string, t: any) => {
