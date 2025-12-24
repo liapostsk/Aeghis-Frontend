@@ -28,6 +28,20 @@ export default function ProfileLayout() {
             headerTintColor: '#fff',
         }}
       />
+      <Stack.Screen 
+        name="help"
+        options={{
+            headerLeft: () => (
+            <Pressable onPress={() => router.push("/(tabs)/profile")}>
+                <Icon name="arrow-back" size={24} color="#7A33CC" />
+            </Pressable>
+            ),
+            headerShown: true,
+            title: "",
+            headerTransparent: true,
+            headerTintColor: '#fff',
+        }}
+      />
     </Stack>
   );
 }

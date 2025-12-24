@@ -40,13 +40,6 @@ export default function SettingsSection({onDelete, onLogout}: settingsSectionPro
           <Ionicons name="settings" size={18} color="#7A33CC" />
           <Text style={styles.sectionTitle}>{t('profile.settings.title')}</Text>
         </View>
-
-        <Pressable style={styles.settingItem}>
-          <Ionicons name="notifications" size={24} color="#7A33CC" />
-          <Text style={styles.settingText}>{t('profile.settings.notifications')}</Text>
-          <Ionicons name="chevron-forward" size={24} color="#7A33CC" style={styles.chevron} />
-        </Pressable>
-
         <Pressable
           style={styles.settingItem}
           onPress={() => router.push('/(tabs)/profile/account')}
@@ -56,12 +49,6 @@ export default function SettingsSection({onDelete, onLogout}: settingsSectionPro
           <Ionicons name="chevron-forward" size={24} color="#7A33CC" />
         </Pressable>
 
-        <Pressable style={styles.settingItem}>
-          <Ionicons name="shield" size={24} color="#7A33CC" />
-          <Text style={styles.settingText}>{t('profile.settings.privacy')}</Text>
-          <Ionicons name="chevron-forward" size={24} color="#7A33CC" style={styles.chevron} />
-        </Pressable>
-
         <Pressable style={styles.settingItem} onPress={() => setShowLanguageModal(true)}>
           <Ionicons name="language" size={24} color="#7A33CC" />
           <Text style={styles.settingText}>{t('profile.settings.language')}</Text>
@@ -69,6 +56,12 @@ export default function SettingsSection({onDelete, onLogout}: settingsSectionPro
         </Pressable>
 
         <Pressable style={styles.settingItem}>
+          <Ionicons name="shield" size={24} color="#7A33CC" />
+          <Text style={styles.settingText}>{t('profile.settings.privacy')}</Text>
+          <Ionicons name="chevron-forward" size={24} color="#7A33CC" style={styles.chevron} />
+        </Pressable>
+
+        <Pressable style={styles.settingItem} onPress={() => router.push('/(tabs)/profile/help')}>
           <Ionicons name="help-circle" size={24} color="#7A33CC" />
           <Text style={styles.settingText}>{t('profile.settings.help')}</Text>
           <Ionicons name="chevron-forward" size={24} color="#7A33CC" style={styles.chevron} />

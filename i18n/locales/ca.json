@@ -568,7 +568,7 @@
       "title": "Configuració",
       "notifications": "Notificacions",
       "account": "Compte",
-      "privacy": "Privacitat i Seguretat",
+      "privacy": "Política de Privacitat",
       "help": "Ajuda i Suport",
       "language": "Idioma",
       "logout": "Tancar Sessió",
@@ -588,6 +588,36 @@
         },
         "cancel": "Cancel·lar",
         "currentLanguage": "Idioma actual"
+      }
+    },
+    "help": {
+      "title": "Ajuda i Suport",
+      "subtitle": "Estem aquí per ajudar-te",
+      "feedback": {
+        "title": "Comparteix la teva Opinió",
+        "description": "La teva opinió és molt valuosa per a nosaltres. Ajuda'ns a millorar Aegis compartint la teva experiència.",
+        "button": "Enviar Feedback",
+        "comingSoon": {
+          "title": "Pròximament",
+          "message": "L'enquesta de feedback estarà disponible aviat. Mentrestant, pots contactar-nos directament."
+        }
+      },
+      "contact": {
+        "title": "Contacte i Suport",
+        "description": "Has trobat un error o tens algun dubte? Contacta amb el nostre equip de suport.",
+        "reportBug": "Reportar un error",
+        "reportIssue": "Reportar un problema",
+        "askQuestion": "Fer una pregunta",
+        "button": "Contactar Suport",
+        "emailSubject": "Suport Aegis - Consulta",
+        "error": {
+          "title": "Error",
+          "message": "No s'ha pogut obrir el client de correu. Si us plau, contacta a {{email}} manualment."
+        }
+      },
+      "faq": {
+        "title": "Preguntes Freqüents",
+        "comingSoon": "Pròximament disposarem d'una secció de preguntes freqüents."
       }
     },
     "safeLocations": {

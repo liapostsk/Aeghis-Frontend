@@ -568,7 +568,7 @@
       "title": "Configuración",
       "notifications": "Notificaciones",
       "account": "Cuenta",
-      "privacy": "Privacidad y Seguridad",
+      "privacy": "Política de privacidad",
       "help": "Ayuda y Soporte",
       "language": "Idioma",
       "logout": "Cerrar Sesión",
@@ -588,6 +588,36 @@
         },
         "cancel": "Cancelar",
         "currentLanguage": "Idioma actual"
+      }
+    },
+    "help": {
+      "title": "Ayuda y Soporte",
+      "subtitle": "Estamos aquí para ayudarte",
+      "feedback": {
+        "title": "Comparte tu Opinión",
+        "description": "Tu opinión es muy valiosa para nosotros. Ayúdanos a mejorar Aegis compartiendo tu experiencia.",
+        "button": "Enviar Feedback",
+        "comingSoon": {
+          "title": "Próximamente",
+          "message": "La encuesta de feedback estará disponible pronto. Mientras tanto, puedes contactarnos directamente."
+        }
+      },
+      "contact": {
+        "title": "Contacto y Soporte",
+        "description": "¿Encontraste un error o tienes alguna duda? Contacta con nuestro equipo de soporte.",
+        "reportBug": "Reportar un error",
+        "reportIssue": "Reportar un problema",
+        "askQuestion": "Hacer una pregunta",
+        "button": "Contactar Soporte",
+        "emailSubject": "Soporte Aegis - Consulta",
+        "error": {
+          "title": "Error",
+          "message": "No se pudo abrir el cliente de correo. Por favor, contacta a {{email}} manualmente."
+        }
+      },
+      "faq": {
+        "title": "Preguntas Frecuentes",
+        "comingSoon": "Próximamente dispondremos de una sección de preguntas frecuentes."
       }
     },
     "safeLocations": {
