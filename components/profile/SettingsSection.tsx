@@ -61,7 +61,7 @@ export default function SettingsSection({onDelete, onLogout}: settingsSectionPro
           <Ionicons name="chevron-forward" size={24} color="#7A33CC" style={styles.chevron} />
         </Pressable>
 
-        <Pressable style={styles.settingItem} onPress={() => router.push('/(tabs)/profile/help')}>
+        <Pressable style={[styles.settingItem, styles.lastSettingItem]} onPress={() => router.push('/(tabs)/profile/help')}>
           <Ionicons name="help-circle" size={24} color="#7A33CC" />
           <Text style={styles.settingText}>{t('profile.settings.help')}</Text>
           <Ionicons name="chevron-forward" size={24} color="#7A33CC" style={styles.chevron} />
@@ -148,6 +148,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
   },
+  lastSettingItem: {
+    borderBottomWidth: 0,
+  },
   logOut: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -162,7 +165,6 @@ const styles = StyleSheet.create({
   chevron: {
     marginLeft: 'auto',
   },
-  // Modal styles
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',

@@ -4,7 +4,8 @@ import { SafeLocation } from "./locations/locationType";
 export enum ValidationStatus {
   PENDING = 'PENDING',
   VERIFIED = 'VERIFIED',
-  REJECTED = 'REJECTED'
+  REJECTED = 'REJECTED',
+  NO_REQUEST = 'NO_REQUEST'
 }
 
 export type UserDto = {
@@ -35,7 +36,7 @@ export interface Contact {
   relation?: string;
 }
 
-export type ContactStatus = "PENDING" | "CONFIRMED" | "REJECTED" | "BLOCKED";
+export type ContactStatus = "PENDING" | "ACCEPTED" | "REJECTED" | "BLOCKED";
 
 // Contacto de emergencia que es usuario
 export interface EmergencyContactDto {

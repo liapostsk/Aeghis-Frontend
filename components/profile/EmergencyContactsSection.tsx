@@ -237,20 +237,20 @@ export default function EmergencyContactsSection() {
         {isEmergency && 'status' in contact && (
           <View style={[
             styles.statusBadge,
-            contact.status === 'CONFIRMED' ? styles.statusAccepted : 
+            contact.status === 'ACCEPTED' ? styles.statusAccepted : 
             contact.status === 'PENDING' ? styles.statusPending : styles.statusRejected
           ]}>
             <View style={[
               styles.statusDot, 
-              contact.status === 'CONFIRMED' ? styles.acceptedDot : 
+              contact.status === 'ACCEPTED' ? styles.acceptedDot : 
               contact.status === 'PENDING' ? styles.pendingDot : styles.rejectedDot
             ]} />
             <Text style={[
               styles.statusBadgeText,
-              contact.status === 'CONFIRMED' ? styles.statusAcceptedText : 
+              contact.status === 'ACCEPTED' ? styles.statusAcceptedText : 
               contact.status === 'PENDING' ? styles.statusPendingText : styles.statusRejectedText
             ]}>
-              {contact.status === 'CONFIRMED' ? 'Aceptado' : 
+              {contact.status === 'ACCEPTED' ? 'Aceptado' : 
                contact.status === 'PENDING' ? 'Pendiente' : 'Rechazado'}
             </Text>
           </View>

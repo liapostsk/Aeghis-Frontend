@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { CompanionRequest, EmergencyContact, ExternalContact } from '@/api/backend/types';
+import { EmergencyContact, ExternalContact } from '@/api/backend/types';
+import { CompanionRequest } from '@/api/backend/companionRequest/companionTypes';
 import { SafeLocation } from '@/api/backend/locations/locationType';
 import { getCurrentUser } from '../../api/backend/user/userApi';
 import { Group } from '@/api/backend/group/groupType';
@@ -9,7 +10,8 @@ import { Group } from '@/api/backend/group/groupType';
 export enum ValidationStatus {
   PENDING = 'PENDING',
   VERIFIED = 'VERIFIED',
-  REJECTED = 'REJECTED'
+  REJECTED = 'REJECTED',
+  NO_REQUEST = 'NO_REQUEST'
 }
 
 export type User = {

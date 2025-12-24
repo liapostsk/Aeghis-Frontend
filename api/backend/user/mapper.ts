@@ -11,7 +11,7 @@ export const mapUserToDto = (user: User): UserDto => {
       phone: user.phone ?? "",
       image: user.image ?? "",
       role: user.role ?? "USER",
-      verify: user.verify ?? ValidationStatus.PENDING,
+      verify: user.verify ?? ValidationStatus.NO_REQUEST,
       acceptedPrivacyPolicy: user.acceptedPrivacyPolicy ?? false,
       dateOfBirth: user.dateOfBirth ?? new Date(),
       safeLocations: user.safeLocations ?? [],

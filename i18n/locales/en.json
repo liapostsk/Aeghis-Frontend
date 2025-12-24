@@ -496,6 +496,10 @@
       "notVerified": {
         "title": "Verify your profile",
         "description": "Complete verification to access companion groups and more features"
+      },
+      "noRequest": {
+        "title": "No verification request",
+        "description": "Start the verification process to access all features"
       }
     },
     "verificationScreen": {

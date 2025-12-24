@@ -41,6 +41,28 @@ export default function VerificationBanner({ onPress }: VerificationBannerProps)
     );
   }
 
+  // Mostrar banner para NO_REQUEST (sin solicitud de verificación)
+  if (user?.verify === ValidationStatus.NO_REQUEST) {
+    return (
+      <Pressable style={styles.noRequestContainer} onPress={onPress}>
+        <View style={styles.iconContainer}>
+          <Ionicons name="shield-outline" size={32} color="#6B7280" />
+        </View>
+        
+        <View style={styles.content}>
+          <Text style={styles.title}>
+            {t('profile.verificationBanner.noRequest.title')}
+          </Text>
+          <Text style={styles.description}>
+            {t('profile.verificationBanner.noRequest.description')}
+          </Text>
+        </View>
+
+        <Ionicons name="chevron-forward" size={24} color="#9CA3AF" />
+      </Pressable>
+    );
+  }
+
   // Mostrar banner de pendiente o no verificado (PENDING o null)
   return (
     <Pressable style={styles.container} onPress={onPress}>
@@ -150,5 +172,16 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#DC2626',
     lineHeight: 18,
+  },
+  noRequestContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    padding: 16,
+    marginHorizontal: 16,
+    marginVertical: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
 });

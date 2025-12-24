@@ -496,6 +496,10 @@
       "notVerified": {
         "title": "Verifica tu perfil",
         "description": "Completa la verificación para acceder a grupos de acompañamiento y más funciones"
+      },
+      "noRequest": {
+        "title": "Sin solicitud de verificación",
+        "description": "Inicia el proceso de verificación para acceder a todas las funciones"
       }
     },
     "verificationScreen": {
@@ -504,12 +508,12 @@
       "subtitle": "Para acceder a grupos de acompañamiento, necesitamos verificar tu identidad",
       "howItWorks": {
         "title": "¿Cómo funciona?",
-        "step1": "1. Selecciona tu foto de perfil (o usa la actual)",
+        "step1": "1. Selecciona una foto de tu galería o usa tu foto de perfil",
         "step2": "2. Toma una selfie en tiempo real",
         "step3": "3. Nuestro sistema verificará que coincidan"
       },
       "profilePhoto": {
-        "title": "1. Foto de perfil",
+        "title": "1. Foto de galería",
         "selectFromGallery": "Seleccionar de galería",
         "change": "Cambiar",
         "selected": "Foto seleccionada"

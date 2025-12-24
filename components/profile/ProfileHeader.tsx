@@ -31,7 +31,7 @@ export default function ProfileHeader({
   const [isUploading, setIsUploading] = useState(false);
 
   // ✅ Log para ver la info del usuario
-  console.log('👤 ProfileHeader - Usuario:', {
+  console.log('ProfileHeader - Usuario:', {
     id: user.id,
     name: user.name,
     email: user.email,
@@ -112,7 +112,7 @@ export default function ProfileHeader({
           try {
             await deleteUserPhoto(user.image);
           } catch (error) {
-            console.warn('⚠️ No se pudo eliminar la foto anterior:', error);
+            console.warn('No se pudo eliminar la foto anterior:', error);
           }
         }
 
@@ -147,12 +147,11 @@ export default function ProfileHeader({
 
               if (user.image) {
                 await deleteUserPhoto(user.image);
-                console.log('🗑️ Foto de perfil eliminada');
+                console.log('Foto de perfil eliminada');
               }
 
               onUpdateProfileImage(null);
             } catch (error) {
-              console.error('❌ Error al eliminar foto:', error);
               Alert.alert('Error', 'Could not delete photo. Please try again.');
             } finally {
               setIsUploading(false);
@@ -204,10 +203,20 @@ export default function ProfileHeader({
               <MaterialIcons name="cancel" size={18} color="#EF4444" />
               <Text style={[styles.verifiedText, { color: '#EF4444' }]}>Verificación rechazada</Text>
             </>
-          ) : (
+          ) : user.verify === ValidationStatus.PENDING ? (
             <>
               <MaterialIcons name="access-time" size={18} color="#F59E0B" />
               <Text style={[styles.verifiedText, { color: '#F59E0B' }]}>Pendiente de verificación</Text>
+            </>
+          ) : user.verify === ValidationStatus.NO_REQUEST ? (
+            <>
+              <MaterialIcons name="shield" size={18} color="#9CA3AF" />
+              <Text style={[styles.verifiedText, { color: '#9CA3AF' }]}>Sin verificar</Text>
+            </>
+          ) : (
+            <>
+              <MaterialIcons name="shield" size={18} color="#9CA3AF" />
+              <Text style={[styles.verifiedText, { color: '#9CA3AF' }]}>Sin verificar</Text>
             </>
           )}
         </View>

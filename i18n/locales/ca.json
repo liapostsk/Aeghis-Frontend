@@ -496,6 +496,10 @@
       "notVerified": {
         "title": "Verifica el teu perfil",
         "description": "Completa la verificació per accedir a grups d'acompanyament i més funcions"
+      },
+      "noRequest": {
+        "title": "Sense sol·licitud de verificació",
+        "description": "Inicia el procés de verificació per accedir a totes les funcions"
       }
     },
     "verificationScreen": {
