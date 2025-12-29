@@ -351,7 +351,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#F9FAFB' 
     },
     scrollContent: {
-        paddingBottom: 120,
+        paddingBottom: 160,
     },
     companionInfo: {
         flexDirection: 'row',
@@ -394,8 +394,6 @@ const styles = StyleSheet.create({
         color: '#7A33CC',
         marginLeft: 12,
     },
-    
-    // Estilos del modal selector
     modalOverlay: {
         position: 'absolute',
         top: 0,

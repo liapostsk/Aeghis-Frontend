@@ -6,6 +6,8 @@ import {
   FlatList,
   StatusBar,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { Group } from '@/api/backend/group/groupType';
@@ -44,7 +46,7 @@ interface Message {
   time: string;
   isUser?: boolean;
   isRead?: boolean;
-  readBy?: string[]; // Array de UIDs que leyeron el mensaje
+  readBy?: string[];
   type?: 'message' | 'status' | 'arrival';
 }
 
@@ -158,7 +160,7 @@ export default function ChatScreen() {
         );
 
         if (hasUnreadMessages) {
-          console.log('📖 Marcando mensajes nuevos como leídos automáticamente...');
+          console.log('Marcando mensajes nuevos como leídos automáticamente...');
           markAllMessagesAsRead(String(groupId)).catch(err => 
             console.warn('Error marcando como leído:', err)
           );
@@ -271,7 +273,11 @@ export default function ChatScreen() {
     const journeyBannerHeight = hasActiveJourney ? 92 : 0;
 
     return (
-      <View style={styles.chatContainer}>
+      <KeyboardAvoidingView 
+        style={styles.chatContainer}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
         <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
         {renderJourneyBanner()}
@@ -298,6 +304,12 @@ export default function ChatScreen() {
           ]}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={EmptyChat}
+          keyboardDismissMode="on-drag"
+          keyboardShouldPersistTaps="handled"
+          maintainVisibleContentPosition={{
+            minIndexForVisible: 0,
+            autoscrollToTopThreshold: 10,
+          }}
         />
 
         <ChatInput
@@ -305,7 +317,7 @@ export default function ChatScreen() {
           onChangeText={setInputText}
           onSend={sendMessage}
         />
-      </View>
+      </KeyboardAvoidingView>
     );
   };
 
@@ -366,12 +378,19 @@ export default function ChatScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#7A33CC' },
-  chatContainer: { flex: 1, backgroundColor: '#FFFFFF' },
+  chatContainer: { 
+    flex: 1, 
+    backgroundColor: '#FAFAFA'
+  },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 16 },
   muted: { color: '#888', marginTop: 8 },
   error: { color: '#c00' },
 
   messagesList: { flex: 1 },
-  messagesContent: { paddingHorizontal: 16, paddingVertical: 16 },
+  messagesContent: { 
+    paddingHorizontal: 16, 
+    paddingTop: 12,
+    paddingBottom: 8,
+  },
   emptyMessagesContent: { flex: 1, justifyContent: 'center' },
 });

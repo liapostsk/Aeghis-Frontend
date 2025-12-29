@@ -686,6 +686,40 @@
       }
     }
   },
+  "safeLocationModal": {
+    "title": "Buscar ubicación segura",
+    "searchPlaceholder": "Escribe un lugar...",
+    "selectOnMap": "Seleccionar en mapa",
+    "mapButtonPressed": "🗺️ Botón de mapa presionado, abriendo modal...",
+    "searchResults": "Resultados de búsqueda",
+    "nearbySafePlaces": "Lugares seguros cercanos",
+    "loadingNearbyPlaces": "Cargando lugares cercanos por defecto...",
+    "noResultsFound": "No se encontraron resultados",
+    "loadingNearbySafePlaces": "Cargando lugares seguros cercanos...",
+    "locationFallback": "Ubicación ({{lat}}, {{lng}})",
+    "customCoordinates": "Coordenadas personalizadas",
+    "errors": {
+      "permissionDenied": "Permiso denegado",
+      "locationAccess": "No se pudo acceder a la ubicación.",
+      "loadingNearby": "Error cargando lugares cercanos:",
+      "searchingPlaces": "Error al buscar lugares:",
+      "gettingDetails": "Error al obtener detalles:"
+    },
+    "console": {
+      "googlePlacesResults": "Resultados de Google Places:",
+      "googleGeocodingResults": "Resultados de Google Geocoding:",
+      "geocodingFound": "Geocoding encontró {{count}} direcciones",
+      "noResults": "No se encontraron resultados en ninguna API"
+    }
+  },
+  "locationEditorModal": {
+    "title": "Editar ubicación",
+    "namePlaceholder": "Nombre (ej: Casa, Oficina)",
+    "typePlaceholder": "Tipo (ej: custom, work, home)",
+    "addressLabel": "Dirección:",
+    "cancel": "Cancelar",
+    "save": "Guardar"
+  },
   "chat": {
     "loading": "Cargando grupo…",
     "error": "Group not found",

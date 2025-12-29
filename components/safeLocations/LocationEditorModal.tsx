@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { SafeLocation } from '@/api/backend/locations/locationType';
 
 type Props = {
@@ -24,6 +25,7 @@ export default function LocationEditorModal({
   onClose,
   onSave,
 }: Props) {
+  const { t } = useTranslation();
   const [name, setName] = useState('');
   const [type, setType] = useState('');
 
@@ -55,33 +57,33 @@ export default function LocationEditorModal({
           style={styles.container}
         >
           <View style={styles.modal}>
-            <Text style={styles.title}>Editar ubicación</Text>
+            <Text style={styles.title}>{t('locationEditorModal.title')}</Text>
 
             <TextInput
               style={styles.input}
-              placeholder="Nombre (ej: Casa, Oficina)"
+              placeholder={t('locationEditorModal.namePlaceholder')}
               value={name}
               onChangeText={setName}
             />
             <TextInput
               style={styles.input}
-              placeholder="Tipo (ej: custom, work, home)"
+              placeholder={t('locationEditorModal.typePlaceholder')}
               value={type}
               onChangeText={setType}
             />
             
             {/* Campo de dirección solo para mostrar - no editable */}
             <View style={styles.addressContainer}>
-              <Text style={styles.addressLabel}>Dirección:</Text>
+              <Text style={styles.addressLabel}>{t('locationEditorModal.addressLabel')}</Text>
               <Text style={styles.addressText}>{location.address}</Text>
             </View>
 
             <View style={styles.buttonRow}>
               <TouchableOpacity onPress={onClose}>
-                <Text style={styles.cancelText}>Cancelar</Text>
+                <Text style={styles.cancelText}>{t('locationEditorModal.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={handleSave}>
-                <Text style={styles.saveText}>Guardar</Text>
+                <Text style={styles.saveText}>{t('locationEditorModal.save')}</Text>
               </TouchableOpacity>
             </View>
           </View>

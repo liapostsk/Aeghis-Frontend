@@ -686,6 +686,40 @@
       }
     }
   },
+  "safeLocationModal": {
+    "title": "Search safe location",
+    "searchPlaceholder": "Type a place...",
+    "selectOnMap": "Select on map",
+    "mapButtonPressed": "🗺️ Map button pressed, opening modal...",
+    "searchResults": "Search results",
+    "nearbySafePlaces": "Nearby safe places",
+    "loadingNearbyPlaces": "Loading nearby places by default...",
+    "noResultsFound": "No results found",
+    "loadingNearbySafePlaces": "Loading nearby safe places...",
+    "locationFallback": "Location ({{lat}}, {{lng}})",
+    "customCoordinates": "Custom coordinates",
+    "errors": {
+      "permissionDenied": "Permission denied",
+      "locationAccess": "Could not access location.",
+      "loadingNearby": "Error loading nearby places:",
+      "searchingPlaces": "Error searching places:",
+      "gettingDetails": "Error getting details:"
+    },
+    "console": {
+      "googlePlacesResults": "Google Places results:",
+      "googleGeocodingResults": "Google Geocoding results:",
+      "geocodingFound": "Geocoding found {{count}} addresses",
+      "noResults": "No results found in any API"
+    }
+  },
+  "locationEditorModal": {
+    "title": "Edit location",
+    "namePlaceholder": "Name (e.g: Home, Office)",
+    "typePlaceholder": "Type (e.g: custom, work, home)",
+    "addressLabel": "Address:",
+    "cancel": "Cancel",
+    "save": "Save"
+  },
   "chat": {
     "loading": "Loading group…",
     "error": "Group not found",
@@ -1005,8 +1039,8 @@
       }
     },
     "email": {
-      "title": "Hey {{name}}, let's\nverify your email!",
-      "instruction": "Enter your email address to receive a verification code.",
+      "title": "Let's\nverify your email!",
+      "instruction": "{{name}}, Enter your email address to receive a verification code.",
       "placeholder": "Enter your email address",
       "button": {
         "send": "Send Code",

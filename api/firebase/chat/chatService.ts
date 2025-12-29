@@ -1,4 +1,3 @@
-// Code for Firestore chat service
 import { auth, db } from '@/firebaseconfig';
 import {
   collection,

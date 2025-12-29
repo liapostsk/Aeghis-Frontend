@@ -686,6 +686,40 @@
       }
     }
   },
+  "safeLocationModal": {
+    "title": "Cercar ubicació segura",
+    "searchPlaceholder": "Escriu un lloc...",
+    "selectOnMap": "Seleccionar al mapa",
+    "mapButtonPressed": "🗺️ Botó de mapa premut, obrint modal...",
+    "searchResults": "Resultats de cerca",
+    "nearbySafePlaces": "Llocs segurs propers",
+    "loadingNearbyPlaces": "Carregant llocs propers per defecte...",
+    "noResultsFound": "No s'han trobat resultats",
+    "loadingNearbySafePlaces": "Carregant llocs segurs propers...",
+    "locationFallback": "Ubicació ({{lat}}, {{lng}})",
+    "customCoordinates": "Coordenades personalitzades",
+    "errors": {
+      "permissionDenied": "Permís denegat",
+      "locationAccess": "No s'ha pogut accedir a la ubicació.",
+      "loadingNearby": "Error carregant llocs propers:",
+      "searchingPlaces": "Error al cercar llocs:",
+      "gettingDetails": "Error al obtenir detalls:"
+    },
+    "console": {
+      "googlePlacesResults": "Resultats de Google Places:",
+      "googleGeocodingResults": "Resultats de Google Geocoding:",
+      "geocodingFound": "Geocoding ha trobat {{count}} adreces",
+      "noResults": "No s'han trobat resultats en cap API"
+    }
+  },
+  "locationEditorModal": {
+    "title": "Editar ubicació",
+    "namePlaceholder": "Nom (ex: Casa, Oficina)",
+    "typePlaceholder": "Tipus (ex: custom, work, home)",
+    "addressLabel": "Adreça:",
+    "cancel": "Cancel·lar",
+    "save": "Desar"
+  },
   "chat": {
     "loading": "Carregant grup…",
     "error": "Grup no trobat",
