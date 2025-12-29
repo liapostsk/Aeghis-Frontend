@@ -1,19 +1,22 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import GroupsList from '@/components/groups/GroupsList';
+import GroupsList, { GroupsListRef } from '@/components/groups/GroupsList';
 import GroupsButton from '@/components/groups/GrupsButton';
 import { useTranslation } from 'react-i18next';
 
 export default function TrustedScreen() {
   const { t } = useTranslation();
-  const load = () => {
-    // Esta función se pasa al botón para recargar cuando se cree un grupo
-    console.log('Recargando grupos de confianza...');
+  const groupsListRef = React.useRef<GroupsListRef>(null);
+
+  const handleGroupCreated = async () => {
+    console.log('Grupo creado, recargando lista...');
+    await groupsListRef.current?.reload();
   };
 
   return (
     <View style={styles.container}>
       <GroupsList
+        ref={groupsListRef}
         groupType="CONFIANZA"
         emptyTitle={t('groups.confianza.emptyTitle')}
         emptySubtitle={t('groups.confianza.emptySubtitle')}
@@ -21,7 +24,7 @@ export default function TrustedScreen() {
       />
       <GroupsButton
         kind="CONFIANZA"
-        onSuccess={load}
+        onSuccess={handleGroupCreated}
         style={styles.fab}
       />
     </View>

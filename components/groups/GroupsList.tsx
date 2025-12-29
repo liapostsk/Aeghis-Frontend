@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useImperativeHandle } from 'react';
 import { View, Text, StyleSheet, FlatList, RefreshControl, Pressable, Image } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
@@ -32,7 +32,11 @@ type Props = {
   noteText: string;
 };
 
-export default function GroupsList({ groupType, emptyTitle, emptySubtitle, noteText }: Props) {
+export interface GroupsListRef {
+  reload: () => Promise<void>;
+}
+
+const GroupsList = React.forwardRef<GroupsListRef, Props>(({ groupType, emptyTitle, emptySubtitle, noteText }, ref) => {
   const { t } = useTranslation();
   const { search } = useGroupSeach();
   const [groups, setGroups] = useState<Group[]>([]);
@@ -59,7 +63,7 @@ export default function GroupsList({ groupType, emptyTitle, emptySubtitle, noteT
       setToken(token);
       const data = await getUserGroupsByType(groupType);
       setGroups(data ?? []);
-      console.log(`🧪 Grupos ${groupType} cargados:`, data);
+      console.log(`Grupos ${groupType} cargados:`, data);
       
       if (data && data.length) {
         const ids = data.map(g => String(g.id));
@@ -83,6 +87,11 @@ export default function GroupsList({ groupType, emptyTitle, emptySubtitle, noteT
   };
 
   useEffect(() => { load(); }, [groupType]);
+
+  // Exponer método reload al componente padre
+  useImperativeHandle(ref, () => ({
+    reload: load
+  }));
 
   // Filtrado local por el search del header
   const filtered = useMemo(() => {
@@ -199,7 +208,11 @@ export default function GroupsList({ groupType, emptyTitle, emptySubtitle, noteT
       </View>
     </View>
   );
-}
+});
+
+GroupsList.displayName = 'GroupsList';
+
+export default GroupsList;
 
 const styles = StyleSheet.create({
   container: {
