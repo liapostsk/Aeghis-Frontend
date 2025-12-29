@@ -8,21 +8,21 @@ import type {
 
 export async function ensureCurrentUserProfile(opts?: FirebaseUserProfileOptions) {
   const uid = auth.currentUser?.uid;
-  console.log('🔐 ensureCurrentUserProfile - Usuario actual:', uid);
-  console.log('📝 ensureCurrentUserProfile - Opciones:', opts);
+  console.log('ensureCurrentUserProfile - Usuario actual:', uid);
+  console.log('ensureCurrentUserProfile - Opciones:', opts);
   
   if (!uid) {
-    console.error('❌ No hay sesión Firebase en ensureCurrentUserProfile');
+    console.error('No hay sesión Firebase en ensureCurrentUserProfile');
     throw new Error('No hay sesión Firebase');
   }
 
   try {
     const ref = doc(db, 'users', uid);
-    console.log('📖 Verificando si existe perfil de usuario...');
+    console.log('Verificando si existe perfil de usuario...');
     const snap = await getDoc(ref);
 
     if (!snap.exists()) {
-      console.log('📝 Creando nuevo perfil de usuario...');
+      console.log('Creando nuevo perfil de usuario...');
       const newProfile: FirebaseUserProfile = {
         displayName: opts?.displayName ?? null,
         photoURL: opts?.photoURL ?? null,
@@ -33,10 +33,9 @@ export async function ensureCurrentUserProfile(opts?: FirebaseUserProfileOptions
         batteryLevel: opts?.batteryLevel ?? null,
       };
       await setDoc(ref, newProfile);
-      console.log('✅ Perfil de usuario creado exitosamente');
+      console.log('Perfil de usuario creado exitosamente');
     } else {
-      console.log('🔄 Actualizando perfil de usuario existente...');
-      // Actualiza lastSeen (y props si quieres)
+      console.log('Actualizando perfil de usuario existente...');
       await updateDoc(ref, {
         isOnline: true,
         lastSeen: serverTimestamp(),
@@ -45,13 +44,13 @@ export async function ensureCurrentUserProfile(opts?: FirebaseUserProfileOptions
         ...(opts?.phone ? { phone: opts.phone } : {}),
         ...(opts?.batteryLevel !== undefined ? { batteryLevel: opts.batteryLevel } : {}),
       });
-      console.log('✅ Perfil de usuario actualizado exitosamente');
+      console.log('Perfil de usuario actualizado exitosamente');
     }
   } catch (error) {
-    console.error('💥 Error en ensureCurrentUserProfile:', error);
-    console.error('📋 Error details:', {
-      code: error.code,
-      message: error.message,
+    console.error('Error en ensureCurrentUserProfile:', error);
+    console.error('Error details:', {
+      code: (error as any).code,
+      message: (error as any).message,
       uid
     });
     throw error;
@@ -61,10 +60,10 @@ export async function ensureCurrentUserProfile(opts?: FirebaseUserProfileOptions
 // Función para actualizar el perfil, al cerrar sesion de firebase
 export async function updateUserProfileOnLogout() {
   const uid = auth.currentUser?.uid;
-  console.log('👋 updateUserProfileOnLogout - Usuario:', uid);
+  console.log('updateUserProfileOnLogout - Usuario:', uid);
   
   if (!uid) {
-    console.error('❌ No hay sesión Firebase en logout');
+    console.error('No hay sesión Firebase en logout');
     throw new Error('No hay sesión Firebase');
   }
 
@@ -73,67 +72,58 @@ export async function updateUserProfileOnLogout() {
     const snap = await getDoc(ref);
 
     if (snap.exists()) {
-      console.log('🔄 Marcando usuario como offline...');
+      console.log(' Marcando usuario como offline...');
       await updateDoc(ref, {
         lastSeen: serverTimestamp(),
         isOnline: false,
       });
-      console.log('✅ Usuario marcado como offline exitosamente');
+      console.log('Usuario marcado como offline exitosamente');
     } else {
-      console.warn('⚠️ No se encontró el perfil de usuario al cerrar sesión');
+      console.warn('No se encontró el perfil de usuario al cerrar sesión');
     }
   } catch (error) {
-    console.error('💥 Error en updateUserProfileOnLogout:', error);
+    console.error(' Error en updateUserProfileOnLogout:', error);
     throw error;
   }
 }
-
-// ===== FUNCIONES ELIMINADAS - NO SE USAN =====
-// - getUserProfileFB() - No se usa en ningún lugar
-// - updateUserPhotoURL() - No se usa en ningún lugar  
-// - updateUserProfile() - No se usa en ningún lugar
 
 // ===== FUNCIONES ESPECÍFICAS PARA BATTERY LEVEL =====
 
 // Actualizar solo el nivel de batería del usuario actual
 export async function updateUserBatteryLevel(batteryLevel: number) {
   const uid = auth.currentUser?.uid;
-  console.log('🔋 updateUserBatteryLevel - Usuario:', uid, 'Nivel:', batteryLevel);
+  console.log('updateUserBatteryLevel - Usuario:', uid, 'Nivel:', batteryLevel);
   
   if (!uid) {
-    console.error('❌ No hay sesión Firebase en updateUserBatteryLevel');
+    console.error('No hay sesión Firebase en updateUserBatteryLevel');
     throw new Error('No hay sesión Firebase');
   }
 
   // Validar que el nivel esté entre 0 y 100
   if (batteryLevel < 0 || batteryLevel > 100) {
-    console.warn('⚠️ Nivel de batería fuera de rango:', batteryLevel, '- Ajustando a rango válido');
+    console.warn('Nivel de batería fuera de rango:', batteryLevel, '- Ajustando a rango válido');
     batteryLevel = Math.max(0, Math.min(100, batteryLevel));
   }
 
   try {
-    console.log('💾 Actualizando nivel de batería en Firebase...');
+    console.log('Actualizando nivel de batería en Firebase...');
     const ref = doc(db, 'users', uid);
     await updateDoc(ref, {
       batteryLevel,
       lastSeen: serverTimestamp(),
     });
-    console.log('✅ Nivel de batería actualizado exitosamente');
+    console.log('Nivel de batería actualizado exitosamente');
   } catch (error) {
-    console.error('💥 Error actualizando nivel de batería:', error);
-    console.error('📋 Error details:', {
-      code: error.code,
-      message: error.message,
+    console.error('Error actualizando nivel de batería:', error);
+    console.error('Error details:', {
+      code: (error as any).code,
+      message: (error as any).message,
       uid,
       batteryLevel
     });
     throw error;
   }
 }
-
-// ===== FUNCIONES ELIMINADAS - NO SE USAN =====
-// - getUserBatteryLevel() - Solo se usa internamente, no exportada
-// - getCurrentUserBatteryLevel() - No se usa en la práctica
 
 // Función interna para obtener batería (no exportada)
 async function getUserBatteryLevel(uid: string): Promise<number | null> {
@@ -150,23 +140,23 @@ async function getUserBatteryLevel(uid: string): Promise<number | null> {
 
 // Obtener información completa de batería de múltiples usuarios
 export async function getMultipleUsersBatteryInfo(userIds: string[]): Promise<Record<string, { batteryLevel: number | null; lastSeen: any; isOnline: boolean }>> {
-  console.log('👥 getMultipleUsersBatteryInfo - Usuarios:', userIds.length);
+  console.log('getMultipleUsersBatteryInfo - Usuarios:', userIds.length);
   
   if (userIds.length === 0) {
-    console.log('ℹ️ No hay usuarios para obtener información de batería');
+    console.log('No hay usuarios para obtener información de batería');
     return {};
   }
 
   try {
     const promises = userIds.map(async (uid) => {
       try {
-        console.log(`📖 Obteniendo info de usuario: ${uid}`);
+        console.log(`Obteniendo info de usuario: ${uid}`);
         const ref = doc(db, 'users', uid);
         const snap = await getDoc(ref);
         
         if (snap.exists()) {
           const data = snap.data() as FirebaseUserProfile;
-          console.log(`✅ Info obtenida para ${uid}:`, { 
+          console.log(`Info obtenida para ${uid}:`, { 
             batteryLevel: data.batteryLevel, 
             isOnline: data.isOnline 
           });
@@ -177,7 +167,7 @@ export async function getMultipleUsersBatteryInfo(userIds: string[]): Promise<Re
             isOnline: data.isOnline,
           };
         }
-        console.log(`⚠️ Usuario ${uid} no encontrado`);
+        console.log(`Usuario ${uid} no encontrado`);
         return {
           uid,
           batteryLevel: null,
@@ -185,7 +175,7 @@ export async function getMultipleUsersBatteryInfo(userIds: string[]): Promise<Re
           isOnline: false,
         };
       } catch (error) {
-        console.error(`💥 Error obteniendo info para usuario ${uid}:`, error);
+        console.error(`Error obteniendo info para usuario ${uid}:`, error);
         return {
           uid,
           batteryLevel: null,
@@ -206,10 +196,10 @@ export async function getMultipleUsersBatteryInfo(userIds: string[]): Promise<Re
       };
     });
 
-    console.log('✅ Información de batería obtenida para todos los usuarios');
+    console.log('Información de batería obtenida para todos los usuarios');
     return batteryInfo;
   } catch (error) {
-    console.error('💥 Error general en getMultipleUsersBatteryInfo:', error);
+    console.error('Error general en getMultipleUsersBatteryInfo:', error);
     throw error;
   }
 }
@@ -220,7 +210,7 @@ export async function getMultipleUsersBatteryInfo(userIds: string[]): Promise<Re
  * @returns Perfil completo del usuario
  */
 export async function getUserProfileFB(clerkId: string): Promise<FirebaseUserProfile> {
-  console.log('👤 getUserProfileFB - Obteniendo perfil para:', clerkId);
+  console.log('getUserProfileFB - Obteniendo perfil para:', clerkId);
   
   try {
     const ref = doc(db, 'users', clerkId);
@@ -228,10 +218,10 @@ export async function getUserProfileFB(clerkId: string): Promise<FirebaseUserPro
     
     if (snap.exists()) {
       const data = snap.data() as FirebaseUserProfile;
-      console.log('✅ Perfil obtenido exitosamente');
+      console.log('Perfil obtenido exitosamente');
       return data;
     } else {
-      console.log('⚠️ Usuario no encontrado, devolviendo perfil por defecto');
+      console.log('Usuario no encontrado, devolviendo perfil por defecto');
       // Devolver perfil por defecto en lugar de error
       return {
         displayName: null,
@@ -244,7 +234,7 @@ export async function getUserProfileFB(clerkId: string): Promise<FirebaseUserPro
       };
     }
   } catch (error) {
-    console.error('💥 Error obteniendo perfil de usuario:', error);
+    console.error('Error obteniendo perfil de usuario:', error);
     throw error;
   }
 }

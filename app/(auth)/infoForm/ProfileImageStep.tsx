@@ -64,6 +64,7 @@ export default function ProfileImageStep({
 
         try {
           // Verificar que tenemos el UID de Clerk
+          console.log('Clerk User ID:', clerkUser?.id);
           if (!clerkUser?.id) {
             throw new Error('No se pudo obtener el ID del usuario de Clerk');
           }

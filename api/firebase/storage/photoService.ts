@@ -14,10 +14,10 @@ export async function uploadUserPhotoAsync(
   photoType: 'profile' | 'verification_live' | 'verification_gallery' = 'profile'
 ): Promise<string> {
     try {
-        console.log('📤 Iniciando subida de foto...');
-        console.log('📍 URI local:', localUri);
-        console.log('👤 Firebase UID:', firebaseUid);
-        console.log('📸 Tipo de foto:', photoType);
+        console.log('Iniciando subida de foto...');
+        console.log('URI local:', localUri);
+        console.log('Firebase UID:', firebaseUid);
+        console.log('Tipo de foto:', photoType);
 
         // Leer el archivo como blob
         const blob = await fetch(localUri).then(res => res.blob());
@@ -27,7 +27,7 @@ export async function uploadUserPhotoAsync(
         const fileName = `${photoType}_${timestamp}.jpg`;
         const storagePath = `users/${firebaseUid}/${fileName}`;
         
-        console.log('📂 Ruta de almacenamiento:', storagePath);
+        console.log('Ruta de almacenamiento:', storagePath);
         
         const fileRef = ref(storage, storagePath);
 

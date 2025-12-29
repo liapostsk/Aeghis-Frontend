@@ -91,12 +91,6 @@ export default function SafeLocationsSection({ locations, onAddLocation }: Props
       ]
     );
   };
-  
-  /*   * Efecto para depurar las ubicaciones seleccionadas
-  useEffect(() => {
-    console.log("SafeLocations seleccionadas:", localLocations);
-  }, [localLocations]);
-  */
 
   return (
     <View style={styles.section}>
@@ -104,7 +98,9 @@ export default function SafeLocationsSection({ locations, onAddLocation }: Props
         <Ionicons name="location" size={18} color="#7A33CC" />
         <Text style={styles.sectionTitle}>{t('profile.safeLocations.title')}</Text>
           <Pressable style={styles.editButton} onPress={() => setEditable(!editable)}>
-            <Text style={{ color: '#7A33CC' }}>{t('profile.safeLocations.edit')}</Text>
+            <Text style={styles.editButtonText}>
+              {editable ? t('profile.safeLocations.done') : t('profile.safeLocations.edit')}
+            </Text>
           </Pressable>
       </View>
 
@@ -127,7 +123,6 @@ export default function SafeLocationsSection({ locations, onAddLocation }: Props
             <Text style={styles.locationName}>{location.name}</Text>
             <Text style={styles.locationType}>{location.type}</Text>
             <Text style={styles.locationAddress}>{location.address}</Text>
-            <Text style={{ fontSize: 12, color: '#999', marginTop: 4 }}>{t('profile.safeLocations.idLabel')}: {location.id}</Text>
           </View>
           {editable && (
             <View style={styles.actionButtons}>
@@ -209,6 +204,7 @@ const styles = StyleSheet.create({
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
@@ -219,6 +215,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#333',
     marginLeft: 10,
+    flex: 1,
   },
   locationItem: {
     flexDirection: 'row',
@@ -255,6 +252,13 @@ const styles = StyleSheet.create({
   },
   editButton: {
     padding: 8,
+    backgroundColor: '#f0f0ff',
+    borderRadius: 8,
+  },
+  editButtonText: {
+    color: '#7A33CC',
+    fontWeight: '600',
+    fontSize: 14,
   },
   addButton: {
     flexDirection: 'row',

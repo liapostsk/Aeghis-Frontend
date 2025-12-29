@@ -48,10 +48,10 @@ export const useActivateClerkSession = () => {
       setSessionActivated(true);
       
       // Actualizar el usuario con el idClerk
-      if (user && !user.idClerk) {
+      if (user && !user.clerkId) {
         setUser({
           ...user,
-          idClerk: clerkUserId,
+          clerkId: clerkUserId,
         });
       }
       

@@ -183,6 +183,10 @@ export const usePositionTracking = (
 
   const sendPosition = async () => {
     try {
+      if (!auth.currentUser) {
+        throw new Error('Usuario no autenticado');
+      }
+      
       const position = await getCurrentPosition();
       const { latitude, longitude } = position.coords;
       

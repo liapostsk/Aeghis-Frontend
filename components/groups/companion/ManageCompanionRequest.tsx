@@ -120,10 +120,10 @@ export default function ManageCompanionRequest({
                   const groupId = await createGroup(groupData);
                   console.log('Grupo creado con ID:', groupId);
 
-                  if (!requestData.companion.idClerk) {
+                  if (!requestData.companion.clerkId) {
                     throw new Error('El usuario acompañante no tiene un idClerk definido.');
                   }
-                  joinGroupChatFirebaseWithClerkId(groupId.toString(), requestData.companion.idClerk);
+                  joinGroupChatFirebaseWithClerkId(groupId.toString(), requestData.companion.clerkId);
 
                   // Guardar el ID del grupo en la solicitud de acompañamiento
                   await updateCompanionGroupId(request.id, groupId);

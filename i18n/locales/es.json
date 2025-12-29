@@ -178,7 +178,7 @@
     "activeJourney": "Trayecto Activo",
     "inProgress": "En progreso",
     "pending": "Pendiente",
-    "appName": "Aegis",
+    "appName": "Aeghis",
     "tapToStart": "Tap para iniciar un trayecto"
   },
   "journeyCreationHeader": {
@@ -599,7 +599,7 @@
       "subtitle": "Estamos aquí para ayudarte",
       "feedback": {
         "title": "Comparte tu Opinión",
-        "description": "Tu opinión es muy valiosa para nosotros. Ayúdanos a mejorar Aegis compartiendo tu experiencia.",
+        "description": "Tu opinión es muy valiosa para nosotros. Ayúdanos a mejorar Aeghis compartiendo tu experiencia.",
         "button": "Enviar Feedback",
         "comingSoon": {
           "title": "Próximamente",
@@ -613,7 +613,7 @@
         "reportIssue": "Reportar un problema",
         "askQuestion": "Hacer una pregunta",
         "button": "Contactar Soporte",
-        "emailSubject": "Soporte Aegis - Consulta",
+        "emailSubject": "Soporte Aeghis - Consulta",
         "error": {
           "title": "Error",
           "message": "No se pudo abrir el cliente de correo. Por favor, contacta a {{email}} manualmente."
@@ -851,7 +851,7 @@
     "summary": {
       "title": "¡Bienvenido a Aeghis!",
       "subtitle": "Tu cuenta ha sido creada exitosamente",
-      "description": "Estás listo para comenzar a disfrutar de todas las funcionalidades que Aegis tiene para ofrecerte.",
+      "description": "Estás listo para comenzar a disfrutar de todas las funcionalidades que Aeghis tiene para ofrecerte.",
       "buttons": {
         "start": "Comenzar Experiencia",
         "loading": "Configurando...",
@@ -864,7 +864,7 @@
         "notifications": "Configurando notificaciones...",
         "realtime": "Configurando servicios en tiempo real...",
         "finalizing": "Finalizando configuración...",
-        "welcome": "¡Bienvenido a Aegis!"
+        "welcome": "¡Bienvenido a Aeghis!"
       },
       "errors": {
         "noUserData": "No hay datos de usuario disponibles.",
@@ -890,7 +890,7 @@
     }
   },
   "welcome": {
-    "title": "¡Bienvenido a Aegis!",
+    "title": "¡Bienvenido a Aeghis!",
     "signUp": "Registrarse",
     "alreadyHaveAccount": "¿Ya tienes una cuenta?",
     "logIn": "Iniciar Sesión",

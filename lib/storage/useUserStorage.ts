@@ -30,7 +30,7 @@ export type User = {
   externalContacts?: ExternalContact[];
   safeLocations?: SafeLocation[];
   groups?: Group[];
-  idClerk?: string; // ID de usuario en Clerk
+  clerkId?: string; // ID de usuario en Clerk
   role?: "USER" | "ADMIN";
   companionRequestsCreated?: CompanionRequest[];
   companionRequestsAccepted?: CompanionRequest[];

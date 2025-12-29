@@ -178,7 +178,7 @@
     "activeJourney": "Trajecte Actiu",
     "inProgress": "En progrés",
     "pending": "Pendent",
-    "appName": "Aegis",
+    "appName": "Aeghis",
     "tapToStart": "Toca per iniciar un trajecte"
   },
   "journeyCreationHeader": {
@@ -599,7 +599,7 @@
       "subtitle": "Estem aquí per ajudar-te",
       "feedback": {
         "title": "Comparteix la teva Opinió",
-        "description": "La teva opinió és molt valuosa per a nosaltres. Ajuda'ns a millorar Aegis compartint la teva experiència.",
+        "description": "La teva opinió és molt valuosa per a nosaltres. Ajuda'ns a millorar Aeghis compartint la teva experiència.",
         "button": "Enviar Feedback",
         "comingSoon": {
           "title": "Pròximament",
@@ -613,7 +613,7 @@
         "reportIssue": "Reportar un problema",
         "askQuestion": "Fer una pregunta",
         "button": "Contactar Suport",
-        "emailSubject": "Suport Aegis - Consulta",
+        "emailSubject": "Suport Aeghis - Consulta",
         "error": {
           "title": "Error",
           "message": "No s'ha pogut obrir el client de correu. Si us plau, contacta a {{email}} manualment."
@@ -849,9 +849,9 @@
       }
     },
     "summary": {
-      "title": "Benvingut a Aegis!",
+      "title": "Benvingut a Aeghis!",
       "subtitle": "El teu compte s'ha creat correctament",
-      "description": "Estàs preparat per començar a gaudir de totes les funcionalitats que Aegis té per oferir-te.",
+      "description": "Estàs preparat per començar a gaudir de totes les funcionalitats que Aeghis té per oferir-te.",
       "buttons": {
         "start": "Començar Experiència",
         "loading": "Configurant...",
@@ -864,7 +864,7 @@
         "notifications": "Configurant notificacions...",
         "realtime": "Configurant serveis en temps real...",
         "finalizing": "Finalitzant configuració...",
-        "welcome": "Benvingut a Aegis!"
+        "welcome": "Benvingut a Aeghis!"
       },
       "errors": {
         "noUserData": "No hi ha dades d'usuari disponibles.",
@@ -889,7 +889,7 @@
       }
     }  },
   "welcome": {
-    "title": "Benvingut a Aegis!",
+    "title": "Benvingut a Aeghis!",
     "signUp": "Registrar-se",
     "alreadyHaveAccount": "Ja tens un compte?",
     "logIn": "Iniciar Sessió",

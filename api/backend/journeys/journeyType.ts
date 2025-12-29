@@ -1,6 +1,6 @@
 import { Participation } from "@/api/backend/participations/participationType";
 import { Group } from "../group/groupType";
-import { CompanionRequest } from "../types";
+import { CompanionRequest } from "@/api/backend/companionRequest/companionTypes";
 
 export interface Journey {
     id: number;

@@ -46,7 +46,7 @@ export const useJourneyForm = ({ currentUser }: UseJourneyFormProps) => {
 
   // Manejadores de selección de destino
   const handleSelectDestination = (location: SafeLocation | Location) => {
-    const safeLocation: SafeLocation = 'name' in location ? location : {
+    const safeLocation: SafeLocation = 'name' in location ? location as SafeLocation : {
       id: location.id,
       name: `Ubicación personalizada`,
       address: `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`,

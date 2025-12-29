@@ -26,14 +26,14 @@ export async function syncJourneyToFirebase(
       throw new Error('No hay sesión Firebase activa');
     }
 
-    console.log(`🔄 Sincronizando journey ${journey.id} con Firebase`);
+    console.log(`Sincronizando journey ${journey.id} con Firebase`);
     
     // Crear journey en Firebase
     await createJourneyInChat(chatId, journey);
     
-    console.log(`✅ Journey ${journey.id} sincronizado con Firebase`);
+    console.log(`Journey ${journey.id} sincronizado con Firebase`);
   } catch (error) {
-    console.error(`❌ Error sincronizando journey ${journey.id}:`, error);
+    console.error(`Error sincronizando journey ${journey.id}:`, error);
     throw error;
   }
 }
@@ -57,7 +57,7 @@ export async function syncParticipationToFirebase(
       throw new Error('No hay sesión Firebase activa');
     }
 
-    console.log(`🔄 Sincronizando participación ${participation.id} con Firebase`);
+    console.log(`Sincronizando participación ${participation.id} con Firebase`);
     
     const destinationPosition = options?.destination ? {
       latitude: options.destination.latitude,
@@ -83,9 +83,9 @@ export async function syncParticipationToFirebase(
       );
     }
     
-    console.log(`✅ Participación ${participation.id} sincronizada con Firebase`);
+    console.log(`Participación ${participation.id} sincronizada con Firebase`);
   } catch (error) {
-    console.error(`❌ Error sincronizando participación ${participation.id}:`, error);
+    console.error(`Error sincronizando participación ${participation.id}:`, error);
     throw error;
   }
 }
@@ -101,7 +101,11 @@ export async function syncCompleteJourneyToFirebase(
   participations: ParticipationDto[]
 ): Promise<void> {
   try {
-    console.log(`🔄 Sincronización completa del journey ${journey.id}`);
+    if (!journey.id) {
+      throw new Error('Journey ID is undefined');
+    }
+    
+    console.log(`Sincronización completa del journey ${journey.id}`);
     
     // 1. Sincronizar journey principal
     await syncJourneyToFirebase(chatId, journey);
@@ -111,9 +115,9 @@ export async function syncCompleteJourneyToFirebase(
       await syncParticipationToFirebase(chatId, journey.id.toString(), participation);
     }
     
-    console.log(`✅ Journey completo ${journey.id} sincronizado con Firebase`);
+    console.log(`Journey completo ${journey.id} sincronizado con Firebase`);
   } catch (error) {
-    console.error(`❌ Error en sincronización completa del journey ${journey.id}:`, error);
+    console.error(`Error en sincronización completa del journey ${journey.id}:`, error);
     throw error;
   }
 }
@@ -172,13 +176,16 @@ export async function ensureActiveJourneysInFirebase(
   allParticipations: ParticipationDto[]
 ): Promise<void> {
   try {
-    console.log(`🔄 Verificando ${activeJourneys.length} journeys activos`);
+    console.log(`Verificando ${activeJourneys.length} journeys activos`);
     
     for (const journey of activeJourneys) {
+      if (!journey.id) {
+        throw new Error('Journey ID is undefined');
+      }
       const exists = await journeyExistsInFirebase(chatId, journey.id.toString());
       
       if (!exists) {
-        console.log(`📋 Journey ${journey.id} no existe en Firebase, sincronizando...`);
+        console.log(`Journey ${journey.id} no existe en Firebase, sincronizando...`);
         
         // Obtener participaciones de este journey
         const journeyParticipations = allParticipations.filter(p => p.journeyId === journey.id);
@@ -186,13 +193,12 @@ export async function ensureActiveJourneysInFirebase(
         // Sincronizar journey completo
         await syncCompleteJourneyToFirebase(chatId, journey, journeyParticipations);
       } else {
-        console.log(`✅ Journey ${journey.id} ya existe en Firebase`);
+        console.log(`Journey ${journey.id} ya existe en Firebase`);
       }
     }
     
-    console.log(`✅ Verificación de journeys activos completada`);
+    console.log(`Verificación de journeys activos completada`);
   } catch (error) {
-    console.error('❌ Error verificando journeys activos:', error);
-    // No lanzar error para no interrumpir la carga de la app
+    console.error('Error verificando journeys activos:', error);
   }
 }

@@ -14,6 +14,8 @@ import * as ImagePicker from 'expo-image-picker';
 import { User, ValidationStatus } from '@/lib/storage/useUserStorage';
 import { uploadUserPhotoAsync, deleteUserPhoto } from '@/api/firebase/storage/photoService';
 import { useState } from 'react';
+import { useAuth } from '@clerk/clerk-expo';
+import { useTokenStore } from '@/lib/auth/tokenStore';
 
 interface profileHeaderProps {
   user: User;
@@ -29,13 +31,15 @@ export default function ProfileHeader({
 }: profileHeaderProps) {
 
   const [isUploading, setIsUploading] = useState(false);
-
-  // ✅ Log para ver la info del usuario
+  const { getToken } = useAuth();
+  const setToken = useTokenStore((state) => state.setToken);
+  
   console.log('ProfileHeader - Usuario:', {
     id: user.id,
     name: user.name,
     email: user.email,
     verify: user.verify,
+    clerkId: user.clerkId,
     verifyType: typeof user.verify,
     image: user.image ? 'Tiene imagen' : 'Sin imagen',
   });
@@ -104,10 +108,12 @@ export default function ProfileHeader({
         quality: 0.8,
       });
 
+      const token = await getToken();
+      setToken(token);
+
       if (!result.canceled && result.assets?.[0]) {
         setIsUploading(true);
 
-        // Delete old photo if exists
         if (user.image) {
           try {
             await deleteUserPhoto(user.image);
@@ -119,7 +125,7 @@ export default function ProfileHeader({
         // Upload new photo
         const downloadURL = await uploadUserPhotoAsync(
           result.assets[0].uri,
-          user.idClerk!,
+          user.clerkId!,
           'profile'
         );
 

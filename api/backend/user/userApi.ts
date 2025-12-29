@@ -25,7 +25,6 @@ export const deleteUser = async (id: number): Promise<void> => {
   await api.delete(`/user/${id}`);
 };
 
-// Puede devolver el id del usuario o null si no existe
 export const checkIfUserExists = async (phone: string): Promise<number | null> => {
   const response = await api.get(`/user/exists/${encodeURIComponent(phone)}`);
   return response.data;
@@ -39,17 +38,14 @@ export const addPhotoToUser = async (id: number, photoUrl: string): Promise<void
   });
 };
 
-/**
- * Obtener todos los usuarios no verificados (solo admin)
- */
 export const getUsersPendingVerification = async (): Promise<UserDto[]> => {
   try {
-    console.log('📋 Obteniendo usuarios pendientes de verificación...');
+    console.log('Obteniendo usuarios pendientes de verificación...');
     const response = await api.get<UserDto[]>('/user/unverified');
-    console.log(`✅ ${response.data.length} usuarios pendientes`);
+    console.log(`${response.data.length} usuarios pendientes`);
     return response.data;
   } catch (error) {
-    console.error('❌ Error obteniendo usuarios pendientes:', error);
+    console.error('Error obteniendo usuarios pendientes:', error);
     throw error;
   }
 };
@@ -66,7 +62,7 @@ export const updateUserVerificationStatus = async (
     await api.post(`/user/${userId}/verify?verified=${status}`);
     console.log('Estado de verificación actualizado');
   } catch (error) {
-    console.log('❌ Error actualizando verificación:', error);
+    console.log('Error actualizando verificación:', error);
     throw error;
   }
 };

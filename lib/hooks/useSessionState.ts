@@ -14,7 +14,7 @@ export type SessionState = "checking" | "noSession" | "needsProfile" | "ready" |
 export function useSessionState() {
   const { isLoaded, isSignedIn, getToken, signOut } = useAuth();
   const { user: clerkUser } = useUser();
-  const { user: localUser, clearUser } = useUserStore(); // ✅ Obtener usuario del store local
+  const { user: localUser, clearUser } = useUserStore();
   const [state, setState] = useState<SessionState>("checking");
   const setToken = useTokenStore(s => s.setToken);
 
@@ -26,7 +26,7 @@ export function useSessionState() {
    */
   const cleanupClerkUser = async (reason: string) => {
     try {
-      console.log(`🗑️ Borrando usuario de Clerk: ${reason}`);
+      console.log(`Borrando usuario de Clerk: ${reason}`);
       
       // 1. Desvincular Firebase
       await unlinkFirebaseSession().catch(() => {});
@@ -34,16 +34,16 @@ export function useSessionState() {
       // 2. Borrar usuario de Clerk (libera email/teléfono)
       if (clerkUser) {
         await clerkUser.delete();
-        console.log("✅ Usuario borrado de Clerk");
+        console.log("Usuario borrado de Clerk");
       }
 
       // 3. Cerrar sesión
       await signOut();
-      console.log("🔒 Sesión cerrada");
+      console.log("Sesión cerrada");
 
       setState("noSession");
     } catch (error) {
-      console.error("❌ Error al limpiar Clerk:", error);
+      console.error("Error al limpiar Clerk:", error);
       
       // Fallback: al menos cerrar sesión
       try {
@@ -51,7 +51,7 @@ export function useSessionState() {
         await signOut();
         setState("noSession");
       } catch (signOutError) {
-        console.error("❌ Error crítico cerrando sesión:", signOutError);
+        console.error("Error crítico cerrando sesión:", signOutError);
         setState("noSession");
       }
     }
@@ -59,7 +59,7 @@ export function useSessionState() {
 
   useEffect(() => {
     if (!isLoaded) {
-      console.log("⏳ Clerk aún no cargó...");
+      console.log("Clerk aún no cargó...");
       return;
     }
 
@@ -74,14 +74,14 @@ export function useSessionState() {
         return;
       }
 
-      if (localUser && localUser.idClerk && clerkUser && localUser.idClerk !== clerkUser.id) {
+      if (localUser && localUser.clerkId && clerkUser && localUser.clerkId !== clerkUser.id) {
         console.log(
           "Usuario local pertenece a otra sesión de Clerk. Limpiando store local."
         );
         clearUser();
       }
 
-      const effectiveLocalUser = (localUser && localUser.idClerk === clerkUser?.id)
+      const effectiveLocalUser = (localUser && localUser.clerkId === clerkUser?.id)
         ? localUser
         : undefined;
 
@@ -91,16 +91,15 @@ export function useSessionState() {
         console.log("Rol del usuario:", localUser?.role);
 
         if (localUser?.role === 'ADMIN') {
-          console.log("👑 Usuario es ADMIN → Estado: admin");
+          console.log("Usuario es ADMIN → Estado: admin");
           setState("admin");
         } else {
-          console.log("👤 Usuario normal → Estado: ready");
+          console.log("Usuario normal → Estado: ready");
           setState("ready");
         }
         return;
       }
 
-      // A partir de aquí: hay sesión en Clerk, pero NO usuario local → mirar backend
       try {
         const token = await getToken();
         if (!token) {
@@ -117,7 +116,6 @@ export function useSessionState() {
         return;
       }
 
-      // Verificar si existe en el backend
       try {
         const user = await getCurrentUser();
         
@@ -134,10 +132,10 @@ export function useSessionState() {
           
           // Verificar rol y establecer estado
           if (user.role === 'ADMIN') {
-            console.log("👑 Usuario es ADMIN → Estado: admin");
+            console.log("Usuario es ADMIN → Estado: admin");
             setState("admin");
           } else {
-            console.log("👤 Usuario normal → Estado: ready");
+            console.log("Usuario normal → Estado: ready");
             setState("ready");
           }
         } else {
@@ -177,7 +175,7 @@ export function useSessionState() {
     };
 
     validateSession();
-  }, [isLoaded, isSignedIn, clerkUser?.id, localUser?.id, localUser?.role, localUser?.idClerk]);
+  }, [isLoaded, isSignedIn, clerkUser?.id, localUser?.id, localUser?.role, localUser?.clerkId]);
 
   return { state, cleanupClerkUser };
 }

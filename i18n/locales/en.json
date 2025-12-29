@@ -178,7 +178,7 @@
     "activeJourney": "Active Journey",
     "inProgress": "In progress",
     "pending": "Pending",
-    "appName": "Aegis",
+    "appName": "Aeghis",
     "tapToStart": "Tap to start a journey"
   },
   "journeyCreationHeader": {
@@ -599,7 +599,7 @@
       "subtitle": "We're here to help you",
       "feedback": {
         "title": "Share Your Feedback",
-        "description": "Your opinion is very valuable to us. Help us improve Aegis by sharing your experience.",
+        "description": "Your opinion is very valuable to us. Help us improve Aeghis by sharing your experience.",
         "button": "Send Feedback",
         "comingSoon": {
           "title": "Coming Soon",
@@ -613,7 +613,7 @@
         "reportIssue": "Report an issue",
         "askQuestion": "Ask a question",
         "button": "Contact Support",
-        "emailSubject": "Aegis Support - Inquiry",
+        "emailSubject": "Aeghis Support - Inquiry",
         "error": {
           "title": "Error",
           "message": "Could not open email client. Please contact {{email}} manually."
@@ -849,9 +849,9 @@
       }
     },
     "summary": {
-      "title": "Welcome to Aegis!",
+      "title": "Welcome to Aeghis!",
       "subtitle": "Your account has been successfully created",
-      "description": "You are ready to start enjoying all the features that Aegis has to offer.",
+      "description": "You are ready to start enjoying all the features that Aeghis has to offer.",
       "buttons": {
         "start": "Start Experience",
         "loading": "Setting up...",
@@ -864,7 +864,7 @@
         "notifications": "Setting up notifications...",
         "realtime": "Setting up real-time services...",
         "finalizing": "Finalizing setup...",
-        "welcome": "Welcome to Aegis!"
+        "welcome": "Welcome to Aeghis!"
       },
       "errors": {
         "noUserData": "No user data available.",
@@ -890,7 +890,7 @@
     }
   },
   "welcome": {
-    "title": "Welcome to Aegis!",
+    "title": "Welcome to Aeghis!",
     "signUp": "Sign Up",
     "alreadyHaveAccount": "Already have an account?",
     "logIn": "Log In",
