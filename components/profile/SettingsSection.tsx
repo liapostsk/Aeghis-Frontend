@@ -67,10 +67,10 @@ export default function SettingsSection({onDelete, onLogout}: settingsSectionPro
           <Ionicons name="chevron-forward" size={24} color="#7A33CC" style={styles.chevron} />
         </Pressable>
       </View>
-      <View style={styles.section}>
-        <Pressable style={styles.logOut} onPress={() => setShowLogoutModal(true)}>
-          <Ionicons name="help-circle" size={24} color="#7A33CC" />
-          <Text style={styles.settingText}>{t('profile.settings.logout')}</Text>
+      <View style={styles.logoutSection}>
+        <Pressable style={styles.logoutButton} onPress={() => setShowLogoutModal(true)}>
+          <Ionicons name="log-out-outline" size={24} color="#ff4444" />
+          <Text style={styles.logoutText}>{t('profile.settings.logout')}</Text>
         </Pressable>
       </View>
       {/* Modal de confirmación */}
@@ -151,10 +151,26 @@ const styles = StyleSheet.create({
   lastSettingItem: {
     borderBottomWidth: 0,
   },
-  logOut: {
+  logoutSection: {
+    backgroundColor: 'white',
+    borderRadius: 15,
+    margin: 16,
+    marginTop: 8,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#ffdddd',
+  },
+  logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     padding: 16,
+  },
+  logoutText: {
+    marginLeft: 15,
+    fontSize: 16,
+    color: '#ff4444',
+    fontWeight: '600',
   },
   settingText: {
     marginLeft: 15,

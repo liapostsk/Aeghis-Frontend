@@ -4,9 +4,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useEffect } from "react";
 import { useUserStore } from "@/lib/storage/useUserStorage";
 import { useChatNotifications } from "@/lib/hooks/useChatNotifications";
+import { useTranslation } from 'react-i18next';
 
 export default function HomeLayout() {
   const { isLoaded } = useAuth();
+  const { t } = useTranslation();
 
   if (!isLoaded) return null;
 
@@ -45,8 +47,8 @@ export default function HomeLayout() {
         <Tabs.Screen
           name="index"
           options={{
-            tabBarLabel: "Map",
-            title: "Map",
+            tabBarLabel: t('tabs.map'),
+            title: t('tabs.map'),
             headerShown: false,
             tabBarIcon: ({ color, focused }) => (
               <Ionicons name={focused ? "map" : "map-outline"} size={24} color={color} />
@@ -57,8 +59,8 @@ export default function HomeLayout() {
         <Tabs.Screen
           name="groups"
           options={{
-            tabBarLabel: "Groups",
-            title: "Groups",
+            tabBarLabel: t('tabs.groups'),
+            title: t('tabs.groups'),
             headerShown: false,
             tabBarIcon: ({ color, focused }) => (
               <Ionicons name={focused ? "people" : "people-outline"} size={24} color={color} />
@@ -70,8 +72,8 @@ export default function HomeLayout() {
           name="profile"
           options={{
             headerShown: false,
-            tabBarLabel: "Profile",
-            title: "Profile",
+            tabBarLabel: t('tabs.profile'),
+            title: t('tabs.profile'),
             headerTransparent: true,
             headerTintColor: '#fff',
             tabBarIcon: ({ color, focused }) => (

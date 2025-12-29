@@ -120,9 +120,9 @@ export default function EmergencyContactsSection() {
         const externalContact = selectedContact as ExternalContact;
         const externalContactUpdate: ExternalContact = {
           id: externalContact.id!,
-          name: externalContact.name,
-          phone: externalContact.phone,
-          relation: externalContact.relation,
+          name: updatedContact.name || externalContact.name,
+          phone: updatedContact.phone || externalContact.phone,
+          relation: updatedContact.relation || externalContact.relation,
         };
         await editExternalContact(selectedContact.id!, externalContactUpdate);
       }

@@ -1,4 +1,9 @@
 {
+  "tabs": {
+    "map": "Mapa",
+    "groups": "Grupos",
+    "profile": "Perfil"
+  },
   "map": {
     "journeyActive": {
       "title": "Journey Activo",
