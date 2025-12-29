@@ -340,6 +340,34 @@
       "description": "Introdueix un codi de 8 dígits per unir-te a un grup existent"
     }
   },
+  "joinGroupModal": {
+    "title": "Unir-se a Grup",
+    "subtitle": "Introdueix el codi d'invitació de 8 caràcters",
+    "invitationCode": "Codi d'Invitació",
+    "placeholder": "XXXX-XXXX",
+    "paste": "Enganxar",
+    "characters": "caràcters",
+    "info": "Demana a l'administrador del grup el codi d'invitació. El codi conté 8 caràcters usant lletres (excloent I, O) i números (excloent 0, 1).",
+    "exampleTitle": "Format del Codi Exemple:",
+    "troubleshoot": {
+      "title": "Tens problemes?",
+      "checkCode": "Assegura't d'haver introduït el codi exactament com s'ha proporcionat",
+      "checkExpired": "Verifica que el codi d'invitació no hagi expirat",
+      "contactAdmin": "Contacta amb l'administrador del grup per un nou codi si és necessari"
+    },
+    "buttons": {
+      "cancel": "Cancel·lar",
+      "joining": "Unint-se...",
+      "join": "Unir-se al Grup"
+    },
+    "alerts": {
+      "invalidCodeTitle": "Codi Invàlid",
+      "invalidCodeMessage": "Si us plau, introdueix un codi complet de 8 caràcters",
+      "errorTitle": "Error",
+      "userMissing": "Falta informació de l'usuari. Si us plau, inicia sessió novament.",
+      "invalidCode": "Codi invàlid o grup no trobat. Si us plau, verifica el codi i torna-ho a intentar."
+    }
+  },
   "admin": {
     "title": "Panell Admin",
     "subtitle": "Verificacions Pendents",

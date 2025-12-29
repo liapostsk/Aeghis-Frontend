@@ -1,5 +1,4 @@
-// File: components/groups/JoinGroupModal.tsx
-import React, { useState, useRef } from 'react';
+import { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -16,6 +15,8 @@ import { useTokenStore } from '@/lib/auth/tokenStore';
 import { joinGroup } from '@/api/backend/group/groupApi';
 import { useUserStore } from '@/lib/storage/useUserStorage';
 import { joinGroupChatFirebase } from '@/api/firebase/chat/chatService';
+import { useTranslation } from 'react-i18next';
+import * as Clipboard from 'expo-clipboard';
 
 interface JoinGroupModalProps {
   visible: boolean;
@@ -24,6 +25,7 @@ interface JoinGroupModalProps {
 }
 
 export default function JoinGroupModal({ visible, onClose, onSuccess }: JoinGroupModalProps) {
+  const { t } = useTranslation();
   const [code, setCode] = useState('');
   const [isJoining, setIsJoining] = useState(false);
   const inputRef = useRef<TextInput>(null);
@@ -61,7 +63,7 @@ export default function JoinGroupModal({ visible, onClose, onSuccess }: JoinGrou
 
   const handleJoinGroup = async () => {
     if (code.length !== 8) {
-      Alert.alert('Invalid Code', 'Please enter a complete 8-character code');
+      Alert.alert(t('joinGroupModal.alerts.invalidCodeTitle'), t('joinGroupModal.alerts.invalidCodeMessage'));
       return;
     }
 
@@ -74,43 +76,37 @@ export default function JoinGroupModal({ visible, onClose, onSuccess }: JoinGrou
       setToken(token);
 
       if (!user || typeof user.id !== 'number') {
-        Alert.alert('Error', 'User information is missing. Please log in again.');
+        Alert.alert(t('joinGroupModal.alerts.errorTitle'), t('joinGroupModal.alerts.userMissing'));
         setIsJoining(false);
         return;
       }
-      console.log("HOLAAAA 1")
-      // Llamada a la API para unirse al grupo
       const response = await joinGroup(user.id, code);
 
       if (onSuccess) {
-        console.log("HOLAAAA 2")
         console.log("Code usado para unirse al grupo:", response);
-        // Unirse al chat del grupo en Firebase
         const responseFb = await joinGroupChatFirebase(String(response));
         console.log("Respuesta de Firebase al unirse al chat del grupo:", responseFb);
-        console.log("HOLAAAA 3")
         onSuccess();
       } else {
-        onClose(); // Fallback si no hay onSuccess
+        onClose();
       }
       
     } catch (error) {
-      Alert.alert('Error', 'Invalid code or group not found. Please check the code and try again.');
+      Alert.alert(t('joinGroupModal.alerts.errorTitle'), t('joinGroupModal.alerts.invalidCode'));
     } finally {
       setIsJoining(false);
     }
   };
 
   const handlePasteCode = async () => {
-    // En una app real usarías Clipboard de react-native
-    // import Clipboard from '@react-native-clipboard/clipboard';
-    // const clipboardText = await Clipboard.getString();
-    
-    // Simulando paste
-    const simulatedClipboard = 'ABC123XY'; // Ejemplo
-    const validatedCode = validateCode(simulatedClipboard);
-    if (validatedCode.length > 0) {
-      setCode(validatedCode);
+    try {
+      const clipboardText = await Clipboard.getStringAsync();
+      const validatedCode = validateCode(clipboardText);
+      if (validatedCode.length > 0) {
+        setCode(validatedCode);
+      }
+    } catch (error) {
+      console.error('Error pasting from clipboard:', error);
     }
   };
 
@@ -128,8 +124,8 @@ export default function JoinGroupModal({ visible, onClose, onSuccess }: JoinGrou
             <Ionicons name="close" size={24} color="#7A33CC" />
           </Pressable>
           <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>Join Group</Text>
-            <Text style={styles.headerSubtitle}>Enter the 8-character invitation code</Text>
+            <Text style={styles.headerTitle}>{t('joinGroupModal.title')}</Text>
+            <Text style={styles.headerSubtitle}>{t('joinGroupModal.subtitle')}</Text>
           </View>
           <View style={styles.placeholder} />
         </View>
@@ -137,29 +133,29 @@ export default function JoinGroupModal({ visible, onClose, onSuccess }: JoinGrou
         <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
           {/* Code Input Section */}
           <View style={styles.inputSection}>
-            <Text style={styles.label}>Invitation Code</Text>
+            <Text style={styles.label}>{t('joinGroupModal.invitationCode')}</Text>
             <View style={styles.codeInputContainer}>
               <TextInput
                 ref={inputRef}
                 style={styles.codeInput}
                 value={formatCode(code)}
                 onChangeText={handleCodeChange}
-                placeholder="XXXX-XXXX"
+                placeholder={t('joinGroupModal.placeholder')}
                 placeholderTextColor="#999"
                 autoCapitalize="characters"
                 autoCorrect={false}
-                maxLength={9} // 8 caracteres + 1 guión
+                maxLength={9}
                 keyboardType="default"
                 textAlign="center"
               />
               <Pressable style={styles.pasteButton} onPress={handlePasteCode}>
                 <Ionicons name="clipboard" size={20} color="#7A33CC" />
-                <Text style={styles.pasteText}>Paste</Text>
+                <Text style={styles.pasteText}>{t('joinGroupModal.paste')}</Text>
               </Pressable>
             </View>
             
             <View style={styles.progressContainer}>
-              <Text style={styles.progressText}>{code.length}/8 characters</Text>
+              <Text style={styles.progressText}>{code.length}/8 {t('joinGroupModal.characters')}</Text>
               <View style={styles.progressBar}>
                 <View 
                   style={[
@@ -176,14 +172,13 @@ export default function JoinGroupModal({ visible, onClose, onSuccess }: JoinGrou
             <View style={styles.infoBox}>
               <Ionicons name="information-circle" size={20} color="#7A33CC" />
               <Text style={styles.infoText}>
-                Ask the group admin for the invitation code. The code contains 8 characters 
-                using letters (excluding I, O) and numbers (excluding 0, 1).
+                {t('joinGroupModal.info')}
               </Text>
             </View>
 
             {/* Code Format Example */}
             <View style={styles.exampleBox}>
-              <Text style={styles.exampleTitle}>Code Format Example:</Text>
+              <Text style={styles.exampleTitle}>{t('joinGroupModal.exampleTitle')}</Text>
               <View style={styles.exampleCode}>
                 <Text style={styles.exampleText}>ABCD-2E3F</Text>
               </View>
@@ -192,23 +187,23 @@ export default function JoinGroupModal({ visible, onClose, onSuccess }: JoinGrou
 
           {/* Troubleshooting */}
           <View style={styles.troubleshootSection}>
-            <Text style={styles.troubleshootTitle}>Having trouble?</Text>
+            <Text style={styles.troubleshootTitle}>{t('joinGroupModal.troubleshoot.title')}</Text>
             <View style={styles.troubleshootItem}>
               <Ionicons name="checkmark-circle" size={16} color="#7A33CC" />
               <Text style={styles.troubleshootText}>
-                Make sure you've entered the code exactly as provided
+                {t('joinGroupModal.troubleshoot.checkCode')}
               </Text>
             </View>
             <View style={styles.troubleshootItem}>
               <Ionicons name="checkmark-circle" size={16} color="#7A33CC" />
               <Text style={styles.troubleshootText}>
-                Check if the invitation code hasn't expired
+                {t('joinGroupModal.troubleshoot.checkExpired')}
               </Text>
             </View>
             <View style={styles.troubleshootItem}>
               <Ionicons name="checkmark-circle" size={16} color="#7A33CC" />
               <Text style={styles.troubleshootText}>
-                Contact the group admin for a new code if needed
+                {t('joinGroupModal.troubleshoot.contactAdmin')}
               </Text>
             </View>
           </View>
@@ -217,7 +212,7 @@ export default function JoinGroupModal({ visible, onClose, onSuccess }: JoinGrou
         {/* Footer */}
         <View style={styles.footer}>
           <Pressable style={styles.cancelButton} onPress={onClose}>
-            <Text style={styles.cancelButtonText}>Cancel</Text>
+            <Text style={styles.cancelButtonText}>{t('joinGroupModal.buttons.cancel')}</Text>
           </Pressable>
           <Pressable 
             style={[
@@ -228,9 +223,9 @@ export default function JoinGroupModal({ visible, onClose, onSuccess }: JoinGrou
             disabled={code.length !== 8 || isJoining}
           >
             {isJoining ? (
-              <Text style={styles.joinButtonText}>Joining...</Text>
+              <Text style={styles.joinButtonText}>{t('joinGroupModal.buttons.joining')}</Text>
             ) : (
-              <Text style={styles.joinButtonText}>Join Group</Text>
+              <Text style={styles.joinButtonText}>{t('joinGroupModal.buttons.join')}</Text>
             )}
           </Pressable>
         </View>

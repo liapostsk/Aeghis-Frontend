@@ -340,6 +340,34 @@
       "description": "Ingresa un código de 8 dígitos para unirte a un grupo existente"
     }
   },
+  "joinGroupModal": {
+    "title": "Unirse a Grupo",
+    "subtitle": "Ingresa el código de invitación de 8 caracteres",
+    "invitationCode": "Código de Invitación",
+    "placeholder": "XXXX-XXXX",
+    "paste": "Pegar",
+    "characters": "caracteres",
+    "info": "Pide al administrador del grupo el código de invitación. El código contiene 8 caracteres usando letras (excluyendo I, O) y números (excluyendo 0, 1).",
+    "exampleTitle": "Formato del Código Ejemplo:",
+    "troubleshoot": {
+      "title": "¿Tienes problemas?",
+      "checkCode": "Asegúrate de haber ingresado el código exactamente como se proporcionó",
+      "checkExpired": "Verifica que el código de invitación no haya expirado",
+      "contactAdmin": "Contacta al administrador del grupo para un nuevo código si es necesario"
+    },
+    "buttons": {
+      "cancel": "Cancelar",
+      "joining": "Uniéndose...",
+      "join": "Unirse al Grupo"
+    },
+    "alerts": {
+      "invalidCodeTitle": "Código Inválido",
+      "invalidCodeMessage": "Por favor ingresa un código completo de 8 caracteres",
+      "errorTitle": "Error",
+      "userMissing": "Falta información del usuario. Por favor, inicia sesión nuevamente.",
+      "invalidCode": "Código inválido o grupo no encontrado. Por favor verifica el código e intenta nuevamente."
+    }
+  },
   "admin": {
     "title": "Panel Admin",
     "subtitle": "Verificaciones Pendientes",
