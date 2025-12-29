@@ -332,15 +332,15 @@ const styles = StyleSheet.create({
     color: '#1F2937',
   },
   headerBarSpacer: {
-    width: 40, // Mismo ancho que el botón para centrar el título
+    width: 40,
   },
   container: {
     flex: 1,
     backgroundColor: '#F9FAFB',
   },
   content: {
-    padding: 20,
-    paddingBottom: 40,
+    padding: 12,
+    paddingBottom: 100,
   },
   header: {
     alignItems: 'center',

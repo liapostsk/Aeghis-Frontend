@@ -209,7 +209,7 @@ export default function CompanionsGroups() {
       const group = await getGroupById(request.companionGroupId);
       
       if (group) {
-        console.log('🗨️ Navegando al chat del grupo:', group.name);
+        console.log('Navegando al chat del grupo:', group.name);
         
         // Navegar al chat del grupo
         router.push(`/chat?groupId=${group.id}`);
@@ -220,7 +220,7 @@ export default function CompanionsGroups() {
         );
       }
     } catch (error) {
-      console.error('❌ Error abriendo chat:', error);
+      console.error('Error abriendo chat:', error);
       Alert.alert(t('groups.companion.alerts.errorTitle'), t('groups.companion.alerts.couldNotOpenChat'));
     } finally {
       setRefreshing(false);

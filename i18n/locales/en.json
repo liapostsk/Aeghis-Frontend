@@ -261,7 +261,7 @@
       "descriptionPlaceholder": "What's this group about?"
     },
     "infoBox": {
-      "confianza": "Trusted groups have enhanced security features and are perfect for family and close friends.",
+      "confianza": "Trusted groups are permanent and are perfect for family and close friends.",
       "temporal": "TEMPORAL groups are automatically deleted after the specified duration.",
       "companion": "COMPANION groups help you find people with similar interests and activities."
     },
@@ -394,7 +394,7 @@
     "confianza": {
       "emptyTitle": "No trusted groups yet",
       "emptySubtitle": "Create one with the + button",
-      "noteText": "These groups are permanent"
+      "noteText": "These groups are permanent 🔒"
     },
     "temporal": {
       "emptyTitle": "No temporary groups yet",

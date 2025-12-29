@@ -132,12 +132,10 @@ const GroupsList = React.forwardRef<GroupsListRef, Props>(({ groupType, emptyTit
             </View>
           }
           renderItem={({ item }) => {
-            const initials = getInitials(item.name);
             const memberCount = item.membersIds?.length || 1;
             const status = stateLabel(item.state);
             const tile = tilesById[String(item.id)];
             
-            // Debug temporal para identificar el problema
             console.log(`Tile para grupo ${item.id}:`, tile);
             
             // Verificación robusta del mensaje

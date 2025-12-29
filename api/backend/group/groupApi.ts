@@ -71,6 +71,7 @@ export const removeMember = async (groupId: number, userId: number): Promise<voi
 };
 
 export const addPhotoToGroup = async (groupId: number, photoUrl: string): Promise<void> => {
+  console.log("API: Añadiendo foto al grupo:", groupId, photoUrl);
   await api.post(`/group/${groupId}/photo`, photoUrl, {
     headers: {
       'Content-Type': 'text/plain',

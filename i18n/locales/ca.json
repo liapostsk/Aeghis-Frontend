@@ -261,7 +261,7 @@
       "descriptionPlaceholder": "De què tracta aquest grup?"
     },
     "infoBox": {
-      "confianza": "Els grups de confiança tenen característiques de seguretat millorades i són perfectes per a família i amics íntims.",
+      "confianza": "Els grups de confiança són permanents i són perfectes per a família i amics íntims.",
       "temporal": "Els grups TEMPORALS s'eliminen automàticament després de la durada especificada.",
       "companion": "Els grups COMPANION t'ajuden a trobar persones amb interessos i activitats similars."
     },
@@ -388,13 +388,13 @@
     "layout": {
       "confianza": "Confiança",
       "temporal": "Temporal",
-      "companion": "Companion",
+      "companion": "Companyia",
       "search": "Cercar"
     },
     "confianza": {
       "emptyTitle": "Encara no tens grups de confiança",
       "emptySubtitle": "Crea'n un amb el botó +",
-      "noteText": "Aquests grups són permanents"
+      "noteText": "Aquests grups són permanents 🔒"
     },
     "temporal": {
       "emptyTitle": "Encara no tens grups temporals",
