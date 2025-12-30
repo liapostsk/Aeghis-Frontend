@@ -50,9 +50,6 @@ export const getUsersPendingVerification = async (): Promise<UserDto[]> => {
   }
 };
 
-/**
- * Actualizar el estado de verificación de un usuario (solo admin)
- */
 export const updateUserVerificationStatus = async (
   userId: number,
   status: ValidationStatus

@@ -53,13 +53,14 @@ export default function AdminVerificationScreen() {
       const token = await getToken();
       setToken(token);
       const pendingUsers = await getUsersPendingVerification();
-      console.log(`📋 ${pendingUsers.length} ${t('admin.pendingUsers')}`);
+      console.log(`${pendingUsers.length} ${t('admin.pendingUsers')}`);
+      console.log("Cargando fotos de verificación de usuarios...", pendingUsers);
 
       const usersWithPhotos = await Promise.all(
         pendingUsers.map(async (user) => {
         try {
           if (!user.clerkId) {
-            console.warn(`⚠️ Usuario ${user.name} no tiene clerkId`);
+            console.warn(`Usuario ${user.name} no tiene clerkId`);
             return { ...user, photosLoaded: false };
           }
             const token = await getToken();
