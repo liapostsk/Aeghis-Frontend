@@ -126,7 +126,6 @@ export default function SummaryStep({ onBack }: { onBack: () => void }) {
         await ensureCurrentUserProfile({
           displayName: user?.name || undefined,
           photoURL: clerkUser?.imageUrl || undefined,
-          phone: clerkUser?.phoneNumbers?.[0]?.phoneNumber || undefined,
         });
         
         console.log("Sesión de Firebase vinculada exitosamente");

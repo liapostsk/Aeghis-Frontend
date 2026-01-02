@@ -130,15 +130,14 @@ export default function EmailCaseScreen() {
           await ensureCurrentUserProfile({
             displayName: userData?.name || undefined,
             photoURL: clerkUser?.imageUrl || undefined,
-            phone: clerkUser?.phoneNumbers?.[0]?.phoneNumber || undefined,
           });
           
-          console.log("✅ Sesión de Firebase vinculada exitosamente");
+          console.log("Sesión de Firebase vinculada exitosamente");
           
         } catch (firebaseError) {
-          console.error("❌ Error vinculando sesión de Firebase:", firebaseError);
+          console.error("Error vinculando sesión de Firebase:", firebaseError);
           // No bloquear el acceso - Firebase es opcional para funcionalidades básicas
-          console.warn("⚠️ Continuando sin Firebase - Funcionalidades de chat limitadas");
+          console.warn("Continuando sin Firebase - Funcionalidades de chat limitadas");
         }
 
         setLoadingMessage(t('login.loadingSteps.welcome'));

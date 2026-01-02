@@ -5,25 +5,14 @@ import { ParticipationState } from '../backend/participations/participationType'
 // Firebase User Profile Types
 export interface FirebaseUserProfile {
   displayName: string | null;
-  photoURL: string | null;
-  phone: string | null;
-  createdAt: any;
   lastSeen: any;
   isOnline: boolean;
   batteryLevel: number | null;
 }
 
-export interface FirebaseUserProfileUpdate {
-  displayName?: string;
-  photoURL?: string;
-  phone?: string;
-  batteryLevel?: number;
-}
-
 export interface FirebaseUserProfileOptions {
   displayName?: string;
   photoURL?: string;
-  phone?: string;
   batteryLevel?: number;
 }
 

@@ -1,15 +1,13 @@
 import { auth, db } from "@/firebaseconfig";
 import { doc, getDoc, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import type { 
-  FirebaseUserProfile, 
-  FirebaseUserProfileUpdate, 
+  FirebaseUserProfile,
   FirebaseUserProfileOptions,
 } from '../types';
 
 export async function ensureCurrentUserProfile(opts?: FirebaseUserProfileOptions) {
   const uid = auth.currentUser?.uid;
   console.log('ensureCurrentUserProfile - Usuario actual:', uid);
-  console.log('ensureCurrentUserProfile - Opciones:', opts);
   
   if (!uid) {
     console.error('No hay sesión Firebase en ensureCurrentUserProfile');
@@ -25,9 +23,6 @@ export async function ensureCurrentUserProfile(opts?: FirebaseUserProfileOptions
       console.log('Creando nuevo perfil de usuario...');
       const newProfile: FirebaseUserProfile = {
         displayName: opts?.displayName ?? null,
-        photoURL: opts?.photoURL ?? null,
-        phone: opts?.phone ?? null,
-        createdAt: serverTimestamp(),
         lastSeen: serverTimestamp(),
         isOnline: true,
         batteryLevel: opts?.batteryLevel ?? null,
@@ -41,7 +36,6 @@ export async function ensureCurrentUserProfile(opts?: FirebaseUserProfileOptions
         lastSeen: serverTimestamp(),
         ...(opts?.displayName ? { displayName: opts.displayName } : {}),
         ...(opts?.photoURL ? { photoURL: opts.photoURL } : {}),
-        ...(opts?.phone ? { phone: opts.phone } : {}),
         ...(opts?.batteryLevel !== undefined ? { batteryLevel: opts.batteryLevel } : {}),
       });
       console.log('Perfil de usuario actualizado exitosamente');
@@ -57,7 +51,6 @@ export async function ensureCurrentUserProfile(opts?: FirebaseUserProfileOptions
   }
 }
 
-// Función para actualizar el perfil, al cerrar sesion de firebase
 export async function updateUserProfileOnLogout() {
   const uid = auth.currentUser?.uid;
   console.log('updateUserProfileOnLogout - Usuario:', uid);
@@ -99,7 +92,6 @@ export async function updateUserBatteryLevel(batteryLevel: number) {
     throw new Error('No hay sesión Firebase');
   }
 
-  // Validar que el nivel esté entre 0 y 100
   if (batteryLevel < 0 || batteryLevel > 100) {
     console.warn('Nivel de batería fuera de rango:', batteryLevel, '- Ajustando a rango válido');
     batteryLevel = Math.max(0, Math.min(100, batteryLevel));
@@ -124,21 +116,6 @@ export async function updateUserBatteryLevel(batteryLevel: number) {
     throw error;
   }
 }
-
-// Función interna para obtener batería (no exportada)
-async function getUserBatteryLevel(uid: string): Promise<number | null> {
-  const ref = doc(db, 'users', uid);
-  const snap = await getDoc(ref);
-
-  if (snap.exists()) {
-    const data = snap.data() as FirebaseUserProfile;
-    return data.batteryLevel;
-  } else {
-    return null; // En lugar de error, devolver null
-  }
-}
-
-// Obtener información completa de batería de múltiples usuarios
 export async function getMultipleUsersBatteryInfo(userIds: string[]): Promise<Record<string, { batteryLevel: number | null; lastSeen: any; isOnline: boolean }>> {
   console.log('getMultipleUsersBatteryInfo - Usuarios:', userIds.length);
   
@@ -204,11 +181,6 @@ export async function getMultipleUsersBatteryInfo(userIds: string[]): Promise<Re
   }
 }
 
-/**
- * Obtener perfil completo de un usuario por su Clerk ID
- * @param clerkId ID de Clerk del usuario
- * @returns Perfil completo del usuario
- */
 export async function getUserProfileFB(clerkId: string): Promise<FirebaseUserProfile> {
   console.log('getUserProfileFB - Obteniendo perfil para:', clerkId);
   
@@ -222,12 +194,8 @@ export async function getUserProfileFB(clerkId: string): Promise<FirebaseUserPro
       return data;
     } else {
       console.log('Usuario no encontrado, devolviendo perfil por defecto');
-      // Devolver perfil por defecto en lugar de error
       return {
         displayName: null,
-        photoURL: null,
-        phone: null,
-        createdAt: serverTimestamp(),
         lastSeen: serverTimestamp(),
         isOnline: false,
         batteryLevel: null,
