@@ -132,7 +132,6 @@ export default function LoginScreen() {
           
         } catch (firebaseError) {
           console.error("Error vinculando sesión de Firebase:", firebaseError);
-          // No bloquear el acceso - Firebase es opcional para funcionalidades básicas
           console.warn("Continuando sin Firebase - Funcionalidades de chat limitadas");
         }
 
