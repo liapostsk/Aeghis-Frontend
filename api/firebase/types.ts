@@ -1,13 +1,11 @@
-export type ChatType = 'CONFIANZA' | 'TEMPORAL' | 'COMPANION';
 import { JourneyType, JourneyState } from '../backend/journeys/journeyType';
 import { ParticipationState } from '../backend/participations/participationType';
 
-// Firebase User Profile Types
 export interface FirebaseUserProfile {
-  displayName: string | null;
   lastSeen: any;
   isOnline: boolean;
   batteryLevel: number | null;
+  displayName?: string;
 }
 
 export interface FirebaseUserProfileOptions {
@@ -16,7 +14,6 @@ export interface FirebaseUserProfileOptions {
   batteryLevel?: number;
 }
 
-// Tipos específicos para battery level
 export interface BatteryInfo {
   level: number;
   timestamp: any;
@@ -28,10 +25,8 @@ export interface UserBatteryUpdate {
 }
 
 export interface ChatDoc {
-  type: ChatType;
   members: string[];
   admins: string[];
-  image?: string;
   ownerId: string;
   lastMessage?: MessageDoc;
   lastMessageAt: any;
@@ -42,7 +37,6 @@ export interface MessageDoc {
   senderId: string;
   senderName: string;
   readBy: string[];
-  type: 'text' | 'image';
   content: string;
   timestamp: any;
 }
@@ -56,8 +50,6 @@ export type GroupTileInfo = {
   unreadCount: number;
   membersCount: number;
 };
-
-// Firebase JOURNEY TYPES:
 
 export interface JourneyDoc {
   ownerId: string;
@@ -83,12 +75,11 @@ export interface Position {
   timestamp: any;
 }
 
-// Position Tile Info
 export type PositionTileInfo = {
   userId: string;
   latitude: number;
   longitude: number;
   accuracy: number;
-  lastUpdated: any;     // Timestamp
+  lastUpdated: any;
   isOnline: boolean;
 };

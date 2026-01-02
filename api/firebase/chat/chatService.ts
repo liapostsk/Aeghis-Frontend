@@ -16,7 +16,7 @@ import {
   getDocs,
   arrayRemove,
 } from 'firebase/firestore';
-import type { ChatDoc, GroupTileInfo, MessageDoc, ChatType } from '../types';
+import type { ChatDoc, GroupTileInfo, MessageDoc } from '../types';
 import { Group } from '../../backend/group/groupType';
 
 /**
@@ -40,14 +40,11 @@ export async function createGroupFirebase(group: Partial<Group>): Promise<string
   try {
     const ownerUid = requireUid();
     const chatRef = doc(db, 'chats', String(group.id));
-    const now = serverTimestamp();
 
     const payload: ChatDoc = {
-      type: group.type as ChatType || 'CONFIANZA',
       admins: ownerUid ? [ownerUid] : [],
       members: ownerUid ? [ownerUid] : [],
       ownerId: ownerUid || '',
-      image: group.imageUrl || '',
       lastMessage: null as unknown as MessageDoc,
       lastMessageAt: "",
     };
@@ -63,7 +60,6 @@ export async function createGroupFirebase(group: Partial<Group>): Promise<string
   }
 }
 
-// Auto-unión a grupo en Firestore
 export async function joinGroupChatFirebase(groupId: string) {
   console.log('joinGroupChatFirebase - Uniéndose al grupo:', groupId);
   
@@ -337,8 +333,8 @@ export  async function getGroupTileInfo(groupId: string): Promise<GroupTileInfo>
   
   try {
     const [chatSnap, seenSnap] = await Promise.all([
-      getDoc(chatRef), // requiere ser miembro (tus reglas)
-      getDoc(doc(db, 'users', uid, 'chatState', String(groupId))), // permitido al propio usuario
+      getDoc(chatRef),
+      getDoc(doc(db, 'users', uid, 'chatState', String(groupId))),
     ]);
 
     console.log(`chatSnap exists: ${chatSnap.exists()}`);
@@ -366,9 +362,6 @@ export  async function getGroupTileInfo(groupId: string): Promise<GroupTileInfo>
       throw new Error(`User ${uid} is not a member of chat ${groupId}`);
     }
 
-    const lastReadAt = seenSnap.exists() ? (seenSnap.data() as any).lastReadAt : null;
-
-    // Cuenta no leídos = mensajes con timestamp > lastReadAt de otros usuarios
     const unreadCount = await getUnreadMessagesCount(groupId);
     
     const result: GroupTileInfo = {
@@ -390,11 +383,6 @@ export  async function getGroupTileInfo(groupId: string): Promise<GroupTileInfo>
   }
 }
 
-/**
- * Obtiene únicamente el número de mensajes no leídos de un chat específico
- * @param groupId ID del grupo/chat
- * @returns Promise<number> - Número de mensajes no leídos
- */
 export async function getUnreadMessagesCount(groupId: string): Promise<number> {
   try {
     const uid = requireUid();
@@ -406,7 +394,6 @@ export async function getUnreadMessagesCount(groupId: string): Promise<number> {
       query(messagesRef, orderBy('timestamp', 'desc'), limit(100))
     );
     
-    // Contar mensajes donde el usuario NO está en readBy y NO es el remitente
     let count = 0;
     messagesSnapshot.docs.forEach(doc => {
       const data = doc.data();
@@ -433,7 +420,6 @@ export async function getUnreadMessagesCount(groupId: string): Promise<number> {
   }
 }
 
-// (Opcional) para varias tarjetas en paralelo:
 export async function getGroupTilesInfo(groupIds: Array<string | number>) {
   console.log(`getGroupTilesInfo para grupos:`, groupIds);
   
@@ -444,7 +430,6 @@ export async function getGroupTilesInfo(groupIds: Array<string | number>) {
       return result;
     } catch (error) {
       console.error(`Error obteniendo tile para grupo ${id}:`, error);
-      // En lugar de fallar todo, devolver null para este grupo específico
       return null;
     }
   });
@@ -455,17 +440,9 @@ export async function getGroupTilesInfo(groupIds: Array<string | number>) {
     success: r !== null 
   })));
   
-  // Filtrar los null (grupos que fallaron) y devolver solo los exitosos
   return results.filter((result): result is GroupTileInfo => result !== null);
 }
 
-// ===== FUNCIONES DE ADMINISTRACIÓN DE GRUPOS =====
-
-/**
- * Promover un usuario a administrador en Firebase
- * @param groupId ID del grupo
- * @param userClerkId Clerk ID del usuario a promover
- */
 export async function makeMemberAdminFirebase(groupId: string, userClerkId: string): Promise<void> {
   console.log('makeMemberAdminFirebase - Promoviendo usuario a admin:', { groupId, userClerkId });
   
@@ -498,11 +475,6 @@ export async function makeMemberAdminFirebase(groupId: string, userClerkId: stri
   }
 }
 
-/**
- * Degradar un administrador a miembro regular en Firebase
- * @param groupId ID del grupo
- * @param userClerkId Clerk ID del usuario a degradar
- */
 export async function removeAdminFirebase(groupId: string, userClerkId: string): Promise<void> {
   console.log('removeAdminFirebase - Degradando admin a miembro:', { groupId, userClerkId });
   
@@ -521,12 +493,10 @@ export async function removeAdminFirebase(groupId: string, userClerkId: string):
       throw new Error('No tienes permisos de administrador');
     }
 
-    // Verificar que no se está auto-degradando si es el único admin
     if (chatData.admins?.length <= 1 && userClerkId === uid) {
       throw new Error('No puedes degradarte siendo el único administrador');
     }
 
-    // Remover el usuario de la lista de admins
     console.log('Removiendo usuario de lista de administradores...');
     await updateDoc(chatRef, {
       admins: arrayRemove(userClerkId),
@@ -540,11 +510,6 @@ export async function removeAdminFirebase(groupId: string, userClerkId: string):
   }
 }
 
-/**
- * Remover un miembro del grupo en Firebase
- * @param groupId ID del grupo
- * @param userClerkId Clerk ID del usuario a remover
- */
 export async function removeMemberFromGroupFirebase(groupId: string, userClerkId: string): Promise<void> {
   console.log('removeMemberFromGroupFirebase - Removiendo miembro:', { groupId, userClerkId });
   
@@ -586,10 +551,6 @@ export async function removeMemberFromGroupFirebase(groupId: string, userClerkId
   }
 }
 
-/**
- * Eliminar un grupo completamente de Firebase
- * @param groupId ID del grupo a eliminar
- */
 export async function deleteGroupFirebase(groupId: string): Promise<void> {
   console.log('deleteGroupFirebase - Eliminando grupo:', groupId);
   
@@ -597,7 +558,6 @@ export async function deleteGroupFirebase(groupId: string): Promise<void> {
     const uid = requireUid();
     const chatRef = doc(db, 'chats', String(groupId));
 
-    // Verificar que el usuario actual es admin/owner
     const chatDoc = await getDoc(chatRef);
     if (!chatDoc.exists()) {
       console.log('Chat ya no existe, considerando como eliminado');
@@ -613,12 +573,7 @@ export async function deleteGroupFirebase(groupId: string): Promise<void> {
     
     const batch = writeBatch(db);
     
-    // Eliminar el documento principal del chat
     batch.delete(chatRef);
-
-    // Nota: En un entorno de producción, deberías usar Cloud Functions
-    // para eliminar las subcollections (messages) de forma segura
-    // Por ahora solo eliminamos el documento principal
     
     await batch.commit();
     console.log('Grupo eliminado exitosamente de Firebase');
@@ -633,10 +588,6 @@ export async function deleteGroupFirebase(groupId: string): Promise<void> {
   }
 }
 
-/**
- * Actualizar información del grupo en Firebase cuando cambia en el backend
- * @param group Datos actualizados del grupo
- */
 export async function updateGroupFirebase(group: Group): Promise<void> {
   console.log('updateGroupFirebase - Actualizando grupo:', group.id, group.name);
   

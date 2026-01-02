@@ -22,7 +22,7 @@ export async function ensureCurrentUserProfile(opts?: FirebaseUserProfileOptions
     if (!snap.exists()) {
       console.log('Creando nuevo perfil de usuario...');
       const newProfile: FirebaseUserProfile = {
-        displayName: opts?.displayName ?? null,
+        displayName: opts?.displayName,
         lastSeen: serverTimestamp(),
         isOnline: true,
         batteryLevel: opts?.batteryLevel ?? null,
@@ -35,7 +35,6 @@ export async function ensureCurrentUserProfile(opts?: FirebaseUserProfileOptions
         isOnline: true,
         lastSeen: serverTimestamp(),
         ...(opts?.displayName ? { displayName: opts.displayName } : {}),
-        ...(opts?.photoURL ? { photoURL: opts.photoURL } : {}),
         ...(opts?.batteryLevel !== undefined ? { batteryLevel: opts.batteryLevel } : {}),
       });
       console.log('Perfil de usuario actualizado exitosamente');
@@ -80,9 +79,6 @@ export async function updateUserProfileOnLogout() {
   }
 }
 
-// ===== FUNCIONES ESPECÍFICAS PARA BATTERY LEVEL =====
-
-// Actualizar solo el nivel de batería del usuario actual
 export async function updateUserBatteryLevel(batteryLevel: number) {
   const uid = auth.currentUser?.uid;
   console.log('updateUserBatteryLevel - Usuario:', uid, 'Nivel:', batteryLevel);
@@ -195,7 +191,6 @@ export async function getUserProfileFB(clerkId: string): Promise<FirebaseUserPro
     } else {
       console.log('Usuario no encontrado, devolviendo perfil por defecto');
       return {
-        displayName: null,
         lastSeen: serverTimestamp(),
         isOnline: false,
         batteryLevel: null,
