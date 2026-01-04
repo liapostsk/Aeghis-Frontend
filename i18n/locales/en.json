@@ -142,8 +142,6 @@
     "startJourney": "Start Journey",
     "createFirstJourney": "Create Your First Journey",
     "groupsAvailable": "You have {{count}} group available",
-    "groupsAvailable_plural": "You have {{count}} groups available",
-    "whichToStart": "Which one do you want to start with?",
     "needGroupToStart": "To start a journey you need a group. What would you like to do?",
     "yourGroups": "Your groups:",
     "member": "member",

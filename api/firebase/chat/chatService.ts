@@ -105,7 +105,6 @@ export async function joinGroupChatFirebaseWithClerkId(groupId: string, clerkId:
 export async function sendMessageFirebase(
   groupId: string, 
   text: string,
-  type: 'text' | 'status' | 'arrival' | 'journey_request' = 'text'
 ) {
   
   try {
@@ -127,7 +126,6 @@ export async function sendMessageFirebase(
     batch.set(newMsgRef, {
       senderId: uid,
       senderName: senderName,
-      type: type,
       content: trimmed,
       readBy: [uid],
       timestamp: serverTimestamp(),

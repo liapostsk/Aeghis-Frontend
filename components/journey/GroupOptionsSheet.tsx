@@ -67,21 +67,14 @@ export default function GroupOptionsSheet({
         </Pressable>
       </View>
 
-      <Text style={styles.subtitle}>
-        {hasGroups 
-          ? `${t('groupOptionsSheet.groupsAvailable', { count: userGroups.length })} ${t('groupOptionsSheet.whichToStart')}`
-          : t('groupOptionsSheet.needGroupToStart')
-        }
-      </Text>
-
-      <ScrollView 
-        style={styles.scrollContainer}
-        contentContainerStyle={styles.optionsContainer}
-        showsVerticalScrollIndicator={false}
-      >
-        {hasGroups ? (
-          <>
-            <Text style={styles.sectionTitle}>{t('groupOptionsSheet.yourGroups')}</Text>
+      {hasGroups && (
+        <>
+          <Text style={styles.sectionTitle}>{t('groupOptionsSheet.yourGroups')}</Text>
+          <ScrollView 
+            style={styles.groupsScrollContainer}
+            contentContainerStyle={styles.groupsContainer}
+            showsVerticalScrollIndicator={true}
+          >
             {userGroups.map((group) => (
               <Pressable 
                 key={group.id} 
@@ -109,12 +102,14 @@ export default function GroupOptionsSheet({
                 </View>
               </Pressable>
             ))}
-            
-            <View style={styles.divider} />
-            <Text style={styles.sectionTitle}>{t('groupOptionsSheet.moreOptions')}</Text>
-          </>
-        ) : null}
+          </ScrollView>
+          
+          <View style={styles.divider} />
+          <Text style={styles.sectionTitle}>{t('groupOptionsSheet.moreOptions')}</Text>
+        </>
+      )}
 
+      <View style={styles.optionsContainer}>
         {/* Crear nuevo grupo */}
         <Pressable style={styles.optionCard} onPress={onCreateGroup}>
           <View style={styles.optionIcon}>
@@ -147,7 +142,7 @@ export default function GroupOptionsSheet({
           </View>
           <Ionicons name="chevron-forward" size={20} color="#ccc" />
         </Pressable>
-      </ScrollView>
+      </View>
     </View>
 
       {/* Modales */}
@@ -182,9 +177,6 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
     flex: 1,
   },
-  scrollContainer: {
-    flex: 1,
-  },
   sheetHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -208,19 +200,26 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 14,
     color: '#6B7280',
-    marginBottom: 20,
+    marginBottom: 16,
     lineHeight: 20,
+  },
+  groupsScrollContainer: {
+    maxHeight: 240,
+    marginBottom: 8,
+  },
+  groupsContainer: {
+    gap: 8,
+    paddingBottom: 8,
   },
   optionsContainer: {
     gap: 12,
-    paddingBottom: 20,
+    marginTop: 8,
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: '#1F2937',
-    marginTop: 12,
-    marginBottom: 8,
+    marginBottom: 12,
   },
   groupCard: {
     flexDirection: 'row',
@@ -228,9 +227,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9FAFB',
     borderRadius: 12,
     padding: 16,
-    marginBottom: 8,
     borderWidth: 1,
     borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   groupIcon: {
     width: 48,
@@ -276,6 +279,11 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   optionIcon: {
     width: 48,

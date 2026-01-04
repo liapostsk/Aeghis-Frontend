@@ -1,23 +1,17 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, Animated } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-
-// Importar APIs y tipos
 import { JourneyDto } from '@/api/backend/journeys/journeyType';
 import { isUserParticipantInJourney } from '@/api/backend/journeys/journeyApi';
 import { Group } from '@/api/backend/group/groupType';
 import { User, useUserStore } from "../../lib/storage/useUserStorage";
 import { useUserGroups } from '@/lib/hooks/useUserGroups';
-
-// Importar componentes
 import BatteryDisplay, { ParticipantsList } from '@/components/common/BatteryDisplay';
 import JoinJourneyModal from '@/components/chat/JoinJourneyModal';
 import JourneyCollapsedTab from '@/components/journey/JourneyCollapsedTab';
 import JourneySimpleInterface from '@/components/journey/JourneySimpleInterface';
-
-// Importar hooks y utilidades
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 import { ParticipationDto } from '@/api/backend/participations/participationType';
@@ -39,7 +33,6 @@ interface Props {
 
 const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStartJourney, onCompleteJourney }: Props) {
   const { t } = useTranslation();
-  // Estados principales
   const [loading, setLoading] = useState(false);
   const [showJourneyOptions, setShowJourneyOptions] = useState(false);
   const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
@@ -59,14 +52,11 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
   const { groups: userGroups, loading: groupsLoading } = useUserGroups();
 
   // Enviar posición a Firebase solo si el usuario es participante y el journey está IN_PROGRESS
-  // (Evita bucles: los valores usados en el hook son estables y no cambian en cada render)
   const chatId = groupJourney?.group.id?.toString();
   const journeyId = groupJourney?.activeJourney?.id?.toString();
   const userId = user?.id?.toString();
   const enabled = !!chatId && !!journeyId && !!userId && isUserParticipant && journeyState === 'IN_PROGRESS';
 
-  // Importa el hook correctamente
-  // con esto se estamos guardando la posicion del usuario en firebase en cada minuto
   usePositionTracking(chatId || '', journeyId || '', userId || '', { enabled, intervalMs: 60000 });
 
   useEffect(() => {
@@ -81,7 +71,6 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
 
       try {
         
-        // Obtener token
         const token = await getToken();
         setToken(token);
         
@@ -135,13 +124,10 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
     );
 
     return () => {
-      console.log('🧹 [JourneyOverlay] Deteniendo listener');
+      console.log('[JourneyOverlay] Deteniendo listener');
       unsubscribe();
     };
   }, [groupJourney]);
-
-  // No abrir automáticamente el modal, solo mostrar el tab colapsado
-  // El usuario lo expandirá manualmente cuando lo necesite
 
   const handleCreateGroup = () => {
     if (userGroups.length === 0) {
@@ -385,18 +371,21 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
     );
   }
 
-  // Si hay journey activo y el modal está cerrado, mostrar tab colapsado
-  if (groupJourney && !isModalVisible) {
-    return (
-      <JourneyCollapsedTab 
-        groupJourney={groupJourney} 
-        onExpand={() => setIsModalVisible(true)} 
-      />
-    );
-  }
+  // Si hay journey activo o pendiente
+  if (groupJourney && ['IN_PROGRESS', 'PENDING'].includes(journeyState)) {
+    // Modal está cerrado: mostrar tab colapsado
+    if (!isModalVisible) {
+      return (
+        <View style={styles.collapsedTabContainer}>
+          <JourneyCollapsedTab 
+            groupJourney={groupJourney} 
+            onExpand={() => setIsModalVisible(true)} 
+          />
+        </View>
+      );
+    }
 
-  // Si hay journey activo y el modal está abierto, mostrar panel expandido
-  if (groupJourney && isModalVisible) {
+    // Modal está abierto: mostrar panel completo con backdrop
     return (
       <View style={styles.overlayContainer}>
         <Pressable 
@@ -410,6 +399,7 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
     );
   }
 
+  // No hay journey activo: mostrar interfaz simple para iniciar
   return (
     <View style={styles.simplePanelContainer}>
       {renderModalContent()}
@@ -668,13 +658,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: '70%',
+    maxHeight: '75%',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.25,
     shadowRadius: 10,
     elevation: 10,
-    // NO bloquea el mapa, solo ocupa su espacio en la parte inferior
+  },
+  collapsedTabContainer: {
+    position: 'absolute',
+    bottom: 80,
+    left: 0,
+    right: 0,
+    zIndex: 1000,
   },
 });
 

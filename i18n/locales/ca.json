@@ -142,8 +142,6 @@
     "startJourney": "Iniciar Trajecte",
     "createFirstJourney": "Crear el teu Primer Trajecte",
     "groupsAvailable": "Tens {{count}} grup disponible",
-    "groupsAvailable_plural": "Tens {{count}} grups disponibles",
-    "whichToStart": "Amb quin vols començar?",
     "needGroupToStart": "Per iniciar un trajecte necessites un grup. Què t'agradaria fer?",
     "yourGroups": "Els teus grups:",
     "member": "membre",
