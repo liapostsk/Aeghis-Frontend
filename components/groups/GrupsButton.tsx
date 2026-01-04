@@ -1,5 +1,4 @@
-// components/groups/GroupsFab.tsx
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import GroupActionModal from '@/components/groups/GroupActionModal';
@@ -12,15 +11,12 @@ type Kind = 'CONFIANZA' | 'TEMPORAL' | 'COMPANION';
 function kindFromPath(pathname: string): Kind {
   if (pathname.endsWith('/TEMPORAL'))   return 'TEMPORAL';
   if (pathname.endsWith('/COMPANION'))  return 'COMPANION';
-  return 'CONFIANZA'; // index (/groups)
+  return 'CONFIANZA';
 }
 
 type Props = {
-  /** Opcional: si no lo pasas, se deduce de la ruta actual */
   kind?: Kind;
-  /** Llamado tras crear/unirse con éxito para refrescar la lista */
   onSuccess?: () => void;
-  /** Opcional: override de estilos del FAB */
   style?: any;
 };
 
@@ -32,23 +28,22 @@ export default function GroupsButton({ kind, onSuccess, style }: Props) {
   const [isCreating, setCreating]   = useState(false);
   const [isJoining, setJoining]     = useState(false);
 
-  // Mapear al tipo que esperan tus modales/API
-  const modalType = currentKind; // 'CONFIANZA' | 'TEMPORAL' | 'COMPANION'
+  const modalType = currentKind;
 
   const handleCreateSuccess = () => {
-    console.log('🎉 GroupsButton: Grupo creado exitosamente');
+    console.log('GroupsButton: Grupo creado exitosamente');
     setCreating(false);
     if (onSuccess) {
-      console.log('🔄 GroupsButton: Ejecutando onSuccess callback...');
+      console.log('GroupsButton: Ejecutando onSuccess callback...');
       onSuccess();
     }
   };
 
   const handleJoinSuccess = () => {
-    console.log('🎉 GroupsButton: Se unió al grupo exitosamente');
+    console.log('GroupsButton: Se unió al grupo exitosamente');
     setJoining(false);
     if (onSuccess) {
-      console.log('🔄 GroupsButton: Ejecutando onSuccess callback...');
+      console.log('GroupsButton: Ejecutando onSuccess callback...');
       onSuccess();
     }
   };

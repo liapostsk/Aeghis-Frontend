@@ -1358,6 +1358,61 @@
       "cancel": "Cancel·lar"
     }
   },
+  "groupTypeSelector": {
+    "title": "Quin tipus de grup vols crear?",
+    "confianza": {
+      "name": "Grup de Confiança",
+      "description": "Per a família i amics propers. Permanent i amb més funcions de seguretat."
+    },
+    "temporal": {
+      "name": "Grup Temporal",
+      "description": "Per a ocasions específiques. Es pot configurar per expirar automàticament."
+    },
+    "cancel": "Cancel·lar"
+  },
+  "emergencyContactsSection": {
+    "title": "Contactes d'Emergència",
+    "editButton": {
+      "edit": "Editar",
+      "done": "Fet"
+    },
+    "tabs": {
+      "app": "Contactes a l'App",
+      "external": "Contactes Externs"
+    },
+    "badges": {
+      "app": "App",
+      "external": "Ext"
+    },
+    "status": {
+      "accepted": "Acceptat",
+      "pending": "Pendent",
+      "rejected": "Rebutjat"
+    },
+    "empty": {
+      "title": "No hi ha contactes d'emergència",
+      "subtitle": "Afegeix contactes que seran notificats en cas d'emergència",
+      "appTab": "No hi ha contactes a l'app",
+      "appTabSubtitle": "Afegeix usuaris que usen l'app per rebre notificacions en temps real",
+      "externalTab": "No hi ha contactes externs",
+      "externalTabSubtitle": "Afegeix contactes que no usen l'app. Rebran alertes per SMS o trucada"
+    },
+    "addButton": "Afegir contacte",
+    "delete": {
+      "titleEmergency": "Eliminar Contacte d'Emergència",
+      "titleExternal": "Eliminar Contacte Extern",
+      "message": "Estàs segur que vols eliminar \"{{name}}\"?",
+      "cancel": "Cancel·lar",
+      "confirm": "Eliminar"
+    },
+    "errors": {
+      "title": "Error",
+      "deleteEmergency": "No s'ha pogut eliminar el contacte d'emergència",
+      "deleteExternal": "No s'ha pogut eliminar el contacte extern",
+      "addContact": "No s'ha pogut afegir el contacte",
+      "editContact": "No s'ha pogut editar el contacte"
+    }
+  },
   "alertModal": {
     "defaultConfirm": "Acceptar",
     "defaultCancel": "Cancel·lar"

@@ -1361,6 +1361,61 @@
       "cancel": "Cancelar"
     }
   },
+  "groupTypeSelector": {
+    "title": "¿Qué tipo de grupo quieres crear?",
+    "confianza": {
+      "name": "Grupo de Confianza",
+      "description": "Para familia y amigos cercanos. Permanente y con más funciones de seguridad."
+    },
+    "temporal": {
+      "name": "Grupo Temporal",
+      "description": "Para ocasiones específicas. Se puede configurar para expirar automáticamente."
+    },
+    "cancel": "Cancelar"
+  },
+  "emergencyContactsSection": {
+    "title": "Contactos de Emergencia",
+    "editButton": {
+      "edit": "Editar",
+      "done": "Hecho"
+    },
+    "tabs": {
+      "app": "Contactos en la App",
+      "external": "Contactos Externos"
+    },
+    "badges": {
+      "app": "App",
+      "external": "Ext"
+    },
+    "status": {
+      "accepted": "Aceptado",
+      "pending": "Pendiente",
+      "rejected": "Rechazado"
+    },
+    "empty": {
+      "title": "No hay contactos de emergencia",
+      "subtitle": "Añade contactos que serán notificados en caso de emergencia",
+      "appTab": "No hay contactos en la app",
+      "appTabSubtitle": "Añade usuarios que usan la app para recibir notificaciones en tiempo real",
+      "externalTab": "No hay contactos externos",
+      "externalTabSubtitle": "Añade contactos que no usan la app. Recibirán alertas por SMS o llamada"
+    },
+    "addButton": "Añadir contacto",
+    "delete": {
+      "titleEmergency": "Eliminar Contacto de Emergencia",
+      "titleExternal": "Eliminar Contacto Externo",
+      "message": "¿Estás seguro de que quieres eliminar \"{{name}}\"?",
+      "cancel": "Cancelar",
+      "confirm": "Eliminar"
+    },
+    "errors": {
+      "title": "Error",
+      "deleteEmergency": "No se pudo eliminar el contacto de emergencia",
+      "deleteExternal": "No se pudo eliminar el contacto externo",
+      "addContact": "No se pudo añadir el contacto",
+      "editContact": "No se pudo editar el contacto"
+    }
+  },
   "alertModal": {
     "defaultConfirm": "Aceptar",
     "defaultCancel": "Cancelar"

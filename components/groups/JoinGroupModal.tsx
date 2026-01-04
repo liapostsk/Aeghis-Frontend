@@ -21,7 +21,7 @@ import * as Clipboard from 'expo-clipboard';
 interface JoinGroupModalProps {
   visible: boolean;
   onClose: () => void;
-  onSuccess?: () => void;
+  onSuccess?: (groupId?: number) => void;
 }
 
 export default function JoinGroupModal({ visible, onClose, onSuccess }: JoinGroupModalProps) {
@@ -80,13 +80,18 @@ export default function JoinGroupModal({ visible, onClose, onSuccess }: JoinGrou
         setIsJoining(false);
         return;
       }
-      const response = await joinGroup(user.id, code);
+      const groupId = await joinGroup(user.id, code);
+      console.log("Usuario unido al grupo con ID:", groupId);
+
+      const responseFb = await joinGroupChatFirebase(String(groupId));
+      console.log("Usuario unido al chat de Firebase:", responseFb);
+
+      // Invalidar caché de grupos
+      const { invalidateGroupsCache } = require('@/lib/hooks/useUserGroups');
+      invalidateGroupsCache();
 
       if (onSuccess) {
-        console.log("Code usado para unirse al grupo:", response);
-        const responseFb = await joinGroupChatFirebase(String(response));
-        console.log("Respuesta de Firebase al unirse al chat del grupo:", responseFb);
-        onSuccess();
+        onSuccess(groupId);
       } else {
         onClose();
       }

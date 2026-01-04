@@ -17,13 +17,15 @@ import {
   editExternalContact,
   createExternalContact 
 } from '@/api/backend/contacts/externalContactsApi';
-import { checkIfUserExists, getCurrentUser, getUser } from '@/api/backend/user/userApi';
+import { checkIfUserExists, getUser } from '@/api/backend/user/userApi';
 import EmergencyContactAddModal from '../emergencyContact/EmergencyContactAddModal';
+import { useTranslation } from 'react-i18next';
 
 type ContactType = 'emergency' | 'external';
 type TabType = 'app' | 'external';
 
 export default function EmergencyContactsSection() {
+  const { t } = useTranslation();
 
   // Obtener contactos de emergencia del usuario desde el store
   const { user } = useUserStore();
@@ -132,23 +134,24 @@ export default function EmergencyContactsSection() {
       setSelectedContact(null);
     } catch (error) {
       console.error("Error editando contacto:", error);
-      Alert.alert("Error", "No se pudo editar el contacto");
+      Alert.alert(t('emergencyContactsSection.errors.title'), t('emergencyContactsSection.errors.editContact'));
     }
   };
 
   const handleDeleteContact = async (contact: EmergencyContact | ExternalContact, type: ContactType) => {
     const contactType = type === 'emergency' ? 'Contacto de Emergencia' : 'Contacto Externo';
+    const titleKey = type === 'emergency' ? 'emergencyContactsSection.delete.titleEmergency' : 'emergencyContactsSection.delete.titleExternal';
     
     Alert.alert(
-      `Eliminar ${contactType}`,
-      `¿Estás seguro de que quieres eliminar "${contact.name}"?`,
+      t(titleKey),
+      t('emergencyContactsSection.delete.message', { name: contact.name }),
       [
         {
-          text: "Cancelar",
+          text: t('emergencyContactsSection.delete.cancel'),
           style: "cancel",
         },
         {
-          text: "Eliminar",
+          text: t('emergencyContactsSection.delete.confirm'),
           onPress: async () => {
             try {
               const token = await getToken();
@@ -163,7 +166,8 @@ export default function EmergencyContactsSection() {
               await refreshUserData();
             } catch (error) {
               console.error(`Error eliminando ${contactType}:`, error);
-              Alert.alert("Error", `No se pudo eliminar el ${contactType.toLowerCase()}`);
+              const errorKey = type === 'emergency' ? 'emergencyContactsSection.errors.deleteEmergency' : 'emergencyContactsSection.errors.deleteExternal';
+              Alert.alert(t('emergencyContactsSection.errors.title'), t(errorKey));
             }
           },
           style: "destructive",
@@ -205,7 +209,7 @@ export default function EmergencyContactsSection() {
       await refreshUserData();
       setModalAddVisible(false);
     } catch (error) {
-      Alert.alert("Error", "No se pudo añadir el contacto");
+      Alert.alert(t('emergencyContactsSection.errors.title'), t('emergencyContactsSection.errors.addContact'));
     }
   };
 
@@ -229,7 +233,7 @@ export default function EmergencyContactsSection() {
         {/* Badge de tipo de contacto */}
         <View style={[styles.typeBadge, isEmergency ? styles.emergencyBadge : styles.externalBadge]}>
           <Text style={[styles.typeBadgeText, isEmergency ? styles.emergencyBadgeText : styles.externalBadgeText]}>
-            {isEmergency ? 'APP' : 'EXT'}
+            {t(isEmergency ? 'emergencyContactsSection.badges.app' : 'emergencyContactsSection.badges.external')}
           </Text>
         </View>
 
@@ -250,8 +254,9 @@ export default function EmergencyContactsSection() {
               contact.status === 'ACCEPTED' ? styles.statusAcceptedText : 
               contact.status === 'PENDING' ? styles.statusPendingText : styles.statusRejectedText
             ]}>
-              {contact.status === 'ACCEPTED' ? 'Aceptado' : 
-               contact.status === 'PENDING' ? 'Pendiente' : 'Rechazado'}
+              {contact.status === 'ACCEPTED' ? t('emergencyContactsSection.status.accepted') : 
+               contact.status === 'PENDING' ? t('emergencyContactsSection.status.pending') : 
+               t('emergencyContactsSection.status.rejected')}
             </Text>
           </View>
         )}
@@ -304,11 +309,11 @@ export default function EmergencyContactsSection() {
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
         <FontAwesome5 name="phone-alt" size={18} color="#7A33CC" />
-        <Text style={styles.sectionTitle}>Contactos de Emergencia</Text>
+        <Text style={styles.sectionTitle}>{t('emergencyContactsSection.title')}</Text>
         {totalContacts > 0 && (
           <Pressable style={styles.editButton} onPress={() => setEditable(!editable)}>
             <Text style={styles.editButtonText}>
-              {editable ? 'Hecho' : 'Editar'}
+              {editable ? t('emergencyContactsSection.editButton.done') : t('emergencyContactsSection.editButton.edit')}
             </Text>
           </Pressable>
         )}
@@ -327,7 +332,7 @@ export default function EmergencyContactsSection() {
               color={activeTab === 'app' ? '#7A33CC' : '#666'} 
             />
             <Text style={[styles.tabText, activeTab === 'app' && styles.activeTabText]}>
-              En la app ({emergencyContacts.length})
+              {t('emergencyContactsSection.tabs.app')} ({emergencyContacts.length})
             </Text>
           </Pressable>
           
@@ -341,7 +346,7 @@ export default function EmergencyContactsSection() {
               color={activeTab === 'external' ? '#7A33CC' : '#666'} 
             />
             <Text style={[styles.tabText, activeTab === 'external' && styles.activeTabText]}>
-              Externos ({externalContacts.length})
+              {t('emergencyContactsSection.tabs.external')} ({externalContacts.length})
             </Text>
           </Pressable>
         </View>
@@ -351,9 +356,9 @@ export default function EmergencyContactsSection() {
       {totalContacts === 0 ? (
         <View style={styles.emptyState}>
           <Ionicons name="person-add" size={48} color="#ccc" />
-          <Text style={styles.emptyTitle}>No hay contactos de emergencia</Text>
+          <Text style={styles.emptyTitle}>{t('emergencyContactsSection.empty.title')}</Text>
           <Text style={styles.emptySubtitle}>
-            Añade contactos para que puedan ser notificados en caso de emergencia
+            {t('emergencyContactsSection.empty.subtitle')}
           </Text>
         </View>
       ) : (
@@ -363,9 +368,9 @@ export default function EmergencyContactsSection() {
             emergencyContacts.length === 0 ? (
               <View style={styles.emptyTabState}>
                 <Ionicons name="phone-portrait" size={36} color="#ccc" />
-                <Text style={styles.emptyTabTitle}>Sin contactos en la app</Text>
+                <Text style={styles.emptyTabTitle}>{t('emergencyContactsSection.empty.appTab')}</Text>
                 <Text style={styles.emptyTabSubtitle}>
-                  Añade contactos que usen la aplicación para mayor funcionalidad
+                  {t('emergencyContactsSection.empty.appTabSubtitle')}
                 </Text>
               </View>
             ) : (
@@ -378,9 +383,9 @@ export default function EmergencyContactsSection() {
             externalContacts.length === 0 ? (
               <View style={styles.emptyTabState}>
                 <Ionicons name="call" size={36} color="#ccc" />
-                <Text style={styles.emptyTabTitle}>Sin contactos externos</Text>
+                <Text style={styles.emptyTabTitle}>{t('emergencyContactsSection.empty.externalTab')}</Text>
                 <Text style={styles.emptyTabSubtitle}>
-                  Añade contactos para llamadas tradicionales de emergencia
+                  {t('emergencyContactsSection.empty.externalTabSubtitle')}
                 </Text>
               </View>
             ) : (
@@ -395,7 +400,7 @@ export default function EmergencyContactsSection() {
       {/* Botón añadir */}
       <Pressable style={styles.addButton} onPress={() => setModalAddVisible(true)}>
         <Ionicons name="add-circle" size={24} color="#7A33CC" />
-        <Text style={styles.addButtonText}>Añadir contacto</Text>
+        <Text style={styles.addButtonText}>{t('emergencyContactsSection.addButton')}</Text>
       </Pressable>
 
       {/* Modales */}

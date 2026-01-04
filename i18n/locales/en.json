@@ -1360,6 +1360,61 @@
       "cancel": "Cancel"
     }
   },
+  "groupTypeSelector": {
+    "title": "What type of group do you want to create?",
+    "confianza": {
+      "name": "Trust Group",
+      "description": "For family and close friends. Permanent and with more security features."
+    },
+    "temporal": {
+      "name": "Temporary Group",
+      "description": "For specific occasions. Can be set to expire automatically."
+    },
+    "cancel": "Cancel"
+  },
+  "emergencyContactsSection": {
+    "title": "Emergency Contacts",
+    "editButton": {
+      "edit": "Edit",
+      "done": "Done"
+    },
+    "tabs": {
+      "app": "App Contacts",
+      "external": "External Contacts"
+    },
+    "badges": {
+      "app": "App",
+      "external": "Ext"
+    },
+    "status": {
+      "accepted": "Accepted",
+      "pending": "Pending",
+      "rejected": "Rejected"
+    },
+    "empty": {
+      "title": "No emergency contacts",
+      "subtitle": "Add contacts who will be notified in case of emergency",
+      "appTab": "No app contacts",
+      "appTabSubtitle": "Add users who use the app to receive real-time notifications",
+      "externalTab": "No external contacts",
+      "externalTabSubtitle": "Add contacts who don't use the app. They'll receive alerts via SMS or call"
+    },
+    "addButton": "Add contact",
+    "delete": {
+      "titleEmergency": "Delete Emergency Contact",
+      "titleExternal": "Delete External Contact",
+      "message": "Are you sure you want to delete \"{{name}}\"?",
+      "cancel": "Cancel",
+      "confirm": "Delete"
+    },
+    "errors": {
+      "title": "Error",
+      "deleteEmergency": "Could not delete emergency contact",
+      "deleteExternal": "Could not delete external contact",
+      "addContact": "Could not add contact",
+      "editContact": "Could not edit contact"
+    }
+  },
   "alertModal": {
     "defaultConfirm": "Accept",
     "defaultCancel": "Cancel"

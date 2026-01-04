@@ -161,9 +161,19 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
   const handleJoinGroup = () => {
     setShowJoinGroupModal(true);
   };
-
+  const handleJoinGroupSuccess = (groupId?: number) => {
+    setShowJoinGroupModal(false);
+    const { invalidateGroupsCache } = require('@/lib/hooks/useUserGroups');
+    invalidateGroupsCache();
+    
+    if (groupId) {
+      console.log('Navegando a journey con el grupo unido:', groupId);
+      router.push(`/chat/journey?groupId=${groupId}`);
+      setShowJourneyOptions(false);
+    }
+  };
   const handleGroupSelected = (group: Group) => {
-    console.log('🎯 Grupo seleccionado para iniciar journey:', group.name, 'ID:', group.id);
+    console.log('Grupo seleccionado para iniciar journey:', group.name, 'ID:', group.id);
     
     // Navegar a la pantalla de creación de journey con el groupId
     router.push(`/chat/journey?groupId=${group.id}`);
@@ -172,21 +182,27 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
     setShowJourneyOptions(false);
   };
 
-  const handleGroupCreated = () => {
+  const handleGroupCreated = (groupId?: number) => {
     setShowCreateGroupModal(false);
     const { invalidateGroupsCache } = require('@/lib/hooks/useUserGroups');
     invalidateGroupsCache();
-    onStartJourney();
+    
+    if (groupId) {
+      console.log('Navegando a journey con el nuevo grupo:', groupId);
+      router.push(`/chat/journey?groupId=${groupId}`);
+      setShowJourneyOptions(false);
+    } else {
+      console.warn('No se recibió groupId, llamando a onStartJourney');
+      onStartJourney();
+    }
   };
 
   const handleJoinSuccess = async (participation: ParticipationDto) => {
     console.log('Usuario unido al trayecto:', participation);
     setShowJoinJourneyModal(false);
     
-    // Actualizar inmediatamente
     setIsUserParticipant(true);
     
-    // Re-verificar con backend después de un pequeño delay
     if (groupJourney && groupJourney.activeJourney.id) {
       setTimeout(async () => {
         try {
@@ -223,6 +239,7 @@ const JourneyOverlay = React.memo(function JourneyOverlay({ groupJourney, onStar
           onJoinGroup={handleJoinGroup}
           onCreateGroupWithType={handleCreateGroupWithType}
           onGroupCreated={handleGroupCreated}
+          onJoinGroupSuccess={handleJoinGroupSuccess}
           setShowCreateGroupModal={setShowCreateGroupModal}
           setShowJoinGroupModal={setShowJoinGroupModal}
           setShowGroupTypeSelector={setShowGroupTypeSelector}

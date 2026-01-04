@@ -1,6 +1,6 @@
-import React from 'react';
 import { View, Text, Pressable, StyleSheet, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 
 interface GroupTypeSelectorProps {
   visible: boolean;
@@ -9,6 +9,8 @@ interface GroupTypeSelectorProps {
 }
 
 export default function GroupTypeSelector({ visible, onSelectType, onClose }: GroupTypeSelectorProps) {
+  const { t } = useTranslation();
+  
   return (
     <Modal
       visible={visible}
@@ -18,7 +20,7 @@ export default function GroupTypeSelector({ visible, onSelectType, onClose }: Gr
     >
       <View style={styles.modalOverlay}>
         <View style={styles.groupTypeModal}>
-          <Text style={styles.groupTypeTitle}>¿Qué tipo de grupo quieres crear?</Text>
+          <Text style={styles.groupTypeTitle}>{t('groupTypeSelector.title')}</Text>
           
           <Pressable 
             style={styles.groupTypeOption} 
@@ -28,9 +30,9 @@ export default function GroupTypeSelector({ visible, onSelectType, onClose }: Gr
               <Ionicons name="shield" size={32} color="#7A33CC" />
             </View>
             <View style={styles.typeInfo}>
-              <Text style={styles.typeName}>Grupo de Confianza</Text>
+              <Text style={styles.typeName}>{t('groupTypeSelector.confianza.name')}</Text>
               <Text style={styles.typeDescription}>
-                Para familia y amigos cercanos. Permanente y con más funciones de seguridad.
+                {t('groupTypeSelector.confianza.description')}
               </Text>
             </View>
           </Pressable>
@@ -43,9 +45,9 @@ export default function GroupTypeSelector({ visible, onSelectType, onClose }: Gr
               <Ionicons name="time" size={32} color="#FF9800" />
             </View>
             <View style={styles.typeInfo}>
-              <Text style={styles.typeName}>Grupo Temporal</Text>
+              <Text style={styles.typeName}>{t('groupTypeSelector.temporal.name')}</Text>
               <Text style={styles.typeDescription}>
-                Para ocasiones específicas. Se puede configurar para expirar automáticamente.
+                {t('groupTypeSelector.temporal.description')}
               </Text>
             </View>
           </Pressable>
@@ -54,7 +56,7 @@ export default function GroupTypeSelector({ visible, onSelectType, onClose }: Gr
             style={styles.cancelButton} 
             onPress={onClose}
           >
-            <Text style={styles.cancelButtonText}>Cancelar</Text>
+            <Text style={styles.cancelButtonText}>{t('groupTypeSelector.cancel')}</Text>
           </Pressable>
         </View>
       </View>

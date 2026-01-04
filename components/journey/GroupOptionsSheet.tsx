@@ -18,7 +18,8 @@ interface GroupOptionsSheetProps {
   onCreateGroup: () => void;
   onJoinGroup: () => void;
   onCreateGroupWithType: (type: 'CONFIANZA' | 'TEMPORAL') => void;
-  onGroupCreated: () => void;
+  onGroupCreated: (groupId?: number) => void;
+  onJoinGroupSuccess?: (groupId?: number) => void;
   setShowCreateGroupModal: (show: boolean) => void;
   setShowJoinGroupModal: (show: boolean) => void;
   setShowGroupTypeSelector: (show: boolean) => void;
@@ -38,6 +39,7 @@ export default function GroupOptionsSheet({
   onJoinGroup,
   onCreateGroupWithType,
   onGroupCreated,
+  onJoinGroupSuccess,
   setShowCreateGroupModal,
   setShowJoinGroupModal,
   setShowGroupTypeSelector,
@@ -168,6 +170,7 @@ export default function GroupOptionsSheet({
       <JoinGroupModal
         visible={showJoinGroupModal}
         onClose={() => setShowJoinGroupModal(false)}
+        onSuccess={onJoinGroupSuccess}
       />
     </>
   );

@@ -17,7 +17,7 @@ type Props = {
     visible: boolean;
     onClose: () => void; 
     type?: 'CONFIANZA' | 'TEMPORAL' | 'COMPANION';
-    onSuccess?: () => void;
+    onSuccess?: (groupId?: number) => void;
 };
 
 export default function CreateGroupModal({ visible, onClose, onSuccess, type }: Props) {
@@ -126,7 +126,7 @@ export default function CreateGroupModal({ visible, onClose, onSuccess, type }: 
           console.log('Cache de grupos invalidado');
 
           if (onSuccess) {
-            onSuccess();
+            onSuccess(idGroup);
           } else {
             onClose();
           }
@@ -168,7 +168,7 @@ export default function CreateGroupModal({ visible, onClose, onSuccess, type }: 
       console.log('Cache de grupos invalidado');
 
       if (onSuccess) {
-        onSuccess();
+        onSuccess(idGroup);
       } else {
         onClose();
       }
