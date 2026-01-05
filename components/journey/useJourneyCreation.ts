@@ -269,7 +269,7 @@ ID del trayecto: ${journeyId}`;
             const statusMessage = i18next.t('useJourneyCreation.notifications.locationSharing', { 
               user: currentUser?.name || 'Un miembro' 
             });
-            await sendMessageFirebase(companionGroupId, statusMessage, 'status');
+            await sendMessageFirebase(companionGroupId, statusMessage);
             console.log('Notificación enviada al grupo COMPANION');
           } catch (notifyError) {
             console.warn('Error enviando notificación al grupo COMPANION:', notifyError);

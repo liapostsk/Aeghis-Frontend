@@ -38,11 +38,10 @@ export interface Contact {
 
 export type ContactStatus = "PENDING" | "ACCEPTED" | "REJECTED" | "BLOCKED";
 
-// Contacto de emergencia que es usuario
 export interface EmergencyContactDto {
   id: number;
   ownerId: number;
-  contactId: number;  // id del usuario contacto
+  contactId: number;
   relation: string;
   status: ContactStatus;
 }
@@ -50,17 +49,16 @@ export interface EmergencyContactDto {
 export interface EmergencyContact {
   id: number;
   ownerId: number;
-  contactId: number;  // id del usuario contacto
+  contactId: number;
   relation: string;
   status: ContactStatus;
-  name: string;       // nombre del contacto (no del usuario)
-  phone: string;      // teléfono del contacto (no del usuario, normalizado E.164)
+  name: string;
+  phone: string;
 }
 
-// Contacto de emergencia externo (no usuario)
 export interface ExternalContact {
   id: number;
   name: string;
-  phone: string;          // normalizado (E.164)
+  phone: string;
   relation: string;
 }

@@ -1,5 +1,5 @@
 
-import { UserDto } from "../../backend/types";
+import { UserDto } from "@/api/backend/types";
 import { User, ValidationStatus } from "@/lib/storage/useUserStorage";
 
 // Mapper function to convert User context type to UserDto

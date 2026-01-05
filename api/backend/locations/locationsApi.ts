@@ -6,7 +6,7 @@ import { Location } from "./locationType";
  * GET /location/{id}
  */
 export const getLocation = async (id: number): Promise<Location> => {
-    const response = await api.get(`/location/${id}`);
+    const response = await api.get(`/locations/${id}`);
     return response.data;
 };
 
@@ -15,7 +15,7 @@ export const getLocation = async (id: number): Promise<Location> => {
  * POST /location
  */
 export const createLocation = async (location: Location): Promise<number> => {
-    const response = await api.post('/location', location);
+    const response = await api.post('/locations', location);
     return response.data;
 };
 
@@ -23,8 +23,8 @@ export const createLocation = async (location: Location): Promise<number> => {
  * Elimina una ubicación
  * DELETE /location
  */
-export const deleteLocation = async (location: Location): Promise<void> => {
-    await api.delete('/location', {
+export const deleteLocation = async (id: number): Promise<void> => {
+    await api.delete('/locations', {
         data: location
     });
 };

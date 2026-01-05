@@ -4,7 +4,7 @@ import { Invitation } from "./groupType";
 export const createInvitation = async (groupId: number, expiry?: number): Promise<Invitation> => {
     const params = expiry ? { expiry } : {};
 
-    const response = await api.post(`/invitation/${groupId}/invite`, null, { params });
+    const response = await api.post(`/invitations/${groupId}/invite`, null, { params });
 
     console.log("Invitación creada:", response.data);
     return response.data;
@@ -15,7 +15,7 @@ export const validateInvitation = async (
   code: string
 ): Promise<boolean> => {
   const response = await api.post(
-    `/invitation/${groupId}/validate`,
+    `/invitations/${groupId}/validate`,
     null,
     { params: { code } }
   );
