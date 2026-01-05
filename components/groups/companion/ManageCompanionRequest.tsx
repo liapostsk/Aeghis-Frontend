@@ -8,15 +8,19 @@ import {
   Image,
   ActivityIndicator,
   Alert,
+  TextInput,
+  Modal,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { CompanionRequestDto } from '@/api/backend/companionRequest/companionTypes';
+import { CompanionRequestDto, EditCompanionRequestDto } from '@/api/backend/companionRequest/companionTypes';
 import {
   acceptCompanionRequest,
   rejectCompanionRequest, 
   getCompanionRequestById,
   finishCompanionRequest,
-  updateCompanionGroupId
+  updateCompanionGroupId,
+  editCompanionRequest,
 } from '@/api/backend/companionRequest/companionRequestApi';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
@@ -25,12 +29,24 @@ import { createGroup } from '@/api/backend/group/groupApi';
 import { createGroupFirebase, joinGroupChatFirebaseWithClerkId } from '@/api/firebase/chat/chatService';
 import { invalidateGroupsCache } from '@/lib/hooks/useUserGroups';
 import { useTranslation } from 'react-i18next';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import SafeLocationModal from '@/components/safeLocations/SafeLocationModal';
+import { Location } from '@/api/backend/locations/locationType';
+import { createLocation } from '@/api/backend/locations/locationsApi';
 
 interface ManageCompanionRequestProps {
   request: CompanionRequestDto;
   onClose: () => void;
   onRequestUpdated: () => void;
 }
+
+type DisplayLocation = {
+  name: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  id?: number;
+};
 
 export default function ManageCompanionRequest({
   request,
@@ -44,6 +60,16 @@ export default function ManageCompanionRequest({
   const { getToken } = useAuth();
   const setToken = useTokenStore((state) => state.setToken);
   const { user } = useUserStore();
+
+  // Estados para edición
+  const [isEditing, setIsEditing] = useState(false);
+  const [editSourceLocation, setEditSourceLocation] = useState<DisplayLocation | null>(null);
+  const [editDestinationLocation, setEditDestinationLocation] = useState<DisplayLocation | null>(null);
+  const [editAproxHour, setEditAproxHour] = useState<Date | null>(null);
+  const [editDescription, setEditDescription] = useState('');
+  const [showSourceModal, setShowSourceModal] = useState(false);
+  const [showDestinationModal, setShowDestinationModal] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
 
   useEffect(() => {
     loadRequestData();
@@ -69,6 +95,141 @@ export default function ManageCompanionRequest({
   };
 
   const canManage = requestData && requestData.companion && requestData.state === 'PENDING';
+  const isCreator = requestData && user && requestData.creator?.id === user.id;
+  const canEdit = isCreator && requestData && (requestData.state === 'CREATED' || requestData.state === 'PENDING');
+
+  const handleStartEdit = () => {
+    if (!requestData) return;
+
+    // Pre-poblar los campos con los datos actuales
+    if (requestData.source) {
+      setEditSourceLocation({
+        name: requestData.source.name || '',
+        address: '',
+        latitude: requestData.source.latitude,
+        longitude: requestData.source.longitude,
+        id: requestData.source.id,
+      });
+    }
+
+    if (requestData.destination) {
+      setEditDestinationLocation({
+        name: requestData.destination.name || '',
+        address: '',
+        latitude: requestData.destination.latitude,
+        longitude: requestData.destination.longitude,
+        id: requestData.destination.id,
+      });
+    }
+
+    if (requestData.aproxHour) {
+      setEditAproxHour(new Date(requestData.aproxHour));
+    }
+
+    setEditDescription(requestData.description || '');
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditSourceLocation(null);
+    setEditDestinationLocation(null);
+    setEditAproxHour(null);
+    setEditDescription('');
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editSourceLocation || !editDestinationLocation) {
+      Alert.alert(
+        t('companion.create.alerts.missingFields.title'),
+        t('companion.create.alerts.missingFields.message')
+      );
+      return;
+    }
+
+    try {
+      setProcessing(true);
+      const token = await getToken();
+      setToken(token);
+
+      // Crear Location para origen si cambió
+      let sourceId = editSourceLocation.id;
+      if (!sourceId || 
+          editSourceLocation.latitude !== requestData?.source?.latitude || 
+          editSourceLocation.longitude !== requestData?.source?.longitude) {
+        const sourceLocationData: Location = {
+          id: 0,
+          latitude: editSourceLocation.latitude,
+          longitude: editSourceLocation.longitude,
+          timestamp: new Date().toISOString(),
+          name: editSourceLocation.name
+        };
+        sourceId = await createLocation(sourceLocationData);
+      }
+
+      // Crear Location para destino si cambió
+      let destId = editDestinationLocation.id;
+      if (!destId || 
+          editDestinationLocation.latitude !== requestData?.destination?.latitude || 
+          editDestinationLocation.longitude !== requestData?.destination?.longitude) {
+        const destLocationData: Location = {
+          id: 0,
+          name: editDestinationLocation.name,
+          latitude: editDestinationLocation.latitude,
+          longitude: editDestinationLocation.longitude,
+          timestamp: new Date().toISOString(),
+        };
+        destId = await createLocation(destLocationData);
+      }
+
+      // Combinar fecha actual con la hora seleccionada
+      let finalDateTime: Date | undefined = undefined;
+      if (editAproxHour) {
+        const now = new Date();
+        const selectedDateTime = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+          editAproxHour.getHours(),
+          editAproxHour.getMinutes(),
+          0,
+          0
+        );
+
+        if (selectedDateTime < now) {
+          selectedDateTime.setDate(selectedDateTime.getDate() + 1);
+        }
+
+        finalDateTime = selectedDateTime;
+      }
+
+      const editDto: EditCompanionRequestDto = {
+        sourceId,
+        destinationId: destId,
+        aproxHour: finalDateTime,
+        description: editDescription || undefined,
+      };
+
+      await editCompanionRequest(request.id, editDto);
+
+      Alert.alert(
+        t('companion.edit.success.title'),
+        t('companion.edit.success.message')
+      );
+
+      setIsEditing(false);
+      await loadRequestData();
+      onRequestUpdated();
+    } catch (error) {
+      console.error('Error editando solicitud:', error);
+      Alert.alert(
+        t('companion.edit.error.title'),
+        t('companion.edit.error.message')
+      );
+    } finally {
+      setProcessing(false);
+    }
+  };
 
   const handleAccept = async () => {
     Alert.alert(
@@ -284,7 +445,12 @@ export default function ManageCompanionRequest({
           <Ionicons name="arrow-back" size={24} color="#1F2937" />
         </Pressable>
         <Text style={styles.headerTitle}>{t('companion.manage.title')}</Text>
-        <View style={styles.placeholder} />
+        {canEdit && !isEditing && (
+          <Pressable onPress={handleStartEdit} style={styles.editButton}>
+            <Ionicons name="create-outline" size={24} color="#7A33CC" />
+          </Pressable>
+        )}
+        {!canEdit && <View style={styles.placeholder} />}
       </View>
 
       <ScrollView 
@@ -475,6 +641,199 @@ export default function ManageCompanionRequest({
           </View>
         )}
       </ScrollView>
+
+      {/* Modal de edición */}
+      <Modal
+        visible={isEditing}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={handleCancelEdit}
+      >
+        <View style={styles.editModalContainer}>
+          {/* Header del modal */}
+          <View style={styles.editModalHeader}>
+            <Pressable onPress={handleCancelEdit} style={styles.closeButton}>
+              <Ionicons name="close" size={24} color="#1F2937" />
+            </Pressable>
+            <Text style={styles.editModalTitle}>{t('companion.edit.title')}</Text>
+            <View style={styles.placeholder} />
+          </View>
+
+          <ScrollView 
+            style={styles.editModalContent}
+            contentContainerStyle={{ paddingBottom: 40 }}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Origen */}
+            <Text style={styles.label}>{t('companion.create.originLabel')}</Text>
+            <Pressable style={styles.input} onPress={() => setShowSourceModal(true)}>
+              <View style={styles.inputContent}>
+                <Ionicons name="location" size={20} color="#7A33CC" />
+                <Text style={{ color: editSourceLocation ? '#1F2937' : '#9CA3AF', flex: 1 }}>
+                  {editSourceLocation ? editSourceLocation.name : t('companion.create.originPlaceholder')}
+                </Text>
+                <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+              </View>
+            </Pressable>
+
+            {/* Destino */}
+            <Text style={styles.label}>{t('companion.create.destinationLabel')}</Text>
+            <Pressable style={styles.input} onPress={() => setShowDestinationModal(true)}>
+              <View style={styles.inputContent}>
+                <Ionicons name="location" size={20} color="#EF4444" />
+                <Text style={{ color: editDestinationLocation ? '#1F2937' : '#9CA3AF', flex: 1 }}>
+                  {editDestinationLocation ? editDestinationLocation.name : t('companion.create.destinationPlaceholder')}
+                </Text>
+                <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+              </View>
+            </Pressable>
+
+            {/* Hora aproximada */}
+            <Text style={styles.label}>{t('companion.create.timeLabel')}</Text>
+            <Pressable style={styles.input} onPress={() => setShowTimePicker(true)}>
+              <View style={styles.inputContent}>
+                <Ionicons name="time" size={20} color="#F59E0B" />
+                <Text style={{ color: editAproxHour ? '#1F2937' : '#9CA3AF', flex: 1 }}>
+                  {editAproxHour 
+                    ? editAproxHour.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+                    : t('companion.create.timePlaceholder')
+                  }
+                </Text>
+                {editAproxHour && (
+                  <Pressable onPress={() => setEditAproxHour(null)} style={{ padding: 4 }}>
+                    <Ionicons name="close-circle" size={20} color="#9CA3AF" />
+                  </Pressable>
+                )}
+                <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+              </View>
+            </Pressable>
+
+            {/* Descripción */}
+            <Text style={styles.label}>{t('companion.create.descriptionLabel')}</Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              placeholder={t('companion.create.descriptionPlaceholder')}
+              multiline
+              numberOfLines={4}
+              value={editDescription}
+              onChangeText={setEditDescription}
+              textAlignVertical="top"
+            />
+
+            {/* Botones de acción */}
+            <View style={styles.editModalActions}>
+              <Pressable 
+                style={[styles.cancelEditButton]}
+                onPress={handleCancelEdit}
+                disabled={processing}
+              >
+                <Text style={styles.cancelEditButtonText}>{t('companion.edit.cancel')}</Text>
+              </Pressable>
+
+              <Pressable 
+                style={[styles.saveEditButton, processing && styles.buttonDisabled]} 
+                onPress={handleSaveEdit}
+                disabled={processing}
+              >
+                {processing ? (
+                  <ActivityIndicator size="small" color="#FFF" />
+                ) : (
+                  <>
+                    <Ionicons name="checkmark-circle" size={20} color="#FFF" />
+                    <Text style={styles.saveEditButtonText}>{t('companion.edit.save')}</Text>
+                  </>
+                )}
+              </Pressable>
+            </View>
+          </ScrollView>
+        </View>
+
+        {/* Modales para selección de ubicación */}
+        <SafeLocationModal
+          visible={showSourceModal}
+          onClose={() => setShowSourceModal(false)}
+          onSelectLocation={(loc) => {
+            const displayLoc: DisplayLocation = {
+              name: ('name' in loc && loc.name) ? loc.name : t('companion.create.customLocation'),
+              address: ('address' in loc && loc.address) ? loc.address : `${loc.latitude.toFixed(4)}, ${loc.longitude.toFixed(4)}`,
+              latitude: loc.latitude,
+              longitude: loc.longitude,
+              id: loc.id,
+            };
+            setEditSourceLocation(displayLoc);
+            setShowSourceModal(false);
+          }}
+          title={t('companion.create.selectOrigin')}
+          acceptLocationTypes="all"
+        />
+
+        <SafeLocationModal
+          visible={showDestinationModal}
+          onClose={() => setShowDestinationModal(false)}
+          onSelectLocation={(loc) => {
+            const displayLoc: DisplayLocation = {
+              name: ('name' in loc && loc.name) ? loc.name : t('companion.create.customLocation'),
+              address: ('address' in loc && loc.address) ? loc.address : `${loc.latitude.toFixed(4)}, ${loc.longitude.toFixed(4)}`,
+              latitude: loc.latitude,
+              longitude: loc.longitude,
+              id: loc.id,
+            };
+            setEditDestinationLocation(displayLoc);
+            setShowDestinationModal(false);
+          }}
+          title={t('companion.create.selectDestination')}
+          acceptLocationTypes="all"
+        />
+
+        {/* Time Picker */}
+        {Platform.OS === 'ios' ? (
+          <Modal
+            visible={showTimePicker}
+            transparent
+            animationType="slide"
+            onRequestClose={() => setShowTimePicker(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>{t('companion.create.selectTime')}</Text>
+                  <Pressable onPress={() => setShowTimePicker(false)}>
+                    <Text style={styles.modalDoneButton}>{t('companion.create.done')}</Text>
+                  </Pressable>
+                </View>
+                <DateTimePicker
+                  value={editAproxHour || new Date()}
+                  mode="time"
+                  is24Hour={true}
+                  display="spinner"
+                  onChange={(event, selectedDate) => {
+                    if (selectedDate) {
+                      setEditAproxHour(selectedDate);
+                    }
+                  }}
+                  textColor="#000000"
+                  style={styles.timePicker}
+                />
+              </View>
+            </View>
+          </Modal>
+        ) : (
+          showTimePicker && (
+            <DateTimePicker
+              value={editAproxHour || new Date()}
+              mode="time"
+              is24Hour={true}
+              display="default"
+              onChange={(event, selectedDate) => {
+                setShowTimePicker(false);
+                if (selectedDate) {
+                  setEditAproxHour(selectedDate);
+                }
+              }}
+            />
+          )
+        )}
+      </Modal>
     </View>
   );
 }
@@ -729,5 +1088,128 @@ finishDescription: {
   color: '#6B7280',
   textAlign: 'center',
   lineHeight: 16,
+},
+// Estilos para el modal de edición
+editButton: {
+  padding: 4,
+},
+editModalContainer: {
+  flex: 1,
+  backgroundColor: '#F9FAFB',
+},
+editModalHeader: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  paddingHorizontal: 16,
+  paddingVertical: 16,
+  backgroundColor: '#FFF',
+  borderBottomWidth: 1,
+  borderBottomColor: '#E5E7EB',
+},
+editModalTitle: {
+  fontSize: 18,
+  fontWeight: '600',
+  color: '#1F2937',
+},
+editModalContent: {
+  flex: 1,
+  paddingHorizontal: 16,
+  paddingTop: 16,
+},
+label: {
+  fontSize: 14,
+  fontWeight: '600',
+  color: '#374151',
+  marginBottom: 8,
+  marginTop: 12,
+},
+input: {
+  backgroundColor: '#FFF',
+  borderWidth: 1,
+  borderColor: '#D1D5DB',
+  borderRadius: 8,
+  paddingHorizontal: 12,
+  paddingVertical: 12,
+},
+inputContent: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 10,
+},
+textArea: {
+  height: 100,
+  paddingTop: 12,
+},
+editModalActions: {
+  flexDirection: 'row',
+  gap: 12,
+  marginTop: 24,
+  marginBottom: 16,
+},
+cancelEditButton: {
+  flex: 1,
+  paddingVertical: 14,
+  borderRadius: 10,
+  borderWidth: 1,
+  borderColor: '#D1D5DB',
+  backgroundColor: '#FFF',
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+cancelEditButtonText: {
+  color: '#6B7280',
+  fontSize: 16,
+  fontWeight: '600',
+},
+saveEditButton: {
+  flex: 1,
+  backgroundColor: '#7A33CC',
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 8,
+  paddingVertical: 14,
+  borderRadius: 10,
+},
+saveEditButtonText: {
+  color: '#FFF',
+  fontSize: 16,
+  fontWeight: '600',
+},
+// Estilos para el modal del time picker (iOS)
+modalOverlay: {
+  flex: 1,
+  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  justifyContent: 'flex-end',
+},
+modalContent: {
+  backgroundColor: '#FFF',
+  borderTopLeftRadius: 20,
+  borderTopRightRadius: 20,
+  paddingBottom: 34,
+},
+modalHeader: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  paddingHorizontal: 20,
+  paddingVertical: 16,
+  borderBottomWidth: 1,
+  borderBottomColor: '#E5E7EB',
+},
+modalTitle: {
+  fontSize: 18,
+  fontWeight: '600',
+  color: '#1F2937',
+},
+modalDoneButton: {
+  fontSize: 16,
+  fontWeight: '600',
+  color: '#7A33CC',
+},
+timePicker: {
+  height: 200,
+  backgroundColor: '#FFF',
 },
 });

@@ -51,8 +51,8 @@
     "joinJourney": "Join Journey",
     "startJourney": "Start Journey",
     "journeyInProgress": "🟢 Journey in progress • Location shared",
-    "journeyCompleted": "✅ Journey completed",
-    "checkingParticipation": "⏳ Checking participation...",
+    "journeyCompleted": "Journey completed",
+    "checkingParticipation": "Checking participation...",
     "finishJourney": "Finish Journey",
     "loading": "Loading..."
   },
@@ -103,7 +103,8 @@
   "peopleOnMap": {
     "permissionDenied": "Permission denied",
     "locationRequired": "Location access is required.",
-    "destination": "Destination"
+    "destination": "Destination",
+    "participant": "Participant"
   },
   "emergencyButton": {
     "emergency": "Emergency",
@@ -395,12 +396,12 @@
     "alerts": {
       "approveTitle": "Approve Verification",
       "approveMessage": "Are you sure you want to approve {{name}}?",
-      "approveSuccess": "✅ Approved",
+      "approveSuccess": "Approved",
       "approveSuccessMessage": "{{name}} has been successfully verified",
       "approveError": "Could not approve verification",
       "rejectTitle": "Reject Verification",
       "rejectMessage": "Are you sure you want to reject {{name}}?",
-      "rejectSuccess": "❌ Rejected",
+      "rejectSuccess": "Rejected",
       "rejectSuccessMessage": "{{name}}'s verification has been rejected",
       "rejectError": "Could not reject verification",
       "signOutTitle": "Sign Out",
@@ -1535,6 +1536,19 @@
         "message": "Could not load request data"
       }
     },
+    "edit": {
+      "title": "Edit request",
+      "cancel": "Cancel",
+      "save": "Save changes",
+      "success": {
+        "title": "Request updated",
+        "message": "Changes have been saved successfully"
+      },
+      "error": {
+        "title": "Error",
+        "message": "Could not update request"
+      }
+    },
     "request": {
       "title": "Request to join",
       "tripDetails": "Trip details",
@@ -1560,7 +1574,7 @@
         "label": "Tell them about yourself",
         "placeholder": "E.g: \"I'm an engineering student at UPC\", \"I work in an office in the area\"...",
         "required": "REQUIRED",
-        "hint": "Share information that builds trust (studies, work, interests...)"
+        "hint": "Share information that builds trust"
       },
       "preview": {
         "title": "Message preview",

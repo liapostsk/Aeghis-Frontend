@@ -51,8 +51,8 @@
     "joinJourney": "Unirme al Trayecto",
     "startJourney": "Iniciar Trayecto",
     "journeyInProgress": "🟢 Trayecto en curso • Ubicación compartida",
-    "journeyCompleted": "✅ Trayecto completado",
-    "checkingParticipation": "⏳ Verificando participación...",
+    "journeyCompleted": "Trayecto completado",
+    "checkingParticipation": "Verificando participación...",
     "finishJourney": "Finalizar Trayecto",
     "loading": "Cargando..."
   },
@@ -103,7 +103,8 @@
   "peopleOnMap": {
     "permissionDenied": "Permiso denegado",
     "locationRequired": "Se requiere acceso a la ubicación.",
-    "destination": "Destino"
+    "destination": "Destino",
+    "participant": "Participante"
   },
   "emergencyButton": {
     "emergency": "Emergencia",
@@ -395,12 +396,12 @@
     "alerts": {
       "approveTitle": "Aprobar Verificación",
       "approveMessage": "¿Estás seguro de que quieres aprobar a {{name}}?",
-      "approveSuccess": "✅ Aprobado",
+      "approveSuccess": "Aprobado",
       "approveSuccessMessage": "{{name}} ha sido verificado correctamente",
       "approveError": "No se pudo aprobar la verificación",
       "rejectTitle": "Rechazar Verificación",
       "rejectMessage": "¿Estás seguro de que quieres rechazar a {{name}}?",
-      "rejectSuccess": "❌ Rechazado",
+      "rejectSuccess": "Rechazado",
       "rejectSuccessMessage": "La verificación de {{name}} ha sido rechazada",
       "rejectError": "No se pudo rechazar la verificación",
       "signOutTitle": "Cerrar Sesión",
@@ -1536,6 +1537,19 @@
         "message": "No se pudieron cargar los datos de la solicitud"
       }
     },
+    "edit": {
+      "title": "Editar solicitud",
+      "cancel": "Cancelar",
+      "save": "Guardar cambios",
+      "success": {
+        "title": "Solicitud actualizada",
+        "message": "Los cambios se han guardado correctamente"
+      },
+      "error": {
+        "title": "Error",
+        "message": "No se pudo actualizar la solicitud"
+      }
+    },
     "request": {
       "title": "Solicitar acompañar",
       "tripDetails": "Detalles del viaje",
@@ -1561,7 +1575,7 @@
         "label": "Cuéntale algo sobre ti",
         "placeholder": "Ej: \"Soy estudiante de ingeniería en la UPC\", \"Trabajo en una oficina por la zona\"...",
         "required": "OBLIGATORIO",
-        "hint": "Comparte información que genere confianza (estudios, trabajo, intereses...)"
+        "hint": "Comparte información que genere confianza"
       },
       "preview": {
         "title": "Vista previa del mensaje",

@@ -2,7 +2,7 @@ import api from "../../client";
 import { UserDto, ValidationStatus } from "../../backend/types";
 
 export const getCurrentUser = async (): Promise<UserDto> => {
-  console.log("📡 API: Llamando /user/me...");
+  console.log("API: Llamando /user/me...");
   const response = await api.get("/user/me");
   return response.data;
 };
@@ -14,6 +14,11 @@ export const createUser = async (dto: UserDto): Promise<number> => {
 
 export const getUser = async (id: number): Promise<UserDto> => {
   const response = await api.get(`/user/${id}`);
+  return response.data;
+};
+
+export const getUserByClerkId = async (clerkId: string): Promise<UserDto> => {
+  const response = await api.get(`/user/clerk/${clerkId}`);
   return response.data;
 };
 

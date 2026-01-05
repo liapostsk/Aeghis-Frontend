@@ -1,5 +1,5 @@
 import api from "../../client";
-import { CompanionRequestDto, CreateCompanionRequestDto } from '@/api/backend/companionRequest/companionTypes';
+import { CompanionRequestDto, CreateCompanionRequestDto, EditCompanionRequestDto } from '@/api/backend/companionRequest/companionTypes';
 import { JourneyDto } from "../journeys/journeyType";
 
 export const createCompanionRequest = async (dto: CreateCompanionRequestDto): Promise<number> => {
@@ -26,6 +26,13 @@ export const deleteCompanionRequest = async (id: number): Promise<void> => {
   console.log(" API: Eliminando solicitud de acompañamiento:", id);
   await api.delete(`/companion-request/${id}`);
   console.log(" API: Solicitud eliminada");
+};
+
+export const editCompanionRequest = async (id: number, dto: EditCompanionRequestDto): Promise<CompanionRequestDto> => {
+  console.log("API: Editando solicitud de acompañamiento:", id, dto);
+  const response = await api.put(`/companion-request/${id}`, dto);
+  console.log("API: Solicitud editada:", response.data);
+  return response.data;
 };
 
 export const finishCompanionRequest = async (id: number): Promise<CompanionRequestDto> => {
@@ -86,17 +93,11 @@ export const searchCompanionRequests = async (
 };
 
 export const requestToJoinCompanionRequest = async (id: number, companionMessage: string): Promise<void> => {
-  console.log("🤝 API: Solicitando unirse a solicitud de acompañamiento:", id);
-  console.log("📝 Mensaje del companion:", companionMessage);
-  
-  // TODO: Implementar endpoint en backend
-  // POST /companion-request/{id}/request-join
-  // Body: { companionMessage: string }
-  // El companionMessage es un string formateado con campos estructurados:
-  // "Motivo: ... | Experiencia: ... | Disponibilidad: ... | Flexibilidad: ... | Información adicional: ..."
+  console.log("API: Solicitando unirse a solicitud de acompañamiento:", id);
+  console.log("Mensaje del companion:", companionMessage);
   
   await api.post(`/companion-request/${id}/request-join`, { companionMessage });
-  console.log("✅ API: Solicitud de unión enviada");
+  console.log("API: Solicitud de unión enviada");
 };
 
 export const cancelCompanionRequest = async (id: number): Promise<void> => {

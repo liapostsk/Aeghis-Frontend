@@ -74,12 +74,3 @@ export interface Position {
   longitude: number;
   timestamp: any;
 }
-
-export type PositionTileInfo = {
-  userId: string;
-  latitude: number;
-  longitude: number;
-  accuracy: number;
-  lastUpdated: any;
-  isOnline: boolean;
-};

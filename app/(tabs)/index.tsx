@@ -18,9 +18,16 @@ import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
 import * as Location from 'expo-location';
 import { useTranslation } from 'react-i18next';
+import { getUserByClerkId } from '@/api/backend/user/userApi';
 
-interface Participant extends Participation {
+interface Participant {
   id: string;
+  name?: string;
+  avatarUrl?: string;
+  destination?: {
+    latitude: number;
+    longitude: number;
+  };
 }
 
 interface GroupWithJourney {
@@ -73,11 +80,62 @@ export default function MapScreen() {
   const [participants, setParticipants] = useState<Participant[]>([]);
 
   useEffect(() => {
-    if (chatId && journeyId) {
-      getParticipants(chatId, journeyId).then(setParticipants);
-    } else {
-      setParticipants([]);
+    async function fetchAndEnrichParticipants() {
+      if (!chatId || !journeyId) {
+        setParticipants([]);
+        return;
+      }
+
+      try {
+        // Obtener participantes básicos de Firebase
+        const firebaseParticipants = await getParticipants(chatId, journeyId);
+        
+        // Enriquecer con información del backend usando Clerk ID
+        const token = await getToken();
+        if (!token) {
+          console.warn('No se pudo obtener token para enriquecer participantes');
+          return;
+        }
+        setToken(token);
+
+        const enriched = await Promise.all(
+          firebaseParticipants.map(async (p) => {
+            try {
+              const userInfo = await getUserByClerkId(p.userId);
+              
+              return {
+                id: p.userId,
+                name: userInfo.name || 'Usuario',
+                avatarUrl: userInfo.image || undefined,
+                destination: p.destination ? {
+                  latitude: p.destination.latitude,
+                  longitude: p.destination.longitude,
+                } : undefined,
+              };
+            } catch (error) {
+              console.error(`Error obteniendo info del participante ${p.userId}:`, error);
+              return {
+                id: p.userId,
+                name: 'Usuario',
+                avatarUrl: undefined,
+                destination: p.destination ? {
+                  latitude: p.destination.latitude,
+                  longitude: p.destination.longitude,
+                } : undefined,
+              };
+            }
+          })
+        );
+
+        console.log('✅ Participantes enriquecidos:', enriched.length);
+        setParticipants(enriched);
+      } catch (error) {
+        console.error('Error obteniendo participantes:', error);
+        setParticipants([]);
+      }
     }
+
+    fetchAndEnrichParticipants();
   }, [chatId, journeyId]);
 
   const handleStartJourney = async () => {

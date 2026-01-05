@@ -103,7 +103,8 @@
   "peopleOnMap": {
     "permissionDenied": "Permís denegat",
     "locationRequired": "Es requereix accés a la ubicació.",
-    "destination": "Destinació"
+    "destination": "Destinació",
+    "participant": "Participant"
   },
   "emergencyButton": {
     "emergency": "Emergència",
@@ -395,12 +396,12 @@
     "alerts": {
       "approveTitle": "Aprovar Verificació",
       "approveMessage": "Estàs segur que vols aprovar {{name}}?",
-      "approveSuccess": "✅ Aprovat",
+      "approveSuccess": "Aprovat",
       "approveSuccessMessage": "{{name}} ha estat verificat correctament",
       "approveError": "No s'ha pogut aprovar la verificació",
       "rejectTitle": "Rebutjar Verificació",
       "rejectMessage": "Estàs segur que vols rebutjar {{name}}?",
-      "rejectSuccess": "❌ Rebutjat",
+      "rejectSuccess": "Rebutjat",
       "rejectSuccessMessage": "La verificació de {{name}} ha estat rebutjada",
       "rejectError": "No s'ha pogut rebutjar la verificació",
       "signOutTitle": "Tancar Sessió",
@@ -1533,6 +1534,19 @@
         "message": "No s'han pogut carregar les dades de la sol·licitud"
       }
     },
+    "edit": {
+      "title": "Editar sol·licitud",
+      "cancel": "Cancel·lar",
+      "save": "Desar canvis",
+      "success": {
+        "title": "Sol·licitud actualitzada",
+        "message": "Els canvis s'han desat correctament"
+      },
+      "error": {
+        "title": "Error",
+        "message": "No s'ha pogut actualitzar la sol·licitud"
+      }
+    },
     "request": {
       "title": "Sol·licitar acompanyar",
       "tripDetails": "Detalls del viatge",
@@ -1558,7 +1572,7 @@
         "label": "Explica'li alguna cosa sobre tu",
         "placeholder": "Ex: \"Sóc estudiant d'enginyeria a la UPC\", \"Treballo en una oficina per la zona\"...",
         "required": "OBLIGATORI",
-        "hint": "Comparteix informació que generi confiança (estudis, feina, interessos...)"
+        "hint": "Comparteix informació que generi confiança"
       },
       "preview": {
         "title": "Vista prèvia del missatge",

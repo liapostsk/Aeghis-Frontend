@@ -152,7 +152,7 @@ export default function CompanionRequestList({
 
             {item.description && (
               <Text style={styles.requestDescription} numberOfLines={2}>
-                📝 {item.description}
+                {item.description}
               </Text>
             )}
 

@@ -48,6 +48,13 @@ export interface CreateCompanionRequestDto {
   description?: string;
 }
 
+export interface EditCompanionRequestDto {
+  sourceId?: number;
+  destinationId?: number;
+  aproxHour?: Date;
+  description?: string;
+}
+
 /*
 export interface CompanionApplicant {
   userId: number;

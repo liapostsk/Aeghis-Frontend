@@ -1,4 +1,3 @@
-// File: components/map/GroupMap.tsx
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Alert, Image } from 'react-native';
 import MapView, { Marker, Polyline, Region, LatLng } from 'react-native-maps';
@@ -44,6 +43,29 @@ export default function PeopleOnMap({ chatId, journeyId, journeyState, participa
     1 // Solo la última posición
   );
 
+  // Logs de depuración
+  useEffect(() => {
+    console.log('PeopleOnMap - Estado:', {
+      enabled,
+      journeyState,
+      participantesRecibidos: participants.length,
+      posicionesEnMapa: positionsMap.size
+    });
+    
+    participants.forEach(p => {
+      console.log(`Participante ${p.id}:`, {
+        nombre: p.name,
+        tieneAvatar: !!p.avatarUrl,
+        tieneDestino: !!p.destination,
+        destino: p.destination
+      });
+    });
+    
+    positionsMap.forEach((positions, userId) => {
+      console.log(`Posiciones de ${userId}:`, positions.length, positions[0]);
+    });
+  }, [participants, positionsMap, enabled, journeyState]);
+
   // 2. Centrar el mapa en la ubicación del usuario
   useEffect(() => {
     (async () => {
@@ -62,8 +84,7 @@ export default function PeopleOnMap({ chatId, journeyId, journeyState, participa
     })();
   }, []);
 
-
-  // Estado para guardar las rutas de cada participante
+  // 3. Obtener y almacenar rutas para cada participante
   const [routes, setRoutes] = useState<Record<string, LatLng[]>>({}); // { [userId]: LatLng[] }
 
   // Obtener rutas cuando el journey está activo y hay posiciones
@@ -73,7 +94,7 @@ export default function PeopleOnMap({ chatId, journeyId, journeyState, participa
       const newRoutes: Record<string, LatLng[]> = {};
       for (const [idx, participant] of participants.entries()) {
         const pos = positionsMap.get(participant.id)?.[0];
-        const dest = participant.destination; // { latitude, longitude }
+        const dest = participant.destination;
         if (pos && dest && dest.latitude && dest.longitude) {
           try {
             const route = await getRouteBetweenPoints(
@@ -87,7 +108,7 @@ export default function PeopleOnMap({ chatId, journeyId, journeyState, participa
             }
           } catch (e) {
             // Puedes loguear el error si quieres
-            console.log(`❌ Error obteniendo ruta para participante ${participant.id}:`, e);
+            console.log(`Error obteniendo ruta para participante ${participant.id}:`, e);
           }
         }
       }
@@ -138,20 +159,22 @@ export default function PeopleOnMap({ chatId, journeyId, journeyState, participa
                   strokeWidth={4}
                 />
               )}
-              {/* Marcador de participante */}
+              {/* Marcador de participante en su posición actual */}
               {pos && (
                 <Marker
                   coordinate={{
                     latitude: pos.latitude,
                     longitude: pos.longitude,
                   }}
-                  title={participant?.name}
+                  title={participant?.name || t('peopleOnMap.participant')}
                 >
-                  <View style={styles.marker}>
-                    {participant?.avatarUrl ? (
+                  {participant?.avatarUrl ? (
+                    <View style={[styles.marker, { borderColor: color }]}>
                       <Image source={{ uri: participant.avatarUrl }} style={styles.avatar} />
-                    ) : null}
-                  </View>
+                    </View>
+                  ) : (
+                    <View style={[styles.defaultMarker, { backgroundColor: color }]} />
+                  )}
                 </Marker>
               )}
               {/* Marcador de destino */}
@@ -161,9 +184,10 @@ export default function PeopleOnMap({ chatId, journeyId, journeyState, participa
                     latitude: dest.latitude,
                     longitude: dest.longitude,
                   }}
-                  pinColor={color}
-                  title={t('peopleOnMap.destination')}
-                />
+                  title={`${t('peopleOnMap.destination')} - ${participant?.name || t('peopleOnMap.participant')}`}
+                >
+                  <View style={[styles.destinationPin, { backgroundColor: color }]} />
+                </Marker>
               )}
             </React.Fragment>
           );
@@ -187,11 +211,26 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 24,
     overflow: 'hidden',
-    borderWidth: 2,
+    borderWidth: 3,
     borderColor: '#fff',
+    backgroundColor: '#f0f0f0',
   },
   avatar: {
     width: '100%',
     height: '100%',
+  },
+  defaultMarker: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 3,
+    borderColor: '#fff',
+  },
+  destinationPin: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 3,
+    borderColor: '#fff',
   },
 });
