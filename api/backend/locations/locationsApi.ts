@@ -24,7 +24,5 @@ export const createLocation = async (location: Location): Promise<number> => {
  * DELETE /location
  */
 export const deleteLocation = async (id: number): Promise<void> => {
-    await api.delete('/locations', {
-        data: location
-    });
+    await api.get(`/locations/${id}`);
 };

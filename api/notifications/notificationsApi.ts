@@ -1,5 +1,5 @@
 import api from "../client";
-import { RegisterTokenDto, SendPushToUserRequest, EmergencyTriggerRequest } from './types';
+import { RegisterTokenDto, SendPushToUserRequest } from './types';
 
 /**
  * Registra el token en backend.
@@ -33,12 +33,4 @@ export async function sendPushToUser(req: SendPushToUserRequest) {
   console.log(" information about sent notification: ", data);
   console.log("payload: ", data.payload);
   return data; // tickets, tokens, etc. según tu backend
-}
-
-/**
- * Dispara una alerta de emergencia que envía notificaciones a todos los contactos de emergencia aceptados
- */
-export async function triggerEmergency(req: EmergencyTriggerRequest): Promise<void> {
-  await api.post('/me/emergency-contact/trigger', req);
-  console.log('[triggerEmergency] Alerta de emergencia disparada exitosamente');
 }

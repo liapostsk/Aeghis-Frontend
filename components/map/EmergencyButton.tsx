@@ -10,7 +10,7 @@ import {
   Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { triggerEmergency } from '@/api/notifications/notificationsApi';
+import { triggerEmergency } from '@/api/backend/contacts/emergencyContactsApi';
 import { useUserStore } from '@/lib/storage/useUserStorage';
 import { useAuth } from '@clerk/clerk-expo';
 import { useTokenStore } from '@/lib/auth/tokenStore';
