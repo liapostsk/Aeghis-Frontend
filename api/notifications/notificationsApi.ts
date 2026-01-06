@@ -1,4 +1,4 @@
-import api from "../client";
+import api from "@/api/client";
 import { RegisterTokenDto, SendPushToUserRequest } from './types';
 
 /**
@@ -6,7 +6,7 @@ import { RegisterTokenDto, SendPushToUserRequest } from './types';
  */
 export async function registerToken(userId: number, dto: RegisterTokenDto): Promise<void> {
   await api.post(`/api/notification-tokens/${userId}`, dto);  
-  console.log('✅ [registerToken] Token registrado exitosamente en backend');
+  console.log('[registerToken] Token registrado exitosamente en backend');
 }
 
 /**
@@ -14,8 +14,6 @@ export async function registerToken(userId: number, dto: RegisterTokenDto): Prom
  */
 export async function revokeToken(userId: number, token: string): Promise<void> {
   await api.delete(`/api/notification-tokens/${userId}/${encodeURIComponent(token)}`);
-  
-  console.log('✅ [revokeToken] Token revocado exitosamente');
 }
 
 /**
@@ -32,5 +30,5 @@ export async function sendPushToUser(req: SendPushToUserRequest) {
   const { data } = await api.post('/api/push/sendToUser', payload);
   console.log(" information about sent notification: ", data);
   console.log("payload: ", data.payload);
-  return data; // tickets, tokens, etc. según tu backend
+  return data;
 }

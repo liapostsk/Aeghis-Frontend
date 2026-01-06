@@ -19,10 +19,6 @@ import i18next from 'i18next';
 import { createJourney } from '@/api/backend/journeys/journeyApi';
 import { createParticipation } from '@/api/backend/participations/participationApi';
 import { createLocation } from '@/api/backend/locations/locationsApi';
-import { 
-  getCompanionRequestByCompanionGroupId,
-  linkTrackingGroupToCompanionRequest 
-} from '@/api/backend/companionRequest/companionRequestApi';
 
 interface UseJourneyCreationProps {
   groupId: string;
@@ -240,32 +236,14 @@ ID del trayecto: ${journeyId}`;
         }
       }
 
+      // TODO: se envia notificacion con el id del grupo que se comparte el trayecto sin tener que almacenarlo en backend
       // 4. Manejar según tipo
       if (journeyType === 'individual') {
-        // Si viene de un grupo COMPANION, asociar tracking group y enviar notificación
         if (companionGroupId && targetGroupId) {
-          try {
-            setCreationStep(i18next.t('useJourneyCreation.steps.linkingTracking'));
-            
-            // Obtener la companion request asociada al grupo COMPANION
-            const companionRequest = await getCompanionRequestByCompanionGroupId(Number(companionGroupId));
-            
-            // Determinar si el usuario actual es el creador o el companion
-            const isCreator = companionRequest.creator?.id === currentUser?.id;
-            
-            // Usar el endpoint unificado con el parámetro isCreatorTrackingGroup
-            await linkTrackingGroupToCompanionRequest(
-              companionRequest.id, 
-              Number(targetGroupId), 
-              isCreator
-            );
-            console.log(`Tracking group ${isCreator ? 'del creador' : 'del companion'} asociado`);
-          } catch (trackingError) {
-            console.warn('Error asociando tracking group:', trackingError);
-          }
-          
           // Enviar notificación al chat del grupo COMPANION
           try {
+            setCreationStep(i18next.t('useJourneyCreation.steps.linkingTracking'));
+
             const statusMessage = i18next.t('useJourneyCreation.notifications.locationSharing', { 
               user: currentUser?.name || 'Un miembro' 
             });

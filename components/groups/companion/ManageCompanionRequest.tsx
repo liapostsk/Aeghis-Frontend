@@ -13,12 +13,10 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { CompanionRequestDto, EditCompanionRequestDto } from '@/api/backend/companionRequest/companionTypes';
+import { CompanionRequestDto, CreateCompanionRequestDto } from '@/api/backend/companionRequest/companionTypes';
 import {
-  acceptCompanionRequest,
-  rejectCompanionRequest, 
+  changeCompanionRequestStatus,
   getCompanionRequestById,
-  finishCompanionRequest,
   updateCompanionGroupId,
   editCompanionRequest,
 } from '@/api/backend/companionRequest/companionRequestApi';
@@ -203,7 +201,7 @@ export default function ManageCompanionRequest({
         finalDateTime = selectedDateTime;
       }
 
-      const editDto: EditCompanionRequestDto = {
+      const editDto: CreateCompanionRequestDto = {
         sourceId,
         destinationId: destId,
         aproxHour: finalDateTime,
@@ -245,8 +243,8 @@ export default function ManageCompanionRequest({
               const token = await getToken();
               setToken(token);
 
-              // Primero aceptar la solicitud
-              await acceptCompanionRequest(request.id);
+              // Primero aceptar la solicitud cambiando su estado a MATCHED
+              await changeCompanionRequestStatus(request.id, 'MATCHED');
               console.log('Solicitud aceptada');
 
               // Crear grupo automáticamente
@@ -359,7 +357,8 @@ export default function ManageCompanionRequest({
               const token = await getToken();
               setToken(token);
 
-              await rejectCompanionRequest(request.id);
+              // Rechazar cambiando el estado de vuelta a CREATED (cancelando la solicitud del companion)
+              await changeCompanionRequestStatus(request.id, 'CREATED');
               Alert.alert(
                 t('companion.manage.reject.success.title'),
                 t('companion.manage.reject.success.message'),
@@ -403,7 +402,7 @@ export default function ManageCompanionRequest({
               const token = await getToken();
               setToken(token);
 
-              await finishCompanionRequest(request.id);
+              await changeCompanionRequestStatus(request.id, 'FINISHED');
               Alert.alert(
                 t('companion.manage.finish.success.title'),
                 t('companion.manage.finish.success.message'),

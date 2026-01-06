@@ -1,6 +1,5 @@
 import { User } from "@/lib/storage/useUserStorage";
 import { Group } from "../group/groupType";
-import { Journey } from "../journeys/journeyType";
 import { SafeLocation } from "../locations/locationType";
 
 export interface CompanionRequest {
@@ -15,17 +14,12 @@ export interface CompanionRequest {
   creator: User;
   companion: User;
   companionGroup?: Group;
-  trackingGroup?: Group;
-  trayecto?: Journey;
-  // Grupos donde cada participante comparte su ubicación
-  creatorTrackingGroup?: Group;
-  companionTrackingGroup?: Group;
 }
 
 export interface CompanionRequestDto {
   id: number;
-  source: SafeLocation;
-  destination: SafeLocation;
+  source: SafeLocation;        // ojo: ver punto 2
+  destination: SafeLocation;   // ojo: ver punto 2
   state: RequestStatus;
   aproxHour?: Date;
   creationDate: Date;
@@ -34,11 +28,6 @@ export interface CompanionRequestDto {
   creator: User;
   companion: User;
   companionGroupId?: number;
-  trackingGroupId?: number;
-  trayectoId?: number;
-  // IDs de los grupos donde cada participante comparte su ubicación
-  creatorTrackingGroupId?: number;
-  companionTrackingGroupId?: number;
 }
 
 export interface CreateCompanionRequestDto {
@@ -47,22 +36,5 @@ export interface CreateCompanionRequestDto {
   aproxHour?: Date;
   description?: string;
 }
-
-export interface EditCompanionRequestDto {
-  sourceId?: number;
-  destinationId?: number;
-  aproxHour?: Date;
-  description?: string;
-}
-
-/*
-export interface CompanionApplicant {
-  userId: number;
-  userName: string;
-  userImage?: string;
-  companionMessage: string;
-  requestDate: Date;
-}
-*/
 
 export type RequestStatus = "CREATED" | "PENDING" | "MATCHED" | "IN_PROGRESS" | "FINISHED" | "EXPIRED" | "CANCELLED";

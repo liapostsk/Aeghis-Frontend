@@ -32,7 +32,7 @@ import {
     deleteGroupFirebase 
 } from '@/api/firebase/chat/chatService';
 import { getUserProfileFB } from '@/api/firebase/users/userService';
-import { finishCompanionRequest } from '@/api/backend/companionRequest/companionRequestApi';
+import { getCompanionRequestByCompanionGroupId, changeCompanionRequestStatus } from '@/api/backend/companionRequest/companionRequestApi';
 import AlertModal from '@/components/common/AlertModal';
 import InviteModal from '@/components/groups/InviteModal';
 import EditGroupModal from '@/components/groups/EditGroupModal';
@@ -300,12 +300,17 @@ export default function GroupInfoScreen() {
             const token = await getToken();
             setToken(token);
 
-            // 1. Finalizar companion request si existe
-            // Nota: Necesitarás obtener el companionRequestId del grupo o de otra fuente
-            // Por ahora, buscamos por el grupo COMPANION
-            // TODO: Implementar getCompanionRequestByGroupId en la API si no existe
+            // 1. Obtener el companion request por el ID del grupo
+            try {
+                const companionRequest = await getCompanionRequestByCompanionGroupId(group.id);
+                // 2. Finalizar companion request cambiando su estado a FINISHED
+                await changeCompanionRequestStatus(companionRequest.id, 'FINISHED');
+                console.log('Companion request finalizado');
+            } catch (error) {
+                console.warn('No se encontró companion request para este grupo o ya fue finalizado:', error);
+            }
             
-            // 2. Eliminar grupo de Firebase y backend
+            // 3. Eliminar grupo de Firebase y backend
             await deleteGroupFirebase(group.id.toString());
             await deleteGroup(group.id);
             
