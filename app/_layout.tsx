@@ -22,7 +22,7 @@ function RootNavigator() {
   }, []);
 
   useEffect(() => {
-    if (state === 'checking') return; // Wait for validation to complete
+    if (state === 'checking') return;
 
     const inAuthGroup = segments[0] === '(auth)';
     const inTabsGroup = segments[0] === '(tabs)';
@@ -34,38 +34,30 @@ function RootNavigator() {
     switch (state) {
       case 'noSession':
         if (!inAuthGroup) {
-          console.log('[RootNavigator] Redirecting to auth (no session)');
           router.replace('/(auth)');
         }
         break;
 
       case 'needsProfile':
-        // Allow navigation within auth group for infoForm
         if (!inAuthGroup) {
-          console.log('[RootNavigator] Redirecting to onboarding (needs profile)');
           router.replace('/(auth)/infoForm');
         }
         break;
 
       case 'admin':
-        // Usuario ADMIN → Redirigir a panel de admin
         if (!inAdminGroup) {
-          console.log('[RootNavigator] Redirecting to admin panel (admin role)');
           router.replace('/(admin)');
         }
         break;
 
       case 'ready':
-        // Usuario normal → Redirigir a tabs solo si NO está en tabs o chat
         if (!inTabsGroup && !inChatGroup) {
-          console.log('[RootNavigator] Redirecting to tabs (ready)');
           router.replace('/(tabs)');
         }
         break;
 
       case 'inconsistent':
         if (!inAuthGroup) {
-          console.log('[RootNavigator] Redirecting to auth (inconsistent state)');
           router.replace('/(auth)');
         }
         break;

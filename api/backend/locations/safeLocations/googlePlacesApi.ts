@@ -44,7 +44,6 @@ export const calculateDistance = (
 export const formatDistance = (meters: number): string =>
   meters < 1000 ? `${meters} m` : `${(meters / 1000).toFixed(1)} km`;
 
-// Transforma la respuesta de Google Places
 export const transformGooglePlaceToLocation = (
   place: any,
   userLat?: number,
@@ -69,11 +68,10 @@ export const transformGooglePlaceToLocation = (
     distance: distanceInMeters ? formatDistance(distanceInMeters) : undefined,
     latitude: lat,
     longitude: lng,
-    externalId: place.place_id || place.id, // ID del lugar en Google Places
+    externalId: place.place_id || place.id,
   };
 }
 
-// 🧭 Buscar lugares cercanos
 export const searchNearbyPlaces = async (
   params: NearbySearchParams
 ): Promise<SafeLocation[]> => {
@@ -90,7 +88,6 @@ export const searchNearbyPlaces = async (
   );
 };
 
-// 🔎 Buscar por texto
 export const searchPlacesByText = async (
   params: TextSearchParams
 ): Promise<SafeLocation[]> => {
@@ -106,7 +103,6 @@ export const searchPlacesByText = async (
   );
 };
 
-// 🏷️ Obtener detalles por place_id
 export const getPlaceDetails = async (
   placeId: string,
   userLat?: number,
@@ -117,7 +113,6 @@ export const getPlaceDetails = async (
   });
 
   const data = response.data;
-  console.log("🔍 Detalles del lugar de Google:", JSON.stringify(data.result, null, 2));
 
   return data.result
     ? transformGooglePlaceToLocation(data.result, userLat, userLng)

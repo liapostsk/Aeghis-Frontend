@@ -3,6 +3,11 @@ import { SafeLocation } from "../locationType";
 import { calculateDistance } from "./googlePlacesApi";
 import { formatDistance } from "./googlePlacesApi";
 
+const DEFAULT_LOCATION_NAME = "Ubicación sin nombre";
+const DEFAULT_DESCRIPTION = "Descripción no disponible";
+const DEFAULT_ADDRESS = "Dirección no disponible";
+const DEFAULT_TYPE = "custom";
+
 export const getLocationFromCoordinates = async (
   latitude: number,
   longitude: number,
@@ -16,17 +21,16 @@ export const getLocationFromCoordinates = async (
 
   try {
     const data = response.data;
-    console.log("🔍 Ubicación obtenida de coordenadas:", JSON.stringify(data, null, 2));
 
     if (data.results && data.results.length > 0) {
         const result = data.results[0];
         const distanceInMeters =
         userLat && userLng ? calculateDistance(userLat, userLng, userLat, userLng) : undefined;
         return {
-            name: name || result.formatted_address || "Ubicación sin nombre",
-            description: result.types ? result.types.join(", ") : "Descripción no disponible",
-            address: result.formatted_address || "Dirección no disponible",
-            type: result.types ? result.types.join(", ") : "custom",
+            name: name || result.formatted_address || DEFAULT_LOCATION_NAME,
+            description: result.types ? result.types.join(", ") : DEFAULT_DESCRIPTION,
+            address: result.formatted_address || DEFAULT_ADDRESS,
+            type: result.types ? result.types.join(", ") : DEFAULT_TYPE,
             distance: distanceInMeters ? formatDistance(distanceInMeters) : undefined,
             latitude: result.geometry.location.lat,
             longitude: result.geometry.location.lng,
@@ -51,13 +55,12 @@ export const searchLocationsByText = async (
 
   try {
     const data = response.data;
-    console.log("🔍 Resultados de búsqueda por texto:", JSON.stringify(data, null, 2));
 
     return (data.results || []).map((result: any) => ({
-      name: result.formatted_address || "Ubicación sin nombre",
-      description: result.types ? result.types.join(", ") : "Descripción no disponible",
-      address: result.formatted_address || "Dirección no disponible",
-      type: result.types ? result.types.join(", ") : "custom",
+      name: result.formatted_address || DEFAULT_LOCATION_NAME,
+      description: result.types ? result.types.join(", ") : DEFAULT_DESCRIPTION,
+      address: result.formatted_address || DEFAULT_ADDRESS,
+      type: result.types ? result.types.join(", ") : DEFAULT_TYPE,
       distance: userLat && userLng ? formatDistance(calculateDistance(userLat, userLng, result.geometry.location.lat, result.geometry.location.lng)) : undefined,
       latitude: result.geometry.location.lat,
       longitude: result.geometry.location.lng,

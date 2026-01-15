@@ -204,7 +204,6 @@ export default function SafeLocationModal({
           const sortedPlacesResult = sortLocationsByDistance(placesResult);
           setResults(sortedPlacesResult);
         } else {
-          // Si no hay resultados, intentamos con Google Geocoding
           const geocodingResult = await searchLocationsByText(query,
             currentLocation?.latitude,
             currentLocation?.longitude
