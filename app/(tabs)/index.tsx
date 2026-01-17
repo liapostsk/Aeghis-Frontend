@@ -9,7 +9,6 @@ import EmergencyButton from '@/components/map/EmergencyButton';
 import AlertModal from '@/components/common/AlertModal';
 import { useEffect, useState } from 'react';
 import { getParticipants } from '@/api/firebase/journey/participationsService';
-import { Participation } from '@/api/firebase/types';
 import { Group } from '@/api/backend/group/groupType';
 import { JourneyDto, JourneyStates } from '@/api/backend/journeys/journeyType';
 import { changeJourneyStatus } from '@/api/backend/journeys/journeyApi';
