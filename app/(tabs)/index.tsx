@@ -126,7 +126,7 @@ export default function MapScreen() {
           })
         );
 
-        console.log('✅ Participantes enriquecidos:', enriched.length);
+        console.log('Participantes enriquecidos:', enriched.length);
         setParticipants(enriched);
       } catch (error) {
         console.error('Error obteniendo participantes:', error);

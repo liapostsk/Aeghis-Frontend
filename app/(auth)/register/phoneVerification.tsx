@@ -18,6 +18,7 @@ import VerificationCodeField from "@/components/ui/VerificationCodeField";
 import { useTranslation } from 'react-i18next';
 
 const validateCode = (code: string, t: any) => {
+  console.log("Validando código:", code);
   if (!code || code.trim() === '') {
     return { isValid: false, message: t('register.phoneVerification.validation.empty') };
   }

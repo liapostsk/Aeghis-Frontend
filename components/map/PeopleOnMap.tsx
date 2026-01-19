@@ -85,7 +85,7 @@ export default function PeopleOnMap({ chatId, journeyId, journeyState, participa
   }, []);
 
   // 3. Obtener y almacenar rutas para cada participante
-  const [routes, setRoutes] = useState<Record<string, LatLng[]>>({}); // { [userId]: LatLng[] }
+  const [routes, setRoutes] = useState<Record<string, LatLng[]>>({});
 
   // Obtener rutas cuando el journey está activo y hay posiciones
   useEffect(() => {

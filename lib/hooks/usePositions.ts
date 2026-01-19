@@ -10,9 +10,6 @@ import {
 } from '@/api/firebase/journey/positionsService';
 import { auth } from '@/firebaseconfig';
 
-/**
- * Hook simplificado para obtener la última posición de un usuario participante
- */
 export const useUserLatestPosition = (
   chatId: string,
   journeyId: string,

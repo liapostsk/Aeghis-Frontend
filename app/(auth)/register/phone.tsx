@@ -94,6 +94,7 @@ export default function PhoneScreen() {
             </Text>
           </View>
 
+          <View style={styles.inputSection}>
           <View style={styles.phoneContainer}>
             <PhoneNumberPicker
               onChange={({ countryCode, callingCode }) => {
@@ -123,6 +124,7 @@ export default function PhoneScreen() {
           {phone && !validation.isValid && (
             <Text style={styles.errorText}>{validation.message}</Text>
           )}
+          </View>
         </View>
 
         <View style={styles.buttonContainer}>
@@ -156,14 +158,17 @@ const styles = StyleSheet.create({
   titleContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 30,
-    bottom: "10%",
+    marginBottom: 40,
   },
   textTitle: {
     color: "#FFFFFF",
-    fontSize: 36,
+    fontSize: 35,
     fontWeight: "bold",
     textAlign: 'center',
+  },
+  inputSection: {
+    width: '100%',
+    minHeight: 80,
   },
   phoneContainer: {
     flexDirection: 'row',
@@ -171,7 +176,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#E3D5F5',
     borderRadius: 10,
     overflow: 'hidden',
-    marginBottom: 20,
   },
   phoneInput: {
     flex: 1,
@@ -182,19 +186,20 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 10,
   },
   phoneInputError: {
-    borderColor: '#FF6B6B',
-    borderWidth: 1,
+    borderColor: '#FF9999',
+    borderWidth: 2,
   },
   errorText: {
-    color: '#FF6B6B',
-    fontSize: 14,
+    color: '#FFCCCC',
+    fontSize: 13,
     textAlign: 'center',
     marginTop: 8,
+    paddingHorizontal: 10,
   },
   buttonContainer: {
     alignItems: 'center',
-    justifyContent: 'center',
-    bottom: "10%",
-    paddingBottom: Platform.OS === 'ios' ? 40 : 20,
+    paddingHorizontal: 20,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 30,
+    marginBottom: 20,
   },
 });

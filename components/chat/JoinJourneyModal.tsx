@@ -30,7 +30,7 @@ interface JoinJourneyModalProps {
   journey: JourneyDto;
   currentUser: UserDto | null;
   onJoinSuccess: (participation: ParticipationDto) => void;
-  chatId: string; // ID del chat para Firebase
+  chatId: string;
 }
 
 export default function JoinJourneyModal({
@@ -234,12 +234,10 @@ export default function JoinJourneyModal({
     setShowDestinationModal(false);
   };
 
-  // Nueva función: Manejar apertura del modal de destino
   const handleOpenDestinationModal = () => {
     setShowDestinationModal(true);
   };
 
-  // Nueva función: Manejar cierre del modal de destino
   const handleCloseDestinationModal = () => {
     setShowDestinationModal(false);
   };

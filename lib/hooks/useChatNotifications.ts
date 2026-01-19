@@ -20,7 +20,7 @@ export function useChatNotifications() {
   useEffect(() => {
     // Esperar a que termine de cargar
     if (groupsLoading) {
-      console.log('⏳ [ChatNotifications] Cargando grupos...');
+      console.log('[ChatNotifications] Cargando grupos...');
       return;
     }
 
@@ -40,7 +40,6 @@ export function useChatNotifications() {
     
     const unsubscribers: Array<() => void> = [];
 
-    // Escuchar mensajes de TODOS los grupos
     groups.forEach((group) => {
       const groupId = group.id; // Mantener el tipo number
       const groupIdString = String(groupId); // Para Firebase
@@ -70,7 +69,7 @@ export function useChatNotifications() {
             return;
           }
 
-          console.log(`📬 [ChatNotifications] Nuevo mensaje en grupo ${groupId}`);
+          console.log(`[ChatNotifications] Nuevo mensaje en grupo ${groupId}`);
           console.log(`   De: ${latestMessage.senderName}`);
           console.log(`   Mensaje: ${latestMessage.content.substring(0, 50)}...`);
 

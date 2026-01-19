@@ -7,7 +7,7 @@ export const getCurrentUser = async (): Promise<UserDto> => {
     const response = await api.get("/users/me");
     return response.data;
   } catch (error) {
-    console.error('Error obteniendo usuario actual:', error);
+    console.log('Error obteniendo usuario actual:', error);
     throw error;
   }
 };
@@ -17,7 +17,7 @@ export const createUser = async (dto: UserDto): Promise<number> => {
     const response = await api.post("/users", dto);
     return response.data;
   } catch (error) {
-    console.error('Error creando usuario:', error);
+    console.log('Error creando usuario:', error);
     throw error;
   }
 };
@@ -27,7 +27,7 @@ export const getUser = async (id: number): Promise<UserDto> => {
     const response = await api.get(`/users/${id}`);
     return response.data;
   } catch (error) {
-    console.error(`Error obteniendo usuario ${id}:`, error);
+    console.log(`Error obteniendo usuario ${id}:`, error);
     throw error;
   }
 };
@@ -46,7 +46,7 @@ export const updateUser = async (id: number, dto: UserDto): Promise<void> => {
   try {
     await api.put(`/users/${id}`, dto);
   } catch (error) {
-    console.error(`Error actualizando usuario ${id}:`, error);
+    console.log(`Error actualizando usuario ${id}:`, error);
     throw error;
   }
 };
@@ -90,7 +90,7 @@ export const getUsersPendingVerification = async (): Promise<UserDto[]> => {
     console.log(`${response.data.length} usuarios pendientes`);
     return response.data;
   } catch (error) {
-    console.error('Error obteniendo usuarios pendientes:', error);
+    console.log('Error obteniendo usuarios pendientes:', error);
     throw error;
   }
 };

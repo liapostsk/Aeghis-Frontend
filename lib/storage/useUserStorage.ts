@@ -30,7 +30,7 @@ export type User = {
   externalContacts?: ExternalContact[];
   safeLocations?: SafeLocation[];
   groups?: Group[];
-  clerkId?: string; // ID de usuario en Clerk
+  clerkId?: string;
   role?: "USER" | "ADMIN";
   companionRequestsCreated?: CompanionRequest[];
   companionRequestsAccepted?: CompanionRequest[];
@@ -52,7 +52,7 @@ export const useUserStore = create<UserStore>()(
 
       refreshUserFromBackend: async () => {
         try {
-          const user = await getCurrentUser(); // ← Usas directamente tu API
+          const user = await getCurrentUser();
           set({ user });
         } catch (err) {
           console.error('Error al refrescar usuario:', err);
