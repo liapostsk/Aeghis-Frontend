@@ -1,6 +1,6 @@
 
 import { router } from 'expo-router';
-import { StyleSheet, StatusBar } from 'react-native';
+import { StyleSheet, StatusBar, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MapHeader from '@/components/map/MapHeader';
 import PeopleOnMap from '@/components/map/PeopleOnMap';
@@ -42,6 +42,7 @@ type ModalType =
   | 'confirmComplete' 
   | 'journeyCompleted' 
   | 'completeError'
+  | 'locationPermissionDenied'
   | null;
 
 interface ModalState {
@@ -59,17 +60,28 @@ export default function MapScreen() {
   // --- USER LOCATION FOR EMERGENCY ---
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | undefined>();
 
-  useEffect(() => {
-    (async () => {
+  const requestLocationPermission = async () => {
+    try {
       const { status } = await Location.requestForegroundPermissionsAsync();
+      
       if (status === 'granted') {
         const location = await Location.getCurrentPositionAsync({});
         setUserLocation({
           lat: location.coords.latitude,
           lng: location.coords.longitude,
         });
+        closeModal();
+      } else {
+        setModalState({ type: 'locationPermissionDenied' });
       }
-    })();
+    } catch (error) {
+      console.error('Error solicitando permisos de ubicación:', error);
+      setModalState({ type: 'locationPermissionDenied' });
+    }
+  };
+
+  useEffect(() => {
+    requestLocationPermission();
   }, []);
 
   // --- PARTICIPANTS LOGIC ---
@@ -225,24 +237,11 @@ export default function MapScreen() {
   const closeModal = () => {
     setModalState({ type: null });
   };
-  
 
-  /*
-  const handleLogout = async () => {
-    await unlinkFirebaseSession();
-    await signOut();
-    clearUser();
-    console.log("🔒 Sesión cerrada");
-    router.replace("/(auth)");
+  const openSettings = () => {
+    Linking.openSettings();
+    closeModal();
   };
-
-  <Pressable 
-    style={styles.debugLogoutButton} 
-    onPress={handleLogout}
-  >
-    <Text>🔒 Cerrar sesión</Text>
-  </Pressable>
-  */
 
   return (
     <SafeAreaView style={styles.container}>
@@ -265,6 +264,18 @@ export default function MapScreen() {
         groupJourney={selectedGroupJourney}
         onStartJourney={handleStartJourney}
         onCompleteJourney={handleCompleteJourney}
+      />
+
+      {/* Modal: Permisos de ubicación denegados */}
+      <AlertModal
+        visible={modalState.type === 'locationPermissionDenied'}
+        type="warning"
+        title={t('map.locationPermission.title')}
+        message={t('map.locationPermission.message')}
+        confirmText={t('map.locationPermission.openSettings')}
+        cancelText={t('map.locationPermission.tryAgain')}
+        onConfirm={openSettings}
+        onCancel={requestLocationPermission}
       />
 
       {/* Modal: Journey ya está activo */}

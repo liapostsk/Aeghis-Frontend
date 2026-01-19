@@ -76,6 +76,8 @@ export default function EmergencyContactAddModal({ visible, onClose, onAddContac
 
   // Manejar contacto seleccionado/guardado
   const handleContactSaved = (contact: Contact) => {
+    console.log(" ADD MODAL - Contacto recibido:", contact);
+    console.log("  - Origen:", modalMode === 'manual' ? 'MANUAL' : 'AGENDA');
     onAddContact(contact);
     setModalMode('initial');
     onClose();

@@ -5,6 +5,12 @@
     "profile": "Profile"
   },
   "map": {
+    "locationPermission": {
+      "title": "Location Permission Required",
+      "message": "The app needs access to your location to work properly. Please enable location permissions in settings.",
+      "openSettings": "Open Settings",
+      "tryAgain": "Try Again"
+    },
     "journeyActive": {
       "title": "Journey Active",
       "message": "The journey is already in progress",
@@ -659,6 +665,7 @@
     "safeLocations": {
       "title": "Safe Locations",
       "edit": "Edit",
+      "done": "Done",
       "add": "Add location",
       "types": {
         "home": "Home",
@@ -1411,7 +1418,8 @@
       "deleteEmergency": "Could not delete emergency contact",
       "deleteExternal": "Could not delete external contact",
       "addContact": "Could not add contact",
-      "editContact": "Could not edit contact"
+      "editContact": "Could not edit contact",
+      "lastContact": "You must have at least one emergency contact. You cannot delete the last contact."
     }
   },
   "alertModal": {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable, Alert } from 'react-native';
 import { Ionicons, FontAwesome5, Feather } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -27,8 +27,8 @@ type TabType = 'app' | 'external';
 export default function EmergencyContactsSection() {
   const { t } = useTranslation();
 
-  // Obtener contactos de emergencia del usuario desde el store
-  const { user } = useUserStore();
+  // Obtener contactos de emergencia del usuario desde el store con suscripción reactiva
+  const user = useUserStore((state) => state.user);
   const emergencyContacts = user?.emergencyContacts || [];
   const externalContacts = user?.externalContacts || [];
 
@@ -48,12 +48,18 @@ export default function EmergencyContactsSection() {
     return value == null || value === "" || value === "null" || value === "undefined";
   };
 
-  // Cargar datos de contactos de emergencia cuando cambien
+  // Memorizar la lista de contactIDs para evitar renders innecesarios
+  const contactIds = useMemo(() => 
+    emergencyContacts.map(c => c.contactId).filter(id => id != null).join(','),
+    [emergencyContacts]
+  );
+
+  // Cargar datos de contactos de emergencia cuando cambien los IDs
   useEffect(() => {
-    if (emergencyContacts.length > 0) {
+    if (contactIds) {
       loadEmergencyContactsData();
     }
-  }, [emergencyContacts]);
+  }, [contactIds]);
 
   // Resetear estados cuando la screen pierde el foco
   useFocusEffect(
@@ -82,8 +88,13 @@ export default function EmergencyContactsSection() {
 
       const contactsData: { [contactId: number]: any } = {};
       
-      for (const contact of emergencyContacts) {
-        if (contact.contactId && !contactsData[contact.contactId]) {
+      // Solo cargar datos que no tengamos ya
+      const contactsToLoad = emergencyContacts.filter(
+        contact => contact.contactId && !emergencyContactsData[contact.contactId]
+      );
+      
+      for (const contact of contactsToLoad) {
+        if (contact.contactId) {
           try {
             const userData = await getUser(contact.contactId);
             contactsData[contact.contactId] = userData;
@@ -93,7 +104,8 @@ export default function EmergencyContactsSection() {
         }
       }
       
-      setEmergencyContactsData(contactsData);
+      // Combinar con los datos existentes
+      setEmergencyContactsData(prev => ({ ...prev, ...contactsData }));
     } catch (error) {
       console.error("Error cargando datos de contactos de emergencia:", error);
     }
@@ -139,6 +151,17 @@ export default function EmergencyContactsSection() {
   };
 
   const handleDeleteContact = async (contact: EmergencyContact | ExternalContact, type: ContactType) => {
+    // Verificar si es el último contacto
+    const totalContacts = emergencyContacts.length + externalContacts.length;
+    if (totalContacts <= 1) {
+      Alert.alert(
+        t('emergencyContactsSection.errors.title'),
+        t('emergencyContactsSection.errors.lastContact'),
+        [{ text: 'OK', style: 'default' }]
+      );
+      return;
+    }
+
     const contactType = type === 'emergency' ? 'Contacto de Emergencia' : 'Contacto Externo';
     const titleKey = type === 'emergency' ? 'emergencyContactsSection.delete.titleEmergency' : 'emergencyContactsSection.delete.titleExternal';
     
@@ -177,13 +200,18 @@ export default function EmergencyContactsSection() {
   };
 
   const handleAddContact = async (contactData: Contact) => {
+    console.log('Intentando agregar contacto:', contactData);
+    
     try {
       const token = await getToken();
       setToken(token);
 
+      console.log('Verificando si el usuario existe con teléfono:', contactData.phone);
       const existsUserId = await checkIfUserExists(contactData.phone);
+      console.log('Usuario existe con ID:', existsUserId);
       
       if (!isEmptyOrNull(existsUserId)) {
+        console.log('Creando contacto de emergencia (usuario en app)');
         const newEmergencyContact: Partial<EmergencyContact> = {
           name: contactData.name || '',
           phone: contactData.phone,
@@ -192,24 +220,41 @@ export default function EmergencyContactsSection() {
           status: 'PENDING',
         };
         
+        console.log('Datos del contacto de emergencia:', newEmergencyContact);
         const emergencyContact = await createEmergencyContact(newEmergencyContact as EmergencyContact);
+        console.log('Contacto de emergencia creado:', emergencyContact);
       } else {
+        console.log('Creando contacto externo (usuario NO en app)');
         const newExternalContactData = {
           name: contactData.name || '',
           phone: contactData.phone,
           relation: contactData.relation || '',
         };
 
-        await createExternalContact({
+        console.log('Datos del contacto externo:', newExternalContactData);
+        const result = await createExternalContact({
           ...newExternalContactData,
           id: 0
         });
+        console.log('Contacto externo creado:', result);
       }
 
+      console.log('Refrescando datos del usuario...');
       await refreshUserData();
+      console.log('Datos refrescados, cerrando modal');
       setModalAddVisible(false);
-    } catch (error) {
-      Alert.alert(t('emergencyContactsSection.errors.title'), t('emergencyContactsSection.errors.addContact'));
+    } catch (error: any) {
+      console.error('Error agregando contacto:', error);
+      console.error('Detalles del error:', {
+        message: error?.message,
+        response: error?.response,
+        status: error?.response?.status,
+        data: error?.response?.data
+      });
+      Alert.alert(
+        t('emergencyContactsSection.errors.title'), 
+        t('emergencyContactsSection.errors.addContact') + '\n\n' + (error?.message || 'Error desconocido')
+      );
     }
   };
 
@@ -237,30 +282,6 @@ export default function EmergencyContactsSection() {
           </Text>
         </View>
 
-        {/* Badge de estado para contactos de emergencia */}
-        {isEmergency && 'status' in contact && (
-          <View style={[
-            styles.statusBadge,
-            contact.status === 'ACCEPTED' ? styles.statusAccepted : 
-            contact.status === 'PENDING' ? styles.statusPending : styles.statusRejected
-          ]}>
-            <View style={[
-              styles.statusDot, 
-              contact.status === 'ACCEPTED' ? styles.acceptedDot : 
-              contact.status === 'PENDING' ? styles.pendingDot : styles.rejectedDot
-            ]} />
-            <Text style={[
-              styles.statusBadgeText,
-              contact.status === 'ACCEPTED' ? styles.statusAcceptedText : 
-              contact.status === 'PENDING' ? styles.statusPendingText : styles.statusRejectedText
-            ]}>
-              {contact.status === 'ACCEPTED' ? t('emergencyContactsSection.status.accepted') : 
-               contact.status === 'PENDING' ? t('emergencyContactsSection.status.pending') : 
-               t('emergencyContactsSection.status.rejected')}
-            </Text>
-          </View>
-        )}
-
         {/* Icono del contacto */}
         <View style={[styles.contactIcon, isEmergency ? styles.emergencyIcon : styles.externalIcon]}>
           <Ionicons 
@@ -275,6 +296,32 @@ export default function EmergencyContactsSection() {
           <Text style={styles.contactName}>{displayName}</Text>
           <Text style={styles.contactRelation}>{contact.relation}</Text>
           <Text style={styles.contactPhone}>{displayPhone}</Text>
+          
+          {/* Badge de estado para contactos de emergencia - Inline */}
+          {/* COMENTADO PARA DEMO
+          {isEmergency && 'status' in contact && (
+            <View style={[
+              styles.statusBadgeInline,
+              contact.status === 'ACCEPTED' ? styles.statusAccepted : 
+              contact.status === 'PENDING' ? styles.statusPending : styles.statusRejected
+            ]}>
+              <View style={[
+                styles.statusDot, 
+                contact.status === 'ACCEPTED' ? styles.acceptedDot : 
+                contact.status === 'PENDING' ? styles.pendingDot : styles.rejectedDot
+              ]} />
+              <Text style={[
+                styles.statusBadgeText,
+                contact.status === 'ACCEPTED' ? styles.statusAcceptedText : 
+                contact.status === 'PENDING' ? styles.statusPendingText : styles.statusRejectedText
+              ]}>
+                {contact.status === 'ACCEPTED' ? t('emergencyContactsSection.status.accepted') : 
+                 contact.status === 'PENDING' ? t('emergencyContactsSection.status.pending') : 
+                 t('emergencyContactsSection.status.rejected')}
+              </Text>
+            </View>
+          )}
+          */}
         </View>
 
         {/* Botones de acción */}
@@ -291,12 +338,15 @@ export default function EmergencyContactsSection() {
               <Feather name="edit-2" size={16} color="#7A33CC" />
             </Pressable>
             
-            <Pressable 
-              style={[styles.actionButton, styles.deleteActionButton]} 
-              onPress={() => handleDeleteContact(contact, type)}
-            >
-              <Feather name="trash-2" size={16} color="#ff4444" />
-            </Pressable>
+            {/* Solo mostrar botón de eliminar si hay más de un contacto */}
+            {totalContacts > 1 && (
+              <Pressable 
+                style={[styles.actionButton, styles.deleteActionButton]} 
+                onPress={() => handleDeleteContact(contact, type)}
+              >
+                <Feather name="trash-2" size={16} color="#ff4444" />
+              </Pressable>
+            )}
           </View>
         )}
       </View>
@@ -578,7 +628,17 @@ const styles = StyleSheet.create({
   deleteActionButton: {
     backgroundColor: '#fff0f0',
   },
-  // Badge de estado prominente
+  // Badge de estado inline (dentro de contactInfo)
+  statusBadgeInline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+    marginTop: 6,
+  },
+  // Badge de estado prominente (ya no se usa, pero lo dejamos por si acaso)
   statusBadge: {
     position: 'absolute',
     top: 30,

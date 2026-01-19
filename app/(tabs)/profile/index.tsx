@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { StyleSheet, View, ScrollView, StatusBar, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -27,23 +27,27 @@ export default function ProfileScreen() {
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const { getToken } = useAuth();
   const setToken = useTokenStore((state) => state.setToken);
+  const isRefreshing = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
       const refreshUser = async () => {
+        if (isRefreshing.current) return; // Evitar múltiples refreshes simultáneos
+        
         try {
-          console.log(t('profile.refreshing'));
+          isRefreshing.current = true;
           const token = await getToken();
           setToken(token);
           await refreshUserFromBackend();
-          console.log(t('profile.userUpdated'));
         } catch (error) {
           console.warn(t('profile.updateError'), error);
+        } finally {
+          isRefreshing.current = false;
         }
       };
 
       refreshUser();
-    }, [refreshUserFromBackend])
+    }, [refreshUserFromBackend, getToken])
   );
 
   const toggleMenu = () => setShowMenu(!showMenu);

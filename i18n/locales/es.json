@@ -5,6 +5,12 @@
     "profile": "Perfil"
   },
   "map": {
+    "locationPermission": {
+      "title": "Permiso de ubicación requerido",
+      "message": "La aplicación necesita acceso a tu ubicación para funcionar correctamente. Por favor, habilita los permisos de ubicación en la configuración.",
+      "openSettings": "Abrir Configuración",
+      "tryAgain": "Intentar de nuevo"
+    },
     "journeyActive": {
       "title": "Journey Activo",
       "message": "El journey ya está en progreso",
@@ -659,6 +665,7 @@
     "safeLocations": {
       "title": "Ubicaciones Seguras",
       "edit": "Editar",
+      "done": "Hecho",
       "add": "Añadir ubicación",
       "types": {
         "home": "Hogar",
@@ -1412,7 +1419,8 @@
       "deleteEmergency": "No se pudo eliminar el contacto de emergencia",
       "deleteExternal": "No se pudo eliminar el contacto externo",
       "addContact": "No se pudo añadir el contacto",
-      "editContact": "No se pudo editar el contacto"
+      "editContact": "No se pudo editar el contacto",
+      "lastContact": "Debes tener al menos un contacto de emergencia. No puedes eliminar el último contacto."
     }
   },
   "alertModal": {

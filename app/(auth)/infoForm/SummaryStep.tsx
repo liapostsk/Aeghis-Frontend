@@ -131,9 +131,9 @@ export default function SummaryStep({ onBack }: { onBack: () => void }) {
         console.log("Sesión de Firebase vinculada exitosamente");
         
       } catch (firebaseError) {
-        console.error("Error vinculando sesión de Firebase:", firebaseError);
+        console.log("Error vinculando sesión de Firebase:", firebaseError);
         // No bloquear el acceso - Firebase es opcional para funcionalidades básicas
-        console.warn("Continuando sin Firebase - Funcionalidades de chat limitadas");
+        console.log("Continuando sin Firebase - Funcionalidades de chat limitadas");
       }
 
       // 7. Actualizar estado local con datos completos (incluyendo el rol del backend)

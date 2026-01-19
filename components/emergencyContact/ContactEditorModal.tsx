@@ -86,7 +86,6 @@ export default function ContactEditorModal({
         >
           <View style={styles.modal}>
             <Text style={styles.title}>{t('emergencyContact.editorModal.title')}</Text>
-          {}
             <TextInput
               style={styles.input}
               placeholder={t('emergencyContact.editorModal.namePlaceholder')}

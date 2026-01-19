@@ -31,8 +31,6 @@ export default function ManualContactForm({ onSave, onCancel }: Props) {
 
         const formattedPhone = `${callingCode}${phoneNumber.replace(/\D/g, '')}`;
 
-        console.log("numero de telefono formateado:", formattedPhone);
-        
         onSave({ 
             name: name.trim(), 
             phone: formattedPhone,
@@ -46,13 +44,15 @@ export default function ManualContactForm({ onSave, onCancel }: Props) {
 
     return (
         <KeyboardAvoidingView 
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             style={styles.keyboardView}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
         >
             <ScrollView 
                 contentContainerStyle={styles.scrollContent}
                 keyboardShouldPersistTaps="handled"
                 showsVerticalScrollIndicator={false}
+                bounces={false}
             >
                 <View style={styles.container}>
                     <Text style={styles.modalTitle}>{t('emergencyContact.manualForm.title')}</Text>
@@ -97,6 +97,7 @@ export default function ManualContactForm({ onSave, onCancel }: Props) {
                                     value={phoneNumber}
                                     onChangeText={setPhoneNumber}
                                     style={styles.phoneInput}
+                                    onSubmitEditing={handleSave}
                                 />
                             </View>
                         </View>
@@ -132,9 +133,11 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         flexGrow: 1,
+        paddingBottom: 40,
     },
     container: {
         paddingVertical: 10,
+        flex: 1,
     },
     modalTitle: {
         fontSize: 24,

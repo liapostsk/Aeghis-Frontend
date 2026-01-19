@@ -3,6 +3,7 @@ import {auth} from "../../../firebaseconfig";
 import { signInWithCustomToken, signOut } from "firebase/auth";
 
 export async function linkFirebaseSession() {
+  console.log("auth currentUser:", auth.currentUser);
   if (auth.currentUser) return;
 
   const { data } = await api.post("/firebase/custom-token");

@@ -127,7 +127,7 @@ export function useSessionState() {
             await linkFirebaseSession();
             console.log("Firebase vinculado");
           } catch (firebaseError) {
-            console.warn(" Error vinculando Firebase (no crítico):", firebaseError);
+            console.log(" Error vinculando Firebase (no crítico):", firebaseError);
           }
           
           // Verificar rol y establecer estado

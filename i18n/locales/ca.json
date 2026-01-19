@@ -5,6 +5,12 @@
     "profile": "Perfil"
   },
   "map": {
+    "locationPermission": {
+      "title": "Permís d'ubicació requerit",
+      "message": "L'aplicació necessita accés a la teva ubicació per funcionar correctament. Si us plau, habilita els permisos d'ubicació a la configuració.",
+      "openSettings": "Obrir Configuració",
+      "tryAgain": "Intentar de nou"
+    },
     "journeyActive": {
       "title": "Journey Actiu",
       "message": "El journey ja està en progrés",
@@ -659,6 +665,7 @@
     "safeLocations": {
       "title": "Ubicacions Segures",
       "edit": "Editar",
+      "done": "Fet",
       "add": "Afegir ubicació",
       "types": {
         "home": "Casa",
@@ -1409,7 +1416,8 @@
       "deleteEmergency": "No s'ha pogut eliminar el contacte d'emergència",
       "deleteExternal": "No s'ha pogut eliminar el contacte extern",
       "addContact": "No s'ha pogut afegir el contacte",
-      "editContact": "No s'ha pogut editar el contacte"
+      "editContact": "No s'ha pogut editar el contacte",
+      "lastContact": "Has de tenir almenys un contacte d'emergència. No pots eliminar l'últim contacte."
     }
   },
   "alertModal": {

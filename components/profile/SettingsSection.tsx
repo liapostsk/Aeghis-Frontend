@@ -55,7 +55,7 @@ export default function SettingsSection({onDelete, onLogout}: settingsSectionPro
           <Ionicons name="chevron-forward" size={24} color="#7A33CC" style={styles.chevron} />
         </Pressable>
 
-        <Pressable style={styles.settingItem}>
+        <Pressable style={styles.settingItem} onPress={() => router.push('/(tabs)/profile/privacy')}>
           <Ionicons name="shield" size={24} color="#7A33CC" />
           <Text style={styles.settingText}>{t('profile.settings.privacy')}</Text>
           <Ionicons name="chevron-forward" size={24} color="#7A33CC" style={styles.chevron} />
