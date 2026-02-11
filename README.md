@@ -34,20 +34,9 @@ Durante el desarrollo del proyecto se han afrontado retos como la sincronizació
 - Clerk
 
 ---
+<img width="393" height="852" alt="iPhone 16 - 1 (2)" src="https://github.com/user-attachments/assets/df313c20-0932-4da9-bf87-94469dc1f58b" />
 
-## Instalación y ejecución
+<img width="1170" height="2532" alt="IMG_9353" src="https://github.com/user-attachments/assets/3e701f8c-265b-4ea4-aab5-df57ebc7e65b" />
 
-### Requisitos previos
+<img width="1170" height="2532" alt="IMG_9347" src="https://github.com/user-attachments/assets/21811ffc-ff6b-424b-8431-de01be6d12fd" />
 
-- Node.js (versión LTS recomendada)
-- npm o yarn
-- Expo CLI
-- Emulador Android / iOS o dispositivo físico
-
-### Instalación
-
-1. Clonar el repositorio:
-
-```bash
-git clone https://github.com/tu-usuario/Aegis-Frontend.git
-cd Aegis-Frontend
